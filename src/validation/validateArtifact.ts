@@ -97,7 +97,7 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
           max: artifact.semanticPalette.length - 1,
         },
         { name: "elevation", rows: chunk.layers.elevation, min: 0, max: 999 },
-        { name: "river", rows: chunk.layers.river, min: 0, max: 1 },
+        { name: "river", rows: chunk.layers.river, min: 0, max: 2 },
         { name: "path", rows: chunk.layers.path, min: 0, max: 1 },
         { name: "structure", rows: chunk.layers.structure, min: 0, max: artifact.structureTypes.length },
         { name: "prop", rows: chunk.layers.prop, min: 0, max: artifact.propTypes.length },

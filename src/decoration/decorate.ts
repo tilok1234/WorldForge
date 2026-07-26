@@ -373,9 +373,10 @@ export function decorateWorld(
       const material = grid[index] as number;
       const isWater = hydro.waterKind[index] !== WATER_NONE;
 
+      const isStream = hydro.isRiver[index] !== 0;
       if (isWater) {
         // Lily pads on pond shallows: mostly-enclosed water, calm read.
-        if (hydro.isRiver[index] === 0 && decalRoll.permilleAt(x, y, 0) < 70) {
+        if (!isStream && decalRoll.permilleAt(x, y, 0) < 70) {
           let landNeighbors = 0;
           for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0], [1, -1], [1, 1], [-1, 1], [-1, -1]] as const) {
             const nx = x + dx;
@@ -391,6 +392,12 @@ export function decorateWorld(
         continue;
       }
       if (protectedCells[index] === 1) continue;
+      // Cosmetic decals never sit on stream cells or blocked terrain: the
+      // package's reference walkability grants passage for ANY walkable-true
+      // decal over blocked ground (its prose limits that to stepping stones,
+      // frost, and ford) — staying off blocked substrates keeps worlds
+      // unambiguous under either reading. Upstream question recorded.
+      if (isStream) continue;
 
       if (propLayer[index] === 0 && material === grassValue) {
         // Leaf litter beside deciduous trees.
@@ -407,14 +414,14 @@ export function decorateWorld(
           continue;
         }
       }
-      if (material === mudValue || material === swampValue) {
+      if (material === mudValue) {
         if (decalRoll.permilleAt(x, y, 2) < 55) {
           decalLayer[index] = decalIndex.get("decal.puddles") as number;
           decalCount += 1;
           continue;
         }
       }
-      if (material === rockValue || material === gravelValue) {
+      if (material === gravelValue) {
         let besideOutcrop = false;
         const outcrop = typeIndex.get("prop.rock_outcrop") as number;
         for (const offset of [index - width, index + width, index - 1, index + 1]) {
@@ -429,8 +436,11 @@ export function decorateWorld(
           continue;
         }
       }
-      // Driftwood on open banks.
-      if (propLayer[index] === 0 && decalRoll.permilleAt(x, y, 4) < 24) {
+      // Driftwood on open walkable banks.
+      const walkableBank =
+        material === grassValue || material === dryGrassValue ||
+        material === mudValue || material === gravelValue;
+      if (walkableBank && propLayer[index] === 0 && decalRoll.permilleAt(x, y, 4) < 24) {
         let besideWater = false;
         for (const offset of [index - width, index + width, index - 1, index + 1]) {
           if (offset >= 0 && offset < cellCount && hydro.waterKind[offset] !== WATER_NONE) {

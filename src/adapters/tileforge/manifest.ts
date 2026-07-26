@@ -36,6 +36,8 @@ export interface FamilyTile {
 export interface FamilyInfo {
   readonly key: string;
   readonly kind: string;
+  /** Family-default walkability (per-tile overrides exist in tiles data). */
+  readonly walkable: boolean;
   /** Atlas image filename as shipped (e.g. "grass_on_soil.png"). */
   readonly imageFile: string;
   /** Atlas image basename without extension (tmj tileset sources match it). */
@@ -136,6 +138,7 @@ interface RawFamily {
   variants: number;
   frames: number;
   maskCount: number;
+  walkable?: boolean;
   atlas: { width: number; height: number; columns: number; padding: number };
   tiles: { mask: number; variant: number; frame: number; atlas: [number, number] }[];
 }
@@ -290,6 +293,7 @@ export function loadPinnedManifest(): { lock: TileForgeLock; manifest: TileForge
     families.set(key, {
       key,
       kind: fam.kind,
+      walkable: fam.walkable ?? true,
       imageFile: fam.image,
       imageBase: fam.image.replace(/\.[^.]+$/, ""),
       variants: fam.variants,

@@ -174,15 +174,19 @@ describe("hydrology in the artifact", () => {
     const result = generateWorldDetailed(normalized, config);
     const summary = result.artifact.hydrology;
     assert.equal(summary.seaLevelPermille, config.water.seaLevelPermille);
-    let riverInChunks = 0;
+    // Format 7 river tiers: 2 = major, 1 = network stream.
+    let majorCells = 0;
+    let allRiverCells = 0;
     for (const chunk of result.artifact.chunks) {
       for (const row of chunk.layers.river) {
         for (const cell of row) {
-          riverInChunks += cell;
+          if (cell === 2) majorCells += 1;
+          if (cell >= 1) allRiverCells += 1;
         }
       }
     }
-    assert.equal(riverInChunks, summary.riverCellCount);
+    assert.equal(majorCells, summary.riverCellCount);
+    assert.equal(allRiverCells, summary.networkRiverCellCount);
     assert.ok(summary.networkRiverCellCount >= summary.riverCellCount);
   });
 });

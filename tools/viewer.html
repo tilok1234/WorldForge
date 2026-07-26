@@ -218,7 +218,7 @@ function draw() {
         const gray = Math.trunc((state.cells.elevation[i] * 255) / 999);
         color = on("material") ? [(color[0] + gray) >> 1, (color[1] + gray) >> 1, (color[2] + gray) >> 1] : [gray, gray, gray];
       }
-      if (on("river") && state.cells.river[i] === 1) color = RIVER;
+      if (on("river") && state.cells.river[i] >= 1) color = state.cells.river[i] === 2 ? [30, 80, 160] : RIVER;
       if (on("path") && state.cells.path[i] === 1) color = TRAIL;
       if (on("structures") && state.cells.structure[i] !== 0) color = state.cells.structure[i] === 1 ? [128, 64, 44] : [70, 40, 36];
       image.data[i * 4] = color[0]; image.data[i * 4 + 1] = color[1];

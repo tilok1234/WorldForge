@@ -23,8 +23,11 @@ import { CROP_TYPES, FENCE_TYPES, PIER_TYPES } from "../settlements/farms.js";
  * propTypes/decalTypes key tables.
  * Format 6 (stage 3): crop/fence/pier layers plus their key tables (crop
  * values are cropTypeIndex*16 + growth stage 1-4).
+ * Format 7 (W8): the river layer carries the FULL two-tier network —
+ * 0 none, 1 network stream, 2 major river. Consumers need the network tier
+ * to reproduce walkability (streams block; majors carried it alone before).
  */
-export const ARTIFACT_FORMAT_VERSION = 6;
+export const ARTIFACT_FORMAT_VERSION = 7;
 
 export interface WorldArtifact {
   readonly formatVersion: number;
@@ -179,10 +182,16 @@ export function generateWorldDetailed(
       crop: number[][]; fence: number[][]; pier: number[][];
     };
   }> = [];
+  // River layer format 7: 0 none, 1 network stream, 2 major river.
+  const riverTiers = new Uint8Array(width * height);
+  for (let index = 0; index < riverTiers.length; index += 1) {
+    if (composed.hydro.isMajorRiver[index] === 1) riverTiers[index] = 2;
+    else if (composed.hydro.isRiver[index] === 1) riverTiers[index] = 1;
+  }
   const layerSources: readonly (readonly [string, ArrayLike<number>])[] = [
     ["material", composed.grid as unknown as ArrayLike<number>],
     ["elevation", composed.fields.elevation],
-    ["river", composed.hydro.isMajorRiver],
+    ["river", riverTiers],
     ["path", composed.routesResult.pathLayer],
     ["structure", composed.structureLayer],
     ["prop", composed.decoration.propLayer],

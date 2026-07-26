@@ -16,8 +16,10 @@ export const GENERATOR_VERSION = "0.1.0";
  * 11: stage 3 — farm plots with pen fences, harbor piers, waterline life.
  * 12: settlements.plans v4 — town scale-up: street arms, bigger plazas and
  *     radii, market stalls, short street-hugging approaches.
+ * 13: decoration v3 — cosmetic decals keep off streams and blocked terrain
+ *     (the package reference walkability would turn them into passage).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 12;
+export const GENERATOR_BEHAVIOR_VERSION = 13;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 9;
@@ -31,7 +33,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "routes.graph": 2,
   "settlements.plans": 4,
   "landmarks.stamps": 1,
-  "decoration.props": 2,
+  "decoration.props": 3,
   "adapter.tileforge": 3,
 };
 

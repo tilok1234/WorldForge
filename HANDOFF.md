@@ -169,6 +169,21 @@ user's "settlements way too small" verdict: radius 18 / 28 lots (small),
 approachMaxLength 8 forces street-lining — the fabric constraint.
 Structure cells 119->246 canonical.
 
+## W8 underway (user go 2026-07-26)
+
+The user blessed the current look as a PROVISIONAL baseline ("ye this is
+better" on the town scale-up; formal approval deferred to the end-of-plan
+polish round) and approved: finish the plan first, polish later, user files
+annoyances as they strike, sand-beach coverage pass woven into W8, one
+deliberate taste round at the end with W9 tooling. W8 increment 1: public
+TS loader (src/consumers/typescript/), artifact format 7 (river layer
+carries 0 none / 1 network / 2 major — the artifact previously omitted
+network streams, so no consumer could reproduce ladder walkability),
+resolve-tileforge also writes world.json + identity-stamped slice manifest,
+walkability parity fixture (loader semantics vs the §3 ladder over
+map-data), no-private-imports guard, traversal harness. Increment 2:
+viewer on the public loader + sand beaches.
+
 ## Review loop (user-requested interface, ebd59c5)
 
 The user reviews worlds in the browser and iterates through chat: start

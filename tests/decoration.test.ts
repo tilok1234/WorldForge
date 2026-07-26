@@ -97,7 +97,7 @@ describe("decoration stage 1", () => {
         assert.ok(composed.hydro.waterKind[index] !== WATER_NONE, "lilypads on water");
       }
       if (decal === puddles) {
-        assert.ok(material === mud || material === swamp, "puddles on wet ground");
+        assert.equal(material, mud, "puddles only on walkable mud (v3)");
       }
       const prop = composed.decoration.propLayer[index] as number;
       if (prop !== 0) {

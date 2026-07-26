@@ -197,10 +197,17 @@ func is_walkable(cell: Vector2i) -> bool:
 	var on_lava := t != null and String(t.get_custom_data("semantic_id")).begins_with("terrain.lava")
 	if _tile_data("pier", cell) != null and not on_lava:
 		return true
+	# Walk-granting decals per the guide PROSE: stepping stones, frost, ford
+	# over water/river. (The packaged reference implementation grants for ANY
+	# walkable-true decal over any blocked terrain, which turns cosmetic
+	# decals into passage; upstream question recorded in the handoff.)
 	var d := _tile_data("decals", cell)
 	var wet := t != null and not bool(t.get_custom_data("walkable"))
 	if d != null and bool(d.get_custom_data("walkable")) and (wet or _tile_data("river", cell) != null):
-		return true
+		var decal_id := String(d.get_custom_data("semantic_id"))
+		for grant in ["terrain.ford_decal", "terrain.stepping_stones_decal", "terrain.frost_decal"]:
+			if decal_id.begins_with(grant):
+				return true
 	if d != null and String(d.get_custom_data("semantic_id")).begins_with("terrain.waterfall"):
 		return false
 	if _tile_data("river", cell) != null:

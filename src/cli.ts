@@ -33,6 +33,7 @@ import {
 } from "./package/importPackage.js";
 import { resolveToTileForge } from "./adapters/tileforge/resolve.js";
 import { loadPinnedManifest } from "./adapters/tileforge/manifest.js";
+import { TILEFORGE_ADAPTER_VERSION } from "./core/version.js";
 import {
   renderTmjDocument,
   verifyAgainstPackageMap,
@@ -436,6 +437,9 @@ function runResolveTileForge(argv: readonly string[]): number {
     return 1;
   }
   mkdirSync(parsed.outDir, { recursive: true });
+  // The engine-neutral artifact rides along so consumers (the TS loader,
+  // parity checks) can bind resolved outputs to their base world.
+  writeFileSync(join(parsed.outDir, "world.json"), canonicalJson(result.artifact));
   writeFileSync(join(parsed.outDir, "tileforge-map-data.json"), canonicalJson(resolved.mapData));
   writeFileSync(join(parsed.outDir, "tileforge-diagnostics.json"), canonicalJson(resolved.diagnostics));
   // §2.13 authored tmj (tilesets block verbatim from the package) plus a
@@ -466,6 +470,10 @@ function runResolveTileForge(argv: readonly string[]): number {
   const sliceManifest = {
     mapW: resolved.mapData.mapW,
     mapH: resolved.mapData.mapH,
+    // Consumer-cache identity (W8): resolved outputs name their base world.
+    baseGenerationIdentitySha256: result.artifact.generator.generationIdentitySha256,
+    baseArtifactFormat: result.artifact.formatVersion,
+    tileforgeAdapterVersion: TILEFORGE_ADAPTER_VERSION,
     destinations: result.composed.routesResult.destinations.map((destination) => ({
       id: destination.id,
       kind: destination.kind,
