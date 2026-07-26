@@ -42,6 +42,7 @@
     <label class="semantic-only"><input type="checkbox" data-layer="structures" checked> structures</label>
     <label class="semantic-only"><input type="checkbox" data-layer="walkable"> walkability</label>
     <label><input type="checkbox" data-layer="routes" checked> routes</label>
+    <label><input type="checkbox" data-layer="pois" checked> discoveries</label>
     <label><input type="checkbox" data-layer="chunks"> chunk grid</label>
   </div>
 </header>
@@ -274,6 +275,29 @@ function draw() {
     ctx.lineWidth = 1;
     for (let cx = 0; cx <= width; cx += chunkWidth) line(x + cx * scale, y, x + cx * scale, y + height * scale);
     for (let cy = 0; cy <= height; cy += chunkHeight) line(x, y + cy * scale, x + width * scale, y + cy * scale);
+  }
+  if (on("pois")) {
+    const pois = state.mode === "native"
+      ? (state.native.slice.pois || [])
+      : (state.handle !== null ? state.handle.pois : (state.world.pois || []).map((p) => ({ type: p.type, x: p.cell[0], y: p.cell[1] })));
+    ctx.font = "10px ui-monospace, monospace";
+    for (const poi of pois) {
+      const px = poi.x !== undefined ? poi.x : poi.cell[0];
+      const py = poi.y !== undefined ? poi.y : poi.cell[1];
+      ctx.strokeStyle = "#ff8a3c";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + px * scale, y + (py - 2.4) * scale);
+      ctx.lineTo(x + (px + 2.4) * scale, y + py * scale);
+      ctx.lineTo(x + px * scale, y + (py + 2.4) * scale);
+      ctx.lineTo(x + (px - 2.4) * scale, y + py * scale);
+      ctx.closePath();
+      ctx.stroke();
+      if (scale >= 4) {
+        ctx.fillStyle = "#ff8a3c";
+        ctx.fillText(String(poi.type).replace("poi.", ""), x + (px + 2.8) * scale, y + py * scale + 3);
+      }
+    }
   }
   if (on("routes")) {
     if (state.mode === "semantic") {

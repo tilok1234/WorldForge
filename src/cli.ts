@@ -522,6 +522,7 @@ function runResolveTileForge(argv: readonly string[]): number {
       toX: route.toCell % w,
       toY: Math.floor(route.toCell / w),
     })),
+    pois: result.composed.pois.map((poi) => ({ id: poi.id, type: poi.type, x: poi.x, y: poi.y })),
     materials: denseTable(pinned.materialFamilyById),
     decals: denseTable(pinned.decalFamilyById),
     roadTypes: denseTable(pinned.roadFamilyByType),
