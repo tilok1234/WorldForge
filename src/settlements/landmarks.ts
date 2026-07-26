@@ -190,6 +190,16 @@ export function placeLandmarks(
         grid[cell] = GRAVEL;
       }
     }
+    // The gateway itself joins the trail (behavior 24): the corridor runs
+    // through the arch, so the gate is corridor-reachable on its own and
+    // never depends on a lucky through-trail.
+    const gateCell = gateY * width + gateX;
+    if (hydro.waterKind[gateCell] === WATER_NONE && hydro.isRiver[gateCell] === 0) {
+      pathLayer[gateCell] = 1;
+      if (grid[gateCell] === rockIndex) {
+        grid[gateCell] = GRAVEL;
+      }
+    }
 
     // Procedural blending: gravel scatter fading outward, never a hard edge.
     const probabilities = [650, 400, 180];

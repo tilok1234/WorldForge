@@ -98,10 +98,14 @@ export interface RouteRules {
   /** Shortcut trails (routes.graph v4): rough paths between near pairs. */
   readonly shortcutTrailMax: number;
   readonly shortcutTrailSpan: number;
+  /** Settlements reserved for the capital-remote map quarter (v7). */
+  readonly remoteQuarterMin: number;
 }
 
 export interface SettlementRules {
-  /** The capital (settlements.plans v5): rank 0 becomes the one city. */
+  /** Cities (settlements.plans v7): ranks 0..cityCount-1. Rank 0 is the
+   * capital; rank 1 — the remote quarter's best — the second city. */
+  readonly cityCount: number;
   readonly cityRadius: number;
   readonly cityLots: number;
   readonly cityPlazaRadius: number;
@@ -155,7 +159,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 9;
+  readonly resolvedConfigFormat: 10;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -278,6 +282,7 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     edgePenaltyCost: 40,
     shortcutTrailMax: 2,
     shortcutTrailSpan: 40,
+    remoteQuarterMin: 0,
   },
   small: {
     stepCost: 10,
@@ -293,6 +298,7 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     edgePenaltyCost: 40,
     shortcutTrailMax: 4,
     shortcutTrailSpan: 80,
+    remoteQuarterMin: 3,
   },
 };
 
@@ -306,12 +312,14 @@ const SETTLEMENT_RULES: { readonly [key in SizePreset]: SettlementRules } = {
     // Tiny worlds stay cramped: the city keeps the old town street reach
     // (plaza 2 + arms 9) so near_town landmarks remain satisfiable, and
     // grows through lots and the ring road instead of sprawl.
+    cityCount: 1,
     cityRadius: 14, cityLots: 22, cityPlazaRadius: 2, cityStreetArmLength: 9,
     cityRingRadius: 6, townCount: 1,
     townRadius: 12, outpostRadius: 7, townLots: 14, outpostLots: 6,
     approachMaxLength: 8, townPlazaRadius: 2, outpostPlazaRadius: 1, streetArmLength: 9,
   },
   small: {
+    cityCount: 2,
     cityRadius: 26, cityLots: 64, cityPlazaRadius: 4, cityStreetArmLength: 20,
     cityRingRadius: 11, townCount: 3,
     townRadius: 20, outpostRadius: 10, townLots: 34, outpostLots: 9,
@@ -354,7 +362,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 9,
+    resolvedConfigFormat: 10,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,

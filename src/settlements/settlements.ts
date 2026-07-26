@@ -122,7 +122,8 @@ export function planSettlements(
     const anchor = (candidates[rank] as { cell: number }).cell;
     const anchorX = anchor % width;
     const anchorY = (anchor - anchorX) / width;
-    const kind = rank === 0 ? "city" : rank <= rules.townCount ? "town" : "outpost";
+    const kind =
+      rank < rules.cityCount ? "city" : rank < rules.cityCount + rules.townCount ? "town" : "outpost";
     const radius =
       kind === "city" ? rules.cityRadius : kind === "town" ? rules.townRadius : rules.outpostRadius;
 

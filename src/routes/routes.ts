@@ -35,6 +35,33 @@ const ROCK = PALETTE_INDEX["terrain.rock"];
 const GRAVEL = PALETTE_INDEX["terrain.gravel"];
 
 /**
+ * The map corner lying farthest from the given cell, by Manhattan distance
+ * (Chebyshev ties two same-side corners when the cell sits at mid-height).
+ * Shared by the remote_corner landmark relation and the remote-quarter
+ * settlement reservation (routes.graph v7).
+ */
+function remoteCorner(fromCell: number, width: number): readonly [number, number] {
+  const tx = fromCell % width;
+  const ty = Math.trunc(fromCell / width);
+  const corners: ReadonlyArray<readonly [number, number]> = [
+    [0, 0],
+    [width - 1, 0],
+    [0, width - 1],
+    [width - 1, width - 1],
+  ];
+  let far = corners[0] as readonly [number, number];
+  let farDist = -1;
+  for (const corner of corners) {
+    const d = Math.abs(corner[0] - tx) + Math.abs(corner[1] - ty);
+    if (d > farDist) {
+      farDist = d;
+      far = corner;
+    }
+  }
+  return far;
+}
+
+/**
  * Grade a rock cell a trail crosses (routes.graph v4). A lone rock cell
  * between open land adopts a walkable neighbor's material so it merges with
  * that region (no one-cell confetti); longer rock crossings become a
@@ -386,6 +413,34 @@ function pickDestinations(
   };
 
   const taken: Destination[] = [];
+  // Settlement selection in three phases (routes.graph v7):
+  //   1. the capital — the single best-scored candidate anywhere;
+  //   2. the remote quarter — the map quarter whose corner lies farthest
+  //      from the capital gets a reserved share, its best candidate
+  //      placing at rank 1 (settlements.plans crowns it the second city);
+  //   3. the rest of the world competes for the remaining slots.
+  bySpacing(scored, 1, taken, "settlement_candidate", config.routes.minDestinationSpacing);
+  if (
+    config.routes.remoteQuarterMin > 0 &&
+    taken.length === 1 &&
+    config.budgets.settlementCount > config.routes.remoteQuarterMin
+  ) {
+    const capital = (taken[0] as Destination).cell;
+    const [cornerX, cornerY] = remoteCorner(capital, fields.width);
+    const quarterSpan = Math.trunc(fields.width / 2);
+    const quarterPool = scored.filter((candidate) => {
+      const qx = candidate.index % fields.width;
+      const qy = Math.trunc(candidate.index / fields.width);
+      return Math.abs(qx - cornerX) <= quarterSpan && Math.abs(qy - cornerY) <= quarterSpan;
+    });
+    bySpacing(
+      quarterPool,
+      1 + config.routes.remoteQuarterMin,
+      taken,
+      "settlement_candidate",
+      config.routes.minDestinationSpacing,
+    );
+  }
   bySpacing(scored, config.budgets.settlementCount, taken, "settlement_candidate", config.routes.minDestinationSpacing);
 
   // Landmark slots honor their relational specs (W5 solver). Unsatisfiable
@@ -412,8 +467,8 @@ function pickDestinations(
     // the ring, so footprints spill up to two more cells outward.
     const streetReach = (rank: number): number => {
       const rules = config.settlements;
-      if (rank === 0) return Math.max(rules.cityRadius + 2, rules.cityPlazaRadius + rules.cityStreetArmLength);
-      if (rank <= rules.townCount) return Math.max(rules.townRadius + 2, rules.townPlazaRadius + rules.streetArmLength);
+      if (rank < rules.cityCount) return Math.max(rules.cityRadius + 2, rules.cityPlazaRadius + rules.cityStreetArmLength);
+      if (rank < rules.cityCount + rules.townCount) return Math.max(rules.townRadius + 2, rules.townPlazaRadius + rules.streetArmLength);
       return rules.outpostRadius + 2;
     };
     let placedSlot = false;
@@ -722,25 +777,7 @@ function relationHolds(
     // The back-country relation (routes.graph v6): the site sits in the
     // quarter of the map whose corner lies farthest from the capital —
     // and its trail becomes the road into the emptiest quadrant.
-    const tx = townCell % width;
-    const ty = Math.trunc(townCell / width);
-    const corners: ReadonlyArray<readonly [number, number]> = [
-      [0, 0],
-      [width - 1, 0],
-      [0, width - 1],
-      [width - 1, width - 1],
-    ];
-    let far: readonly [number, number] = corners[0] as readonly [number, number];
-    let farDist = -1;
-    for (const corner of corners) {
-      // Manhattan distance: discriminates diagonal corners where Chebyshev
-      // ties (a capital at mid-height ties two same-side corners).
-      const d = Math.abs(corner[0] - tx) + Math.abs(corner[1] - ty);
-      if (d > farDist) {
-        farDist = d;
-        far = corner;
-      }
-    }
+    const far = remoteCorner(townCell, width);
     const cx = cell % width;
     const cy = Math.trunc(cell / width);
     return Math.max(Math.abs(cx - far[0]), Math.abs(cy - far[1])) <= Math.trunc(width / 4);

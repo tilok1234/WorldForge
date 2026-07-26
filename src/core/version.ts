@@ -53,11 +53,15 @@ export const GENERATOR_VERSION = "0.1.0";
  *     remote_corner (the quarter farthest from the capital; routes.graph
  *     6, landmarks.stamps 4, decoration.pois 8); trapper camps join the
  *     spur-path kinds.
+ * 24: the second city — settlement selection reserves the capital-remote
+ *     map quarter (routes.graph 7) and settlements.plans v7 crowns its
+ *     best candidate the second city (cityCount), so the back country
+ *     gets a main city, satellites, and real roads.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 23;
+export const GENERATOR_BEHAVIOR_VERSION = 24;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 12;
+export const RECIPE_COMPILER_VERSION = 13;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -65,8 +69,8 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 4,
   "macro.biomes": 3,
   "hydrology.water": 2,
-  "routes.graph": 6,
-  "settlements.plans": 6,
+  "routes.graph": 7,
+  "settlements.plans": 7,
   "landmarks.stamps": 4,
   "decoration.props": 5,
   "decoration.pois": 8,
