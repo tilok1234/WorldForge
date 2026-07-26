@@ -13,11 +13,34 @@ import { WATER_NONE } from "../hydrology/hydrology.js";
 import type { MacroFields } from "../fields/macroFields.js";
 import type { RoutesResult } from "../routes/routes.js";
 import { PALETTE_INDEX } from "../regions/biomes.js";
+import { channel } from "../core/channels.js";
 import {
   STRUCTURE_FOOTPRINTS,
   STRUCTURE_LAYER_VALUE,
   type StructureType,
 } from "./structures.js";
+
+/** settlements.plans v2 (W5.1): purpose-led lots plus a rolled village mix. */
+const TOWN_SPECIALS: readonly StructureType[] = [
+  "structure.town_hall",
+  "structure.tavern",
+  "structure.smithy",
+  "structure.chapel",
+  "structure.manor",
+];
+const TOWN_FILL: readonly { readonly type: StructureType; readonly weight: number }[] = [
+  { type: "structure.cottage", weight: 45 },
+  { type: "structure.house", weight: 30 },
+  { type: "structure.bakery", weight: 15 },
+  { type: "structure.well", weight: 10 },
+];
+const OUTPOST_SEQUENCES: { readonly [key in SettlementPlan["purpose"]]: readonly StructureType[] } = {
+  farming: ["structure.farmhouse", "structure.barn", "structure.stall", "structure.cottage"],
+  mining: ["structure.watchtower", "structure.cottage", "structure.stall", "structure.cottage"],
+  harbor: ["structure.watchtower", "structure.cottage", "structure.stall", "structure.cottage"],
+  crossing: ["structure.watchtower", "structure.tavern", "structure.cottage", "structure.cottage"],
+  waypoint: ["structure.watchtower", "structure.cottage", "structure.cottage", "structure.cottage"],
+};
 
 const COBBLE = PALETTE_INDEX["terrain.cobble"];
 const PACKED_ROAD = PALETTE_INDEX["terrain.packed_road"];
@@ -114,25 +137,88 @@ export function planSettlements(
     }
 
     // Structures spiral outward from the plaza in deterministic ring order.
-    const sequence: StructureType[] =
-      kind === "town"
-        ? ["structure.town_hall", ...Array<StructureType>(rules.townLots - 1).fill("structure.house")]
-        : ["structure.watchtower", ...Array<StructureType>(rules.outpostLots - 1).fill("structure.house")];
+    // Towns lead with civic specials then a channel-rolled village mix;
+    // outposts follow their purpose (settlements.plans v2, the W5.1 brief).
+    const variety = channel(config.seed, "settlements.variety");
+    let sequence: StructureType[];
+    if (kind === "town") {
+      sequence = [...TOWN_SPECIALS.slice(0, Math.min(TOWN_SPECIALS.length, rules.townLots))];
+      for (let slot = sequence.length; slot < rules.townLots; slot += 1) {
+        const pick = variety.weightedPickAt(anchorX, anchorY, TOWN_FILL.map((f) => f.weight), slot);
+        sequence.push((TOWN_FILL[pick] as { type: StructureType }).type);
+      }
+    } else {
+      const pool = OUTPOST_SEQUENCES[purpose];
+      sequence = Array.from(
+        { length: rules.outpostLots },
+        (_, slot) => pool[Math.min(slot, pool.length - 1)] as StructureType,
+      );
+    }
     const placed: PlacedStructure[] = [];
 
     if (kind === "town") {
-      const wellCell = cellAt(anchorX, anchorY, width, height);
-      if (wellCell !== -1 && grid[wellCell] === COBBLE && structureLayer[wellCell] === 0) {
-        structureLayer[wellCell] = STRUCTURE_LAYER_VALUE["structure.well"];
-        placed.push({
-          type: "structure.well",
-          x: anchorX,
-          y: anchorY,
-          width: 1,
-          height: 1,
-          entranceX: anchorX,
-          entranceY: anchorY,
-        });
+      // Plaza legibility (W5.1): the fountain anchors the square. Its 2x2
+      // footprint centers on the plaza; the south-side cobble is the
+      // approach. Falls back to the classic well if the plaza is clipped.
+      const fountainOrigin = cellAt(anchorX - 1, anchorY - 1, width, height);
+      let fountainDown = false;
+      if (fountainOrigin !== -1) {
+        let clear = true;
+        for (const [sx, sy] of [[0, 0], [1, 0], [0, 1], [1, 1]] as const) {
+          const cell = cellAt(anchorX - 1 + sx, anchorY - 1 + sy, width, height);
+          if (cell === -1 || grid[cell] !== COBBLE || structureLayer[cell] !== 0) {
+            clear = false;
+            break;
+          }
+        }
+        if (clear) {
+          // The entrance is whichever perimeter cell already joins the
+          // street network (plazas can be clipped by streams).
+          let entrance = -1;
+          const perimeter: (readonly [number, number])[] = [];
+          for (let sx = -1; sx <= 2; sx += 1) perimeter.push([anchorX - 1 + sx, anchorY + 1]);
+          for (let sy = -1; sy <= 2; sy += 1) perimeter.push([anchorX + 1, anchorY - 1 + sy]);
+          for (let sx = -1; sx <= 2; sx += 1) perimeter.push([anchorX - 1 + sx, anchorY - 2]);
+          for (let sy = -1; sy <= 2; sy += 1) perimeter.push([anchorX - 2, anchorY - 1 + sy]);
+          for (const [px, py] of perimeter) {
+            const cell = cellAt(px, py, width, height);
+            if (cell !== -1 && structureLayer[cell] === 0 && (grid[cell] === COBBLE || grid[cell] === PACKED_ROAD)) {
+              entrance = cell;
+              break;
+            }
+          }
+          if (entrance !== -1) {
+            for (const [sx, sy] of [[0, 0], [1, 0], [0, 1], [1, 1]] as const) {
+              const cell = (anchorY - 1 + sy) * width + anchorX - 1 + sx;
+              structureLayer[cell] = STRUCTURE_LAYER_VALUE["structure.fountain"];
+            }
+            placed.push({
+              type: "structure.fountain",
+              x: anchorX - 1,
+              y: anchorY - 1,
+              width: 2,
+              height: 2,
+              entranceX: entrance % width,
+              entranceY: Math.trunc(entrance / width),
+            });
+            fountainDown = true;
+          }
+        }
+      }
+      if (!fountainDown) {
+        const wellCell = cellAt(anchorX, anchorY, width, height);
+        if (wellCell !== -1 && grid[wellCell] === COBBLE && structureLayer[wellCell] === 0) {
+          structureLayer[wellCell] = STRUCTURE_LAYER_VALUE["structure.well"];
+          placed.push({
+            type: "structure.well",
+            x: anchorX,
+            y: anchorY,
+            width: 1,
+            height: 1,
+            entranceX: anchorX,
+            entranceY: anchorY,
+          });
+        }
       }
     }
 

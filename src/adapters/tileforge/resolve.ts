@@ -34,6 +34,16 @@ const STRUCTURE_NAME: { readonly [key: string]: string } = {
   "structure.town_hall": "townhall",
   "structure.watchtower": "tower",
   "structure.well": "well",
+  "structure.cottage": "cottage",
+  "structure.tavern": "tavern",
+  "structure.smithy": "smithy",
+  "structure.chapel": "chapel",
+  "structure.manor": "manor",
+  "structure.bakery": "bakery",
+  "structure.farmhouse": "farmhouse",
+  "structure.barn": "barn",
+  "structure.stall": "stall",
+  "structure.fountain": "fountain",
 };
 
 /** WorldForge semantic prop keys -> package prop species names. */
@@ -252,31 +262,16 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
   // oriented across the river run (stone for highways, wood otherwise).
   const fordId = manifest.decalIdByKey.get("ford");
   let fordDecals = 0;
-  // Street-level crossings: a stream cell severs a street when it carries a
-  // corridor material itself OR runs between corridor cells on opposite
-  // sides (streets never paint over water, so the gap cells stay terrain).
-  // Without a ford the §3 ladder blocks the cell and the street splits.
-  {
-    const roadMatId = manifest.materialIdByKey.get("packedroad");
-    const cobbleMatId = manifest.materialIdByKey.get("cobble");
-    const corridor = (index: number): boolean =>
-      mat[index] === roadMatId || mat[index] === cobbleMatId;
-    for (let index = 0; index < cellCount; index += 1) {
-      if (river[index] === 0) continue;
-      const x = index % width;
-      const y = (index - x) / width;
-      const northSouth =
-        y > 0 && y < height - 1 && corridor(index - width) && corridor(index + width);
-      const eastWest =
-        x > 0 && x < width - 1 && corridor(index - 1) && corridor(index + 1);
-      if (!corridor(index) && !northSouth && !eastWest) continue;
-      if (fordId === undefined) {
-        unresolved.add("crossing.street_ford -> decal ford");
-        break;
-      }
-      decal[index] = fordId;
-      fordDecals += 1;
+  // Street-level crossings, computed once in composition (single source of
+  // truth): without a ford the §3 ladder blocks the cell and the street
+  // severs. Crossings out-rank decoration decals.
+  for (const cell of composed.streetFordCells) {
+    if (fordId === undefined) {
+      unresolved.add("crossing.street_ford -> decal ford");
+      break;
     }
+    decal[cell] = fordId;
+    fordDecals += 1;
   }
   let bridgeStructures = 0;
   for (const route of composed.routesResult.routes) {

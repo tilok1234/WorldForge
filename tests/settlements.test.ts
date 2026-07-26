@@ -85,6 +85,40 @@ describe("settlement planning", () => {
     }
   });
 
+  it("gives towns a varied lot mix and a legible plaza (W5.1)", () => {
+    let sawFountain = false;
+    let sawFarmingKit = false;
+    for (let seed = 1; seed <= 6; seed += 1) {
+      const { composed } = worldFor(seed);
+      const town = composed.settlementPlans[0];
+      if (town === undefined) continue;
+      const types = new Set(town.structures.map((s) => s.type));
+      assert.ok(
+        types.size >= 4,
+        `seed ${seed}: town mixes structure types (${[...types].join(", ")})`,
+      );
+      if (types.has("structure.fountain")) {
+        sawFountain = true;
+        const fountain = town.structures.find((s) => s.type === "structure.fountain")!;
+        // The fountain sits on the plaza: every footprint cell is cobble-backed
+        // structure layer, its entrance is street-reachable (validated by the
+        // entrance gate), and it centers on the anchor.
+        assert.ok(
+          Math.abs(fountain.x + 1 - town.anchorX) <= 1 && Math.abs(fountain.y + 1 - town.anchorY) <= 1,
+          `seed ${seed}: fountain centers the plaza`,
+        );
+      }
+      for (const plan of composed.settlementPlans.slice(1)) {
+        if (plan.purpose === "farming") {
+          const outpostTypes = new Set(plan.structures.map((s) => s.type));
+          if (outpostTypes.has("structure.farmhouse")) sawFarmingKit = true;
+        }
+      }
+    }
+    assert.ok(sawFountain, "at least one town centers a fountain");
+    void sawFarmingKit; // informative only: farming outposts are seed-dependent
+  });
+
   it("resolves identically across repeated composition (order independence)", () => {
     const first = worldFor(3).composed;
     const second = worldFor(3).composed;

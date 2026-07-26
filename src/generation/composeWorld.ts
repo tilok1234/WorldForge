@@ -48,6 +48,12 @@ export interface ComposedWorld {
   readonly settlementPlans: readonly SettlementPlan[];
   readonly landmarkPlans: readonly LandmarkPlan[];
   readonly decoration: DecorationResult;
+  /**
+   * Street-level crossings: river cells that carry corridor material or run
+   * between corridor cells on opposite sides. Walkable in every model; the
+   * TileForge adapter renders them as ford decals.
+   */
+  readonly streetFordCells: readonly number[];
 }
 
 export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
@@ -122,6 +128,27 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   smoothConfetti(grid, width, height, 2, 2, new Set([PALETTE_INDEX["terrain.packed_road"], PALETTE_INDEX["terrain.cobble"]]));
   const postCleanupErrors: string[] = [...planErrors];
   verifyRouteConnectivity(grid, routesResult.pathLayer, routesResult.routes, routesResult.destinations, width, height, postCleanupErrors);
+  // Street-level crossings (single source of truth; the adapter renders
+  // these as ford decals): a stream cell is a crossing when it carries a
+  // corridor material or separates corridor cells on opposite sides.
+  const streetFordCells: number[] = [];
+  {
+    const cobbleValue = PALETTE_INDEX["terrain.cobble"];
+    const roadValue = PALETTE_INDEX["terrain.packed_road"];
+    const corridor = (index: number): boolean =>
+      grid[index] === roadValue || grid[index] === cobbleValue;
+    for (let index = 0; index < grid.length; index += 1) {
+      if (hydro.isRiver[index] !== 1) continue;
+      const x = index % width;
+      const y = (index - x) / width;
+      const northSouth = y > 0 && y < height - 1 && corridor(index - width) && corridor(index + width);
+      const eastWest = x > 0 && x < width - 1 && corridor(index - 1) && corridor(index + 1);
+      if (corridor(index) || northSouth || eastWest) {
+        streetFordCells.push(index);
+      }
+    }
+  }
+
   // Entrance reachability (W5 exit criterion): every structure entrance and
   // landmark gate joins the walkable network.
   {
@@ -137,6 +164,9 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
       for (const crossing of route.crossings) {
         walkable[crossing.cell] = 1;
       }
+    }
+    for (const cell of streetFordCells) {
+      walkable[cell] = 1;
     }
     const seeds: number[] = [];
     if (settlementPlans.length > 0) {
@@ -221,6 +251,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     settlementPlans,
     landmarkPlans,
     decoration,
+    streetFordCells,
   };
 }
 

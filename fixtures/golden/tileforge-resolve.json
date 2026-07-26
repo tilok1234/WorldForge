@@ -4,26 +4,26 @@
     "fortress gate emitted as a wall-layer opening (package gate structure is 3x2)"
   ],
   "bridgeStructures": 0,
-  "decorationDecals": 2356,
+  "decorationDecals": 2360,
   "dirtPathCells": 106,
-  "fordDecals": 14,
+  "fordDecals": 11,
   "materialCells": {
-    "terrain.cobble": 347,
+    "terrain.cobble": 285,
     "terrain.dry_grass": 501,
-    "terrain.grass": 23830,
+    "terrain.grass": 23885,
     "terrain.gravel": 75,
     "terrain.mud": 1102,
     "terrain.packed_road": 1374,
-    "terrain.rock": 19111,
+    "terrain.rock": 19114,
     "terrain.snow": 10352,
-    "terrain.swamp": 869,
+    "terrain.swamp": 874,
     "water.deep": 1348,
-    "water.shallow": 6627
+    "water.shallow": 6626
   },
-  "metaCells": 169,
-  "overlayCells": 2142,
+  "metaCells": 119,
+  "overlayCells": 2145,
   "packageId": "forest-a5baf52-seed103991",
-  "propCells": 8680,
+  "propCells": 8689,
   "unresolvedKeys": [],
   "wallCells": 31
 }
