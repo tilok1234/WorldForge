@@ -106,7 +106,11 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
     if (composed.routesResult.pathLayer[index] === 1) {
       road[index] = manifest.roadTypeByKey.get("dirtpath") ?? 0;
     }
-    if (composed.hydro.isMajorRiver[index] === 1) {
+    // The FULL two-tier river network: W4 places fords on crossing-tier
+    // river cells, and the package's ford substrate rule (water/shallow/
+    // river only) demands those cells render as river runs. The artifact's
+    // own river layer stays majors-only; this is adapter emission.
+    if (composed.hydro.isRiver[index] === 1) {
       river[index] = 1;
     }
   }

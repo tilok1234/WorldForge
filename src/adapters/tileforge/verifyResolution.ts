@@ -33,6 +33,7 @@ import {
   RESOLVED_CELL_LAYERS,
   type ResolvedCellLayerName,
 } from "./resolution.js";
+import { loadPackageTmj, pinnedPackageDir, type TmjDocument } from "./tmj.js";
 
 const ROOT = fileURLToPath(new URL("../../../..", import.meta.url));
 const SAMPLE_LIMIT = 12;
@@ -83,17 +84,6 @@ export interface SeamReport {
   readonly cellsCompared: number;
   readonly mismatches: number;
   readonly samples: readonly string[];
-}
-
-interface TmjDocument {
-  readonly width: number;
-  readonly height: number;
-  readonly layers: readonly {
-    readonly name: string;
-    readonly type: string;
-    readonly data?: readonly number[];
-  }[];
-  readonly tilesets: readonly { readonly firstgid: number; readonly source: string }[];
 }
 
 /** A tile resolved from a stored gid. */
@@ -170,15 +160,9 @@ export function buildGidDecoder(manifest: TileForgeManifest, doc: TmjDocument): 
 }
 
 export function loadPackageMapData(): TileForgeMapData {
-  const { lock } = loadPinnedManifest();
-  const path = join(ROOT, ...lock.packagePath.split("/"), "map-data.json");
-  return JSON.parse(readFileSync(path, "utf8")) as TileForgeMapData;
-}
-
-function loadPackageTmj(): TmjDocument {
-  const { lock } = loadPinnedManifest();
-  const path = join(ROOT, ...lock.packagePath.split("/"), "map.tmj");
-  return JSON.parse(readFileSync(path, "utf8")) as TmjDocument;
+  return JSON.parse(
+    readFileSync(join(pinnedPackageDir(), "map-data.json"), "utf8"),
+  ) as TileForgeMapData;
 }
 
 /**
@@ -325,16 +309,17 @@ export interface RenderReport {
 }
 
 /**
- * §4 step 1: render map.tmj from its STORED gids — painter's algorithm in the
- * shipped layer order, binary alpha, animation snapped to frame 0, the sand
- * layer at its +16 px dual offset — and pixel-diff against map-reference.png.
- * Zero differing pixels proves compositing, layer order, offsets, and gid
- * resolution.
+ * Renders a tmj document through the §2.13 compositing model: painter's
+ * algorithm in the shipped layer order, binary alpha, animation snapped to
+ * frame 0, the sand layer at its +16 px dual offset.
  */
-export function verifyReferenceRender(): RenderReport {
-  const { lock, manifest } = loadPinnedManifest();
-  const packageDir = join(ROOT, ...lock.packagePath.split("/"));
-  const doc = loadPackageTmj();
+export function renderTmjDocument(doc: TmjDocument): {
+  readonly width: number;
+  readonly height: number;
+  readonly rgba: Uint8Array;
+} {
+  const { manifest } = loadPinnedManifest();
+  const packageDir = pinnedPackageDir();
   const decoder = buildGidDecoder(manifest, doc);
   const tileSize = manifest.tileSize;
   const width = doc.width * tileSize;
@@ -373,8 +358,18 @@ export function verifyReferenceRender(): RenderReport {
       blitTile(rgba, width, height, atlas, tile, cellX * tileSize + offsetX, cellY * tileSize + offsetY, tileSize);
     }
   }
+  return { width, height, rgba };
+}
 
-  const reference = decodePng(readFileSync(join(packageDir, "map-reference.png")));
+/**
+ * §4 step 1: render map.tmj from its STORED gids and pixel-diff against
+ * map-reference.png. Zero differing pixels proves compositing, layer order,
+ * offsets, and gid resolution.
+ */
+export function verifyReferenceRender(): RenderReport {
+  const tileSize = loadPinnedManifest().manifest.tileSize;
+  const { width, height, rgba } = renderTmjDocument(loadPackageTmj());
+  const reference = decodePng(readFileSync(join(pinnedPackageDir(), "map-reference.png")));
   if (reference.width !== width || reference.height !== height) {
     throw new Error(
       `map-reference.png is ${reference.width}x${reference.height}, expected ${width}x${height}`,

@@ -24,8 +24,11 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "routes.graph": 2,
   "settlements.plans": 1,
   "landmarks.stamps": 1,
-  "adapter.tileforge": 1,
+  "adapter.tileforge": 2,
 };
 
-/** Version of the TileForge resolution adapter itself. */
-export const TILEFORGE_ADAPTER_VERSION = 1;
+/**
+ * Version of the TileForge resolution adapter itself. 2: the emitted river
+ * layer carries the full two-tier network so fords sit on rendered runs.
+ */
+export const TILEFORGE_ADAPTER_VERSION = 2;

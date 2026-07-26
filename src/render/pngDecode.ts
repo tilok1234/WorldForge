@@ -1,8 +1,9 @@
 /**
  * Minimal PNG decoder for verification tooling (zero external dependencies;
- * inflate comes from node:zlib). Supports exactly what the pinned TileForge
- * package ships: 8-bit RGBA, non-interlaced, standard filters 0-4. Anything
- * else fails loudly rather than decoding approximately.
+ * inflate comes from node:zlib). Supports what the pinned TileForge package
+ * ships (8-bit RGBA) plus our own encoder's 8-bit RGB, non-interlaced,
+ * standard filters 0-4; RGB decodes to RGBA with opaque alpha. Anything else
+ * fails loudly rather than decoding approximately.
  */
 
 import { inflateSync } from "node:zlib";
@@ -43,6 +44,7 @@ export function decodePng(bytes: Uint8Array): DecodedPng {
   }
   let width = 0;
   let height = 0;
+  let channels = 0;
   let sawIhdr = false;
   const idatParts: Uint8Array[] = [];
   let offset = 8;
@@ -61,12 +63,13 @@ export function decodePng(bytes: Uint8Array): DecodedPng {
       const bitDepth = data[8];
       const colorType = data[9];
       const interlace = data[12];
-      if (bitDepth !== 8 || colorType !== 6 || interlace !== 0) {
+      if (bitDepth !== 8 || (colorType !== 6 && colorType !== 2) || interlace !== 0) {
         throw new Error(
           `unsupported PNG variant (bitDepth ${bitDepth}, colorType ${colorType}, ` +
-            `interlace ${interlace}); the pinned package ships RGBA8 non-interlaced`,
+            `interlace ${interlace}); only 8-bit RGB/RGBA non-interlaced is supported`,
         );
       }
+      channels = colorType === 6 ? 4 : 3;
       sawIhdr = true;
     } else if (type === "IDAT") {
       idatParts.push(data);
@@ -81,14 +84,14 @@ export function decodePng(bytes: Uint8Array): DecodedPng {
 
   const compressed = Buffer.concat(idatParts.map((part) => Buffer.from(part)));
   const raw = inflateSync(compressed);
-  const stride = width * 4;
+  const stride = width * channels;
   if (raw.length !== (stride + 1) * height) {
     throw new Error(
-      `PNG data length ${raw.length} does not match ${width}x${height} RGBA8`,
+      `PNG data length ${raw.length} does not match ${width}x${height} at ${channels} channels`,
     );
   }
 
-  const rgba = new Uint8Array(stride * height);
+  const unfiltered = new Uint8Array(stride * height);
   for (let y = 0; y < height; y += 1) {
     const filter = raw[y * (stride + 1)] as number;
     const rowIn = (y * (stride + 1)) + 1;
@@ -96,9 +99,9 @@ export function decodePng(bytes: Uint8Array): DecodedPng {
     const prevOut = rowOut - stride;
     for (let i = 0; i < stride; i += 1) {
       const x = raw[rowIn + i] as number;
-      const left = i >= 4 ? (rgba[rowOut + i - 4] as number) : 0;
-      const up = y > 0 ? (rgba[prevOut + i] as number) : 0;
-      const upLeft = y > 0 && i >= 4 ? (rgba[prevOut + i - 4] as number) : 0;
+      const left = i >= channels ? (unfiltered[rowOut + i - channels] as number) : 0;
+      const up = y > 0 ? (unfiltered[prevOut + i] as number) : 0;
+      const upLeft = y > 0 && i >= channels ? (unfiltered[prevOut + i - channels] as number) : 0;
       let value: number;
       switch (filter) {
         case 0:
@@ -119,8 +122,18 @@ export function decodePng(bytes: Uint8Array): DecodedPng {
         default:
           throw new Error(`unsupported PNG filter ${filter} on row ${y}`);
       }
-      rgba[rowOut + i] = value & 0xff;
+      unfiltered[rowOut + i] = value & 0xff;
     }
+  }
+  if (channels === 4) {
+    return { width, height, rgba: unfiltered };
+  }
+  const rgba = new Uint8Array(width * height * 4);
+  for (let p = 0; p < width * height; p += 1) {
+    rgba[p * 4] = unfiltered[p * 3] as number;
+    rgba[p * 4 + 1] = unfiltered[p * 3 + 1] as number;
+    rgba[p * 4 + 2] = unfiltered[p * 3 + 2] as number;
+    rgba[p * 4 + 3] = 255;
   }
   return { width, height, rgba };
 }

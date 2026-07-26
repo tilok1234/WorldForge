@@ -33,10 +33,12 @@ import {
 } from "./package/importPackage.js";
 import { resolveToTileForge } from "./adapters/tileforge/resolve.js";
 import {
+  renderTmjDocument,
   verifyAgainstPackageMap,
   verifyChunkedResolution,
   verifyReferenceRender,
 } from "./adapters/tileforge/verifyResolution.js";
+import { emitResolvedTmj } from "./adapters/tileforge/emitTmj.js";
 import { encodePng } from "./render/png.js";
 import type { NormalizedWorldRecipe, WorldRecipe } from "./recipe/schema.js";
 
@@ -435,12 +437,27 @@ function runResolveTileForge(argv: readonly string[]): number {
   mkdirSync(parsed.outDir, { recursive: true });
   writeFileSync(join(parsed.outDir, "tileforge-map-data.json"), canonicalJson(resolved.mapData));
   writeFileSync(join(parsed.outDir, "tileforge-diagnostics.json"), canonicalJson(resolved.diagnostics));
+  // §2.13 authored tmj (tilesets block verbatim from the package) plus a
+  // native-scale render through the §4-proven compositor for visual review.
+  const emitted = emitResolvedTmj(resolved.mapData, config.seed);
+  writeFileSync(join(parsed.outDir, "resolved-map.tmj"), canonicalJson(emitted.doc));
+  const render = renderTmjDocument(emitted.doc);
+  const rgb = new Uint8Array(render.width * render.height * 3);
+  for (let p = 0; p < render.width * render.height; p += 1) {
+    rgb[p * 3] = render.rgba[p * 4] as number;
+    rgb[p * 3 + 1] = render.rgba[p * 4 + 1] as number;
+    rgb[p * 3 + 2] = render.rgba[p * 4 + 2] as number;
+  }
+  writeFileSync(join(parsed.outDir, "resolved-render.png"), encodePng(render.width, render.height, rgb));
   process.stdout.write(
     [
       `resolved ${resolved.mapData.mapW}x${resolved.mapData.mapH} world against ${resolved.diagnostics.packageId}`,
       `  meta cells ${resolved.diagnostics.metaCells}, wall cells ${resolved.diagnostics.wallCells}, fords ${resolved.diagnostics.fordDecals}, bridges ${resolved.diagnostics.bridgeStructures}`,
+      `  tmj tiles ${emitted.tileCount} across ${Object.keys(emitted.layerCounts).length} layers`,
       `wrote ${join(parsed.outDir, "tileforge-map-data.json")}`,
       `wrote ${join(parsed.outDir, "tileforge-diagnostics.json")}`,
+      `wrote ${join(parsed.outDir, "resolved-map.tmj")}`,
+      `wrote ${join(parsed.outDir, "resolved-render.png")} (${render.width}x${render.height})`,
     ].join("\n") + "\n",
   );
   return 0;

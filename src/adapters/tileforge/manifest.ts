@@ -61,6 +61,19 @@ export function materialPairKey(a: number, b: number): number {
   return a * 64 + b;
 }
 
+/** mappings.selector v2 entry for one family (§2.4 variant selection). */
+export interface SelectorFamily {
+  readonly baseVariants: number;
+  /** The LAST extrasPct.length variant indices are weighted rare accents. */
+  readonly extrasPct: readonly number[];
+  readonly tones?: {
+    readonly n: number;
+    readonly period: number;
+    /** Per-offset smoothstep table, length = period. */
+    readonly smooth: readonly number[];
+  };
+}
+
 export interface CliffBiomes {
   /** reskin group key ("" default, "sand", "snow", "volc") per material id. */
   readonly groupByMaterial: readonly string[];
@@ -99,6 +112,9 @@ export interface TileForgeManifest {
   readonly transitions: TransitionTables;
   /** gate structure id plus every state sibling with that base (§2.8 wall rule). */
   readonly gateStructureIds: ReadonlySet<number>;
+  /** mappings.selector: version 1 = uniform hash %% variants everywhere. */
+  readonly selectorVersion: number;
+  readonly selectorFamilies: ReadonlyMap<string, SelectorFamily>;
   readonly families: ReadonlyMap<string, FamilyInfo>;
   readonly materialCount: number;
   readonly structureCount: number;
@@ -150,6 +166,10 @@ export function loadPinnedManifest(): { lock: TileForgeLock; manifest: TileForge
         matPriority: Record<string, number>;
         flushPairs: [number, number][];
         gutterPairs: [number, number][];
+      };
+      selector?: {
+        version: number;
+        families?: Record<string, SelectorFamily>;
       };
     };
     families: Record<string, RawFamily>;
@@ -281,6 +301,8 @@ export function loadPinnedManifest(): { lock: TileForgeLock; manifest: TileForge
       cliffBiomes,
       transitions,
       gateStructureIds,
+      selectorVersion: raw.mappings.selector?.version ?? 1,
+      selectorFamilies: new Map(Object.entries(raw.mappings.selector?.families ?? {})),
       families,
       materialCount: Object.keys(raw.mappings.materials).length,
       structureCount: Object.keys(raw.mappings.structures).length,
