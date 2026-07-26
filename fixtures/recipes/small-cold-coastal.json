@@ -1,0 +1,16 @@
+{
+  "recipeFormat": 1,
+  "seed": 103991,
+  "world": { "sizePreset": "small", "climatePreset": "cold_coastal" },
+  "biases": {
+    "northElevationPermille": 350,
+    "temperaturePermille": -400,
+    "moisturePermille": 200
+  },
+  "budgets": {
+    "regionCount": 4,
+    "settlementCount": 5,
+    "primaryRouteCount": 2,
+    "landmarkCount": 1
+  }
+}

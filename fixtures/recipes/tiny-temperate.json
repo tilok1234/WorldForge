@@ -1,0 +1,5 @@
+{
+  "recipeFormat": 1,
+  "seed": 1,
+  "world": { "sizePreset": "tiny", "climatePreset": "temperate" }
+}

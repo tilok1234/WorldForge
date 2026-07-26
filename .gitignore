@@ -3,10 +3,15 @@ outputs/
 tmp/
 .cache/
 
+# Toolchain
+node_modules/
+dist/
+
 # Downloaded read-only upstream references
 external/
 
 # Local environment and editor state
+worldforge.local.json
 .env
 .env.*
 .godot/

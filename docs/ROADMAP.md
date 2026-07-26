@@ -31,6 +31,11 @@ Deliverables:
 - documented AI authoring boundary;
 - normalized recipe and resolved-config identity;
 - no-write path guard for TileForge and external repositories;
+- walking-skeleton pipeline: one trivial recipe flows recipe →
+  `ResolvedWorldConfig` → generation → artifact → validation end to end using
+  stub passes;
+- cross-platform continuous integration (Windows, Linux, macOS) running build,
+  tests, and golden fixtures on the pinned toolchain;
 - minimal command-line entry point.
 
 ### W0B — Real package grounding
@@ -55,6 +60,8 @@ Exit criteria:
 - an accepted recipe can validate and resolve without any AI connection;
 - unsupported fields, including premature relational constraints, fail
   validation;
+- the walking-skeleton artifact regenerates byte-identically on every CI
+  platform;
 - the real package manifest and required guides can be read without relying on
   TileForge source internals;
 - the dependency lock detects a changed package or manifest;
@@ -93,6 +100,7 @@ Deliverables:
 - elevation, moisture, and temperature fields;
 - initial region/biome classifier;
 - macro debug render;
+- seed-sweep contact-sheet tool rendering many seeds into one review grid;
 - region-size and fragmentation validator.
 
 Exit criteria:

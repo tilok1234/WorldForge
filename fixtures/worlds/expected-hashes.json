@@ -1,0 +1,12 @@
+{
+  "small-cold-coastal": {
+    "generationIdentitySha256": "95d6476c28a882031e5fb9df1cbe7a02c2799d24786727f3ac1f949aed6f46d1",
+    "recipeSha256": "94d005a4c04a82ce2caa7435c3db8b3332e19914ec634136d4e1cc12526be4b2",
+    "resolvedConfigSha256": "597a8af6e21da14834b9ca06004768536987dce79b33601c6923e77722efb0c0"
+  },
+  "tiny-temperate": {
+    "generationIdentitySha256": "d078616fca94c214e457262223ac9809f28ff2d4bd1653412646ae70239cf88d",
+    "recipeSha256": "fa170b5a41e334b1d60b38623e543e64eabedbe26b23b218640b06492c35bd63",
+    "resolvedConfigSha256": "4eba5832eab87c2bf9202ce3337df25703c1132a5b9dede469bdbf62f3405770"
+  }
+}

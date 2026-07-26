@@ -227,8 +227,6 @@ The first meaningful demonstration should be one small finite world containing:
 ## Draft decisions still open
 
 - Canonical world and chunk dimensions.
-- Whether the first build compiles entirely offline or also supports runtime
-  generation.
 - World artifact encoding: readable JSON first, compact binary later.
 - Exact extension interface for game-specific content.
 - Whether authored landmarks use raw semantic stamps, scenes, or both.

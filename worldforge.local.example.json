@@ -1,0 +1,4 @@
+{
+  "$comment": "Copy to worldforge.local.json (gitignored) and list machine-local absolute paths the output path guard must always refuse, e.g. your TileForge checkout.",
+  "forbiddenOutputRoots": ["C:\\path\\to\\your\\tileforge\\checkout"]
+}

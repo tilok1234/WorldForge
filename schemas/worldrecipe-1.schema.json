@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldforge.local/schemas/worldrecipe-1.schema.json",
+  "title": "WorldRecipe (format 1, W0 vocabulary)",
+  "description": "Author-facing root generation document. Mirrors src/recipe/validate.ts, which is the enforced validator. W0 vocabulary only: seed, named presets, integer permille biases, budgets, toggles (none defined). Relational and named-entity fields are rejected until their solver milestone.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["recipeFormat", "seed", "world"],
+  "properties": {
+    "recipeFormat": { "const": 1 },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+    "world": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sizePreset", "climatePreset"],
+      "properties": {
+        "sizePreset": { "enum": ["tiny", "small"] },
+        "climatePreset": { "enum": ["temperate", "cold_coastal"] }
+      }
+    },
+    "biases": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "northElevationPermille": { "type": "integer", "minimum": -1000, "maximum": 1000 },
+        "temperaturePermille": { "type": "integer", "minimum": -1000, "maximum": 1000 },
+        "moisturePermille": { "type": "integer", "minimum": -1000, "maximum": 1000 }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "regionCount": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "settlementCount": { "type": "integer", "minimum": 0, "maximum": 16 },
+        "primaryRouteCount": { "type": "integer", "minimum": 0, "maximum": 8 },
+        "landmarkCount": { "type": "integer", "minimum": 0, "maximum": 8 }
+      }
+    },
+    "toggles": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    }
+  }
+}

@@ -77,9 +77,9 @@ policy.
 
 ## Project status
 
-**Documentation and architecture foundation. TypeScript has been selected for
-the engine-neutral compiler and command-line tools. Runtime implementation has
-not started.**
+**W0A in progress: pinned TypeScript toolchain, W0 `WorldRecipe` contract,
+recipe compiler, path guard, and walking-skeleton pipeline. W0B (import of the
+first approved TileForge package) is pending the first real export.**
 
 The intended first release is a small finite seeded world that:
 
