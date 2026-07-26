@@ -149,6 +149,17 @@ the user presses refresh (R) and the view reloads in place. The viewer
 stays read-only by contract — approvals and change requests flow through
 chat, never through the tool.
 
+**Playable slice (8489f81):** `world.gd`/`world.tscn` stream the resolved
+world in 32-cell chunks through the packaged-importer TileSet — grid player
+on the §3 ladder (importer tile metadata), M minimap (mappings.minimap), E
+mark-deltas persisted in user:// over the deterministic base.
+`verify_world.gd` (via `node dist/tools/godot-consumer.js --world
+outputs/w7-slice`) proves headlessly: chunk re-entry byte-stable, walkable
+flood 42,888 cells with ALL 6 destinations reachable (fortress included),
+wall/deep-water block + ford walks, deltas round-trip. Play:
+`godot --path consumers/godot`. Remaining W7 evidence: windowed visual
+review (seams, minimap look) + the user's visual approval + W5.1 verdict.
+
 ## Commands
 
 ```
