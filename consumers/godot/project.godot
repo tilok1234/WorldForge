@@ -8,6 +8,7 @@ config_version=5
 
 config/name="WorldForge Godot Consumer"
 config/features=PackedStringArray("4.2")
+run/main_scene="res://world.tscn"
 
 [rendering]
 

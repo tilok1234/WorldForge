@@ -1,4 +1,6 @@
-# The pinned package copy (recreated by node dist/tools/godot-consumer.js)
-# and Godot's import cache. Only WorldForge-authored scripts are committed.
+# The pinned package copy and the resolved world (both recreated by
+# node dist/tools/godot-consumer.js) and Godot's import cache. Only
+# WorldForge-authored scripts and scenes are committed.
 .godot/
 tileforge/
+world/
