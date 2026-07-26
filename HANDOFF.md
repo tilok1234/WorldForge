@@ -53,6 +53,23 @@ build the pure-TS mask/underlay verifier (entry gate 2) before any Godot
 work, then a Godot project under `consumers/godot/` (copy the package folder
 in per its `README.txt` quick start; run `tileforge_importer.gd` headless).
 
+**W7 progress (2026-07-26, explicit user go, verifier-first):** entry gate 2
+is DONE in pure TS — `src/adapters/tileforge/resolution.ts` implements the
+full §2.4-2.8 derivation (blob47 + ladder, underlay incl. open-side rule,
+corner16 sand field, net16 with river-mouth and wall-gate rules, overlays,
+decals, cliffs/ramps); `verifyResolution.ts` proves it two ways:
+forge-identical against the package's own `map.tmj` (every layer, all 3456
+underlays; only unverifiable border sand excluded — the workbench map was
+cropped from a larger canvas, so its border sand ring carries pre-crop data,
+240 points / 16 divergent, reported not compared) and seam-clean (chunked
+halo-2 resolution == global, zero mismatches over 2.2M comparisons on the
+canonical 256x256 world at 16- and 32-cell chunks; window over-reads throw,
+so the halo bound is proven too). CLI: `verify-resolution`. 124 tests.
+Known contract question: GAME-GUIDE §2.6 includes packed road in the
+wet-bank list, FORMATS.md + the worldgen example omit it, the workbench map
+never exercises it — we follow FORMATS; bridge approaches are where a wrong
+reading would show (bank under water beside a road corridor).
+
 ## Working agreements with the user
 
 - **Milestone loop**: implement → tests + goldens → 3-OS CI green → send
@@ -86,6 +103,7 @@ npm test                     # build + full suite (Node --test needs the glob)
 node dist/tools/update-golden.js
 node dist/src/cli.js smoke | generate | render-macro | contact-sheet |
                      resolve-tileforge <recipe> --out outputs/<dir> |
+                     verify-resolution [<recipe>] |
                      import-package | verify-package | validate-recipe | hash
 tools/viewer.html            # read-only artifact viewer (file input or ?url=)
 ```

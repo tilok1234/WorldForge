@@ -32,6 +32,10 @@ import {
   verifyTileForgePackage,
 } from "./package/importPackage.js";
 import { resolveToTileForge } from "./adapters/tileforge/resolve.js";
+import {
+  verifyAgainstPackageMap,
+  verifyChunkedResolution,
+} from "./adapters/tileforge/verifyResolution.js";
 import type { NormalizedWorldRecipe, WorldRecipe } from "./recipe/schema.js";
 
 const WORLDFORGE_ROOT = fileURLToPath(new URL("../..", import.meta.url));
@@ -55,6 +59,11 @@ const USAGE = `worldforge <command>
   resolve-tileforge <file> --out <dir>
                                resolve a world into the pinned package's
                                map-data.json format plus diagnostics
+  verify-resolution [<file>]   prove the §2 mask/underlay derivation against
+                               the package's own workbench export, then prove
+                               chunked resolution matches global resolution
+                               for the recipe's world (default: the canonical
+                               recipe)
 `;
 
 main(process.argv.slice(2));
@@ -91,6 +100,9 @@ function main(argv: readonly string[]): void {
       break;
     case "resolve-tileforge":
       exitWith(runResolveTileForge(argv.slice(1)));
+      break;
+    case "verify-resolution":
+      exitWith(runVerifyResolution(argv[1]));
       break;
     case undefined:
     case "help":
@@ -429,6 +441,72 @@ function runResolveTileForge(argv: readonly string[]): number {
       `wrote ${join(parsed.outDir, "tileforge-diagnostics.json")}`,
     ].join("\n") + "\n",
   );
+  return 0;
+}
+
+function runVerifyResolution(file: string | undefined): number {
+  const truth = verifyAgainstPackageMap();
+  process.stdout.write(
+    `workbench truth test (${truth.mapW}x${truth.mapH}, forge-derived tiles vs our §2 derivation):\n`,
+  );
+  for (const layer of truth.layers) {
+    const status = layer.mismatches === 0 ? "match" : `${layer.mismatches} MISMATCHES`;
+    process.stdout.write(
+      `  ${layer.layer.padEnd(15)} ${String(layer.storedPlaced).padStart(5)} tiles  ${status}\n`,
+    );
+    for (const sample of layer.samples) {
+      process.stdout.write(`    ${sample}\n`);
+    }
+    for (const note of layer.notes ?? []) {
+      process.stdout.write(`    note: ${note}\n`);
+    }
+  }
+  if (!truth.ok) {
+    process.stderr.write("truth test FAILED: derivation is not forge-identical\n");
+    return 1;
+  }
+
+  const recipePath =
+    file ?? join(WORLDFORGE_ROOT, "fixtures", "recipes", "small-cold-coastal.json");
+  const loaded = loadRecipe(recipePath);
+  if (typeof loaded === "number") {
+    return loaded;
+  }
+  const normalized = normalizeRecipe(loaded);
+  const config = compileRecipe(normalized);
+  const result = generateWorldDetailed(normalized, config);
+  const gateErrors = [...result.composed.hydro.topologyErrors, ...result.composed.routesResult.errors];
+  if (gateErrors.length > 0) {
+    process.stderr.write(`generation FAILED; nothing verified\n${gateErrors.join("\n")}\n`);
+    return 1;
+  }
+  const resolved = resolveToTileForge(result.composed);
+  if (resolved.diagnostics.unresolvedKeys.length > 0) {
+    process.stderr.write("resolution FAILED; unresolved semantic keys\n");
+    return 1;
+  }
+  let ok = true;
+  for (const [chunkW, chunkH] of [
+    [16, 16],
+    [32, 32],
+  ] as const) {
+    const seams = verifyChunkedResolution(resolved.mapData, chunkW, chunkH);
+    const status = seams.ok ? "match" : `${seams.mismatches} MISMATCHES`;
+    process.stdout.write(
+      `seam test ${resolved.mapData.mapW}x${resolved.mapData.mapH} world, ` +
+        `${chunkW}x${chunkH} chunks (halo ${seams.halo}): ${seams.chunksChecked} chunks, ` +
+        `${seams.cellsCompared} comparisons, ${status}\n`,
+    );
+    for (const sample of seams.samples) {
+      process.stdout.write(`    ${sample}\n`);
+    }
+    ok = ok && seams.ok;
+  }
+  if (!ok) {
+    process.stderr.write("seam test FAILED: chunked resolution diverges from global\n");
+    return 1;
+  }
+  process.stdout.write("resolution verification: pass\n");
   return 0;
 }
 
