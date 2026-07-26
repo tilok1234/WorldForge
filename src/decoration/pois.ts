@@ -273,9 +273,9 @@ export function planPois(
     if (
       (material === grass || material === dryGrass) &&
       !capped("poi.bandit_camp") &&
-      settlementGap > 16 &&
-      nearRoad(x, y, 14) &&
-      !nearRoad(x, y, 4) &&
+      settlementGap > 12 &&
+      nearRoad(x, y, 18) &&
+      !nearRoad(x, y, 3) &&
       clearRegion(x - 4, y - 3, 9, 8)
     ) {
       const campWall = STRUCTURE_LAYER_VALUE["structure.camp_wall"];
