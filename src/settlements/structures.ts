@@ -19,6 +19,13 @@ export const STRUCTURE_TYPES = [
   "structure.barn",
   "structure.stall",
   "structure.fountain",
+  "structure.cave_mouth",
+  "structure.mine_shaft",
+  "structure.stone_circle",
+  "structure.den",
+  "structure.crypt",
+  "structure.ruin",
+  "structure.giant_skeleton",
 ] as const;
 
 export type StructureType = (typeof STRUCTURE_TYPES)[number];
@@ -44,4 +51,11 @@ export const STRUCTURE_FOOTPRINTS: { readonly [key in StructureType]?: readonly 
   "structure.barn": [3, 2],
   "structure.stall": [2, 1],
   "structure.fountain": [2, 2],
+  "structure.cave_mouth": [2, 1],
+  "structure.mine_shaft": [2, 2],
+  "structure.stone_circle": [3, 3],
+  "structure.den": [2, 2],
+  "structure.crypt": [2, 2],
+  "structure.ruin": [3, 2],
+  "structure.giant_skeleton": [4, 2],
 };

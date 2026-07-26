@@ -27,9 +27,10 @@ describe("decoration stage 1", () => {
     assert.deepEqual(first.decoration, second.decoration);
     const bare = composedFor(5, 0);
     assert.equal(bare.decoration.propCount, 0);
-    // Decoration off/on: terrain, routes, structures identical.
+    // Decoration off/on: terrain and routes identical. (The structure layer
+    // may differ: POIs are deliberate placements that read decoration — a
+    // hunter camp needs a forest — so density legitimately changes them.)
     assert.deepEqual(bare.grid, first.grid);
-    assert.deepEqual(bare.structureLayer, first.structureLayer);
     assert.deepEqual(bare.routesResult.routes, first.routesResult.routes);
   });
 

@@ -73,6 +73,14 @@ export interface WorldPoi {
   readonly id: number;
   readonly type: string;
   readonly cell: readonly [number, number];
+  /** Present on structure-bearing POIs: the atomic footprint. */
+  readonly structure?: {
+    readonly type: string;
+    readonly x: number;
+    readonly y: number;
+    readonly w: number;
+    readonly h: number;
+  };
 }
 
 interface RawChunk {
@@ -123,8 +131,22 @@ const BLOCKED_MATERIALS = new Set<string>([
   "terrain.swamp",
 ]);
 
-/** Structures with a walkable footprint cell; every other structure blocks. */
-const WALKABLE_STRUCTURES = new Set<string>(["structure.fortress_gate"]);
+/**
+ * Pass cells per structure type (public world-model contract mirroring the
+ * pinned package's pass arrays; the parity fixture proves it in-engine).
+ * cellIndex is row-major within the footprint; unlisted types block fully.
+ * Painted single-cell structures (the fortress gate) have no footprint
+ * record and default to cellIndex 0.
+ */
+const STRUCTURE_PASS_CELLS: Readonly<Record<string, readonly number[]>> = {
+  "structure.fortress_gate": [0],
+  "structure.cave_mouth": [0, 1],
+  "structure.mine_shaft": [2, 3],
+  "structure.stone_circle": [1, 4, 7],
+  "structure.den": [2, 3],
+  "structure.crypt": [2, 3],
+  "structure.giant_skeleton": [5, 6, 7],
+};
 
 /** Prop species that block movement; unlisted species never block. */
 const BLOCKING_PROPS = new Set<string>([
@@ -134,7 +156,7 @@ const BLOCKING_PROPS = new Set<string>([
   "prop.buoy", "prop.campfire", "prop.game_rack", "prop.log_pile",
   "prop.standing_stone", "prop.runestone", "prop.broken_wagon",
   "prop.bone_pile", "prop.altar", "prop.brazier", "prop.gravestones",
-  "prop.lone_grave",
+  "prop.lone_grave", "prop.mine_cart", "prop.ore_vein",
 ]);
 
 /** Corridor materials whose street grid streams must not sever. */
@@ -255,6 +277,8 @@ export class WorldHandle {
 
   private readonly layers: Record<ChunkLayerName, Uint16Array>;
   private readonly crossingCells: Set<number>;
+  /** cell -> footprint origin/width for record-backed structures. */
+  private readonly structureRects: Map<number, { readonly ox: number; readonly oy: number; readonly w: number }>;
 
   constructor(raw: RawArtifact) {
     this.generator = raw.generator;
@@ -288,6 +312,30 @@ export class WorldHandle {
             flat[(originY + ly) * width + originX + lx] = row[lx] as number;
           }
         }
+      }
+    }
+
+    // Footprint index for pass-cell walkability: settlement structures and
+    // structure-bearing POIs carry records; painted cells (fortress walls
+    // and gate) deliberately have none.
+    this.structureRects = new Map();
+    const addRect = (ox: number, oy: number, w: number, h: number): void => {
+      for (let sy = 0; sy < h; sy += 1) {
+        for (let sx = 0; sx < w; sx += 1) {
+          this.structureRects.set((oy + sy) * width + ox + sx, { ox, oy, w });
+        }
+      }
+    };
+    for (const settlement of (raw as unknown as {
+      settlements: readonly { structures: readonly { cell: readonly [number, number]; footprint: readonly [number, number] }[] }[];
+    }).settlements) {
+      for (const structure of settlement.structures) {
+        addRect(structure.cell[0], structure.cell[1], structure.footprint[0], structure.footprint[1]);
+      }
+    }
+    for (const poi of raw.pois ?? []) {
+      if (poi.structure !== undefined) {
+        addRect(poi.structure.x, poi.structure.y, poi.structure.w, poi.structure.h);
       }
     }
 
@@ -399,7 +447,13 @@ export class WorldHandle {
   walkableAt(x: number, y: number): boolean {
     const structure = this.structureAt(x, y);
     if (structure !== null) {
-      return WALKABLE_STRUCTURES.has(structure);
+      const pass = STRUCTURE_PASS_CELLS[structure];
+      if (pass === undefined) {
+        return false;
+      }
+      const rect = this.structureRects.get(this.index(x, y));
+      const cellIndex = rect === undefined ? 0 : (y - rect.oy) * rect.w + (x - rect.ox);
+      return pass.includes(cellIndex);
     }
     const prop = this.propAt(x, y);
     if (prop !== null && BLOCKING_PROPS.has(prop)) {

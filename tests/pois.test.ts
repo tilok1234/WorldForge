@@ -85,6 +85,43 @@ describe("points of interest, phase A", () => {
     assert.ok(sawGraveyard, "at least one seed places a graveyard");
   });
 
+  it("places structure discoveries whose pass cells walk in the loader", () => {
+    const PASS: Record<string, readonly number[]> = {
+      "structure.cave_mouth": [0, 1],
+      "structure.mine_shaft": [2, 3],
+      "structure.stone_circle": [1, 4, 7],
+      "structure.crypt": [2, 3],
+      "structure.ruin": [],
+      "structure.giant_skeleton": [5, 6, 7],
+      "structure.den": [2, 3],
+    };
+    let checkedStructures = 0;
+    for (let seed = 1; seed <= 8 && checkedStructures < 3; seed += 1) {
+      const { normalized, config } = composedFor(seed);
+      const { artifact } = generateWorldDetailed(normalized, config);
+      const loaded = loadWorldArtifact(JSON.parse(JSON.stringify(artifact)));
+      assert.ok(loaded.ok);
+      for (const poi of loaded.world.pois) {
+        if (poi.structure === undefined) continue;
+        checkedStructures += 1;
+        const pass = PASS[poi.structure.type];
+        assert.ok(pass !== undefined, `known pass model for ${poi.structure.type}`);
+        for (let sy = 0; sy < poi.structure.h; sy += 1) {
+          for (let sx = 0; sx < poi.structure.w; sx += 1) {
+            const cellIndex: number = sy * poi.structure.w + sx;
+            const expected: boolean = (pass as readonly number[]).includes(cellIndex);
+            assert.equal(
+              loaded.world.walkableAt(poi.structure.x + sx, poi.structure.y + sy),
+              expected,
+              `${poi.structure.type} cell ${cellIndex} walkability`,
+            );
+          }
+        }
+      }
+    }
+    assert.ok(checkedStructures > 0, "structure POIs occur across seeds");
+  });
+
   it("carries pois through the artifact and the public loader", () => {
     const { normalized, config } = composedFor(1);
     const { artifact } = generateWorldDetailed(normalized, config);

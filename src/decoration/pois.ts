@@ -21,6 +21,11 @@ import type { ResolvedWorldConfig } from "../recipe/compile.js";
 import type { SettlementPlan } from "../settlements/settlements.js";
 import type { FarmResult } from "../settlements/farms.js";
 import { DECAL_TYPES, DECOR_TYPES, type DecorationResult } from "./decorate.js";
+import {
+  STRUCTURE_FOOTPRINTS,
+  STRUCTURE_LAYER_VALUE,
+  type StructureType,
+} from "../settlements/structures.js";
 
 export const POI_TYPES = [
   "poi.hunters_camp",
@@ -29,14 +34,31 @@ export const POI_TYPES = [
   "poi.graveyard",
   "poi.wayside_shrine",
   "poi.fishing_spot",
+  "poi.mine",
+  "poi.cave",
+  "poi.stone_circle",
+  "poi.crypt",
+  "poi.ruin",
+  "poi.giant_skeleton",
 ] as const;
 export type PoiType = (typeof POI_TYPES)[number];
+
+/** Structure footprint carried by structure-bearing POIs (phase B): the
+ * loader rebuilds per-cell indexes from this to apply pass-cell walkability. */
+export interface PoiStructure {
+  readonly type: StructureType;
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+}
 
 export interface PlacedPoi {
   readonly id: number;
   readonly type: PoiType;
   readonly x: number;
   readonly y: number;
+  readonly structure?: PoiStructure;
 }
 
 const MIN_POI_SPACING = 14;
@@ -65,6 +87,8 @@ export function planPois(
   const grass = PALETTE_INDEX["terrain.grass"];
   const dryGrass = PALETTE_INDEX["terrain.dry_grass"];
   const snow = PALETTE_INDEX["terrain.snow"];
+  const gravel = PALETTE_INDEX["terrain.gravel"];
+  const rockValue = PALETTE_INDEX["terrain.rock"];
   const propIndex = new Map<string, number>();
   DECOR_TYPES.forEach((key, index) => propIndex.set(key, index + 1));
   const decalIndex = new Map<string, number>();
@@ -170,18 +194,58 @@ export function planPois(
   // (forest) claims the whole budget with one POI kind.
   const typeCounts = new Map<PoiType, number>();
   const TYPE_CAPS: { readonly [key in PoiType]: number } = {
-    "poi.hunters_camp": Math.max(2, Math.ceil(budget / 4)),
-    "poi.standing_stones": Math.max(2, Math.ceil(budget / 4)),
-    "poi.fishing_spot": Math.max(1, Math.ceil(budget / 5)),
+    "poi.hunters_camp": Math.max(2, Math.ceil(budget / 5)),
+    "poi.standing_stones": Math.max(2, Math.ceil(budget / 6)),
+    "poi.fishing_spot": Math.max(1, Math.ceil(budget / 6)),
     "poi.battlefield": budget,
     "poi.graveyard": budget,
     "poi.wayside_shrine": budget,
+    "poi.mine": 2,
+    "poi.cave": 2,
+    "poi.stone_circle": 1,
+    "poi.crypt": 1,
+    "poi.ruin": 2,
+    "poi.giant_skeleton": 1,
   };
   const capped = (type: PoiType): boolean =>
     (typeCounts.get(type) ?? 0) >= TYPE_CAPS[type];
-  const record = (type: PoiType, x: number, y: number): void => {
+  const record = (type: PoiType, x: number, y: number, structure?: PoiStructure): void => {
     typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1);
-    pois.push({ id: pois.length, type, x, y });
+    pois.push(structure === undefined ? { id: pois.length, type, x, y } : { id: pois.length, type, x, y, structure });
+  };
+
+  /** Atomically stamp a structure POI: footprint plus a one-cell gap must be
+   * claimable; footprint cells clear their ambient decoration. */
+  const stampStructure = (type: StructureType, originX: number, originY: number): PoiStructure | null => {
+    const footprint = STRUCTURE_FOOTPRINTS[type];
+    if (footprint === undefined) return null;
+    const [w, h] = footprint;
+    for (let sy = -1; sy <= h; sy += 1) {
+      for (let sx = -1; sx <= w; sx += 1) {
+        const cell = cellAt(originX + sx, originY + sy);
+        if (cell === -1 || !claimable(cell)) return null;
+      }
+    }
+    for (let sy = 0; sy < h; sy += 1) {
+      for (let sx = 0; sx < w; sx += 1) {
+        const cell = (originY + sy) * width + originX + sx;
+        structureLayer[cell] = STRUCTURE_LAYER_VALUE[type];
+        decoration.propLayer[cell] = 0;
+        decoration.decalLayer[cell] = 0;
+      }
+    }
+    return { type, x: originX, y: originY, w, h };
+  };
+
+  const rockNear = (x: number, y: number, radius: number): boolean => {
+    const rock = PALETTE_INDEX["terrain.rock"];
+    for (let dy = -radius; dy <= radius; dy += 1) {
+      for (let dx = -radius; dx <= radius; dx += 1) {
+        const index = cellAt(x + dx, y + dy);
+        if (index !== -1 && grid[index] === rock) return true;
+      }
+    }
+    return false;
   };
 
   // Deterministic bounded candidate scan; each accepted candidate becomes
@@ -200,6 +264,111 @@ export function planPois(
       continue;
     }
     const variant = roll.permilleAt(x, y, 2);
+
+    // --- Structure discoveries (phase B) come first: rare, capped tight ---
+
+    // Giant skeleton: a once-in-a-world find on open ground, far from anyone.
+    if (
+      (material === grass || material === dryGrass) &&
+      variant < 60 &&
+      !capped("poi.giant_skeleton") &&
+      settlementGap > 25 &&
+      !nearRoad(x, y, 6)
+    ) {
+      const stamp = stampStructure("structure.giant_skeleton", x, y);
+      if (stamp !== null) {
+        putProp(x - 2, y, "prop.bone_pile");
+        putProp(x + 4, y + 2, "prop.bone_pile");
+        record("poi.giant_skeleton", x, y, stamp);
+        continue;
+      }
+    }
+
+    // Mine: a shaft into the rock with working clutter.
+    if (
+      (material === grass || material === dryGrass || material === gravel) &&
+      !capped("poi.mine") &&
+      rockNear(x, y, 3) &&
+      variant < 500
+    ) {
+      const stamp = stampStructure("structure.mine_shaft", x, y);
+      if (stamp !== null) {
+        putProp(x - 1, y + 1, "prop.mine_cart");
+        putProp(x + 2, y, "prop.ore_vein");
+        putProp(x + 2, y + 2, "prop.log_pile");
+        record("poi.mine", x, y, stamp);
+        continue;
+      }
+    }
+
+    // Cave mouth: where open land meets the rock mass.
+    if (
+      material === rockValue &&
+      !capped("poi.cave") &&
+      variant < 500
+    ) {
+      let facesOpen = false;
+      for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
+        const index = cellAt(x + dx, y + dy);
+        if (index !== -1 && grid[index] !== rockValue && hydro.waterKind[index] === WATER_NONE) {
+          facesOpen = true;
+          break;
+        }
+      }
+      if (facesOpen) {
+        const stamp = stampStructure("structure.cave_mouth", x, y);
+        if (stamp !== null) {
+          record("poi.cave", x, y, stamp);
+          continue;
+        }
+      }
+    }
+
+    // Stone circle: the grand sacred site, one per world at most.
+    if (
+      (material === grass || material === dryGrass || material === snow) &&
+      !capped("poi.stone_circle") &&
+      !nearRoad(x, y, 6) &&
+      treesNear(x, y, 3) <= 2 &&
+      variant < 400
+    ) {
+      const stamp = stampStructure("structure.stone_circle", x - 1, y - 1);
+      if (stamp !== null) {
+        record("poi.stone_circle", x, y, stamp);
+        continue;
+      }
+    }
+
+    // Crypt: old burial vault in reach of the living.
+    if (
+      material === grass &&
+      !capped("poi.crypt") &&
+      settlementGap >= MIN_SETTLEMENT_DISTANCE &&
+      settlementGap <= 30 &&
+      variant < 250
+    ) {
+      const stamp = stampStructure("structure.crypt", x, y);
+      if (stamp !== null) {
+        putProp(x - 1, y + 1, "prop.lone_grave");
+        record("poi.crypt", x, y, stamp);
+        continue;
+      }
+    }
+
+    // Ruin: a collapsed farmstead deep in the wild.
+    if (
+      (material === grass || material === dryGrass) &&
+      !capped("poi.ruin") &&
+      !nearRoad(x, y, 4) &&
+      variant < 200
+    ) {
+      const stamp = stampStructure("structure.ruin", x, y);
+      if (stamp !== null) {
+        putProp(x - 1, y - 1, "prop.broken_wagon");
+        record("poi.ruin", x, y, stamp);
+        continue;
+      }
+    }
 
     // Graveyard: within reach of a settlement, on open grass.
     if (

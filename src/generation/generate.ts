@@ -120,6 +120,13 @@ export interface WorldArtifact {
     readonly id: number;
     readonly type: string;
     readonly cell: readonly [number, number];
+    readonly structure?: {
+      readonly type: string;
+      readonly x: number;
+      readonly y: number;
+      readonly w: number;
+      readonly h: number;
+    };
   }>;
   readonly routes: ReadonlyArray<{
     readonly id: number;
@@ -301,6 +308,17 @@ export function generateWorldDetailed(
       id: poi.id,
       type: poi.type,
       cell: [poi.x, poi.y] as const,
+      ...(poi.structure === undefined
+        ? {}
+        : {
+            structure: {
+              type: poi.structure.type,
+              x: poi.structure.x,
+              y: poi.structure.y,
+              w: poi.structure.w,
+              h: poi.structure.h,
+            },
+          }),
     })),
     routes: composed.routesResult.routes.map((route) => ({
       id: route.id,

@@ -6046,7 +6046,7 @@
             0,
             0,
             1,
-            7,
+            33,
             0
           ],
           [
@@ -7509,7 +7509,7 @@
           ],
           [
             0,
-            1,
+            0,
             0,
             0,
             1,
@@ -9520,10 +9520,10 @@
             0
           ],
           [
-            1,
-            1,
             0,
-            8,
+            0,
+            0,
+            0,
             6,
             2,
             0,
@@ -9560,7 +9560,7 @@
             0,
             0,
             7,
-            0,
+            33,
             0,
             0,
             0,
@@ -10100,10 +10100,10 @@
             0
           ],
           [
-            0,
-            0,
-            0,
-            0,
+            23,
+            23,
+            23,
+            23,
             0,
             0,
             0,
@@ -10118,10 +10118,10 @@
             0
           ],
           [
-            0,
-            0,
-            0,
-            0,
+            23,
+            23,
+            23,
+            23,
             0,
             0,
             0,
@@ -28337,7 +28337,7 @@
             0,
             0,
             0,
-            1,
+            0,
             0,
             0,
             0,
@@ -30367,7 +30367,7 @@
             0,
             1,
             0,
-            0,
+            32,
             8,
             2,
             1,
@@ -30387,8 +30387,8 @@
             0,
             1,
             0,
-            2,
-            6,
+            0,
+            0,
             2,
             0,
             1
@@ -30404,8 +30404,8 @@
             2,
             7,
             0,
-            2,
-            2,
+            0,
+            0,
             0,
             0,
             1,
@@ -30966,9 +30966,9 @@
             0,
             0,
             0,
-            0,
-            0,
-            0,
+            22,
+            22,
+            22,
             0,
             0,
             0
@@ -30984,9 +30984,9 @@
             0,
             0,
             0,
-            0,
-            0,
-            0,
+            22,
+            22,
+            22,
             0,
             0,
             0
@@ -33938,9 +33938,9 @@
           [
             0,
             0,
-            23,
-            26,
-            24,
+            0,
+            0,
+            0,
             0,
             0,
             0,
@@ -42381,7 +42381,7 @@
             0,
             0,
             0,
-            1,
+            0,
             0,
             0,
             0,
@@ -44394,9 +44394,9 @@
             1,
             1,
             1,
-            8,
             0,
-            1,
+            0,
+            39,
             8
           ],
           [
@@ -44411,7 +44411,7 @@
             9,
             0,
             0,
-            0,
+            38,
             0,
             0,
             3,
@@ -44432,7 +44432,7 @@
             0,
             1,
             7,
-            1,
+            29,
             7
           ],
           [
@@ -44974,8 +44974,8 @@
             0,
             0,
             0,
-            0,
-            0,
+            18,
+            18,
             0,
             0
           ],
@@ -44992,8 +44992,8 @@
             0,
             0,
             0,
-            0,
-            0,
+            18,
+            18,
             0,
             0
           ],
@@ -54711,7 +54711,7 @@
             0,
             0,
             0,
-            16,
+            0,
             0,
             0,
             0,
@@ -55272,27 +55272,9 @@
             0,
             0,
             0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-          ],
-          [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
+            19,
+            19,
+            19,
             0,
             0,
             0,
@@ -55308,9 +55290,27 @@
             0,
             0,
             0,
+            19,
+            19,
+            19,
             0,
             0,
             0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            19,
+            19,
+            19,
             0,
             0,
             0,
@@ -55851,12 +55851,12 @@
   ],
   "formatVersion": 8,
   "generator": {
-    "generationIdentitySha256": "b081200be0cdd46a03e93684a12aad01fe6e0dd34ada75d8452edae0c0920346",
-    "generatorBehaviorVersion": 15,
+    "generationIdentitySha256": "c7633037cf8b180814f28a22510795271f9b1a532417aacc7224751af7cc98ba",
+    "generatorBehaviorVersion": 16,
     "name": "worldforge",
     "recipeCompilerVersion": 9,
     "recipeSha256": "b18720c7f09ed2b9bba855ce538cdb4f0c1e5b7fb3bf4de0de61a89ac242d994",
-    "resolvedConfigSha256": "9a02402aa4a6dc3eaeb080dead2b068b6bf9228565132d9d7b00b6f58fd6e257",
+    "resolvedConfigSha256": "2ba20920e0c207c368445019bb7c0ef6224c7768b455150ef29f17ff1b27029d",
     "seed": 1,
     "version": "0.1.0"
   },
@@ -55892,19 +55892,71 @@
     },
     {
       "cell": [
+        10,
+        40
+      ],
+      "id": 2,
+      "structure": {
+        "h": 2,
+        "type": "structure.ruin",
+        "w": 3,
+        "x": 10,
+        "y": 40
+      },
+      "type": "poi.ruin"
+    },
+    {
+      "cell": [
         25,
         28
       ],
-      "id": 2,
+      "id": 3,
       "type": "poi.fishing_spot"
     },
     {
       "cell": [
-        19,
-        44
+        32,
+        12
       ],
-      "id": 3,
-      "type": "poi.fishing_spot"
+      "id": 4,
+      "structure": {
+        "h": 2,
+        "type": "structure.giant_skeleton",
+        "w": 4,
+        "x": 32,
+        "y": 12
+      },
+      "type": "poi.giant_skeleton"
+    },
+    {
+      "cell": [
+        12,
+        59
+      ],
+      "id": 5,
+      "structure": {
+        "h": 2,
+        "type": "structure.mine_shaft",
+        "w": 2,
+        "x": 12,
+        "y": 59
+      },
+      "type": "poi.mine"
+    },
+    {
+      "cell": [
+        57,
+        51
+      ],
+      "id": 6,
+      "structure": {
+        "h": 3,
+        "type": "structure.stone_circle",
+        "w": 3,
+        "x": 56,
+        "y": 50
+      },
+      "type": "poi.stone_circle"
     }
   ],
   "propTypes": [
@@ -55944,7 +55996,9 @@
     "prop.altar",
     "prop.brazier",
     "prop.gravestones",
-    "prop.lone_grave"
+    "prop.lone_grave",
+    "prop.mine_cart",
+    "prop.ore_vein"
   ],
   "regions": [
     {
@@ -56080,6 +56134,13 @@
     "structure.farmhouse",
     "structure.barn",
     "structure.stall",
-    "structure.fountain"
+    "structure.fountain",
+    "structure.cave_mouth",
+    "structure.mine_shaft",
+    "structure.stone_circle",
+    "structure.den",
+    "structure.crypt",
+    "structure.ruin",
+    "structure.giant_skeleton"
   ]
 }

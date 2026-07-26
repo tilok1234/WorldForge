@@ -22,8 +22,10 @@ export const GENERATOR_VERSION = "0.1.0";
  *     production use of the package's corner16 dual-grid sand system.
  * 15: wilderness points of interest, phase A (decoration.pois 1) — camps,
  *     stone rings, battlefields, graveyards, shrines, fishing spots.
+ * 16: POIs phase B (decoration.pois 2) — structure discoveries: mines,
+ *     cave mouths, the stone circle, crypts, ruins, the giant skeleton.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 15;
+export const GENERATOR_BEHAVIOR_VERSION = 16;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 9;
@@ -38,7 +40,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "settlements.plans": 4,
   "landmarks.stamps": 1,
   "decoration.props": 3,
-  "decoration.pois": 1,
+  "decoration.pois": 2,
   "adapter.tileforge": 3,
 };
 

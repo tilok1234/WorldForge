@@ -50,6 +50,13 @@ const STRUCTURE_NAME: { readonly [key: string]: string } = {
   "structure.barn": "barn",
   "structure.stall": "stall",
   "structure.fountain": "fountain",
+  "structure.cave_mouth": "cavemouth",
+  "structure.mine_shaft": "mineshaft",
+  "structure.stone_circle": "stonecircle",
+  "structure.den": "den",
+  "structure.crypt": "crypt",
+  "structure.ruin": "ruin",
+  "structure.giant_skeleton": "giantskeleton",
 };
 
 /** WorldForge semantic prop keys -> package prop species names. */
@@ -91,6 +98,8 @@ const PROP_NAME: { readonly [key: string]: string } = {
   "prop.brazier": "brazier",
   "prop.gravestones": "gravestones",
   "prop.lone_grave": "lonegrave",
+  "prop.mine_cart": "minecart",
+  "prop.ore_vein": "orevein",
 };
 
 /** WorldForge crop keys -> package crop names. */
@@ -352,6 +361,31 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
           meta[cell] = entry.id * 256 + sy * structure.width + sx;
           metaCells += 1;
         }
+      }
+    }
+  }
+
+  // Structure-bearing POIs (phase B) emit meta codes exactly like planner
+  // structures: full atomic footprints, package-validated dimensions.
+  for (const poi of composed.pois) {
+    if (poi.structure === undefined) continue;
+    const name = STRUCTURE_NAME[poi.structure.type];
+    const entry = name === undefined ? undefined : manifest.structureByName.get(name);
+    if (entry === undefined) {
+      unresolved.add(`${poi.structure.type} -> ${name ?? "?"}`);
+      continue;
+    }
+    if (entry.def.w !== poi.structure.w || entry.def.h !== poi.structure.h) {
+      unresolved.add(
+        `${poi.structure.type}: footprint ${poi.structure.w}x${poi.structure.h} != package ${entry.def.w}x${entry.def.h}`,
+      );
+      continue;
+    }
+    for (let sy = 0; sy < poi.structure.h; sy += 1) {
+      for (let sx = 0; sx < poi.structure.w; sx += 1) {
+        const cell = (poi.structure.y + sy) * width + poi.structure.x + sx;
+        meta[cell] = entry.id * 256 + sy * poi.structure.w + sx;
+        metaCells += 1;
       }
     }
   }

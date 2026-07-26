@@ -174,6 +174,11 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
     for (const landmark of artifact.landmarks) {
       claim(`landmark ${landmark.id}`, landmark.cell[0], landmark.cell[1], landmark.footprint[0], landmark.footprint[1]);
     }
+    for (const poi of artifact.pois) {
+      if (poi.structure !== undefined) {
+        claim(`poi ${poi.id} ${poi.structure.type}`, poi.structure.x, poi.structure.y, poi.structure.w, poi.structure.h);
+      }
+    }
   }
 
   if (errors.length === 0 && artifact.regions.length > 0) {
