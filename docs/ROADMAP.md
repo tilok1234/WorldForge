@@ -17,35 +17,48 @@ the compatibility package.
 
 Deliverables:
 
+### W0A — Authoring and toolchain foundation
+
 - independent WorldForge repository;
 - repository-local `AGENTS.md`;
 - adopted vision, boundary, architecture, and generation documents;
 - TypeScript project, test, and CLI skeleton using a pinned toolchain;
 - source, test, fixture, schema, and output directories;
-- canonical `WorldRecipe` schema and normalized recipe identity;
-- one manually authored and one AI-drafted example using the same recipe
-  contract;
-- documented AI authoring boundary and structured recipe-diff format;
-- normalized configuration schema;
-- dependency-lock schema;
-- explicit import of one real user-selected TileForge package into an ignored
-  WorldForge-owned cache;
-- dependency lock generated from that real package;
-- minimal committed TileForge contract fixture if redistribution is approved;
+- canonical W0 `WorldRecipe` schema limited to seed, named presets, integer
+  counts, integer biases, budgets, and supported toggles;
+- one canonical recipe example usable through manual or AI authoring;
+- versioned recipe compiler and `ResolvedWorldConfig` schema;
+- documented AI authoring boundary;
+- normalized recipe and resolved-config identity;
 - no-write path guard for TileForge and external repositories;
 - minimal command-line entry point.
+
+### W0B — Real package grounding
+
+- dependency-lock schema;
+- explicit import of one real user-selected TileForge release package into
+  `fixtures/tileforge-packages/<package-id>/`;
+- dependency lock generated from that real package;
+- approved complete package committed for clean-clone reproducibility;
+- package preflight for validation, unexpected secrets, source-control metadata,
+  and host file-size limits.
 
 Exit criteria:
 
 - a smoke command runs;
 - invalid output roots are rejected;
 - a TileForge repository path cannot be used as an output;
-- configuration normalization is deterministic;
-- equivalent manual and AI-drafted recipes normalize identically;
-- an accepted recipe can generate without any AI connection;
+- recipe normalization and resolved-config compilation are deterministic;
+- the same recipe normalizes identically regardless of authoring client;
+- normalized recipe plus compiler version produces byte-identical
+  `ResolvedWorldConfig`;
+- an accepted recipe can validate and resolve without any AI connection;
+- unsupported fields, including premature relational constraints, fail
+  validation;
 - the real package manifest and required guides can be read without relying on
   TileForge source internals;
 - the dependency lock detects a changed package or manifest;
+- a clean clone contains the complete pinned compatibility package;
 - repository ownership rules are documented.
 
 ## Milestone W1 — Deterministic kernel
@@ -134,7 +147,8 @@ Deliverables:
 - districts or lots;
 - atomic structure placement;
 - entrance and approach reservations;
-- one authored landmark stamp with procedural blending.
+- one authored landmark stamp with procedural blending;
+- versioned relational-placement vocabulary backed by the implemented solver.
 
 Exit criteria:
 
@@ -163,7 +177,7 @@ Exit criteria:
 - a reference slice passes the TileForge acceptance procedure;
 - no file in the TileForge repository changes.
 
-## Milestone W7 — Godot vertical slice
+## Milestone W7 — Godot consumer vertical slice
 
 Deliverables:
 
@@ -192,7 +206,33 @@ Exit criteria:
 - TileForge metadata drives walkability and hazards correctly;
 - a clean checkout can reproduce the demonstration.
 
-## Milestone W8 — Optional AI authoring workflow
+## Milestone W8 — TypeScript game consumer
+
+Deliverables:
+
+- typed public artifact loader;
+- artifact, generator, and dependency compatibility validation;
+- typed world, chunk, layer, route, and metadata access;
+- chunk query or streaming interface suitable for TypeScript games;
+- build-time CLI integration example;
+- small TypeScript traversal or inspection harness using the W7 world;
+- cross-consumer parity fixture and report.
+
+Exit criteria:
+
+- the Godot and TypeScript consumers load the same base world artifact;
+- both agree on artifact hash, chunk coordinates, semantic IDs, walkability,
+  and required-route topology;
+- incompatible artifact or dependency versions fail clearly;
+- the TypeScript consumer does not import private generator-pass modules;
+- consumer-specific caches identify their base artifact and adapter version;
+- no game-specific quest, enemy, progression, or lore system enters the core.
+
+Runtime generation inside a shipped TypeScript game is not required for this
+milestone. The first lane is artifact loading plus optional build-time compiler
+invocation.
+
+## Milestone W9 — Optional AI authoring workflow
 
 Deliverables:
 
@@ -213,7 +253,7 @@ Exit criteria:
 - AI cannot bypass validators or modify generated artifacts as a hidden repair;
 - TileForge remains a pinned, read-only package dependency.
 
-## Deferred until after W7
+## Deferred beyond the initial consumer proofs
 
 - infinite worlds;
 - multiplayer synchronization;
@@ -225,6 +265,7 @@ Exit criteria:
 - economy simulation;
 - graphical world editor;
 - runtime AI as a requirement for generation or loading;
+- in-process runtime generation inside shipped Godot or TypeScript games;
 - Unity support;
 - automatic TileForge upstream changes;
 - multiple simultaneous TileForge packages.
@@ -245,7 +286,6 @@ Biggest unresolved risk:
 
 What should not be treated as final:
 
-- language choice;
 - file formats beyond versioning principles;
 - world and chunk dimensions;
 - biome list;

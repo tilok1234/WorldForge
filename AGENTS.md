@@ -19,6 +19,9 @@ The adopted implementation language is TypeScript. Read
 `docs/decisions/ADR-0001-typescript.md` before changing the core toolchain,
 numeric kernel, or runtime boundaries.
 
+TypeScript as the compiler language does not make generator internals a public
+game API.
+
 ## Absolute TileForge rule
 
 TileForge is read-only upstream.
@@ -57,11 +60,30 @@ Do not make the change merely because filesystem permissions allow it.
 - Do not expand a milestone until its stated exit criteria pass.
 - Treat generated worlds as outputs, not hand-edited source.
 
+## Multi-game integration discipline
+
+- Keep the versioned engine-neutral artifact as the boundary for both Godot and
+  TypeScript games.
+- Godot consumes the artifact through its importer/runtime adapter.
+- TypeScript games consume it through a typed public loader, not unversioned
+  imports from generator internals.
+- Consumer-specific derived caches MUST identify their base artifact hash and
+  adapter version.
+- A consumer adapter MUST NOT reinterpret or silently change base semantic
+  meaning.
+- Keep production game recipes, authored content, quests, enemies, and
+  progression in the consuming game or an explicitly versioned content pack by
+  default.
+- Do not write to a game repository unless the user separately scopes that
+  repository and task.
+
 ## Source-of-truth discipline
 
 - Treat the accepted normalized `WorldRecipe` as the source of truth for world
   intent; prose chat history is optional provenance, not the world contract.
-- Read mappings from the pinned TileForge manifest.
+- Treat `ResolvedWorldConfig` as deterministic derived data; do not maintain it
+  as a second hand-authored source of truth.
+- Read mappings from the pinned committed TileForge package manifest.
 - Read rendering behavior from the package guide and formats.
 - Do not invent numeric IDs, atlas coordinates, mask rules, or structure sizes.
 - Keep WorldForge semantic schemas authoritative for world meaning.
@@ -96,7 +118,10 @@ Do not make the change merely because filesystem permissions allow it.
   unavoidable, pin the implementation, quantize before semantic decisions, and
   protect it with cross-platform golden vectors.
 - Never let iteration order of unordered collections affect output.
-- Normalize configuration before hashing it.
+- Normalize `WorldRecipe` before identity hashing and canonicalize
+  `ResolvedWorldConfig` before calculating its derived verification hash.
+- Compile the normalized recipe into `ResolvedWorldConfig` through the versioned
+  recipe compiler; never accept two independently authored inputs for one world.
 - Canonicalize serialization, including object-key order and numeric encoding.
 - Include generator and rule versions in output.
 - Add deterministic fixtures before refactoring generation behavior.

@@ -54,7 +54,7 @@ The long-term system can produce:
 - minimap and debugging representations;
 - chunk-streamable semantic data;
 - deterministic rebuilds and generator-version migrations;
-- engine adapters, starting with Godot;
+- official consumer adapters for Godot and TypeScript games;
 - optional AI-assisted translation of creative briefs into validated recipes;
 - structured recipe diffs and validation explanations for iterative design;
 - compatibility with multiple visual packages through explicit adapters.
@@ -101,9 +101,19 @@ interfaces owned by the game.
 ### 8. AI translates intent; WorldForge owns generation
 
 AI is an optional authoring client. Its output is a draft until it becomes a
-schema-valid, normalized `WorldRecipe`. The accepted recipe, seed, generator
-version, rules, and pinned dependencies—not a chat transcript—define the world.
-WorldForge must regenerate that world offline without an AI model.
+schema-valid, normalized `WorldRecipe`. The recipe includes the seed and compiles
+deterministically into a fully explicit `ResolvedWorldConfig`. The accepted
+recipe, recipe-compiler version, generator version, rules, and pinned
+dependencies—not a chat transcript or separately edited configuration—define
+the world. WorldForge must regenerate that world offline without an AI model.
+
+### 9. One artifact, multiple games
+
+WorldForge emits one engine-neutral, versioned artifact. Godot and TypeScript
+games consume that artifact through separate public adapters. Sharing
+TypeScript with one consumer does not permit that game to depend on private
+generator modules. Game-specific recipes, authored content, and gameplay
+systems remain outside the reusable core.
 
 ## Intended player-facing result
 
@@ -123,7 +133,9 @@ Although WorldForge is a developer tool, its quality is measured in play:
 User intent
     -> manual recipe or optional AI-authored draft
     -> validated and normalized WorldRecipe
-    -> world seed + generator version + pinned dependencies
+    -> deterministic recipe compiler
+    -> ResolvedWorldConfig
+    -> generator version + pinned dependencies
     -> global world graph
     -> macro fields and regions
     -> hydrology
@@ -148,6 +160,8 @@ User intent
 - Preserve authored landmark and override lanes.
 - Provide automated evidence for topology and visual-integration correctness.
 - Allow future games to reuse the generator without inheriting one game's lore.
+- Prove the same artifact can be consumed by Godot and TypeScript games without
+  changing its semantic meaning.
 
 ## Non-goals
 
@@ -166,6 +180,8 @@ WorldForge does not:
 - require an AI model to generate, load, or replay an accepted world;
 - treat a prose prompt or conversation transcript as the canonical world file;
 - allow AI-generated settings to bypass normal validation.
+- make a consuming game depend on private WorldForge compiler internals;
+- place one game's quests, enemies, progression, or lore in the reusable core.
 
 ## Product boundaries
 
@@ -173,11 +189,14 @@ WorldForge does not:
 |---|---|
 | Creative direction and acceptance | User |
 | Natural-language-to-recipe drafting | Optional AI authoring client |
-| Accepted world settings | Versioned WorldRecipe |
+| Accepted world intent and seed | Versioned WorldRecipe |
+| Explicit generator parameters | Derived ResolvedWorldConfig |
 | Tile art, masks, atlases, semantic tile IDs | TileForge |
 | World regions, terrain meaning, routes, settlements | WorldForge |
 | Semantic-to-TileForge resolution | WorldForge adapter using the public package |
-| Streaming and runtime rendering | Game/runtime adapter |
+| Godot artifact loading and streaming | Godot consumer adapter |
+| TypeScript artifact loading and typed access | TypeScript consumer loader |
+| Streaming and runtime rendering | Consuming game |
 | Combat, quests, enemies, loot, progression | Game |
 | Actor and equipment art | Separate sprite systems |
 

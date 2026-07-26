@@ -14,7 +14,8 @@ generate without an AI connection.
 ```text
 User intent
     -> manual settings or optional AI-authored settings
-    -> validated WorldRecipe + seed
+    -> validated WorldRecipe containing the seed
+    -> deterministic ResolvedWorldConfig
     -> deterministic WorldForge generation
     -> TileForge resolution
     -> versioned game artifact
@@ -26,6 +27,31 @@ strictly separate:
 ```text
 TileForge package -> WorldForge semantic generation -> game runtime
 ```
+
+## Official game consumer lanes
+
+WorldForge is intended to support multiple games rather than one permanent game
+project. Its engine-neutral artifact is the shared boundary:
+
+```text
+                               ┌─> Godot adapter -> Godot game
+WorldForge versioned artifact ─┤
+                               └─> TypeScript loader -> TypeScript game
+```
+
+- **Godot** is the first playable integration target. A thin importer and
+  runtime adapter load chunks, TileForge-resolved layers, and metadata.
+- **TypeScript games** are the second official consumer lane. A typed loader
+  validates and exposes the same artifact without requiring a Godot bridge.
+- Both consumers use the same base artifact and semantic identities.
+- TypeScript games do not bypass the artifact contract merely because the
+  WorldForge compiler is also written in TypeScript.
+- Production recipes, authored landmarks, quests, enemies, and other
+  game-specific content belong to the consuming game or its versioned content
+  pack by default.
+
+Initial generation remains an offline or build-time step. In-process runtime
+generation can be considered later without changing the artifact contract.
 
 ## Absolute TileForge boundary
 
@@ -40,6 +66,11 @@ WorldForge implements against a pinned exported TileForge package:
 - `GAME-GUIDE.md`
 - `FORMATS.md`
 - the packaged importers and reference artifacts
+
+The first approved complete package is committed under
+`fixtures/tileforge-packages/<package-id>/` so a clean WorldForge clone can
+reproduce compatibility tests without access to TileForge source. Source
+checkouts remain external, ignored, and read-only.
 
 See [Repository Boundaries](docs/REPOSITORY_BOUNDARIES.md) for the complete
 policy.
@@ -80,8 +111,12 @@ Boundary and agent rules override convenience and implementation shortcuts.
 |---|---|
 | User | Creative intent, constraints, review, and approval |
 | AI authoring client | Optional translation of intent into draft WorldRecipes |
+| WorldRecipe | Accepted authoring intent, including the world seed |
+| ResolvedWorldConfig | Deterministically derived generator parameters |
 | TileForge | Tile art, masks, atlases, semantic tile IDs, integration package |
 | WorldForge | Recipe validation, world planning, deterministic generation, chunks, compatibility adapter |
+| Godot adapter | Imports and streams the public artifact in Godot |
+| TypeScript loader | Validates and exposes the public artifact to TypeScript games |
 | Game | Runtime streaming, gameplay, combat, quests, persistence |
 
 ## Initial design principles
@@ -94,6 +129,7 @@ Boundary and agent rules override convenience and implementation shortcuts.
 - TileForge is a pinned external dependency, never an editable subproject.
 - AI-authored and manually authored settings use the same schema and validators.
 - Accepted worlds regenerate offline without requiring an AI model.
+- Godot and TypeScript games consume the same engine-neutral artifact.
 - Game-specific content attaches through extensions instead of entering the
   reusable core.
 

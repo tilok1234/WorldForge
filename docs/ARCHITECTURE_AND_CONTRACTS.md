@@ -7,8 +7,9 @@ Implementation language: **TypeScript**, adopted in
 
 ## Architectural principle
 
-WorldForge compiles a validated `WorldRecipe` into semantic world data. Tile
-resolution is a final adapter stage.
+WorldForge compiles a validated `WorldRecipe` into a fully explicit
+`ResolvedWorldConfig`, then compiles that configuration into semantic world
+data. Tile resolution is a final adapter stage.
 
 An optional AI authoring layer may translate high-level intent into a draft
 recipe. It remains outside the deterministic compiler and cannot bypass the
@@ -34,24 +35,29 @@ This layer is a client of WorldForge, not part of generation. WorldForge must
 remain fully usable through files, a command line, tests, or a future editor
 without an AI service.
 
-### 1. Configuration loader
+### 1. Recipe loader and compiler
 
-Loads and validates:
+The public loader validates and normalizes author-facing recipe fields:
 
 - recipe format version;
 - world seed;
-- generator version;
-- world dimensions;
-- chunk dimensions;
+- named presets;
+- integer counts, biases, and budgets supported by the current recipe version.
+
+The versioned recipe compiler then resolves presets, defaults, and rule packs
+into `ResolvedWorldConfig`, containing:
+
+- generator behavior version;
+- explicit world and chunk dimensions;
 - macro-field parameters;
-- biome definitions;
-- route and settlement budgets;
+- biome definitions and thresholds;
+- route, settlement, and landmark budgets;
 - enabled generation passes;
 - pinned TileForge package identity for compatibility tests.
 
-It normalizes the recipe and produces its stable identity. Invalid
-configuration fails before generation regardless of whether a person or AI
-authored it.
+Invalid recipes fail before resolution regardless of whether a person or AI
+authored them. `ResolvedWorldConfig` is derived data and cannot be supplied as
+an independent user override in the normal generation path.
 
 ### 2. Coordinate and hash kernel
 
@@ -172,12 +178,33 @@ Produces:
 - TileForge material and typed-layer codes;
 - masks and underlays;
 - stable semantic tile IDs;
-- optional TMJ or Godot-ready chunk data;
+- engine-neutral resolved chunk data;
 - compatibility and resolution diagnostics.
 
 The adapter owns TileForge-specific interpretation. The core does not.
 
-### 12. Validator and visualizer
+### 12. Artifact writer and game consumers
+
+The artifact writer emits one canonical, engine-neutral world artifact.
+
+Official consumer lanes are:
+
+- **Godot adapter:** imports the artifact into Godot resources, streams chunks,
+  and maps declared metadata to engine behavior.
+- **TypeScript loader:** validates formats and dependencies, exposes typed world
+  and chunk access, and supports TypeScript game build pipelines and runtimes.
+
+Both consumers read the same base artifact. They may create engine-specific
+caches or import products, but every derivative records the base artifact hash
+and consumer-adapter version. A consumer cannot mutate the base artifact or
+reinterpret its semantic IDs.
+
+The TypeScript loader is a public consumer package. It must not depend on
+private generator-pass modules merely because the compiler shares its language.
+Build-time tooling may invoke the public compiler API or CLI; shipped runtime
+generation remains a later, explicit capability.
+
+### 13. Validator and visualizer
 
 Runs structural checks and produces:
 
@@ -217,11 +244,14 @@ worldforge/
     validation/
     adapters/
       tileforge/
+    consumers/
       godot/
+      typescript/
   schemas/
   fixtures/
     worlds/
-    tileforge-contract/
+    tileforge-packages/
+      <package-id>/       # approved complete package, committed
   tools/
   tests/
   outputs/              # generated, ignored by default
@@ -233,17 +263,45 @@ The interface between an AI authoring client and WorldForge is structured data,
 not hidden prompt behavior.
 
 ```text
-IntentBrief -> draft WorldRecipe -> schema validation -> normalized WorldRecipe
+IntentBrief
+    -> draft WorldRecipe
+    -> schema validation
+    -> normalized WorldRecipe
+    -> versioned RecipeCompiler
+    -> ResolvedWorldConfig
 ```
 
 - `IntentBrief` may contain prose and optional provenance.
 - A draft recipe is editable, reviewable, and allowed to fail validation.
-- A normalized recipe is the canonical generator input.
-- AI suggestions after generation are expressed as recipe diffs.
+- A normalized recipe is the canonical authored input and contains the seed.
+- `ResolvedWorldConfig` is the fully explicit, deterministic compiler output.
+- A future W9 authoring client expresses suggestions after generation as recipe
+  diffs.
 - AI never directly repairs generated chunks or resolved TileForge layers.
-- The same normalized recipe must compile identically without AI access.
+- The same normalized recipe must resolve and generate identically without AI
+  access.
 
 See `AI_AUTHORING_MODEL.md` for the complete responsibility and restraint model.
+
+## Recipe and resolved configuration contract
+
+WorldForge deliberately uses two layers with one source of truth:
+
+| Layer | Purpose | Authored? |
+|---|---|---|
+| `WorldRecipe` | Portable creative intent, seed, presets, counts, integer biases, budgets | Yes |
+| `ResolvedWorldConfig` | Concrete dimensions, thresholds, field parameters, enabled passes, dependency selection | No; deterministically derived |
+
+The recipe compiler is versioned. It rejects vocabulary that its behavior
+version does not implement. In particular, W0 recipes use presets, counts,
+integer biases, budgets, and simple feature toggles. Relational constraints such
+as “across the river from the main town” are invalid until W5 or a later
+milestone introduces their schema and solver.
+
+The normalized recipe and its compiler version are sufficient to derive the
+resolved configuration. WorldForge records `recipeSha256` and
+`resolvedConfigSha256` so drift can be diagnosed, but the resolved config never
+becomes an independently edited authority.
 
 ## World artifact contract
 
@@ -256,7 +314,9 @@ A readable first format might contain:
     "name": "worldforge",
     "version": "0.1.0",
     "seed": 103991,
-    "recipeSha256": "<sha256>"
+    "recipeCompilerVersion": 1,
+    "recipeSha256": "<sha256>",
+    "resolvedConfigSha256": "<sha256>"
   },
   "dimensions": {
     "width": 256,
@@ -298,6 +358,10 @@ The exact encoding is draft. The principles are not:
 - Keep semantic meaning separate from resolved atlas positions.
 - Make array dimensions and coordinate origin explicit.
 - Preserve enough source data to regenerate derived output.
+- Keep the base artifact independent of Godot, browser, Node.js, and
+  framework-specific object models.
+- Require every consumer-specific derivative to record the base artifact hash
+  and adapter version.
 
 ## Semantic identity
 
@@ -324,13 +388,15 @@ empty cells, or atlas tile zero.
 Generation identity is:
 
 ```text
-normalized WorldRecipe
-+ world seed
+normalized WorldRecipe, including world seed
++ recipe compiler version
 + WorldForge generator version
-+ normalized configuration
 + rule-pack versions
 + pinned dependency identities
 ```
+
+`resolvedConfigSha256` is recorded as a derived verification value. It is not a
+second independent identity input.
 
 Every pass uses a named channel, for example:
 
@@ -417,6 +483,7 @@ WorldForge should distinguish:
 - generator behavior version;
 - rule-pack version;
 - adapter version;
+- game-consumer adapter version;
 - TileForge dependency version.
 
 A generator behavior change does not silently rewrite an existing world.
@@ -439,3 +506,6 @@ Before a generated world is accepted:
 - required traversal remains possible;
 - every semantic key resolves through the pinned TileForge adapter;
 - a reference slice passes the TileForge rendering acceptance test.
+- each implemented game consumer rejects incompatible artifacts;
+- Godot and TypeScript consumers agree on the base fixture's chunk coordinates,
+  semantic IDs, walkability, and artifact hash.

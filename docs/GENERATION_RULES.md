@@ -43,7 +43,18 @@ strength.
 - Natural-language intent MAY be translated into a draft `WorldRecipe`.
 - A prose prompt or conversation transcript MUST NOT be the only canonical
   world definition.
-- Every draft MUST pass schema validation and normalization before generation.
+- Every draft MUST pass schema validation and normalization, then compile
+  deterministically into `ResolvedWorldConfig`, before generation.
+- `WorldRecipe` MUST include the seed and remain the only author-facing root
+  generation document. Versioned authored assets MAY be referenced by it.
+- `ResolvedWorldConfig` MUST be treated as derived data, not a second
+  independently edited source of truth.
+- Recipe vocabulary MUST be rejected until the corresponding generator pass and
+  validator exist.
+- W0 recipe vocabulary MUST remain limited to named presets, integer counts,
+  integer biases, budgets, and simple supported toggles.
+- Relational placement constraints MUST NOT enter the schema before their
+  versioned solver milestone.
 - AI-authored recipes MUST obey the same topology, budget, path-safety,
   compatibility, and validation rules as manually authored recipes.
 - AI MUST NOT silently change an accepted seed, constraint, dependency, or
@@ -55,7 +66,7 @@ strength.
   traversal, and overlap checks as manually authored stamps.
 - Accepted recipes MUST remain readable, editable, and reproducible offline.
 - Prompt and model metadata MAY be stored as provenance, but MUST NOT replace
-  the normalized recipe in generation identity.
+  the normalized recipe and recipe-compiler version in generation identity.
 - AI access to TileForge remains read-only and package-based.
 
 ## World-scale coherence
@@ -175,6 +186,26 @@ These rules apply only in the TileForge adapter:
 - Persistent player changes MUST be stored as explicit deltas over the
   deterministic base world.
 - Regeneration MUST NOT erase persistent deltas without a migration decision.
+
+## Multi-game consumer rules
+
+- The canonical world artifact MUST remain engine-neutral.
+- Godot and TypeScript consumers MUST validate artifact format, generator
+  identity, and pinned dependency identity before loading.
+- Consumer adapters MUST NOT change the semantic meaning of cells, routes,
+  structures, or metadata.
+- Consumer-specific caches MUST record the base artifact hash and adapter
+  version.
+- The same base fixture MUST produce matching chunk coordinates, semantic IDs,
+  walkability, and topology in both official consumer lanes.
+- A TypeScript game MUST use the public loader or artifact schema and MUST NOT
+  couple itself to private generator-pass modules.
+- Game-specific extension data MUST be namespaced and optional to the reusable
+  core.
+- Production game recipes and authored content SHOULD live with the consuming
+  game or its explicitly versioned content pack.
+- Runtime generation inside either game engine is a separate capability from
+  artifact consumption and MUST NOT be assumed by the initial adapters.
 
 ## Performance restraints
 

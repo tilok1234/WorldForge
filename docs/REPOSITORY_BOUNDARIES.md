@@ -114,15 +114,27 @@ A pinned dependency record should contain at least:
 }
 ```
 
-The package may be copied into a WorldForge-owned fixture or cache only through
-an explicit import command. That command must refuse any destination outside
-the WorldForge repository or its configured cache.
+The project adopts committed package fixtures for reproducibility. The first
+approved complete TileForge export is imported into:
 
-Milestone W0 must exercise this path with one real user-selected TileForge
-export and write its dependency lock. The complete package remains ignored
-unless its size and redistribution rights are explicitly approved. A minimal
-committed contract fixture may be derived from that package only when licensing,
-provenance, and required files are documented.
+```text
+worldforge/fixtures/tileforge-packages/<package-id>/
+```
+
+The import command must refuse destinations outside that root, validate the
+package, scan for unexpected secrets or source-control metadata, check host file
+size limits, calculate hashes, and write the dependency lock. The package is
+committed only after those checks pass.
+
+The user owns TileForge and has approved the complete release package as a
+WorldForge fixture. This approval applies to released package contents, not
+TileForge source. A source checkout remains ignored under
+`external/tileforge-reference/` and read-only.
+
+If a future package becomes unsuitable for ordinary Git because of size or
+distribution constraints, storage strategy requires a separate decision. Do
+not silently replace the committed-package contract with an unpinned local
+cache.
 
 ## Compatibility problem procedure
 
@@ -145,7 +157,7 @@ WorldForge must never silently patch upstream.
 | Authoritative TileForge repository | Read-only inspection |
 | Downloaded TileForge reference copy | Clone/fetch/checkout for inspection; no source edits, commits, or pushes |
 | TileForge release ZIP | Read |
-| Imported package fixture under WorldForge | Read; replace only through explicit import |
+| Approved package fixture under WorldForge | Read; add or replace only through explicit import and review |
 | WorldForge source and docs | Read/write within task scope |
 | WorldForge generated output | Read/write within configured output root |
 | Game repository | No access unless the user separately scopes it |
@@ -176,8 +188,9 @@ The following must never be accepted as generation destinations:
 - Preserve unrelated and user-owned dirty work.
 - Never reset, clean, or overwrite another agent's changes.
 - Commit only WorldForge-owned files.
-- Never include imported TileForge release packages in Git unless the repository
-  explicitly adopts fixture storage.
+- Commit only approved TileForge release packages under
+  `fixtures/tileforge-packages/`; never commit TileForge source or an arbitrary
+  checkout.
 - Do not commit generated worlds by default; commit small deterministic fixtures
   and expected validation summaries instead.
 - Publishing, version tagging, and visibility changes require their own authority.
@@ -186,7 +199,8 @@ The following must never be accepted as generation destinations:
 
 A TileForge upgrade is a deliberate compatibility event:
 
-1. Import the new package into a new versioned cache entry.
+1. Import the new package into a new versioned fixture directory under
+   `fixtures/tileforge-packages/`.
 2. Validate manifest format and required mappings.
 3. If useful, inspect or download the corresponding TileForge tag or commit
    without modifying it.
@@ -196,4 +210,5 @@ A TileForge upgrade is a deliberate compatibility event:
 7. Record expected visual or semantic changes.
 8. Update the WorldForge dependency lock only after approval.
 
-Never overwrite the previously pinned package before the comparison completes.
+Never overwrite or remove the previously pinned package before comparison and
+approval are complete.

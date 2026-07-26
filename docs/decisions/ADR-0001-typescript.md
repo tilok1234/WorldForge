@@ -10,18 +10,19 @@ WorldForge needs an implementation language for its engine-neutral compiler,
 command-line tools, schemas, deterministic tests, TileForge adapter, and
 versioned JSON artifacts.
 
-The first game integration target is Godot, but the reusable generator does not
-need to execute inside the game engine. TileForge is JavaScript-based and its
-public consumer contract is primarily manifests, guides, and JSON-compatible
-data.
+The first game integration target is Godot, followed by an official TypeScript
+game-consumer lane. The reusable generator does not need to execute inside
+either game runtime. TileForge is JavaScript-based and its public consumer
+contract is primarily manifests, guides, and JSON-compatible data.
 
 ## Decision
 
 Implement the WorldForge core and command-line tooling in TypeScript.
 
 Compile and test it on a repository-pinned Node.js toolchain. The Godot adapter
-will consume versioned WorldForge artifacts rather than requiring Node.js inside
-the shipped game.
+and TypeScript game loader will consume versioned WorldForge artifacts. Sharing
+the compiler's language does not make private generator modules part of the
+TypeScript game API.
 
 ## Reasons
 
@@ -34,6 +35,8 @@ the shipped game.
 - Generated artifacts can remain engine-neutral.
 - Godot can use a thin importer/runtime adapter instead of hosting the complete
   generator.
+- TypeScript games can use a typed artifact loader and optional build-time
+  compiler invocation without a language bridge.
 - The ecosystem supports property tests, golden fixtures, schema validation,
   and command-line packaging.
 
@@ -67,10 +70,13 @@ acceptable generation contract.
 - The TileForge package adapter can consume manifests without a language bridge.
 - AI and manual authoring clients can share JSON Schema-backed recipes.
 - Game projects receive stable artifacts instead of generator internals.
+- Godot and TypeScript consumers can share schemas, fixtures, and parity tests.
 
 ### Tradeoffs
 
 - Runtime generation directly inside Godot is not the first architecture.
+- Runtime generation inside a shipped TypeScript game is also not required by
+  the first consumer adapter.
 - JavaScript numeric edge cases require explicit discipline and tests.
 - A shipped game that needs live generation will need a service, embedded
   runtime, pre-generated artifacts, or a future port of the deterministic

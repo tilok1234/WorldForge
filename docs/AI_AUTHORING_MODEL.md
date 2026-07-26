@@ -21,7 +21,9 @@ recipe without using AI.
 |---|---|
 | User | Creative direction, constraints, review, and approval |
 | AI authoring client | Drafting and revising structured settings |
-| WorldRecipe | Accepted, portable description of the requested world |
+| WorldRecipe | Accepted, portable intent and seed |
+| RecipeCompiler | Deterministic resolution of intent into explicit parameters |
+| ResolvedWorldConfig | Derived parameters consumed by generation passes |
 | WorldForge | Deterministic generation, validation, and world artifacts |
 | TileForge | Tile semantics, visual construction rules, and released packages |
 | Game adapter | Loading, streaming, and presenting the generated artifact |
@@ -34,14 +36,16 @@ approval. A conversation transcript is not the world specification.
 WorldForge supports two equivalent paths:
 
 ```text
-Human or tool writes settings ──────────────┐
+Human or tool writes recipe ────────────────┐
                                             ├─> validated WorldRecipe
-Human describes intent -> AI drafts settings┘
+Human describes intent -> AI drafts recipe ┘
+                                                    ↓
+                                         ResolvedWorldConfig
 ```
 
-Both paths enter the same configuration loader, normalizer, validators, and
-generator. AI-authored recipes receive no hidden capabilities and bypass no
-rules.
+Both paths enter the same recipe loader, normalizer, deterministic recipe
+compiler, validators, and generator. AI-authored recipes receive no hidden
+capabilities and bypass no rules.
 
 ## Canonical workflow
 
@@ -53,15 +57,17 @@ rules.
       ↓
 3. Schema validation and normalization
       ↓
-4. User review when the recipe or baseline requires approval
+4. Deterministic compilation to ResolvedWorldConfig
       ↓
-5. Seeded deterministic generation
+5. User review when the recipe or baseline requires approval
       ↓
-6. Structural validation and debug views
+6. Seeded deterministic generation
       ↓
-7. Optional AI explanation or recipe-diff proposal
+7. Structural validation and debug views
       ↓
-8. TileForge resolution and versioned game export
+8. Optional AI explanation or recipe-diff proposal
+      ↓
+9. TileForge resolution and versioned game export
 ```
 
 The AI revises the recipe, not the generated cells. Directly painting over a
@@ -71,44 +77,67 @@ inputs with their own schema and validation.
 
 ## WorldRecipe
 
-The exact schema will be versioned during Milestone W0. A conceptual example is:
+`WorldRecipe` is the only author-facing root generation document. It includes
+the seed, describes bounded intent, and may later reference separately versioned
+authored assets such as landmark stamps. The first schema is intentionally
+small:
 
 ```json
 {
   "recipeFormat": 1,
   "seed": 12345,
   "world": {
-    "size": "small",
-    "climate": "cold_coastal"
+    "sizePreset": "small",
+    "climatePreset": "cold_coastal"
   },
-  "geography": {
-    "mountainBias": "north",
-    "requiredWatersheds": 1
+  "biases": {
+    "northElevationPermille": 350,
+    "temperaturePermille": -400,
+    "moisturePermille": 200
   },
-  "settlements": {
-    "fishingVillages": 4,
-    "towns": 1
-  },
-  "routes": {
-    "requiredPrimaryRoutes": 2,
-    "connectAllSettlements": true
-  },
-  "landmarks": [
-    {
-      "type": "ancient_fortress",
-      "relation": "across_river_from_main_town"
-    }
-  ],
-  "constraints": {
-    "requireReachableLandmarks": true,
-    "maximumDisconnectedRegions": 0
+  "budgets": {
+    "regionCount": 4,
+    "settlementCount": 5,
+    "primaryRouteCount": 2,
+    "landmarkCount": 1
   }
 }
 ```
 
-Recipe fields describe semantic intent and measurable constraints. They do not
-contain atlas coordinates, TileForge source paths, arbitrary executable code,
-or instructions to weaken validators.
+Recipe fields describe semantic intent and measurable bounds. Biases use
+normalized integers rather than unconstrained floating-point values. Recipes do
+not contain atlas coordinates, TileForge source paths, arbitrary executable
+code, resolved field parameters, or instructions to weaken validators.
+
+## ResolvedWorldConfig
+
+The versioned `RecipeCompiler` expands recipe presets and budgets through pinned
+rule packs into explicit generator parameters such as dimensions, chunk size,
+field thresholds, biome definitions, enabled passes, and placement budgets.
+
+`ResolvedWorldConfig` is:
+
+- deterministic from the normalized recipe and recipe-compiler version;
+- recorded and hashed for diagnostics;
+- readable in debug artifacts;
+- not a second user-authored configuration file;
+- rejected if its hash does not match a fresh resolution of the recipe.
+
+## Staged vocabulary
+
+Recipe vocabulary lands only with generator capability:
+
+- **W0:** seed, named presets, integer counts, integer biases, budgets, and
+  simple feature toggles.
+- **W2–W4:** field, biome, hydrology, and route controls backed by implemented
+  passes and validators.
+- **W5+:** named entities and relational constraints backed by an actual
+  placement or constraint solver.
+- **W9:** polished natural-language drafting, explanations, and structured
+  recipe-diff UX.
+
+Unknown or milestone-premature fields fail validation. They are never stored as
+promises for behavior that does not exist.
 
 ## Deterministic boundary
 
@@ -119,12 +148,14 @@ Reproducibility begins after a recipe has been:
 1. schema-valid;
 2. normalized;
 3. saved;
-4. assigned its generation identity.
+4. compiled into `ResolvedWorldConfig`;
+5. assigned its generation identity.
 
-The reproducible identity includes the normalized recipe, seed, WorldForge
-generator version, rule-pack versions, and pinned dependency identities. The
-original prose prompt may be stored as optional provenance, but it is not a
-substitute for the accepted recipe.
+The reproducible identity includes the normalized recipe—including its seed—the
+recipe-compiler version, WorldForge generator version, rule-pack versions, and
+pinned dependency identities. The resolved-config hash is recorded as derived
+verification. The original prose prompt may be stored as optional provenance,
+but it is not a substitute for the accepted recipe.
 
 WorldForge must be able to regenerate an accepted world offline without calling
 an AI model.
@@ -157,7 +188,7 @@ An AI authoring client must not:
 - execute arbitrary code embedded in a recipe;
 - declare a generated world approved without the required evidence and review.
 
-## Iteration model
+## Future W9 iteration model
 
 A useful AI-assisted iteration is expressed as a recipe diff:
 
