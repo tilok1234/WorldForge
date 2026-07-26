@@ -9,7 +9,7 @@
  *   generate <file> --out <dir>    run the pipeline and write world outputs
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { canonicalJson } from "./core/canonicalJson.js";
@@ -21,9 +21,12 @@ import {
   generationIdentity,
   resolvedConfigIdentity,
 } from "./recipe/compile.js";
-import { generateWorld } from "./generation/generate.js";
+import { generateWorldDetailed } from "./generation/generate.js";
 import { validateArtifact } from "./validation/validateArtifact.js";
 import { writeWorldOutputs } from "./artifact/write.js";
+import { renderMacroSet } from "./render/macroRender.js";
+import { buildContactSheet } from "./render/contactSheet.js";
+import { canonicalSha256 } from "./core/identity.js";
 import {
   importTileForgePackage,
   verifyTileForgePackage,
@@ -39,6 +42,11 @@ const USAGE = `worldforge <command>
   resolve <file>               print the canonical ResolvedWorldConfig
   hash <file>                  print recipe, config, and generation hashes
   generate <file> --out <dir>  generate and write a world (guarded output)
+  render-macro <file> --out <dir>
+                               write macro debug renders (biomes + fields)
+                               and the region report
+  contact-sheet <file> --out <dir> [--seeds <n>]
+                               render n consecutive seeds into one review grid
   import-package <zip> [--id <packageId>] [--label <text>]
                                import a TileForge release package (explicit,
                                one-time; upgrades are a deliberate event)
@@ -64,6 +72,12 @@ function main(argv: readonly string[]): void {
       break;
     case "generate":
       exitWith(runGenerate(argv.slice(1)));
+      break;
+    case "render-macro":
+      exitWith(runRenderMacro(argv.slice(1)));
+      break;
+    case "contact-sheet":
+      exitWith(runContactSheet(argv.slice(1)));
       break;
     case "import-package":
       exitWith(runImportPackage(argv.slice(1)));
@@ -91,8 +105,8 @@ function runSmoke(): number {
   };
   const normalized = normalizeRecipe(recipe);
   const config = compileRecipe(normalized);
-  const artifact = generateWorld(normalized, config);
-  const report = validateArtifact(artifact);
+  const artifact = generateWorldDetailed(normalized, config).artifact;
+  const report = validateArtifact(artifact, { minRegionCells: config.biomes.minRegionCells });
   if (report.status !== "pass") {
     process.stderr.write(`smoke: FAIL\n${report.errors.join("\n")}\n`);
     return 1;
@@ -177,8 +191,8 @@ function runGenerate(argv: readonly string[]): number {
   }
   const normalized = normalizeRecipe(loaded);
   const config = compileRecipe(normalized);
-  const artifact = generateWorld(normalized, config);
-  const report = validateArtifact(artifact);
+  const artifact = generateWorldDetailed(normalized, config).artifact;
+  const report = validateArtifact(artifact, { minRegionCells: config.biomes.minRegionCells });
   if (report.status !== "pass") {
     process.stderr.write(`validation FAILED; nothing written\n${report.errors.join("\n")}\n`);
     return 1;
@@ -191,12 +205,121 @@ function runGenerate(argv: readonly string[]): number {
   });
   process.stdout.write(
     [
-      `generated ${config.world.width}x${config.world.height} world (${artifact.chunks.length} chunks)`,
+      `generated ${config.world.width}x${config.world.height} world (${artifact.chunks.length} chunks, ${artifact.regions.length} regions)`,
       `generationIdentitySha256: ${artifact.generator.generationIdentitySha256}`,
+      ...report.warnings.map((warning) => `warning: ${warning}`),
       ...written.map((path) => `wrote ${path}`),
     ].join("\n") + "\n",
   );
   return 0;
+}
+
+function runRenderMacro(argv: readonly string[]): number {
+  const parsed = parseFileAndOut(argv, "render-macro");
+  if (typeof parsed === "number") {
+    return parsed;
+  }
+  const loaded = loadRecipe(parsed.file);
+  if (typeof loaded === "number") {
+    return loaded;
+  }
+  const normalized = normalizeRecipe(loaded);
+  const config = compileRecipe(normalized);
+  const result = generateWorldDetailed(normalized, config);
+  const report = validateArtifact(result.artifact, { minRegionCells: config.biomes.minRegionCells });
+  if (report.status !== "pass") {
+    process.stderr.write(`validation FAILED; nothing written\n${report.errors.join("\n")}\n`);
+    return 1;
+  }
+  const renders = renderMacroSet(result.fields, result.biomeWorld);
+  mkdirSync(parsed.outDir, { recursive: true });
+  const files: Array<[string, Buffer | string]> = [
+    ["macro-biomes.png", renders.biomes],
+    ["macro-elevation.png", renders.elevation],
+    ["macro-moisture.png", renders.moisture],
+    ["macro-temperature.png", renders.temperature],
+    [
+      "regions-report.json",
+      canonicalJson({
+        generationIdentitySha256: result.artifact.generator.generationIdentitySha256,
+        regionCount: result.artifact.regions.length,
+        residualSmallRegions: result.biomeWorld.residualSmallRegions,
+        regions: result.artifact.regions,
+        validation: report,
+      }),
+    ],
+  ];
+  for (const [name, data] of files) {
+    writeFileSync(join(parsed.outDir, name), data);
+    process.stdout.write(`wrote ${join(parsed.outDir, name)}\n`);
+  }
+  return 0;
+}
+
+function runContactSheet(argv: readonly string[]): number {
+  let seeds = 16;
+  const filtered: string[] = [];
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--seeds") {
+      seeds = Number(argv[i + 1]);
+      i += 1;
+    } else {
+      filtered.push(argv[i] as string);
+    }
+  }
+  const parsed = parseFileAndOut(filtered, "contact-sheet");
+  if (typeof parsed === "number") {
+    return parsed;
+  }
+  const loaded = loadRecipe(parsed.file);
+  if (typeof loaded === "number") {
+    return loaded;
+  }
+  const normalized = normalizeRecipe(loaded);
+  const sheet = buildContactSheet(normalized, seeds);
+  mkdirSync(parsed.outDir, { recursive: true });
+  writeFileSync(join(parsed.outDir, "contact-sheet.png"), sheet.png);
+  writeFileSync(join(parsed.outDir, "contact-sheet-index.json"), canonicalJson(sheet.index));
+  process.stdout.write(
+    [
+      `rendered ${sheet.index.tiles.length} seeds (${sheet.index.columns}x${sheet.index.rows} grid)`,
+      `index sha256: ${canonicalSha256(sheet.index)}`,
+      `wrote ${join(parsed.outDir, "contact-sheet.png")}`,
+      `wrote ${join(parsed.outDir, "contact-sheet-index.json")}`,
+    ].join("\n") + "\n",
+  );
+  return 0;
+}
+
+function parseFileAndOut(
+  argv: readonly string[],
+  command: string,
+): { file: string; outDir: string } | number {
+  const positional: string[] = [];
+  let outDir: string | undefined;
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === "--out") {
+      outDir = argv[i + 1];
+      i += 1;
+    } else if (arg !== undefined) {
+      positional.push(arg);
+    }
+  }
+  const file = positional[0];
+  if (file === undefined || outDir === undefined) {
+    process.stderr.write(`usage: worldforge ${command} <recipe.json> --out <dir>\n`);
+    return 2;
+  }
+  const guard = guardOutputRoot(outDir, {
+    worldforgeRoot: WORLDFORGE_ROOT,
+    forbiddenRoots: loadForbiddenRoots(),
+  });
+  if (!guard.allowed) {
+    process.stderr.write(`output path rejected: ${guard.reason}\n  ${guard.resolvedPath}\n`);
+    return 1;
+  }
+  return { file, outDir: guard.resolvedPath };
 }
 
 function runImportPackage(argv: readonly string[]): number {

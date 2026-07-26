@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { canonicalJson } from "../src/core/canonicalJson.js";
 import { buildKernelVectors } from "../src/testing/kernelVectors.js";
+import { buildMacroSamples, buildTinyBiomePng } from "../src/testing/macroSamples.js";
 import { validateRecipe } from "../src/recipe/validate.js";
 import { normalizeRecipe, recipeIdentity } from "../src/recipe/normalize.js";
 import {
@@ -71,3 +72,11 @@ writeFileSync(join(GOLDEN_DIR, "kernel-vectors.json"), canonicalJson(buildKernel
   encoding: "utf8",
 });
 process.stdout.write(`updated ${join(GOLDEN_DIR, "kernel-vectors.json")}\n`);
+
+writeFileSync(join(GOLDEN_DIR, "macro-samples.json"), canonicalJson(buildMacroSamples()), {
+  encoding: "utf8",
+});
+process.stdout.write(`updated ${join(GOLDEN_DIR, "macro-samples.json")}\n`);
+
+writeFileSync(join(GOLDEN_DIR, "tiny-biomes.png"), buildTinyBiomePng());
+process.stdout.write(`updated ${join(GOLDEN_DIR, "tiny-biomes.png")}\n`);

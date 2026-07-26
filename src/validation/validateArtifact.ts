@@ -7,15 +7,21 @@ export interface ValidationReport {
   readonly warnings: readonly string[];
 }
 
+export interface ValidationOptions {
+  /** Regions below this size warn; one-cell regions are always errors. */
+  readonly minRegionCells?: number;
+}
+
 const HEX64 = /^[0-9a-f]{64}$/;
 const SEMANTIC_KEY = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/;
 
 /**
- * W0 structural validation (docs/GENERATION_RULES.md, "Validation gates"):
- * exact chunk coverage, consistent layer shapes, in-range palette references,
- * and a complete generation identity. Later milestones add topology gates.
+ * Structural validation (docs/GENERATION_RULES.md, "Validation gates"): exact
+ * chunk coverage, consistent layer shapes, in-range palette references, a
+ * complete generation identity, and region-size gates. Later milestones add
+ * topology gates.
  */
-export function validateArtifact(artifact: WorldArtifact): ValidationReport {
+export function validateArtifact(artifact: WorldArtifact, options: ValidationOptions = {}): ValidationReport {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -99,6 +105,28 @@ export function validateArtifact(artifact: WorldArtifact): ValidationReport {
 
     if (seen.size !== expected) {
       errors.push(`chunks must cover the world exactly once: expected ${expected}, found ${seen.size}`);
+    }
+  }
+
+  if (errors.length === 0 && artifact.regions.length > 0) {
+    let regionCellTotal = 0;
+    for (const region of artifact.regions) {
+      regionCellTotal += region.cellCount;
+      if (!artifact.semanticPalette.includes(region.biome)) {
+        errors.push(`region ${region.id} names biome "${region.biome}" outside the palette`);
+      }
+      if (region.cellCount === 1) {
+        errors.push(`region ${region.id} is one-cell biome confetti`);
+      } else if (options.minRegionCells !== undefined && region.cellCount < options.minRegionCells) {
+        warnings.push(
+          `region ${region.id} (${region.biome}) has ${region.cellCount} cells, below the ${options.minRegionCells}-cell minimum`,
+        );
+      }
+    }
+    if (regionCellTotal !== width * height) {
+      errors.push(
+        `region cell counts must cover the world exactly once: expected ${width * height}, found ${regionCellTotal}`,
+      );
     }
   }
 

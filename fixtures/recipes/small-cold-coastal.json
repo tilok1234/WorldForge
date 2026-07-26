@@ -3,9 +3,7 @@
   "seed": 103991,
   "world": { "sizePreset": "small", "climatePreset": "cold_coastal" },
   "biases": {
-    "northElevationPermille": 350,
-    "temperaturePermille": -400,
-    "moisturePermille": 200
+    "northElevationPermille": 350
   },
   "budgets": {
     "regionCount": 4,

@@ -28,8 +28,10 @@ const CLIMATE_RULES: { readonly [key in ClimatePreset]: ClimateBase } = {
     coastalInfluencePermille: 0,
   },
   cold_coastal: {
-    baseTemperaturePermille: -400,
-    baseMoisturePermille: 200,
+    // Offsets shift the tight fbm bell (p50 ≈ 470) without saturating one
+    // class; tuned against measured percentiles during W2 review.
+    baseTemperaturePermille: -150,
+    baseMoisturePermille: 80,
     coastalInfluencePermille: 500,
   },
 };
@@ -47,8 +49,31 @@ interface ClimateBase {
   readonly coastalInfluencePermille: number;
 }
 
+export interface MacroFieldSpec {
+  readonly octaves: ReadonlyArray<{ readonly cellSizeLog2: number; readonly weightPermille: number }>;
+  /** Added to every sample before clamping to [0, 999]. */
+  readonly offsetPermille: number;
+  /** North-south gradient strength (positive = higher in the north). */
+  readonly northGradientPermille: number;
+}
+
+export interface BiomeRules {
+  /** Regions smaller than this merge into a neighbor during smoothing. */
+  readonly minRegionCells: number;
+  /** Bounded smoothing iterations (docs/GENERATION_RULES.md, performance). */
+  readonly smoothingPasses: number;
+  readonly thresholds: {
+    readonly rockElevationMin: number;
+    readonly snowTemperatureMax: number;
+    readonly mudMoistureMin: number;
+    readonly mudElevationMax: number;
+    readonly dryMoistureMax: number;
+    readonly dryTemperatureMin: number;
+  };
+}
+
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 1;
+  readonly resolvedConfigFormat: 2;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -59,18 +84,67 @@ export interface ResolvedWorldConfig {
     readonly temperatureBiasPermille: number;
     readonly moistureBiasPermille: number;
   };
+  readonly macroFields: {
+    readonly elevation: MacroFieldSpec;
+    readonly moisture: MacroFieldSpec;
+    readonly temperature: MacroFieldSpec;
+  };
+  readonly biomes: BiomeRules;
   readonly budgets: NormalizedWorldRecipe["budgets"];
   /** Named generation passes enabled at this behavior version. */
   readonly passes: readonly string[];
-  /** W0A: no TileForge package is pinned yet; adapter stages stay disabled. */
+  /** No TileForge-consuming pass exists yet; the adapter (W6) pins it. */
   readonly dependencies: { readonly tileforge: null };
 }
+
+/** macro.fields rule pack v1: octave layouts per size preset. */
+const OCTAVE_RULES: { readonly [key in SizePreset]: MacroFieldSpec["octaves"] } = {
+  tiny: [
+    { cellSizeLog2: 5, weightPermille: 550 },
+    { cellSizeLog2: 4, weightPermille: 300 },
+    { cellSizeLog2: 3, weightPermille: 150 },
+  ],
+  small: [
+    { cellSizeLog2: 6, weightPermille: 550 },
+    { cellSizeLog2: 5, weightPermille: 300 },
+    { cellSizeLog2: 4, weightPermille: 150 },
+  ],
+};
+
+/** macro.biomes rule pack v1: thresholds and region limits per size preset. */
+const BIOME_RULES: { readonly [key in SizePreset]: BiomeRules } = {
+  tiny: {
+    minRegionCells: 12,
+    smoothingPasses: 8,
+    thresholds: {
+      rockElevationMin: 660,
+      snowTemperatureMax: 320,
+      mudMoistureMin: 630,
+      mudElevationMax: 500,
+      dryMoistureMax: 380,
+      dryTemperatureMin: 460,
+    },
+  },
+  small: {
+    minRegionCells: 80,
+    smoothingPasses: 8,
+    thresholds: {
+      rockElevationMin: 660,
+      snowTemperatureMax: 320,
+      mudMoistureMin: 630,
+      mudElevationMax: 500,
+      dryMoistureMax: 380,
+      dryTemperatureMin: 460,
+    },
+  },
+};
 
 export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldConfig {
   const size = SIZE_RULES[normalized.world.sizePreset];
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
+  const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 1,
+    resolvedConfigFormat: 2,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -82,8 +156,26 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
       temperatureBiasPermille: normalized.biases.temperaturePermille,
       moistureBiasPermille: normalized.biases.moisturePermille,
     },
+    macroFields: {
+      elevation: {
+        octaves,
+        offsetPermille: 0,
+        northGradientPermille: normalized.biases.northElevationPermille,
+      },
+      moisture: {
+        octaves,
+        offsetPermille: climate.baseMoisturePermille + normalized.biases.moisturePermille,
+        northGradientPermille: 0,
+      },
+      temperature: {
+        octaves,
+        offsetPermille: climate.baseTemperaturePermille + normalized.biases.temperaturePermille,
+        northGradientPermille: 0,
+      },
+    },
+    biomes: BIOME_RULES[normalized.world.sizePreset],
     budgets: normalized.budgets,
-    passes: ["terrain.base"],
+    passes: ["macro.fields", "regions.biomes"],
     dependencies: { tileforge: null },
   };
 }

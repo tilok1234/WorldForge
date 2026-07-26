@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldforge.local/schemas/resolved-world-config-2.schema.json",
+  "title": "ResolvedWorldConfig (format 2)",
+  "description": "Deterministically derived generator parameters produced by the versioned recipe compiler (src/recipe/compile.ts). Format 2 adds macro-field and biome rule-pack expansions (Milestone W2). Derived data: hashed for verification, never independently authored or edited.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "resolvedConfigFormat",
+    "recipeCompilerVersion",
+    "generatorBehaviorVersion",
+    "rulePackVersions",
+    "seed",
+    "world",
+    "climate",
+    "macroFields",
+    "biomes",
+    "budgets",
+    "passes",
+    "dependencies"
+  ],
+  "properties": {
+    "resolvedConfigFormat": { "const": 2 },
+    "recipeCompilerVersion": { "type": "integer", "minimum": 1 },
+    "generatorBehaviorVersion": { "type": "integer", "minimum": 1 },
+    "rulePackVersions": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 1 }
+    },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+    "world": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "chunkWidth", "chunkHeight"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "chunkWidth": { "type": "integer", "minimum": 1 },
+        "chunkHeight": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "climate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "baseTemperaturePermille",
+        "baseMoisturePermille",
+        "coastalInfluencePermille",
+        "northElevationBiasPermille",
+        "temperatureBiasPermille",
+        "moistureBiasPermille"
+      ],
+      "properties": {
+        "baseTemperaturePermille": { "type": "integer" },
+        "baseMoisturePermille": { "type": "integer" },
+        "coastalInfluencePermille": { "type": "integer" },
+        "northElevationBiasPermille": { "type": "integer" },
+        "temperatureBiasPermille": { "type": "integer" },
+        "moistureBiasPermille": { "type": "integer" }
+      }
+    },
+    "macroFields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["elevation", "moisture", "temperature"],
+      "properties": {
+        "elevation": { "$ref": "#/$defs/macroFieldSpec" },
+        "moisture": { "$ref": "#/$defs/macroFieldSpec" },
+        "temperature": { "$ref": "#/$defs/macroFieldSpec" }
+      }
+    },
+    "biomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minRegionCells", "smoothingPasses", "thresholds"],
+      "properties": {
+        "minRegionCells": { "type": "integer", "minimum": 1 },
+        "smoothingPasses": { "type": "integer", "minimum": 0 },
+        "thresholds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "rockElevationMin",
+            "snowTemperatureMax",
+            "mudMoistureMin",
+            "mudElevationMax",
+            "dryMoistureMax",
+            "dryTemperatureMin"
+          ],
+          "properties": {
+            "rockElevationMin": { "type": "integer" },
+            "snowTemperatureMax": { "type": "integer" },
+            "mudMoistureMin": { "type": "integer" },
+            "mudElevationMax": { "type": "integer" },
+            "dryMoistureMax": { "type": "integer" },
+            "dryTemperatureMin": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["regionCount", "settlementCount", "primaryRouteCount", "landmarkCount"],
+      "properties": {
+        "regionCount": { "type": "integer" },
+        "settlementCount": { "type": "integer" },
+        "primaryRouteCount": { "type": "integer" },
+        "landmarkCount": { "type": "integer" }
+      }
+    },
+    "passes": { "type": "array", "items": { "type": "string" } },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tileforge"],
+      "properties": { "tileforge": { "type": "null" } }
+    }
+  },
+  "$defs": {
+    "macroFieldSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["octaves", "offsetPermille", "northGradientPermille"],
+      "properties": {
+        "octaves": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["cellSizeLog2", "weightPermille"],
+            "properties": {
+              "cellSizeLog2": { "type": "integer", "minimum": 1, "maximum": 16 },
+              "weightPermille": { "type": "integer", "minimum": 0, "maximum": 1000 }
+            }
+          }
+        },
+        "offsetPermille": { "type": "integer" },
+        "northGradientPermille": { "type": "integer" }
+      }
+    }
+  }
+}

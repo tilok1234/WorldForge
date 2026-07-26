@@ -30,16 +30,27 @@ describe("recipe compiler", () => {
 
   it("expands climate presets and carries biases separately", () => {
     const config = compileRecipe(normalized(1, "small", "cold_coastal"));
-    assert.equal(config.climate.baseTemperaturePermille, -400);
-    assert.equal(config.climate.baseMoisturePermille, 200);
+    assert.equal(config.climate.baseTemperaturePermille, -150);
+    assert.equal(config.climate.baseMoisturePermille, 80);
     assert.equal(config.climate.coastalInfluencePermille, 500);
     assert.equal(config.climate.temperatureBiasPermille, 0);
   });
 
-  it("keeps the W0A dependency state explicit", () => {
+  it("keeps the dependency state explicit and lists the W2 passes", () => {
     const config = compileRecipe(normalized(1, "tiny", "temperate"));
     assert.equal(config.dependencies.tileforge, null);
-    assert.deepEqual(config.passes, ["terrain.base"]);
+    assert.deepEqual(config.passes, ["macro.fields", "regions.biomes"]);
+    assert.equal(config.resolvedConfigFormat, 2);
+    assert.equal(config.macroFields.temperature.offsetPermille, 0);
+    assert.equal(config.biomes.minRegionCells, 12);
+  });
+
+  it("feeds climate presets and biases into the field specs", () => {
+    const config = compileRecipe(normalized(1, "small", "cold_coastal"));
+    assert.equal(config.macroFields.temperature.offsetPermille, -150);
+    assert.equal(config.macroFields.moisture.offsetPermille, 80);
+    assert.equal(config.macroFields.elevation.northGradientPermille, 0);
+    assert.equal(config.biomes.minRegionCells, 80);
   });
 
   it("is deterministic: same recipe, byte-identical config and hashes", () => {
