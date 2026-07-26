@@ -5,8 +5,8 @@
   ],
   "bridgeStructures": 3,
   "cropCells": 0,
-  "decorationDecals": 1834,
-  "dirtPathCells": 826,
+  "decorationDecals": 1763,
+  "dirtPathCells": 824,
   "fordDecals": 76,
   "materialCells": {
     "terrain.cobble": 3378,
@@ -23,10 +23,10 @@
     "water.shallow": 6633
   },
   "metaCells": 1777,
-  "overlayCells": 1933,
+  "overlayCells": 3690,
   "packageId": "forest-a5baf52-seed103991",
   "pierCells": 13,
-  "propCells": 8253,
+  "propCells": 9723,
   "unresolvedKeys": [],
   "wallCells": 139
 }

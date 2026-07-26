@@ -62,8 +62,11 @@ export const GENERATOR_VERSION = "0.1.0";
  *     groves, mushroom glens, burned woods, boulder fields, cactus
  *     flats; five new species (giant shroom, corrupted tree, beehive,
  *     cactus, flower bed).
+ * 26: density dial (decoration.props 7) — ambient scatter roughly doubled
+ *     per biome, sparser biomes' forest bases raised, tall-grass and moss
+ *     patches widened, character zones more numerous and larger.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 25;
+export const GENERATOR_BEHAVIOR_VERSION = 26;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 13;
@@ -77,7 +80,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "routes.graph": 7,
   "settlements.plans": 7,
   "landmarks.stamps": 4,
-  "decoration.props": 6,
+  "decoration.props": 7,
   "decoration.pois": 8,
   "adapter.tileforge": 3,
 };
