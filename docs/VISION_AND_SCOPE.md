@@ -235,4 +235,5 @@ The first meaningful demonstration should be one small finite world containing:
 - Canonical world and chunk dimensions.
 - World artifact encoding: readable JSON first, compact binary later.
 - Exact extension interface for game-specific content.
-- Whether authored landmarks use raw semantic stamps, scenes, or both.
+- Authored landmarks: raw semantic stamps implemented (W5, fixtures/stamps/);
+  forge-composed scenes remain a possible later addition.

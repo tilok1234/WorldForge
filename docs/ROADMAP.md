@@ -10,8 +10,15 @@ remain gated until the foundation proves deterministic and integrable.
 TypeScript is the adopted language for the engine-neutral compiler and CLI. See
 `decisions/ADR-0001-typescript.md`.
 
-The remaining pre-W0 input is the first real TileForge export that will serve as
-the compatibility package.
+Status 2026-07-26: W0-W5 are complete and visually approved as baselines; W6
+is complete and approved at the data level. Two W6 exit criteria transfer to
+the W7 entry gate and must not quietly vanish: (1) the reference slice passing
+the TileForge acceptance procedure through the packaged Godot importer per the
+guide map-reference method; (2) chunk-border matching at resolution level —
+mask/underlay agreement across seams, not just raw grids. Standing W7
+native-scale check: if the resolved town reads as a row of boxes, W5.1 is
+footprint variety (package cottage/tavern/smithy/chapel/manor pool) and plaza
+legibility. Flat elevation is accepted, flagged future work.
 
 ## Milestone W0 — Repository and contracts
 
