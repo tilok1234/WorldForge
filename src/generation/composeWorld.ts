@@ -9,7 +9,7 @@ import { clampInt } from "../core/fixedPoint.js";
 import { floorDiv } from "../core/coords.js";
 import type { ResolvedWorldConfig } from "../recipe/compile.js";
 import { buildMacroFields, type MacroFields } from "../fields/macroFields.js";
-import { buildHydrology, WATER_DEEP, WATER_SHALLOW, type HydrologyResult } from "../hydrology/hydrology.js";
+import { buildHydrology, WATER_DEEP, WATER_NONE, WATER_SHALLOW, type HydrologyResult } from "../hydrology/hydrology.js";
 import { decorateWorld, type DecorationResult } from "../decoration/decorate.js";
 import { planFarmsAndPiers, type FarmResult } from "../settlements/farms.js";
 import {
@@ -112,6 +112,77 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     }
   }
 
+  // Beaches (behavior 14) run AFTER wetlands: marsh coasts survive as swamp
+  // ribbons, remaining low shoreline land becomes sand. The elevation gate
+  // keeps beaches to sea-level coasts, and the first row/column is excluded —
+  // the pinned package's §2.7 sand margin cannot represent sand there.
+  const beachOriginals = new Map<number, number>();
+  {
+    const SAND = PALETTE_INDEX["terrain.sand"];
+    const sandable = new Set<number>([GRASS, DRY_GRASS, MUD]);
+    const beachElevationMax = config.water.seaLevelPermille + 45;
+    const placements = beachOriginals;
+    for (let y = 1; y < height; y += 1) {
+      for (let x = 1; x < width; x += 1) {
+        const index = y * width + x;
+        if (hydro.waterKind[index] !== WATER_NONE) continue;
+        if (!sandable.has(grid[index] as number)) continue;
+        if ((fields.elevation[index] as number) > beachElevationMax) continue;
+        if (hydro.isRiver[index] === 1) continue;
+        let besideWater = false;
+        for (const neighbor of [index - width, index + width, index - 1, index + 1]) {
+          if (neighbor < 0 || neighbor >= grid.length) continue;
+          if (x === 0 && neighbor === index - 1) continue;
+          if (x === width - 1 && neighbor === index + 1) continue;
+          if (hydro.waterKind[neighbor] !== WATER_NONE) {
+            besideWater = true;
+            break;
+          }
+        }
+        if (besideWater) {
+          placements.set(index, grid[index] as number);
+          grid[index] = SAND;
+        }
+      }
+    }
+    // Fill pockets fully enclosed by sand/water (swamp specks included) so
+    // smoothing — barred from spreading sand — never meets an unabsorbable
+    // one-cell hole behind the ribbon.
+    const fillable = new Set<number>([GRASS, DRY_GRASS, MUD, SWAMP]);
+    let filled = true;
+    while (filled) {
+      filled = false;
+      for (let y = 1; y < height; y += 1) {
+        for (let x = 1; x < width; x += 1) {
+          const index = y * width + x;
+          if (hydro.waterKind[index] !== WATER_NONE) continue;
+          if (!fillable.has(grid[index] as number)) continue;
+          if ((fields.elevation[index] as number) > beachElevationMax) continue;
+          if (hydro.isRiver[index] === 1) continue;
+          let enclosed = true;
+          for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+              enclosed = false;
+              break;
+            }
+            const value = grid[ny * width + nx] as number;
+            if (value !== SAND && value !== SHALLOW && value !== DEEP) {
+              enclosed = false;
+              break;
+            }
+          }
+          if (enclosed) {
+            placements.set(index, grid[index] as number);
+            grid[index] = SAND;
+            filled = true;
+          }
+        }
+      }
+    }
+  }
+
   // Routes stamp packed-road corridors into the material grid after all
   // terrain passes, so decoration-era passes can never sever them unnoticed:
   // connectivity is re-verified on the final grid.
@@ -127,7 +198,47 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   // Absorb one-cell regions introduced by overlays and road carving. Road
   // cells are protected: traversal-critical corridors are never rewritten,
   // and connectivity is re-verified afterwards on the final grid.
-  smoothConfetti(grid, width, height, 2, 2, new Set([PALETTE_INDEX["terrain.packed_road"], PALETTE_INDEX["terrain.cobble"]]));
+  // A beach is at least two contiguous cells: sand is confetti-protected, so
+  // lone survivors — including cells orphaned when settlement streets paved
+  // their neighbors — revert to their original material. Runs after every
+  // pass that can rewrite shoreline cells.
+  {
+    const SAND = PALETTE_INDEX["terrain.sand"];
+    const lonely: number[] = [];
+    for (const index of beachOriginals.keys()) {
+      if (grid[index] !== SAND) continue;
+      const x = index % width;
+      let hasSandNeighbor = false;
+      for (const neighbor of [index - width, index + width, index - 1, index + 1]) {
+        if (neighbor < 0 || neighbor >= grid.length) continue;
+        if (x === 0 && neighbor === index - 1) continue;
+        if (x === width - 1 && neighbor === index + 1) continue;
+        if (grid[neighbor] === SAND) {
+          hasSandNeighbor = true;
+          break;
+        }
+      }
+      if (!hasSandNeighbor) {
+        lonely.push(index);
+      }
+    }
+    for (const index of lonely) {
+      grid[index] = beachOriginals.get(index) as number;
+    }
+  }
+
+  // Sand is protected like the corridors, and additionally barred as an
+  // absorption target: smoothing must neither erase a beach nor spread sand
+  // to cells the beach rule (and its §2.7 margin) never blessed.
+  smoothConfetti(
+    grid, width, height, 2, 2,
+    new Set([
+      PALETTE_INDEX["terrain.packed_road"],
+      PALETTE_INDEX["terrain.cobble"],
+      PALETTE_INDEX["terrain.sand"],
+    ]),
+    new Set([PALETTE_INDEX["terrain.sand"]]),
+  );
   const postCleanupErrors: string[] = [...planErrors];
   verifyRouteConnectivity(grid, routesResult.pathLayer, routesResult.routes, routesResult.destinations, width, height, postCleanupErrors);
   // Street-level crossings (single source of truth; the adapter renders

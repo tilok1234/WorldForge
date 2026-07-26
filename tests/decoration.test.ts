@@ -111,6 +111,31 @@ describe("decoration stage 1", () => {
     }
   });
 
+  it("keeps sand beaches on watered low shores and off the §2.7 margin", () => {
+    let sawSand = false;
+    for (let seed = 1; seed <= 6; seed += 1) {
+      const composed = composedFor(seed);
+      const { width, height } = composed;
+      const sand = PALETTE_INDEX["terrain.sand"];
+      for (let index = 0; index < composed.grid.length; index += 1) {
+        if (composed.grid[index] !== sand) continue;
+        sawSand = true;
+        const x = index % width;
+        const y = (index - x) / width;
+        assert.ok(x > 0 && y > 0, `sand at (${x}, ${y}) violates the sand margin`);
+        let besideWater = false;
+        for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+          if (composed.hydro.waterKind[ny * width + nx] !== WATER_NONE) besideWater = true;
+        }
+        assert.ok(besideWater, `sand at (${x}, ${y}) has no adjacent standing water`);
+      }
+    }
+    assert.ok(sawSand, "at least one seed grows a beach");
+  });
+
   it("varies forest density in patches rather than uniform scatter", () => {
     const composed = composedFor(3);
     const { width, height } = composed;

@@ -20,6 +20,7 @@ export const PALETTE_DEBUG_COLORS: { readonly [key in PaletteKey]: readonly [num
   "terrain.swamp": [70, 105, 82],
   "water.deep": [36, 86, 148],
   "water.shallow": [86, 156, 205],
+  "terrain.sand": [214, 197, 143],
 };
 
 const RIVER_COLOR: readonly [number, number, number] = [50, 110, 190];

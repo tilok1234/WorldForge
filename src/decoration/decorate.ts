@@ -436,10 +436,11 @@ export function decorateWorld(
           continue;
         }
       }
-      // Driftwood on open walkable banks.
+      // Driftwood on open walkable banks (beaches included).
       const walkableBank =
         material === grassValue || material === dryGrassValue ||
-        material === mudValue || material === gravelValue;
+        material === mudValue || material === gravelValue ||
+        material === PALETTE_INDEX["terrain.sand"];
       if (walkableBank && propLayer[index] === 0 && decalRoll.permilleAt(x, y, 4) < 24) {
         let besideWater = false;
         for (const offset of [index - width, index + width, index - 1, index + 1]) {

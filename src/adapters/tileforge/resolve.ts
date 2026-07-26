@@ -31,6 +31,7 @@ const MATERIAL_FAMILY: { readonly [key in PaletteKey]: string } = {
   "terrain.swamp": "muck",
   "water.deep": "deep",
   "water.shallow": "shallow",
+  "terrain.sand": "sand",
 };
 
 /** WorldForge structure types -> package structure names. */

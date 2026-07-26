@@ -18,8 +18,10 @@ export const GENERATOR_VERSION = "0.1.0";
  *     radii, market stalls, short street-hugging approaches.
  * 13: decoration v3 — cosmetic decals keep off streams and blocked terrain
  *     (the package reference walkability would turn them into passage).
+ * 14: sand beaches on low sea-level shores (macro.biomes 2) — the first
+ *     production use of the package's corner16 dual-grid sand system.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 13;
+export const GENERATOR_BEHAVIOR_VERSION = 14;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 9;
@@ -28,7 +30,7 @@ export const RECIPE_COMPILER_VERSION = 9;
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "recipe.presets": 2,
   "macro.fields": 4,
-  "macro.biomes": 1,
+  "macro.biomes": 2,
   "hydrology.water": 2,
   "routes.graph": 2,
   "settlements.plans": 4,

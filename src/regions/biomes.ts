@@ -30,6 +30,8 @@ export const WORLD_PALETTE = [
   "terrain.swamp",
   "water.deep",
   "water.shallow",
+  // Append-only: existing palette indexes are part of every stored world.
+  "terrain.sand",
 ] as const;
 
 export type PaletteKey = (typeof WORLD_PALETTE)[number];
@@ -127,6 +129,9 @@ export function smoothConfetti(
   minRegionCells: number,
   passes: number,
   protectedValues: ReadonlySet<number> = new Set(),
+  /** Materials small pockets may never be absorbed INTO (e.g. sand, whose
+   * placement rule owns the §2.7 margin and shoreline adjacency). */
+  barredTargets: ReadonlySet<number> = new Set(),
 ): void {
   for (let pass = 0; pass < passes; pass += 1) {
     const { labels, components } = labelComponents(grid, width, height);
@@ -172,6 +177,9 @@ export function smoothConfetti(
       let bestLabel = -1;
       let bestCount = -1;
       for (const [neighborLabel, count] of neighbors) {
+        if (barredTargets.has((components[neighborLabel] as Component).biome)) {
+          continue;
+        }
         if (count > bestCount || (count === bestCount && neighborLabel < bestLabel)) {
           bestLabel = neighborLabel;
           bestCount = count;
