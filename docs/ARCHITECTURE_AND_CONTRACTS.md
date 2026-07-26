@@ -217,6 +217,20 @@ Runs structural checks and produces:
 - TileForge-resolved reference slice;
 - machine-readable validation report.
 
+The visualizer matures into an **interactive artifact viewer** once layers
+stack (planned at W4): a single-file, no-build browser tool in the spirit of
+TileForge's workbench delivery style that loads a world artifact plus its
+validation report and provides pan/zoom, per-layer toggles for the views
+listed above, and hover inspection of cells, regions, routes, and placements.
+
+The viewer is **read-only by contract**. It MUST NOT write, edit, or repair
+world data — the graphical world *editor* remains deferred, and hand-edited
+worlds would break the recipe-is-truth contract. Static debug renders remain
+the milestone evidence format before the viewer exists (W2–W3) and stay
+available afterward for reports and diffs. Once the public TypeScript loader
+exists (W8), the viewer SHOULD run on that loader, so opening a world also
+exercises the consumer contract.
+
 ## Suggested repository structure
 
 ```text

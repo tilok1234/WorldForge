@@ -136,7 +136,12 @@ Deliverables:
 - local dirt-path routing;
 - bridge/ford candidate selection;
 - TileForge-compatible road corridor semantics;
-- connectivity and detour validators.
+- connectivity and detour validators;
+- interactive read-only artifact viewer v1 — single-file, no-build browser
+  tool loading the world artifact: pan/zoom, layer toggles (fields,
+  hydrology, biomes, routes, placements, chunk grid), hover inspection.
+  Read-only by contract; the graphical world editor stays deferred. Static
+  debug renders remain the evidence format for W2-W3 and for reports.
 
 Exit criteria:
 
@@ -224,7 +229,9 @@ Deliverables:
 - chunk query or streaming interface suitable for TypeScript games;
 - build-time CLI integration example;
 - small TypeScript traversal or inspection harness using the W7 world;
-- cross-consumer parity fixture and report.
+- cross-consumer parity fixture and report;
+- artifact viewer migrated onto the public loader, so opening a world in the
+  viewer also exercises the consumer contract.
 
 Exit criteria:
 
@@ -271,7 +278,8 @@ Exit criteria:
 - enemy population simulation;
 - faction territory simulation;
 - economy simulation;
-- graphical world editor;
+- graphical world editor (the read-only artifact viewer, W4, is in scope —
+  editing is what stays deferred);
 - runtime AI as a requirement for generation or loading;
 - in-process runtime generation inside shipped Godot or TypeScript games;
 - Unity support;
