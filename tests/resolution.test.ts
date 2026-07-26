@@ -20,6 +20,7 @@ import {
   loadPackageMapData,
   verifyAgainstPackageMap,
   verifyChunkedResolution,
+  verifyReferenceRender,
 } from "../src/adapters/tileforge/verifyResolution.js";
 
 function composedFor(seed: number) {
@@ -207,6 +208,20 @@ describe("workbench truth test", () => {
     const sand = report.layers.find((l) => l.layer === "sand");
     assert.ok(sand !== undefined && sand.cellsCompared > 3000, "sand interior compared");
     assert.match((sand.notes ?? []).join(" "), /240 dual points \(16 diverge/);
+  });
+});
+
+describe("§4 acceptance, step 1: reference render", () => {
+  it("renders map.tmj from stored gids pixel-identical to map-reference.png", () => {
+    const report = verifyReferenceRender();
+    assert.equal(
+      report.differingPixels,
+      0,
+      `${report.differingPixels}/${report.totalPixels} differing\n  ${report.samples.join("\n  ")}`,
+    );
+    assert.ok(report.ok);
+    assert.equal(report.width, 72 * 32);
+    assert.equal(report.height, 48 * 32);
   });
 });
 

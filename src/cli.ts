@@ -35,7 +35,9 @@ import { resolveToTileForge } from "./adapters/tileforge/resolve.js";
 import {
   verifyAgainstPackageMap,
   verifyChunkedResolution,
+  verifyReferenceRender,
 } from "./adapters/tileforge/verifyResolution.js";
+import { encodePng } from "./render/png.js";
 import type { NormalizedWorldRecipe, WorldRecipe } from "./recipe/schema.js";
 
 const WORLDFORGE_ROOT = fileURLToPath(new URL("../..", import.meta.url));
@@ -463,6 +465,30 @@ function runVerifyResolution(file: string | undefined): number {
   }
   if (!truth.ok) {
     process.stderr.write("truth test FAILED: derivation is not forge-identical\n");
+    return 1;
+  }
+
+  const render = verifyReferenceRender();
+  process.stdout.write(
+    `§4 step 1 reference render (stored gids, frame 0): ${render.width}x${render.height}, ` +
+      `${render.differingPixels}/${render.totalPixels} differing pixels ` +
+      `${render.ok ? "— zero-diff pass" : "— FAIL"}\n`,
+  );
+  if (!render.ok) {
+    for (const sample of render.samples) {
+      process.stdout.write(`    ${sample}\n`);
+    }
+    const debugDir = join(WORLDFORGE_ROOT, "outputs", "w7-acceptance");
+    mkdirSync(debugDir, { recursive: true });
+    const rgb = new Uint8Array(render.width * render.height * 3);
+    for (let p = 0; p < render.width * render.height; p += 1) {
+      rgb[p * 3] = render.rgba[p * 4] as number;
+      rgb[p * 3 + 1] = render.rgba[p * 4 + 1] as number;
+      rgb[p * 3 + 2] = render.rgba[p * 4 + 2] as number;
+    }
+    const debugPath = join(debugDir, "stored-gid-render.png");
+    writeFileSync(debugPath, encodePng(render.width, render.height, rgb));
+    process.stderr.write(`reference render FAILED; our composite written to ${debugPath}\n`);
     return 1;
   }
 

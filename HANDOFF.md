@@ -64,7 +64,16 @@ cropped from a larger canvas, so its border sand ring carries pre-crop data,
 240 points / 16 divergent, reported not compared) and seam-clean (chunked
 halo-2 resolution == global, zero mismatches over 2.2M comparisons on the
 canonical 256x256 world at 16- and 32-cell chunks; window over-reads throw,
-so the halo bound is proven too). CLI: `verify-resolution`. 124 tests.
+so the halo bound is proven too). CLI: `verify-resolution`. 125 tests.
+**§4 acceptance now passes at both steps in pure TS**: step 1 — map.tmj
+rendered from stored gids (painter's algorithm, shipped layer order, binary
+alpha, frame 0, sand +16 offset) is pixel-identical to `map-reference.png`,
+0/3538944 differing; step 2 — the §2-derived masks match the stored ones
+(the truth test above). Zero-dep RGBA8 PNG decoder at
+`src/render/pngDecode.ts` (node:zlib inflate). The remaining
+entry-gate-1 language "through the packaged Godot importer" = run
+`tileforge_importer.gd` headless in `consumers/godot/` and re-check
+importer-built custom data; the pixel proof is already banked.
 Known contract question: GAME-GUIDE §2.6 includes packed road in the
 wet-bank list, FORMATS.md + the worldgen example omit it, the workbench map
 never exercises it — we follow FORMATS; bridge approaches are where a wrong

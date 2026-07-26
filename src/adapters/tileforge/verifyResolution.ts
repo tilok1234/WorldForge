@@ -17,8 +17,14 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
+import { decodePng, type DecodedPng } from "../../render/pngDecode.js";
 import type { TileForgeMapData } from "./resolve.js";
-import { loadPinnedManifest, type FamilyInfo, type TileForgeManifest } from "./manifest.js";
+import {
+  loadPinnedManifest,
+  type FamilyInfo,
+  type FamilyTile,
+  type TileForgeManifest,
+} from "./manifest.js";
 import {
   buildResolutionTables,
   resolveLayers,
@@ -90,9 +96,17 @@ interface TmjDocument {
   readonly tilesets: readonly { readonly firstgid: number; readonly source: string }[];
 }
 
-/** gid -> "family:mask" decoder built from the manifest atlas tables. */
+/** A tile resolved from a stored gid. */
+export interface DecodedGid {
+  readonly family: FamilyInfo;
+  readonly entryIndex: number;
+  readonly tile: FamilyTile;
+}
+
+/** gid decoder built from the manifest atlas tables. */
 export interface GidDecoder {
   decode(gid: number): string;
+  decodeTile(gid: number): DecodedGid;
 }
 
 const FLIP_BITS = 0xe0000000;
@@ -110,40 +124,47 @@ export function buildGidDecoder(manifest: TileForgeManifest, doc: TmjDocument): 
         throw new Error(`map.tmj tileset "${entry.source}" matches no manifest family`);
       }
       const cell = 32 + 2 * family.atlasPadding;
-      const entries: { mask: number }[] = [];
+      const entries: FamilyTile[] = [];
       for (const tile of family.tiles) {
         const col = (tile.atlasX - family.atlasPadding) / cell;
         const row = (tile.atlasY - family.atlasPadding) / cell;
         if (!Number.isInteger(col) || !Number.isInteger(row)) {
           throw new Error(`family ${family.key}: atlas position off the padded grid`);
         }
-        entries[row * family.atlasColumns + col] = { mask: tile.mask };
+        entries[row * family.atlasColumns + col] = tile;
       }
-      return { firstgid: entry.firstgid, key: family.key, entries };
+      return { firstgid: entry.firstgid, family, entries };
     })
     .sort((a, b) => a.firstgid - b.firstgid);
 
+  const decodeTile = (gid: number): DecodedGid => {
+    if ((gid & FLIP_BITS) !== 0) {
+      throw new Error(`map.tmj gid ${gid} carries flip bits (§2.13 forbids them)`);
+    }
+    let found = null;
+    for (const set of sets) {
+      if (set.firstgid <= gid) {
+        found = set;
+      } else {
+        break;
+      }
+    }
+    if (found === null) {
+      throw new Error(`gid ${gid} precedes every tileset firstgid`);
+    }
+    const entryIndex = gid - found.firstgid;
+    const tile = found.entries[entryIndex];
+    if (tile === undefined) {
+      throw new Error(`gid ${gid} has no atlas entry in family ${found.family.key}`);
+    }
+    return { family: found.family, entryIndex, tile };
+  };
+
   return {
+    decodeTile,
     decode(gid: number): string {
-      if ((gid & FLIP_BITS) !== 0) {
-        throw new Error(`map.tmj gid ${gid} carries flip bits (§2.13 forbids them)`);
-      }
-      let found = null;
-      for (const set of sets) {
-        if (set.firstgid <= gid) {
-          found = set;
-        } else {
-          break;
-        }
-      }
-      if (found === null) {
-        throw new Error(`gid ${gid} precedes every tileset firstgid`);
-      }
-      const entry = found.entries[gid - found.firstgid];
-      if (entry === undefined) {
-        throw new Error(`gid ${gid} has no atlas entry in family ${found.key}`);
-      }
-      return `${found.key}:${entry.mask}`;
+      const { family, tile } = decodeTile(gid);
+      return `${family.key}:${tile.mask}`;
     },
   };
 }
@@ -290,6 +311,151 @@ export function verifyAgainstPackageMap(): TruthReport {
   }
 
   return { ok: allOk, mapW: data.mapW, mapH: data.mapH, layers: comparisons };
+}
+
+export interface RenderReport {
+  readonly ok: boolean;
+  readonly width: number;
+  readonly height: number;
+  readonly totalPixels: number;
+  readonly differingPixels: number;
+  readonly samples: readonly string[];
+  /** Our composite, for writing a debug artifact when the diff fails. */
+  readonly rgba: Uint8Array;
+}
+
+/**
+ * §4 step 1: render map.tmj from its STORED gids — painter's algorithm in the
+ * shipped layer order, binary alpha, animation snapped to frame 0, the sand
+ * layer at its +16 px dual offset — and pixel-diff against map-reference.png.
+ * Zero differing pixels proves compositing, layer order, offsets, and gid
+ * resolution.
+ */
+export function verifyReferenceRender(): RenderReport {
+  const { lock, manifest } = loadPinnedManifest();
+  const packageDir = join(ROOT, ...lock.packagePath.split("/"));
+  const doc = loadPackageTmj();
+  const decoder = buildGidDecoder(manifest, doc);
+  const tileSize = manifest.tileSize;
+  const width = doc.width * tileSize;
+  const height = doc.height * tileSize;
+  const rgba = new Uint8Array(width * height * 4);
+
+  const atlasCache = new Map<string, DecodedPng>();
+  const atlasFor = (family: FamilyInfo): DecodedPng => {
+    let atlas = atlasCache.get(family.imageFile);
+    if (atlas === undefined) {
+      atlas = decodePng(readFileSync(join(packageDir, family.imageFile)));
+      atlasCache.set(family.imageFile, atlas);
+    }
+    return atlas;
+  };
+
+  for (const layer of doc.layers) {
+    if (layer.type !== "tilelayer" || layer.data === undefined) continue;
+    const offsetX = layer.name === "sand" ? 16 : 0;
+    const offsetY = offsetX;
+    for (let index = 0; index < layer.data.length; index += 1) {
+      const gid = layer.data[index] as number;
+      if (gid === 0) continue;
+      const cellX = index % doc.width;
+      const cellY = (index - cellX) / doc.width;
+      const decoded = decoder.decodeTile(gid);
+      const { family } = decoded;
+      // §4: hold animation at frame 0 (frames are innermost in entry order).
+      let tile = decoded.tile;
+      if (family.frames > 1 && tile.frame !== 0) {
+        const zeroIndex = decoded.entryIndex - (decoded.entryIndex % family.frames);
+        const zero = buildZeroLookup(decoder, gid, decoded.entryIndex, zeroIndex);
+        tile = zero;
+      }
+      const atlas = atlasFor(family);
+      blitTile(rgba, width, height, atlas, tile, cellX * tileSize + offsetX, cellY * tileSize + offsetY, tileSize);
+    }
+  }
+
+  const reference = decodePng(readFileSync(join(packageDir, "map-reference.png")));
+  if (reference.width !== width || reference.height !== height) {
+    throw new Error(
+      `map-reference.png is ${reference.width}x${reference.height}, expected ${width}x${height}`,
+    );
+  }
+  let differing = 0;
+  const samples: string[] = [];
+  for (let p = 0; p < width * height; p += 1) {
+    const at = p * 4;
+    if (
+      rgba[at] !== reference.rgba[at] ||
+      rgba[at + 1] !== reference.rgba[at + 1] ||
+      rgba[at + 2] !== reference.rgba[at + 2] ||
+      rgba[at + 3] !== reference.rgba[at + 3]
+    ) {
+      differing += 1;
+      if (samples.length < SAMPLE_LIMIT) {
+        const x = p % width;
+        const y = (p - x) / width;
+        samples.push(
+          `px(${x},${y}) cell(${Math.floor(x / tileSize)},${Math.floor(y / tileSize)}) ` +
+            `ours=${pixelText(rgba, at)} reference=${pixelText(reference.rgba, at)}`,
+        );
+      }
+    }
+  }
+  return {
+    ok: differing === 0,
+    width,
+    height,
+    totalPixels: width * height,
+    differingPixels: differing,
+    samples,
+    rgba,
+  };
+}
+
+function pixelText(rgba: Uint8Array, at: number): string {
+  return `[${rgba[at]},${rgba[at + 1]},${rgba[at + 2]},${rgba[at + 3]}]`;
+}
+
+/** Resolves the frame-0 sibling entry of an animated tile via the decoder. */
+function buildZeroLookup(
+  decoder: GidDecoder,
+  gid: number,
+  entryIndex: number,
+  zeroIndex: number,
+): FamilyTile {
+  const zero = decoder.decodeTile(gid - (entryIndex - zeroIndex));
+  if (zero.tile.frame !== 0) {
+    throw new Error(`frame-0 normalization landed on frame ${zero.tile.frame}`);
+  }
+  return zero.tile;
+}
+
+/** Copies opaque pixels of a 32x32 tile onto the canvas (binary alpha, clipped). */
+function blitTile(
+  canvas: Uint8Array,
+  canvasW: number,
+  canvasH: number,
+  atlas: DecodedPng,
+  tile: FamilyTile,
+  destX: number,
+  destY: number,
+  tileSize: number,
+): void {
+  for (let y = 0; y < tileSize; y += 1) {
+    const dy = destY + y;
+    if (dy < 0 || dy >= canvasH) continue;
+    for (let x = 0; x < tileSize; x += 1) {
+      const dx = destX + x;
+      if (dx < 0 || dx >= canvasW) continue;
+      const src = ((tile.atlasY + y) * atlas.width + tile.atlasX + x) * 4;
+      if ((atlas.rgba[src + 3] as number) === 0) continue;
+      const dst = (dy * canvasW + dx) * 4;
+      canvas[dst] = atlas.rgba[src] as number;
+      canvas[dst + 1] = atlas.rgba[src + 1] as number;
+      canvas[dst + 2] = atlas.rgba[src + 2] as number;
+      canvas[dst + 3] = atlas.rgba[src + 3] as number;
+    }
+  }
 }
 
 /**

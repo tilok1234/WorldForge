@@ -36,6 +36,8 @@ export interface FamilyTile {
 export interface FamilyInfo {
   readonly key: string;
   readonly kind: string;
+  /** Atlas image filename as shipped (e.g. "grass_on_soil.png"). */
+  readonly imageFile: string;
   /** Atlas image basename without extension (tmj tileset sources match it). */
   readonly imageBase: string;
   readonly variants: number;
@@ -240,6 +242,7 @@ export function loadPinnedManifest(): { lock: TileForgeLock; manifest: TileForge
     families.set(key, {
       key,
       kind: fam.kind,
+      imageFile: fam.image,
       imageBase: fam.image.replace(/\.[^.]+$/, ""),
       variants: fam.variants,
       frames: fam.frames,
