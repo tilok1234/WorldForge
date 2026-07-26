@@ -43,7 +43,7 @@ export function renderHydrologyPng(composed: ComposedWorld): Buffer {
   const { width, height, grid, hydro } = composed;
   const rgb = new Uint8Array(width * height * 3);
   for (let index = 0; index < grid.length; index += 1) {
-    const [r, g, b] = hydro.isRiver[index] === 1 ? RIVER_COLOR : cellColor(grid[index] as number);
+    const [r, g, b] = hydro.isMajorRiver[index] === 1 ? RIVER_COLOR : cellColor(grid[index] as number);
     rgb[index * 3] = r;
     rgb[index * 3 + 1] = g;
     rgb[index * 3 + 2] = b;

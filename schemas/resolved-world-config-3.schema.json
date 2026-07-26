@@ -86,6 +86,7 @@
         "seaLevelPermille",
         "shallowBandPermille",
         "riverAccumulationThreshold",
+        "majorRiverAccumulationThreshold",
         "wetlandMoistureMin",
         "coastalInfluenceRadius"
       ],
@@ -93,6 +94,7 @@
         "seaLevelPermille": { "type": "integer", "minimum": 0, "maximum": 999 },
         "shallowBandPermille": { "type": "integer", "minimum": 0, "maximum": 999 },
         "riverAccumulationThreshold": { "type": "integer", "minimum": 1 },
+        "majorRiverAccumulationThreshold": { "type": "integer", "minimum": 1 },
         "wetlandMoistureMin": { "type": "integer", "minimum": 0, "maximum": 999 },
         "coastalInfluenceRadius": { "type": "integer", "minimum": 1 }
       }

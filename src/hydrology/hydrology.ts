@@ -5,9 +5,10 @@
  * - priority-flood depression filling over a binary heap keyed
  *   (filledElevation, cell index) — the pop order is total, so the resulting
  *   drainage parent tree is identical on every platform;
- * - every land cell's flow direction is its priority-flood parent, which by
- *   construction descends (never rises) in filled elevation until it reaches
- *   the world border or water, so rivers always have a destination;
+ * - land flow directions are the steepest strictly-lower filled neighbor;
+ *   plateau cells route by deterministic BFS from their spill side (never by
+ *   scan order), and every path descends or stays level until it reaches the
+ *   world border or water, so rivers always have a destination;
  * - flow accumulation processed in descending (filled, index) order;
  * - ocean = flooded cells reachable from the border at or below sea level;
  *   other flooded or below-sea-level cells are lakes (1-2 cell ponds are
@@ -39,12 +40,15 @@ export interface HydrologyResult {
   readonly flowDir: Int32Array;
   readonly accumulation: readonly number[];
   readonly isRiver: Uint8Array;
+  /** The artifact/debug river layer: accumulation over the major threshold. */
+  readonly isMajorRiver: Uint8Array;
   readonly riverTraces: readonly RiverTrace[];
   /** BFS cell distance to the nearest ocean cell; -1 when no ocean exists. */
   readonly coastDistance: Int32Array;
   readonly oceanCellCount: number;
   readonly lakeCount: number;
   readonly riverCellCount: number;
+  readonly majorRiverCellCount: number;
   /** Topology violations; must be empty for a releasable world. */
   readonly topologyErrors: readonly string[];
 }
@@ -143,7 +147,7 @@ export function buildHydrology(
     }
   }
   // Absorb 1-2 cell ponds as land so they cannot become region confetti.
-  const lakeCount = pruneAndCountLakes(isLakeCell, width, height, 3);
+  const lakeCount = pruneAndCountLakes(isLakeCell, elevation, filled, rules.seaLevelPermille, width, height, 3, 12);
 
   const waterKind = new Uint8Array(cellCount);
   for (let index = 0; index < cellCount; index += 1) {
@@ -157,12 +161,37 @@ export function buildHydrology(
     }
   }
 
-  // Flow directions: priority-flood parents, land cells only.
+  // Flow directions: steepest strictly-lower filled neighbor. Plateau cells
+  // (no strictly lower neighbor) route by deterministic multi-source BFS from
+  // their spill side, so flat flow converges toward the exit instead of
+  // sweeping in scan order — scan-order parenting reads as straight parallel
+  // capillaries on the map (W3 iteration brief).
   const flowDir = new Int32Array(cellCount).fill(-1);
+  const flatUnrouted: number[] = [];
   for (let index = 0; index < cellCount; index += 1) {
-    if (waterKind[index] === WATER_NONE && parent[index] !== -1) {
-      flowDir[index] = parent[index] as number;
+    if (waterKind[index] !== WATER_NONE) {
+      continue;
     }
+    const x = index % width;
+    const y = (index - x) / width;
+    const level = filled[index] as number;
+    let best = -1;
+    let bestLevel = level;
+    for (const neighbor of neighborIndexes(x, y, width, height)) {
+      const neighborLevel = filled[neighbor] as number;
+      if (neighborLevel < bestLevel) {
+        bestLevel = neighborLevel;
+        best = neighbor;
+      }
+    }
+    if (best !== -1) {
+      flowDir[index] = best;
+    } else {
+      flatUnrouted.push(index);
+    }
+  }
+  if (flatUnrouted.length > 0) {
+    routeFlats(flatUnrouted, flowDir, filled, waterKind, parent, width, height);
   }
 
   // Accumulation in descending (filled, index) order.
@@ -183,11 +212,21 @@ export function buildHydrology(
   }
 
   const isRiver = new Uint8Array(cellCount);
+  const isMajorRiver = new Uint8Array(cellCount);
   let riverCellCount = 0;
+  let majorRiverCellCount = 0;
   for (let index = 0; index < cellCount; index += 1) {
-    if (waterKind[index] === WATER_NONE && (accumulation[index] as number) >= rules.riverAccumulationThreshold) {
+    if (waterKind[index] !== WATER_NONE) {
+      continue;
+    }
+    const flow = accumulation[index] as number;
+    if (flow >= rules.riverAccumulationThreshold) {
       isRiver[index] = 1;
       riverCellCount += 1;
+    }
+    if (flow >= rules.majorRiverAccumulationThreshold) {
+      isMajorRiver[index] = 1;
+      majorRiverCellCount += 1;
     }
   }
 
@@ -195,16 +234,16 @@ export function buildHydrology(
   const topologyErrors: string[] = [];
   const hasRiverInflow = new Uint8Array(cellCount);
   for (let index = 0; index < cellCount; index += 1) {
-    if (isRiver[index] === 1) {
+    if (isMajorRiver[index] === 1) {
       const downstream = flowDir[index] as number;
-      if (downstream !== -1 && isRiver[downstream] === 1) {
+      if (downstream !== -1 && isMajorRiver[downstream] === 1) {
         hasRiverInflow[downstream] = 1;
       }
     }
   }
   const riverTraces: RiverTrace[] = [];
   for (let index = 0; index < cellCount; index += 1) {
-    if (isRiver[index] !== 1 || hasRiverInflow[index] === 1) {
+    if (isMajorRiver[index] !== 1 || hasRiverInflow[index] === 1) {
       continue;
     }
     let cursor = index;
@@ -270,21 +309,95 @@ export function buildHydrology(
     flowDir,
     accumulation,
     isRiver,
+    isMajorRiver,
     riverTraces,
     coastDistance,
     oceanCellCount,
     lakeCount,
     riverCellCount,
+    majorRiverCellCount,
     topologyErrors,
   };
+}
+
+/**
+ * Route plateau cells by BFS from their spill side. Seeds, in ascending cell
+ * order: border flats (they drain off-map), flats beside water, and flats
+ * beside an already-routed equal-level cell. Expansion is FIFO with a fixed
+ * neighbor order, so the flow field is deterministic and converges toward the
+ * exit. Cells no seed can reach (not expected after filling) fall back to
+ * their priority-flood parent.
+ */
+function routeFlats(
+  flats: readonly number[],
+  flowDir: Int32Array,
+  filled: readonly number[],
+  waterKind: Uint8Array,
+  parent: Int32Array,
+  width: number,
+  height: number,
+): void {
+  const pending = new Uint8Array(width * height);
+  for (const index of flats) {
+    pending[index] = 1;
+  }
+  const queue: number[] = [];
+  for (const index of flats) {
+    const x = index % width;
+    const y = (index - x) / width;
+    if (x === 0 || y === 0 || x === width - 1 || y === height - 1) {
+      flowDir[index] = -1; // drains off the world edge
+      pending[index] = 0;
+      queue.push(index);
+      continue;
+    }
+    for (const neighbor of neighborIndexes(x, y, width, height)) {
+      const routedLand =
+        waterKind[neighbor] === WATER_NONE &&
+        pending[neighbor] === 0 &&
+        flowDir[neighbor] !== -1 &&
+        (filled[neighbor] as number) === (filled[index] as number);
+      const intoWater =
+        waterKind[neighbor] !== WATER_NONE &&
+        (filled[neighbor] as number) <= (filled[index] as number);
+      if (routedLand || intoWater) {
+        flowDir[index] = neighbor;
+        pending[index] = 0;
+        queue.push(index);
+        break;
+      }
+    }
+  }
+  for (let head = 0; head < queue.length; head += 1) {
+    const index = queue[head] as number;
+    const x = index % width;
+    const y = (index - x) / width;
+    for (const neighbor of neighborIndexes(x, y, width, height)) {
+      if (pending[neighbor] === 1) {
+        flowDir[neighbor] = index;
+        pending[neighbor] = 0;
+        queue.push(neighbor);
+      }
+    }
+  }
+  for (const index of flats) {
+    if (pending[index] === 1) {
+      flowDir[index] = parent[index] as number; // unreachable fallback
+      pending[index] = 0;
+    }
+  }
 }
 
 /** Remove lake components smaller than minCells; return remaining lake count. */
 function pruneAndCountLakes(
   isLakeCell: Uint8Array,
+  elevation: readonly number[],
+  filled: readonly number[],
+  seaLevel: number,
   width: number,
   height: number,
   minCells: number,
+  minMaxDepth: number,
 ): number {
   const visited = new Uint8Array(isLakeCell.length);
   let lakeCount = 0;
@@ -305,7 +418,36 @@ function pruneAndCountLakes(
         }
       }
     }
-    if (component.length < minCells) {
+    // A real pond has area: require at least one 2x2 all-lake block, so
+    // 1-wide "snake" lakes along noise creases are absorbed as land instead
+    // of rendering as straight water lines (W3 iteration review).
+    let hasBlock = false;
+    let maxDepth = 0;
+    for (const index of component) {
+      const level = filled[index] as number;
+      const raw = elevation[index] as number;
+      const depth = Math.max(level - raw, level <= seaLevel ? seaLevel - raw : 0);
+      if (depth > maxDepth) {
+        maxDepth = depth;
+      }
+    }
+    for (const index of component) {
+      const x = index % width;
+      const y = (index - x) / width;
+      if (
+        x < width - 1 &&
+        y < height - 1 &&
+        isLakeCell[index + 1] === 1 &&
+        isLakeCell[index + width] === 1 &&
+        isLakeCell[index + width + 1] === 1
+      ) {
+        hasBlock = true;
+        break;
+      }
+    }
+    // Basin explanation (docs/GENERATION_RULES.md): a real lake reaches real
+    // depth somewhere; permille-deep crease fills are absorbed as land.
+    if (component.length < minCells || !hasBlock || maxDepth < minMaxDepth) {
       for (const index of component) {
         isLakeCell[index] = 0;
       }

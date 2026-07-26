@@ -51,6 +51,7 @@ export interface WorldArtifact {
     readonly oceanCellCount: number;
     readonly lakeCount: number;
     readonly riverCellCount: number;
+    readonly networkRiverCellCount: number;
     readonly riverSourceCount: number;
     readonly wetlandCellCount: number;
   };
@@ -110,7 +111,7 @@ export function generateWorldDetailed(
           const worldIndex = worldY * width + cx * chunkWidth + lx;
           materialRow[lx] = composed.grid[worldIndex] as number;
           elevationRow[lx] = composed.fields.elevation[worldIndex] as number;
-          riverRow[lx] = composed.hydro.isRiver[worldIndex] as number;
+          riverRow[lx] = composed.hydro.isMajorRiver[worldIndex] as number;
         }
         material.push(materialRow);
         elevation.push(elevationRow);
@@ -146,7 +147,8 @@ export function generateWorldDetailed(
       seaLevelPermille: config.water.seaLevelPermille,
       oceanCellCount: composed.hydro.oceanCellCount,
       lakeCount: composed.hydro.lakeCount,
-      riverCellCount: composed.hydro.riverCellCount,
+      riverCellCount: composed.hydro.majorRiverCellCount,
+      networkRiverCellCount: composed.hydro.riverCellCount,
       riverSourceCount: composed.hydro.riverTraces.length,
       wetlandCellCount: composed.wetlandCellCount,
     },

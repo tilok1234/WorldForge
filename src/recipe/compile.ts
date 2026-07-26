@@ -62,8 +62,12 @@ export interface WaterRules {
   readonly seaLevelPermille: number;
   /** Water within this band below the surface renders/classifies shallow. */
   readonly shallowBandPermille: number;
-  /** Flow-accumulation count at which a cell becomes river. */
+  /** Flow-accumulation count at which a cell joins the internal river
+   *  network (kept queryable for W4 crossing candidates). */
   readonly riverAccumulationThreshold: number;
+  /** Higher threshold for the artifact/debug river layer, so maps read as a
+   *  few coherent rivers instead of drainage veins. */
+  readonly majorRiverAccumulationThreshold: number;
   /** Wetland (swamp) needs at least this moisture beside water. */
   readonly wetlandMoistureMin: number;
   /** Coastal moisture halo radius in cells (uses climate coastalInfluence). */
@@ -124,16 +128,18 @@ export interface ResolvedWorldConfig {
  */
 const OCTAVE_RULES: { readonly [key in SizePreset]: MacroFieldSpec["octaves"] } = {
   tiny: [
-    { cellSizeLog2: 6, weightPermille: 450 },
-    { cellSizeLog2: 5, weightPermille: 300 },
-    { cellSizeLog2: 4, weightPermille: 150 },
-    { cellSizeLog2: 3, weightPermille: 100 },
+    { cellSizeLog2: 6, weightPermille: 430 },
+    { cellSizeLog2: 5, weightPermille: 290 },
+    { cellSizeLog2: 4, weightPermille: 140 },
+    { cellSizeLog2: 3, weightPermille: 80 },
+    { cellSizeLog2: 2, weightPermille: 60 },
   ],
   small: [
-    { cellSizeLog2: 7, weightPermille: 450 },
-    { cellSizeLog2: 6, weightPermille: 300 },
-    { cellSizeLog2: 5, weightPermille: 150 },
-    { cellSizeLog2: 4, weightPermille: 100 },
+    { cellSizeLog2: 7, weightPermille: 430 },
+    { cellSizeLog2: 6, weightPermille: 290 },
+    { cellSizeLog2: 5, weightPermille: 140 },
+    { cellSizeLog2: 4, weightPermille: 80 },
+    { cellSizeLog2: 3, weightPermille: 60 },
   ],
 };
 
@@ -146,6 +152,7 @@ const WATER_RULES: {
       seaLevelPermille: 310,
       shallowBandPermille: 45,
       riverAccumulationThreshold: 48,
+      majorRiverAccumulationThreshold: 100,
       wetlandMoistureMin: 560,
       coastalInfluenceRadius: 8,
     },
@@ -153,6 +160,7 @@ const WATER_RULES: {
       seaLevelPermille: 310,
       shallowBandPermille: 45,
       riverAccumulationThreshold: 320,
+      majorRiverAccumulationThreshold: 800,
       wetlandMoistureMin: 560,
       coastalInfluenceRadius: 16,
     },
@@ -162,6 +170,7 @@ const WATER_RULES: {
       seaLevelPermille: 370,
       shallowBandPermille: 45,
       riverAccumulationThreshold: 48,
+      majorRiverAccumulationThreshold: 100,
       wetlandMoistureMin: 560,
       coastalInfluenceRadius: 8,
     },
@@ -169,6 +178,7 @@ const WATER_RULES: {
       seaLevelPermille: 370,
       shallowBandPermille: 45,
       riverAccumulationThreshold: 320,
+      majorRiverAccumulationThreshold: 800,
       wetlandMoistureMin: 560,
       coastalInfluenceRadius: 16,
     },

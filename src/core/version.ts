@@ -10,15 +10,15 @@ export const GENERATOR_NAME = "worldforge";
 export const GENERATOR_VERSION = "0.1.0";
 
 /** Behavior version of the generation passes. W2 macro: 2. W3 hydrology: 3. */
-export const GENERATOR_BEHAVIOR_VERSION = 3;
+export const GENERATOR_BEHAVIOR_VERSION = 4;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 3;
+export const RECIPE_COMPILER_VERSION = 4;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "recipe.presets": 1,
-  "macro.fields": 2,
+  "macro.fields": 3,
   "macro.biomes": 1,
-  "hydrology.water": 1,
+  "hydrology.water": 2,
 };

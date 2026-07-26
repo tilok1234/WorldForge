@@ -47,15 +47,17 @@ describe("hydrology topology", () => {
         riverCells += hydro.isRiver[index] as number;
       }
       assert.equal(riverCells, hydro.riverCellCount);
-      if (hydro.riverTraces.length > 0) {
+      if (hydro.riverCellCount > 0) {
         sawRiver = true;
+      }
+      if (hydro.riverTraces.length > 0) {
         for (const trace of hydro.riverTraces) {
           assert.ok(trace.length >= 1);
           assert.ok(["ocean", "lake", "edge"].includes(trace.destination));
         }
       }
     }
-    assert.ok(sawRiver, "at least one of seeds 1-5 should produce a river");
+    assert.ok(sawRiver, "at least one of seeds 1-5 should produce a river network");
   });
 
   it("keeps the ocean border-connected and lakes at 3+ cells", () => {
@@ -181,5 +183,6 @@ describe("hydrology in the artifact", () => {
       }
     }
     assert.equal(riverInChunks, summary.riverCellCount);
+    assert.ok(summary.networkRiverCellCount >= summary.riverCellCount);
   });
 });
