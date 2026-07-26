@@ -169,6 +169,17 @@ user's "settlements way too small" verdict: radius 18 / 28 lots (small),
 approachMaxLength 8 forces street-lining — the fabric constraint.
 Structure cells 119->246 canonical.
 
+## W9 COMPLETE (ef4eee8) — the starter roadmap is fully implemented
+
+Authoring tooling: validate-brief / explain-recipe / diff-recipes /
+compare-worlds / approve-recipe (sidecar approval with recipeSha256 drift
+detection). The whole W0–W9 plan now has machine-verified evidence.
+Remaining, all user-gated: windowed Godot playthrough (seams/feel), the
+end-of-plan taste-polish round (use compare-worlds + diff-recipes), and
+the FORMAL visual baseline approval (`approve-recipe
+fixtures/recipes/small-cold-coastal.json --baseline` once the user
+blesses the look).
+
 ## W8 COMPLETE (af35d0e)
 
 Viewer semantic mode runs on the public loader (dynamic import of
