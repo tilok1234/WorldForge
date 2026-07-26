@@ -97,6 +97,12 @@ export interface TileForgeManifest {
   readonly propIdByName: ReadonlyMap<string, number>;
   /** prop type id -> species name (index by id). */
   readonly propNameById: readonly string[];
+  /** crop name -> crop type id. */
+  readonly cropIdByName: ReadonlyMap<string, number>;
+  /** fence family key -> fence layer byte. */
+  readonly fenceTypeByKey: ReadonlyMap<string, number>;
+  /** pier family key -> pier layer byte. */
+  readonly pierTypeByKey: ReadonlyMap<string, number>;
   /** road family key -> road layer byte. */
   readonly roadTypeByKey: ReadonlyMap<string, number>;
   /** wall family key -> wall layer byte. */
@@ -157,6 +163,7 @@ export function loadPinnedManifest(): { lock: TileForgeLock; manifest: TileForge
       structures: Record<string, StructureDef>;
       decals: Record<string, string>;
       props: Record<string, string>;
+      crops: Record<string, string>;
       roadTypes: Record<string, string>;
       wallTypes: Record<string, string>;
       pierTypes: Record<string, string>;
@@ -200,6 +207,18 @@ export function loadPinnedManifest(): { lock: TileForgeLock; manifest: TileForge
   const propIdByName = new Map<string, number>();
   for (const [id, name] of Object.entries(raw.mappings.props)) {
     propIdByName.set(name, Number(id));
+  }
+  const cropIdByName = new Map<string, number>();
+  for (const [id, name] of Object.entries(raw.mappings.crops)) {
+    cropIdByName.set(name, Number(id));
+  }
+  const fenceTypeByKey = new Map<string, number>();
+  for (const [id, key] of Object.entries(raw.mappings.fenceTypes)) {
+    fenceTypeByKey.set(key, Number(id));
+  }
+  const pierTypeByKey = new Map<string, number>();
+  for (const [id, key] of Object.entries(raw.mappings.pierTypes)) {
+    pierTypeByKey.set(key, Number(id));
   }
   const roadTypeByKey = new Map<string, number>();
   for (const [id, key] of Object.entries(raw.mappings.roadTypes)) {
@@ -300,6 +319,9 @@ export function loadPinnedManifest(): { lock: TileForgeLock; manifest: TileForge
       decalIdByKey,
       propIdByName,
       propNameById: denseByIdTable(raw.mappings.props),
+      cropIdByName,
+      fenceTypeByKey,
+      pierTypeByKey,
       roadTypeByKey,
       wallTypeByKey,
       materialFamilyById,

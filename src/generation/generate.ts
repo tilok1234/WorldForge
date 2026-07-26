@@ -15,13 +15,16 @@ import { composeWorld, type ComposedWorld } from "./composeWorld.js";
 import { WORLD_PALETTE } from "../regions/biomes.js";
 import { STRUCTURE_TYPES } from "../settlements/structures.js";
 import { DECAL_TYPES, DECOR_TYPES } from "../decoration/decorate.js";
+import { CROP_TYPES, FENCE_TYPES, PIER_TYPES } from "../settlements/farms.js";
 
 /**
  * Format 4 (Milestone W5): adds the structure layer, settlements, landmarks.
  * Format 5 (decoration stage 1): prop/moss/tallgrass/decal layers plus the
  * propTypes/decalTypes key tables.
+ * Format 6 (stage 3): crop/fence/pier layers plus their key tables (crop
+ * values are cropTypeIndex*16 + growth stage 1-4).
  */
-export const ARTIFACT_FORMAT_VERSION = 5;
+export const ARTIFACT_FORMAT_VERSION = 6;
 
 export interface WorldArtifact {
   readonly formatVersion: number;
@@ -64,6 +67,12 @@ export interface WorldArtifact {
   readonly propTypes: readonly string[];
   /** Decal layer values are 1-based indexes into this list. */
   readonly decalTypes: readonly string[];
+  /** Crop layer values are (1-based index into this list) * 16 + stage. */
+  readonly cropTypes: readonly string[];
+  /** Fence layer values are 1-based indexes into this list. */
+  readonly fenceTypes: readonly string[];
+  /** Pier layer values are 1-based indexes into this list. */
+  readonly pierTypes: readonly string[];
   readonly hydrology: {
     readonly seaLevelPermille: number;
     readonly oceanCellCount: number;
@@ -133,6 +142,12 @@ export interface WorldArtifact {
       readonly tallgrass: ReadonlyArray<readonly number[]>;
       /** 0 = none, else 1-based index into decalTypes. */
       readonly decal: ReadonlyArray<readonly number[]>;
+      /** 0 = none, else cropTypeIndex*16 + stage. */
+      readonly crop: ReadonlyArray<readonly number[]>;
+      /** 0 = none, else 1-based index into fenceTypes. */
+      readonly fence: ReadonlyArray<readonly number[]>;
+      /** 0 = none, else 1-based index into pierTypes. */
+      readonly pier: ReadonlyArray<readonly number[]>;
     };
   }>;
 }
@@ -161,53 +176,42 @@ export function generateWorldDetailed(
       material: number[][]; elevation: number[][]; river: number[][];
       path: number[][]; structure: number[][]; prop: number[][];
       moss: number[][]; tallgrass: number[][]; decal: number[][];
+      crop: number[][]; fence: number[][]; pier: number[][];
     };
   }> = [];
+  const layerSources: readonly (readonly [string, ArrayLike<number>])[] = [
+    ["material", composed.grid as unknown as ArrayLike<number>],
+    ["elevation", composed.fields.elevation],
+    ["river", composed.hydro.isMajorRiver],
+    ["path", composed.routesResult.pathLayer],
+    ["structure", composed.structureLayer],
+    ["prop", composed.decoration.propLayer],
+    ["moss", composed.decoration.mossLayer],
+    ["tallgrass", composed.decoration.tallGrassLayer],
+    ["decal", composed.decoration.decalLayer],
+    ["crop", composed.farms.cropLayer],
+    ["fence", composed.farms.fenceLayer],
+    ["pier", composed.farms.pierLayer],
+  ];
   for (let cy = 0; cy < chunksDown; cy += 1) {
     for (let cx = 0; cx < chunksAcross; cx += 1) {
-      const material: number[][] = [];
-      const elevation: number[][] = [];
-      const river: number[][] = [];
-      const path: number[][] = [];
-      const structure: number[][] = [];
-      const prop: number[][] = [];
-      const moss: number[][] = [];
-      const tallgrass: number[][] = [];
-      const decal: number[][] = [];
-      for (let ly = 0; ly < chunkHeight; ly += 1) {
-        const materialRow = new Array<number>(chunkWidth);
-        const elevationRow = new Array<number>(chunkWidth);
-        const riverRow = new Array<number>(chunkWidth);
-        const pathRow = new Array<number>(chunkWidth);
-        const structureRow = new Array<number>(chunkWidth);
-        const propRow = new Array<number>(chunkWidth);
-        const mossRow = new Array<number>(chunkWidth);
-        const tallgrassRow = new Array<number>(chunkWidth);
-        const decalRow = new Array<number>(chunkWidth);
-        const worldY = cy * chunkHeight + ly;
-        for (let lx = 0; lx < chunkWidth; lx += 1) {
-          const worldIndex = worldY * width + cx * chunkWidth + lx;
-          materialRow[lx] = composed.grid[worldIndex] as number;
-          elevationRow[lx] = composed.fields.elevation[worldIndex] as number;
-          riverRow[lx] = composed.hydro.isMajorRiver[worldIndex] as number;
-          pathRow[lx] = composed.routesResult.pathLayer[worldIndex] as number;
-          structureRow[lx] = composed.structureLayer[worldIndex] as number;
-          propRow[lx] = composed.decoration.propLayer[worldIndex] as number;
-          mossRow[lx] = composed.decoration.mossLayer[worldIndex] as number;
-          tallgrassRow[lx] = composed.decoration.tallGrassLayer[worldIndex] as number;
-          decalRow[lx] = composed.decoration.decalLayer[worldIndex] as number;
+      const layers = {} as Record<string, number[][]>;
+      for (const [name, source] of layerSources) {
+        const rows: number[][] = [];
+        for (let ly = 0; ly < chunkHeight; ly += 1) {
+          const row = new Array<number>(chunkWidth);
+          const worldY = cy * chunkHeight + ly;
+          for (let lx = 0; lx < chunkWidth; lx += 1) {
+            row[lx] = source[worldY * width + cx * chunkWidth + lx] as number;
+          }
+          rows.push(row);
         }
-        material.push(materialRow);
-        elevation.push(elevationRow);
-        river.push(riverRow);
-        path.push(pathRow);
-        structure.push(structureRow);
-        prop.push(propRow);
-        moss.push(mossRow);
-        tallgrass.push(tallgrassRow);
-        decal.push(decalRow);
+        layers[name] = rows;
       }
-      chunks.push({ coord: [cx, cy], layers: { material, elevation, river, path, structure, prop, moss, tallgrass, decal } });
+      chunks.push({
+        coord: [cx, cy],
+        layers: layers as unknown as (typeof chunks)[number]["layers"],
+      });
     }
   }
 
@@ -236,6 +240,9 @@ export function generateWorldDetailed(
     structureTypes: [...STRUCTURE_TYPES],
     propTypes: [...DECOR_TYPES],
     decalTypes: [...DECAL_TYPES],
+    cropTypes: [...CROP_TYPES],
+    fenceTypes: [...FENCE_TYPES],
+    pierTypes: [...PIER_TYPES],
     hydrology: {
       seaLevelPermille: config.water.seaLevelPermille,
       oceanCellCount: composed.hydro.oceanCellCount,

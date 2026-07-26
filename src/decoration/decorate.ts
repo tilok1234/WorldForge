@@ -19,6 +19,7 @@ import { PALETTE_INDEX, WORLD_PALETTE } from "../regions/biomes.js";
 import { WATER_NONE, type HydrologyResult } from "../hydrology/hydrology.js";
 import type { RoutesResult } from "../routes/routes.js";
 import type { ResolvedWorldConfig } from "../recipe/compile.js";
+import type { FarmResult } from "../settlements/farms.js";
 
 /** Semantic prop keys, stage 1. Layer stores index + 1 (0 = none). */
 export const DECOR_TYPES = [
@@ -44,6 +45,9 @@ export const DECOR_TYPES = [
   "prop.cattails",
   "prop.milestone",
   "prop.signpost",
+  "prop.rowboat",
+  "prop.fishnets",
+  "prop.buoy",
 ] as const;
 
 /** Semantic ground-decal keys, stage 1. Layer stores index + 1 (0 = none). */
@@ -59,7 +63,8 @@ export const DECAL_TYPES = [
 const BLOCKING = new Set<string>([
   "prop.oak", "prop.birch", "prop.pine", "prop.willow", "prop.dead_tree",
   "prop.fruit_tree", "prop.stump", "prop.fallen_log", "prop.boulder",
-  "prop.rock_outcrop", "prop.milestone", "prop.signpost",
+  "prop.rock_outcrop", "prop.milestone", "prop.signpost", "prop.rowboat",
+  "prop.buoy",
 ]);
 
 /** Two-part canopy species (§2.10): skip when a structure sits above. */
@@ -188,6 +193,17 @@ function latticePermille(noise: Channel, x: number, y: number, period: number, s
   return Math.floor((top * (1000 - qy) + bottom * qy) / 1_000_000);
 }
 
+const CARDINALS: readonly (readonly [number, number])[] = [
+  [0, -1], [1, 0], [0, 1], [-1, 0],
+];
+
+function cellIn(x: number, y: number, width: number, height: number): number {
+  if (x < 0 || y < 0 || x >= width || y >= height) {
+    return -1;
+  }
+  return y * width + x;
+}
+
 export function decorateWorld(
   grid: readonly number[],
   structureLayer: Uint8Array,
@@ -195,6 +211,7 @@ export function decorateWorld(
   routesResult: RoutesResult,
   entranceCells: readonly number[],
   config: ResolvedWorldConfig,
+  farms: FarmResult,
 ): DecorationResult {
   const { width, height } = config.world;
   const cellCount = width * height;
@@ -229,7 +246,10 @@ export function decorateWorld(
       material === roadValue ||
       material === cobbleValue ||
       routesResult.pathLayer[index] === 1 ||
-      structureLayer[index] !== 0
+      structureLayer[index] !== 0 ||
+      farms.cropLayer[index] !== 0 ||
+      farms.fenceLayer[index] !== 0 ||
+      farms.pierLayer[index] !== 0
     ) {
       protectedCells[index] = 1;
     }
@@ -421,6 +441,69 @@ export function decorateWorld(
         if (besideWater) {
           decalLayer[index] = decalIndex.get("decal.driftwood") as number;
           decalCount += 1;
+        }
+      }
+    }
+  }
+
+  // Waterline life: reed and cattail fringes on calm lake shallows, and
+  // working clutter around piers (a moored rowboat at the head, nets on the
+  // shore cell, a buoy out in open water).
+  const aquatic = channel(seed, "decor.aquatic");
+  const reedsValue = typeIndex.get("prop.reeds") as number;
+  const cattailsValue = typeIndex.get("prop.cattails") as number;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = y * width + x;
+      if (hydro.waterKind[index] === WATER_NONE || hydro.isRiver[index] !== 0) continue;
+      if (farms.pierLayer[index] !== 0 || propLayer[index] !== 0 || decalLayer[index] !== 0) continue;
+      let landNeighbors = 0;
+      for (const [dx, dy] of CARDINALS) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+        if (hydro.waterKind[ny * width + nx] === WATER_NONE) landNeighbors += 1;
+      }
+      if (landNeighbors >= 2 && aquatic.permilleAt(x, y, 0) < 130) {
+        propLayer[index] = aquatic.permilleAt(x, y, 1) < 550 ? reedsValue : cattailsValue;
+        propCount += 1;
+      }
+    }
+  }
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = y * width + x;
+      if (farms.pierLayer[index] === 0) continue;
+      let pierNeighbors = 0;
+      let landward = -1;
+      let seaward: readonly [number, number] | null = null;
+      for (const [dx, dy] of CARDINALS) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+        const neighbor = ny * width + nx;
+        if (farms.pierLayer[neighbor] !== 0) pierNeighbors += 1;
+        else if (hydro.waterKind[neighbor] === WATER_NONE) landward = neighbor;
+        else seaward = [dx, dy];
+      }
+      if (pierNeighbors > 1) continue; // interior pier cells
+      if (landward !== -1 && propLayer[landward] === 0 && protectedCells[landward] === 0) {
+        propLayer[landward] = typeIndex.get("prop.fishnets") as number;
+        propCount += 1;
+      }
+      if (seaward !== null) {
+        const [dx, dy] = seaward;
+        const moor = (y + dy) * width + x + dx;
+        if (moor >= 0 && moor < cellCount && propLayer[moor] === 0 && farms.pierLayer[moor] === 0) {
+          propLayer[moor] = typeIndex.get("prop.rowboat") as number;
+          propCount += 1;
+        }
+        const buoyX = x + dx * 3;
+        const buoyY = y + dy * 3;
+        const buoy = cellIn(buoyX, buoyY, width, height);
+        if (buoy !== -1 && hydro.waterKind[buoy] !== WATER_NONE && propLayer[buoy] === 0 && farms.pierLayer[buoy] === 0) {
+          propLayer[buoy] = typeIndex.get("prop.buoy") as number;
+          propCount += 1;
         }
       }
     }

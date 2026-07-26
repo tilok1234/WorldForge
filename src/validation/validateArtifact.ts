@@ -104,6 +104,9 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
         { name: "moss", rows: chunk.layers.moss, min: 0, max: 1 },
         { name: "tallgrass", rows: chunk.layers.tallgrass, min: 0, max: 1 },
         { name: "decal", rows: chunk.layers.decal, min: 0, max: artifact.decalTypes.length },
+        { name: "crop", rows: chunk.layers.crop, min: 0, max: artifact.cropTypes.length * 16 + 4 },
+        { name: "fence", rows: chunk.layers.fence, min: 0, max: artifact.fenceTypes.length },
+        { name: "pier", rows: chunk.layers.pier, min: 0, max: artifact.pierTypes.length },
       ];
       for (const layer of layerChecks) {
         if (layer.rows.length !== chunkHeight) {

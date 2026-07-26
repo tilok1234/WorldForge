@@ -4,7 +4,8 @@
     "fortress gate emitted as a wall-layer opening (package gate structure is 3x2)"
   ],
   "bridgeStructures": 0,
-  "decorationDecals": 2360,
+  "cropCells": 36,
+  "decorationDecals": 2355,
   "dirtPathCells": 106,
   "fordDecals": 11,
   "materialCells": {
@@ -21,9 +22,10 @@
     "water.shallow": 6626
   },
   "metaCells": 119,
-  "overlayCells": 2145,
+  "overlayCells": 2144,
   "packageId": "forest-a5baf52-seed103991",
-  "propCells": 8689,
+  "pierCells": 8,
+  "propCells": 8745,
   "unresolvedKeys": [],
   "wallCells": 31
 }

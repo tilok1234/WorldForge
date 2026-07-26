@@ -10,6 +10,11 @@ import type { ComposedWorld } from "../../generation/composeWorld.js";
 import { WORLD_PALETTE, type PaletteKey } from "../../regions/biomes.js";
 import { STRUCTURE_TYPES } from "../../settlements/structures.js";
 import { DECAL_TYPES as DECAL_TYPES_LIST, DECOR_TYPES as DECOR_TYPES_LIST } from "../../decoration/decorate.js";
+import {
+  CROP_TYPES as CROP_TYPES_LIST,
+  FENCE_TYPES as FENCE_TYPES_LIST,
+  PIER_TYPES as PIER_TYPES_LIST,
+} from "../../settlements/farms.js";
 import { WATER_NONE } from "../../hydrology/hydrology.js";
 import { loadPinnedManifest, type TileForgeManifest } from "./manifest.js";
 
@@ -70,7 +75,21 @@ const PROP_NAME: { readonly [key: string]: string } = {
   "prop.cattails": "cattails",
   "prop.milestone": "milestone",
   "prop.signpost": "signpost",
+  "prop.rowboat": "rowboat",
+  "prop.fishnets": "fishnets",
+  "prop.buoy": "buoy",
 };
+
+/** WorldForge crop keys -> package crop names. */
+const CROP_NAME: { readonly [key: string]: string } = {
+  "crop.wheat": "wheat",
+  "crop.pumpkin": "pumpkin",
+  "crop.corn": "corn",
+};
+
+/** WorldForge fence/pier keys -> package family keys. */
+const FENCE_NAME: { readonly [key: string]: string } = { "fence.pen": "penfence" };
+const PIER_NAME: { readonly [key: string]: string } = { "pier.pier": "pier" };
 
 /** WorldForge semantic decal keys -> package decal family keys. */
 const DECAL_NAME: { readonly [key: string]: string } = {
@@ -114,6 +133,8 @@ export interface ResolveDiagnostics {
   readonly propCells: number;
   readonly decorationDecals: number;
   readonly overlayCells: number;
+  readonly cropCells: number;
+  readonly pierCells: number;
 }
 
 export interface ResolvedWorld {
@@ -194,6 +215,64 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
     }
     moss[index] = composed.decoration.mossLayer[index] as number;
     tall[index] = composed.decoration.tallGrassLayer[index] as number;
+  }
+
+  // Farms and piers (stage 3): crop bytes remap through mappings.crops;
+  // fence/pier bytes through their type tables.
+  const crop = zeros();
+  const fence = zeros();
+  const pier = zeros();
+  const cropPackageIds = CROP_TYPES_LIST.map((key) => {
+    const name = CROP_NAME[key as string];
+    const id = name === undefined ? undefined : manifest.cropIdByName.get(name);
+    if (id === undefined) {
+      unresolved.add(`${key} -> ${name ?? "?"}`);
+      return -1;
+    }
+    return id;
+  });
+  const fencePackageTypes = FENCE_TYPES_LIST.map((key) => {
+    const name = FENCE_NAME[key as string];
+    const id = name === undefined ? undefined : manifest.fenceTypeByKey.get(name);
+    if (id === undefined) {
+      unresolved.add(`${key} -> ${name ?? "?"}`);
+      return -1;
+    }
+    return id;
+  });
+  const pierPackageTypes = PIER_TYPES_LIST.map((key) => {
+    const name = PIER_NAME[key as string];
+    const id = name === undefined ? undefined : manifest.pierTypeByKey.get(name);
+    if (id === undefined) {
+      unresolved.add(`${key} -> ${name ?? "?"}`);
+      return -1;
+    }
+    return id;
+  });
+  let cropCells = 0;
+  let pierCellCount = 0;
+  for (let index = 0; index < cellCount; index += 1) {
+    const cropValue = composed.farms.cropLayer[index] as number;
+    if (cropValue !== 0) {
+      const packageId = cropPackageIds[(cropValue >> 4) - 1] ?? -1;
+      if (packageId >= 0) {
+        crop[index] = packageId * 16 + (cropValue % 16);
+        cropCells += 1;
+      }
+    }
+    const fenceValue = composed.farms.fenceLayer[index] as number;
+    if (fenceValue !== 0) {
+      const packageType = fencePackageTypes[fenceValue - 1] ?? -1;
+      if (packageType >= 0) fence[index] = packageType;
+    }
+    const pierValue = composed.farms.pierLayer[index] as number;
+    if (pierValue !== 0) {
+      const packageType = pierPackageTypes[pierValue - 1] ?? -1;
+      if (packageType >= 0) {
+        pier[index] = packageType;
+        pierCellCount += 1;
+      }
+    }
   }
 
   const materialCells: Record<string, number> = {};
@@ -305,15 +384,15 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
     mapH: height,
     mat,
     road,
-    fence: zeros(),
+    fence,
     wall,
     river,
     moss,
     tall,
-    pier: zeros(),
+    pier,
     decal,
     prop,
-    crop: zeros(),
+    crop,
     meta,
     elev: zeros(),
     ramp: zeros(),
@@ -334,6 +413,8 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
       propCells,
       decorationDecals,
       overlayCells: composed.decoration.overlayCount,
+      cropCells,
+      pierCells: pierCellCount,
     },
   };
 }

@@ -103,7 +103,10 @@ describe("decoration stage 1", () => {
       if (prop !== 0) {
         const key = DECOR_TYPES[prop - 1] as string;
         const biome = WORLD_PALETTE[material] as string;
-        assert.ok(!biome.startsWith("water."), `${key} stays off open water`);
+        const aquatic = ["prop.reeds", "prop.cattails", "prop.rowboat", "prop.buoy"];
+        if (biome.startsWith("water.")) {
+          assert.ok(aquatic.includes(key), `${key} stays off open water`);
+        }
       }
     }
   });

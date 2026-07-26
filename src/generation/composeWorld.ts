@@ -11,6 +11,7 @@ import type { ResolvedWorldConfig } from "../recipe/compile.js";
 import { buildMacroFields, type MacroFields } from "../fields/macroFields.js";
 import { buildHydrology, WATER_DEEP, WATER_SHALLOW, type HydrologyResult } from "../hydrology/hydrology.js";
 import { decorateWorld, type DecorationResult } from "../decoration/decorate.js";
+import { planFarmsAndPiers, type FarmResult } from "../settlements/farms.js";
 import {
   classifyCell,
   labelComponents,
@@ -48,6 +49,7 @@ export interface ComposedWorld {
   readonly settlementPlans: readonly SettlementPlan[];
   readonly landmarkPlans: readonly LandmarkPlan[];
   readonly decoration: DecorationResult;
+  readonly farms: FarmResult;
   /**
    * Street-level crossings: river cells that carry corridor material or run
    * between corridor cells on opposite sides. Walkable in every model; the
@@ -213,8 +215,12 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     routesResult = { ...routesResult, errors: [...routesResult.errors, ...postCleanupErrors] };
   }
 
-  // Decoration (stage 1) runs last: every traversal-critical pass is final,
-  // and it never writes corridor, crossing, structure, or entrance cells.
+  // Farm plots and harbor piers (stage 3) are settlement infrastructure:
+  // planned after every traversal-critical pass, before decoration.
+  const farms = planFarmsAndPiers(grid, structureLayer, hydro, routesResult.pathLayer, settlementPlans, config);
+
+  // Decoration runs last: it never writes corridor, crossing, structure,
+  // entrance, crop, fence, or pier cells.
   const entranceCells: number[] = [];
   for (const plan of settlementPlans) {
     for (const structure of plan.structures) {
@@ -224,7 +230,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   for (const plan of landmarkPlans) {
     entranceCells.push(plan.entranceY * width + plan.entranceX);
   }
-  const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config);
+  const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config, farms);
 
   const labeling = labelComponents(grid, width, height);
   const regions: RegionSummary[] = labeling.components.map((component, id) => ({
@@ -251,6 +257,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     settlementPlans,
     landmarkPlans,
     decoration,
+    farms,
     streetFordCells,
   };
 }
