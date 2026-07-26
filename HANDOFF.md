@@ -137,6 +137,22 @@ reading would show (bank under water beside a road corridor).
   `worldforge.local.json` (gitignored; recreate from the example file on a
   new machine).
 
+## Alive-worlds direction (user verdict on the first candidates)
+
+"Looks cool but very bare bones — utilize the tileset, detailed intricate
+maps that feel alive." Standing creative direction, staged through the
+decoration compiler. **Stage 1 SHIPPED (5957d52)**: behavior 9, compiler 9
+(decoration.densityPermille, default 400), artifact format 5
+(prop/moss/tallgrass/decal layers + key tables), adapter v3. Forests with
+closed cores and open meadows (gate = patch−350; measured 4..160 trees per
+16-block), biome species tables, overlays in patches, causal decals,
+roadside milestones/signposts. Adapter v3 lesson: streams sever streets
+(streets never paint over water), so any river cell on or between corridor
+material gets a STREET FORD — canonical world: 2 route + 12 street fords.
+Stage 2 = W5.1 settlement variety + plazas; stage 3 = coast/water dressing
+(piers, sand, lakeside detail). All layers flow through the §2-proven
+pipeline automatically (viewer, render, seams, Godot).
+
 ## Review loop (user-requested interface, ebd59c5)
 
 The user reviews worlds in the browser and iterates through chat: start
