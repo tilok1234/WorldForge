@@ -169,6 +169,17 @@ user's "settlements way too small" verdict: radius 18 / 28 lots (small),
 approachMaxLength 8 forces street-lining — the fabric constraint.
 Structure cells 119->246 canonical.
 
+## Sand beaches SHIPPED (246a76b, behavior 14, macro.biomes 2)
+
+corner16 live in production. Contract machinery: §2.7 margin (no sand in
+row/col 0; emitter throws), wetlands BEFORE beaches (marsh coasts
+survive), enclosed-pocket fixpoint fill, smoothing barred from absorbing
+INTO sand (new smoothConfetti barredTargets param), beaches ≥2 contiguous
+cells with lone-cell revert AFTER settlement paving (harbor towns pave
+waterfronts and orphan sand). All proofs green with sand active; both
+consumers flood exactly 34,502 cells. LESSON: every pass that rewrites
+shoreline materials must precede the lone-sand revert.
+
 ## W8 increment 1 SHIPPED (e6979d9)
 
 Public TS loader (src/consumers/typescript/loader.ts, ZERO imports —
