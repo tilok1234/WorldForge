@@ -62,6 +62,12 @@ export function buildMacroSamples(): unknown {
         regionCount: composed.regions.length,
         residualSmallRegions: composed.residualSmallRegions,
         biomeCellTotals,
+        settlements: {
+          planCount: composed.settlementPlans.length,
+          purposes: composed.settlementPlans.map((plan) => plan.purpose),
+          structureCount: composed.settlementPlans.reduce((sum, plan) => sum + plan.structures.length, 0),
+          landmarkCount: composed.landmarkPlans.length,
+        },
         routes: {
           destinationCount: composed.routesResult.destinations.length,
           routeCount: composed.routesResult.routes.length,

@@ -246,6 +246,8 @@ function runRenderMacro(argv: readonly string[]): number {
     ["macro-biomes.png", renders.biomes],
     ["macro-hydrology.png", renders.hydrology],
     ["macro-routes.png", renders.routes],
+    ["macro-settlements.png", renders.settlements],
+    ...(renders.townCrop !== null ? ([["town-detail-4x.png", renders.townCrop]] as Array<[string, Buffer | string]>) : []),
     ["macro-elevation.png", renders.elevation],
     ["macro-moisture.png", renders.moisture],
     ["macro-temperature.png", renders.temperature],

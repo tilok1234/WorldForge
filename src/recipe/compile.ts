@@ -94,6 +94,20 @@ export interface RouteRules {
   readonly edgePenaltyCost: number;
 }
 
+export interface SettlementRules {
+  readonly townRadius: number;
+  readonly outpostRadius: number;
+  readonly townLots: number;
+  readonly outpostLots: number;
+  /** Longest carved approach from a structure entrance to a street. */
+  readonly approachMaxLength: number;
+}
+
+export interface LandmarkSpec {
+  readonly type: string;
+  readonly relation: string | null;
+}
+
 export interface BiomeRules {
   /** Regions smaller than this merge into a neighbor during smoothing. */
   readonly minRegionCells: number;
@@ -110,7 +124,7 @@ export interface BiomeRules {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 4;
+  readonly resolvedConfigFormat: 5;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -133,6 +147,9 @@ export interface ResolvedWorldConfig {
   };
   readonly water: WaterRules;
   readonly routes: RouteRules;
+  readonly settlements: SettlementRules;
+  /** One spec per landmark budget slot; unspecified slots default. */
+  readonly landmarkSpecs: readonly LandmarkSpec[];
   readonly biomes: BiomeRules;
   readonly budgets: NormalizedWorldRecipe["budgets"];
   /** Named generation passes enabled at this behavior version. */
@@ -239,6 +256,12 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
   },
 };
 
+/** settlements.plans rule pack v1: settlement geometry per size preset. */
+const SETTLEMENT_RULES: { readonly [key in SizePreset]: SettlementRules } = {
+  tiny: { townRadius: 7, outpostRadius: 4, townLots: 5, outpostLots: 2, approachMaxLength: 48 },
+  small: { townRadius: 9, outpostRadius: 5, townLots: 8, outpostLots: 3, approachMaxLength: 96 },
+};
+
 /** macro.biomes rule pack v1: thresholds and region limits per size preset. */
 const BIOME_RULES: { readonly [key in SizePreset]: BiomeRules } = {
   tiny: {
@@ -272,7 +295,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 4,
+    resolvedConfigFormat: 5,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -304,9 +327,14 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
     },
     water: WATER_RULES[normalized.world.climatePreset][normalized.world.sizePreset],
     routes: ROUTE_RULES[normalized.world.sizePreset],
+    settlements: SETTLEMENT_RULES[normalized.world.sizePreset],
+    landmarkSpecs: Array.from({ length: normalized.budgets.landmarkCount }, (_, slot) => {
+      const spec = normalized.landmarks[slot];
+      return spec === undefined ? { type: "ancient_fortress", relation: null } : spec;
+    }),
     biomes: BIOME_RULES[normalized.world.sizePreset],
     budgets: normalized.budgets,
-    passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph"],
+    passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps"],
     dependencies: { tileforge: null },
   };
 }

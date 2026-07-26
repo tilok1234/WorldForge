@@ -37,6 +37,22 @@ export const BUDGET_RANGES = {
 export type BudgetField = keyof typeof BUDGET_RANGES;
 export const BUDGET_FIELD_NAMES = Object.keys(BUDGET_RANGES).sort() as readonly BudgetField[];
 
+export const LANDMARK_TYPES = ["ancient_fortress"] as const;
+export type LandmarkType = (typeof LANDMARK_TYPES)[number];
+
+export const RELATION_KINDS = ["across_river_from_town", "near_town", "far_from_town"] as const;
+export type RelationKind = (typeof RELATION_KINDS)[number];
+
+export interface LandmarkRequest {
+  readonly type: LandmarkType;
+  readonly relation?: RelationKind;
+}
+
+export interface NormalizedLandmarkRequest {
+  readonly type: LandmarkType;
+  readonly relation: RelationKind | null;
+}
+
 /** W0 defines no toggles; the object may be present but must be empty. */
 export const TOGGLE_NAMES: readonly string[] = [];
 
@@ -51,6 +67,8 @@ export interface WorldRecipe {
   readonly biases?: { readonly [key in BiasField]?: number };
   readonly budgets?: { readonly [key in BudgetField]?: number };
   readonly toggles?: { readonly [key: string]: boolean };
+  /** W5 relational vocabulary: one entry per requested landmark. */
+  readonly landmarks?: readonly LandmarkRequest[];
 }
 
 /** Recipe after deterministic normalization: every default made explicit. */
@@ -64,6 +82,7 @@ export interface NormalizedWorldRecipe {
   readonly biases: { readonly [key in BiasField]: number };
   readonly budgets: { readonly [key in BudgetField]: number };
   readonly toggles: { readonly [key: string]: boolean };
+  readonly landmarks: readonly NormalizedLandmarkRequest[];
 }
 
 /**
@@ -76,7 +95,6 @@ export const FUTURE_VOCABULARY = new Set([
   "hydrology",
   "routes",
   "settlements",
-  "landmarks",
   "structures",
   "decoration",
   "constraints",

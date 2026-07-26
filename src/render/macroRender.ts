@@ -9,8 +9,10 @@ import { WORLD_PALETTE, type PaletteKey } from "../regions/biomes.js";
 import { encodePng } from "./png.js";
 
 export const PALETTE_DEBUG_COLORS: { readonly [key in PaletteKey]: readonly [number, number, number] } = {
+  "terrain.cobble": [156, 146, 130],
   "terrain.dry_grass": [162, 154, 84],
   "terrain.grass": [79, 143, 62],
+  "terrain.gravel": [128, 120, 108],
   "terrain.mud": [97, 70, 47],
   "terrain.packed_road": [174, 144, 102],
   "terrain.rock": [138, 141, 144],
@@ -136,10 +138,68 @@ export function renderFieldPng(width: number, height: number, values: readonly n
   return encodePng(fullWidth, height, rgb);
 }
 
+const STRUCTURE_COLOR: readonly [number, number, number] = [70, 40, 36];
+const GATE_COLOR: readonly [number, number, number] = [128, 64, 44];
+
+/** Settlements review render: routes base + structure cells. */
+export function renderSettlementsPng(composed: ComposedWorld): Buffer {
+  const { width, height, grid, routesResult, structureLayer } = composed;
+  const rgb = new Uint8Array(width * height * 3);
+  for (let index = 0; index < grid.length; index += 1) {
+    let color = routesResult.pathLayer[index] === 1 ? [206, 162, 74] as const : cellColor(grid[index] as number);
+    const structure = structureLayer[index] as number;
+    if (structure !== 0) {
+      color = structure === 1 ? GATE_COLOR : STRUCTURE_COLOR;
+    }
+    rgb[index * 3] = color[0];
+    rgb[index * 3 + 1] = color[1];
+    rgb[index * 3 + 2] = color[2];
+  }
+  return encodePng(width, height, rgb);
+}
+
+/** Nearest-neighbor upscaled crop centered on the town for review. */
+export function renderTownCropPng(composed: ComposedWorld, scale = 4): Buffer | null {
+  const town = composed.settlementPlans[0];
+  if (town === undefined) {
+    return null;
+  }
+  const half = town.radius + 8;
+  const { width, height } = composed;
+  const x0 = Math.max(0, town.anchorX - half);
+  const y0 = Math.max(0, town.anchorY - half);
+  const x1 = Math.min(width - 1, town.anchorX + half);
+  const y1 = Math.min(height - 1, town.anchorY + half);
+  const cw = x1 - x0 + 1;
+  const ch = y1 - y0 + 1;
+  const rgb = new Uint8Array(cw * scale * ch * scale * 3);
+  for (let y = 0; y < ch; y += 1) {
+    for (let x = 0; x < cw; x += 1) {
+      const index = (y0 + y) * width + x0 + x;
+      let color = composed.routesResult.pathLayer[index] === 1 ? [206, 162, 74] as const : cellColor(composed.grid[index] as number);
+      const structure = composed.structureLayer[index] as number;
+      if (structure !== 0) {
+        color = structure === 1 ? GATE_COLOR : STRUCTURE_COLOR;
+      }
+      for (let sy = 0; sy < scale; sy += 1) {
+        for (let sx = 0; sx < scale; sx += 1) {
+          const pixel = ((y * scale + sy) * cw * scale + x * scale + sx) * 3;
+          rgb[pixel] = color[0];
+          rgb[pixel + 1] = color[1];
+          rgb[pixel + 2] = color[2];
+        }
+      }
+    }
+  }
+  return encodePng(cw * scale, ch * scale, rgb);
+}
+
 export interface MacroRenderSet {
   readonly biomes: Buffer;
   readonly hydrology: Buffer;
   readonly routes: Buffer;
+  readonly settlements: Buffer;
+  readonly townCrop: Buffer | null;
   readonly elevation: Buffer;
   readonly moisture: Buffer;
   readonly temperature: Buffer;
@@ -151,6 +211,8 @@ export function renderMacroSet(composed: ComposedWorld): MacroRenderSet {
     biomes: renderWorldGridPng(width, height, composed.grid),
     hydrology: renderHydrologyPng(composed),
     routes: renderRoutesPng(composed),
+    settlements: renderSettlementsPng(composed),
+    townCrop: renderTownCropPng(composed),
     elevation: renderFieldPng(width, height, fields.elevation),
     moisture: renderFieldPng(width, height, composed.moistureAdjusted),
     temperature: renderFieldPng(width, height, fields.temperature),

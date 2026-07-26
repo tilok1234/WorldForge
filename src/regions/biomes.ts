@@ -19,8 +19,10 @@ export const BIOME_KEYS = [
 
 /** Complete semantic palette, alphabetical; material indexes point here. */
 export const WORLD_PALETTE = [
+  "terrain.cobble",
   "terrain.dry_grass",
   "terrain.grass",
+  "terrain.gravel",
   "terrain.mud",
   "terrain.packed_road",
   "terrain.rock",

@@ -20,6 +20,8 @@ import {
   type RegionSummary,
 } from "../regions/biomes.js";
 import { buildRoutes, verifyRouteConnectivity, type RoutesResult } from "../routes/routes.js";
+import { planSettlements, type SettlementPlan } from "../settlements/settlements.js";
+import { placeLandmarks, type LandmarkPlan } from "../settlements/landmarks.js";
 
 const SWAMP = PALETTE_INDEX["terrain.swamp"];
 const DEEP = PALETTE_INDEX["water.deep"];
@@ -41,6 +43,9 @@ export interface ComposedWorld {
   readonly hydro: HydrologyResult;
   readonly wetlandCellCount: number;
   readonly routesResult: RoutesResult;
+  readonly structureLayer: Uint8Array;
+  readonly settlementPlans: readonly SettlementPlan[];
+  readonly landmarkPlans: readonly LandmarkPlan[];
 }
 
 export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
@@ -102,12 +107,76 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   // connectivity is re-verified on the final grid.
   let routesResult = buildRoutes(grid, fields, hydro, config);
 
+  // Settlement and landmark planning (W5): plans mutate the grid (plazas,
+  // cobble streets, structure footprints, stamps, blending) before cleanup.
+  const structureLayer = new Uint8Array(width * height);
+  const planErrors: string[] = [];
+  const settlementPlans = planSettlements(grid, structureLayer, fields, hydro, routesResult, config, planErrors);
+  const landmarkPlans = placeLandmarks(grid, structureLayer, routesResult.pathLayer, fields, hydro, routesResult, config, planErrors);
+
   // Absorb one-cell regions introduced by overlays and road carving. Road
   // cells are protected: traversal-critical corridors are never rewritten,
   // and connectivity is re-verified afterwards on the final grid.
-  smoothConfetti(grid, width, height, 2, 2, new Set([PALETTE_INDEX["terrain.packed_road"]]));
-  const postCleanupErrors: string[] = [];
+  smoothConfetti(grid, width, height, 2, 2, new Set([PALETTE_INDEX["terrain.packed_road"], PALETTE_INDEX["terrain.cobble"]]));
+  const postCleanupErrors: string[] = [...planErrors];
   verifyRouteConnectivity(grid, routesResult.pathLayer, routesResult.routes, routesResult.destinations, width, height, postCleanupErrors);
+  // Entrance reachability (W5 exit criterion): every structure entrance and
+  // landmark gate joins the walkable network.
+  {
+    const walkable = new Uint8Array(grid.length);
+    const cobbleValue = PALETTE_INDEX["terrain.cobble"];
+    const roadValue = PALETTE_INDEX["terrain.packed_road"];
+    for (let index = 0; index < grid.length; index += 1) {
+      if (grid[index] === roadValue || grid[index] === cobbleValue || routesResult.pathLayer[index] === 1) {
+        walkable[index] = 1;
+      }
+    }
+    for (const route of routesResult.routes) {
+      for (const crossing of route.crossings) {
+        walkable[crossing.cell] = 1;
+      }
+    }
+    const seeds: number[] = [];
+    if (settlementPlans.length > 0) {
+      seeds.push((settlementPlans[0] as SettlementPlan).anchorY * width + (settlementPlans[0] as SettlementPlan).anchorX);
+    }
+    const reached = new Uint8Array(grid.length);
+    const queue: number[] = [];
+    for (const seed of seeds) {
+      walkable[seed] = 1;
+      reached[seed] = 1;
+      queue.push(seed);
+    }
+    for (let head = 0; head < queue.length; head += 1) {
+      const index = queue[head] as number;
+      const x = index % width;
+      for (const neighbor of [index - width, index + width, index - 1, index + 1]) {
+        if (neighbor < 0 || neighbor >= grid.length) continue;
+        if (x === 0 && neighbor === index - 1) continue;
+        if (x === width - 1 && neighbor === index + 1) continue;
+        if (reached[neighbor] === 0 && walkable[neighbor] === 1) {
+          reached[neighbor] = 1;
+          queue.push(neighbor);
+        }
+      }
+    }
+    for (const plan of settlementPlans) {
+      for (const structure of plan.structures) {
+        const entrance = structure.entranceY * width + structure.entranceX;
+        if (entrance >= 0 && entrance < grid.length && reached[entrance] === 0) {
+          postCleanupErrors.push(
+            `settlement ${plan.id}: entrance of ${structure.type} at (${structure.entranceX}, ${structure.entranceY}) is unreachable`,
+          );
+        }
+      }
+    }
+    for (const plan of landmarkPlans) {
+      const gate = plan.entranceY * width + plan.entranceX;
+      if (reached[gate] === 0) {
+        postCleanupErrors.push(`landmark ${plan.id}: gate at (${plan.entranceX}, ${plan.entranceY}) is unreachable`);
+      }
+    }
+  }
   if (postCleanupErrors.length > 0) {
     routesResult = { ...routesResult, errors: [...routesResult.errors, ...postCleanupErrors] };
   }
@@ -133,6 +202,9 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     hydro,
     wetlandCellCount,
     routesResult,
+    structureLayer,
+    settlementPlans,
+    landmarkPlans,
   };
 }
 

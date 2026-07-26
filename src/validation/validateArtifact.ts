@@ -99,6 +99,7 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
         { name: "elevation", rows: chunk.layers.elevation, min: 0, max: 999 },
         { name: "river", rows: chunk.layers.river, min: 0, max: 1 },
         { name: "path", rows: chunk.layers.path, min: 0, max: 1 },
+        { name: "structure", rows: chunk.layers.structure, min: 0, max: artifact.structureTypes.length },
       ];
       for (const layer of layerChecks) {
         if (layer.rows.length !== chunkHeight) {
@@ -129,6 +130,42 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
 
     if (seen.size !== expected) {
       errors.push(`chunks must cover the world exactly once: expected ${expected}, found ${seen.size}`);
+    }
+  }
+
+  if (errors.length === 0) {
+    const occupied = new Set<number>();
+    const claim = (label: string, cellX: number, cellY: number, fw: number, fh: number): void => {
+      for (let sy = 0; sy < fh; sy += 1) {
+        for (let sx = 0; sx < fw; sx += 1) {
+          const cx = cellX + sx;
+          const cy = cellY + sy;
+          if (cx < 0 || cy < 0 || cx >= width || cy >= height) {
+            errors.push(`${label} footprint leaves the world at (${cx}, ${cy})`);
+            return;
+          }
+          const key = cy * width + cx;
+          if (occupied.has(key)) {
+            errors.push(`${label} overlaps another structure at (${cx}, ${cy})`);
+            return;
+          }
+          occupied.add(key);
+        }
+      }
+    };
+    for (const settlement of artifact.settlements) {
+      for (const structure of settlement.structures) {
+        claim(
+          `settlement ${settlement.id} ${structure.type}`,
+          structure.cell[0],
+          structure.cell[1],
+          structure.footprint[0],
+          structure.footprint[1],
+        );
+      }
+    }
+    for (const landmark of artifact.landmarks) {
+      claim(`landmark ${landmark.id}`, landmark.cell[0], landmark.cell[1], landmark.footprint[0], landmark.footprint[1]);
     }
   }
 

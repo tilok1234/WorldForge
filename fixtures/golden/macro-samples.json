@@ -3,8 +3,10 @@
   "worlds": [
     {
       "biomeCellTotals": {
+        "terrain.cobble": 0,
         "terrain.dry_grass": 0,
         "terrain.grass": 2887,
+        "terrain.gravel": 0,
         "terrain.mud": 27,
         "terrain.packed_road": 0,
         "terrain.rock": 82,
@@ -79,19 +81,27 @@
           "x": 5,
           "y": 60
         }
-      ]
+      ],
+      "settlements": {
+        "landmarkCount": 0,
+        "planCount": 0,
+        "purposes": [],
+        "structureCount": 0
+      }
     },
     {
       "biomeCellTotals": {
+        "terrain.cobble": 347,
         "terrain.dry_grass": 501,
-        "terrain.grass": 23980,
+        "terrain.grass": 23829,
+        "terrain.gravel": 75,
         "terrain.mud": 1102,
-        "terrain.packed_road": 1536,
-        "terrain.rock": 19218,
+        "terrain.packed_road": 1374,
+        "terrain.rock": 19113,
         "terrain.snow": 10352,
-        "terrain.swamp": 874,
+        "terrain.swamp": 869,
         "water.deep": 1348,
-        "water.shallow": 6625
+        "water.shallow": 6626
       },
       "hydrology": {
         "lakeCount": 22,
@@ -103,15 +113,15 @@
         "wetlandCellCount": 932
       },
       "name": "small-cold-coastal",
-      "regionCount": 136,
-      "residualSmallRegions": 92,
+      "regionCount": 155,
+      "residualSmallRegions": 109,
       "routes": {
         "crossingCount": 2,
         "destinationCount": 6,
         "errorCount": 0,
         "roadCellCount": 564,
         "routeCount": 5,
-        "trailCellCount": 93
+        "trailCellCount": 101
       },
       "samples": [
         {
@@ -159,7 +169,19 @@
           "x": 5,
           "y": 60
         }
-      ]
+      ],
+      "settlements": {
+        "landmarkCount": 1,
+        "planCount": 5,
+        "purposes": [
+          "harbor",
+          "farming",
+          "harbor",
+          "crossing",
+          "crossing"
+        ],
+        "structureCount": 21
+      }
     }
   ]
 }

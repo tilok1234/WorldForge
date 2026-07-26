@@ -1,0 +1,26 @@
+{
+  "stampFormat": 1,
+  "type": "ancient_fortress",
+  "footprint": { "width": 9, "height": 9 },
+  "anchor": { "x": 4, "y": 4 },
+  "entrance": { "x": 4, "y": 8 },
+  "substrate": { "maxSlopePermille": 140 },
+  "blendRadius": 3,
+  "legend": {
+    "W": { "structure": "structure.fortress_wall", "material": "terrain.rock" },
+    "G": { "structure": "structure.fortress_gate", "material": "terrain.cobble" },
+    "C": { "material": "terrain.cobble" },
+    "o": { "material": "terrain.gravel" }
+  },
+  "cells": [
+    "WWWWWWWWW",
+    "WoooooooW",
+    "WooCCCooW",
+    "WooCCCooW",
+    "WooCCCooW",
+    "WoooCoooW",
+    "WoooCoooW",
+    "WoooCoooW",
+    "WWWWGWWWW"
+  ]
+}

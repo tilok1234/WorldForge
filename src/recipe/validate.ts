@@ -1,5 +1,7 @@
 import {
   BIAS_FIELD_NAMES,
+  LANDMARK_TYPES,
+  RELATION_KINDS,
   BUDGET_FIELD_NAMES,
   BUDGET_RANGES,
   CLIMATE_PRESET_NAMES,
@@ -23,7 +25,7 @@ export type RecipeValidation =
   | { readonly ok: true; readonly recipe: WorldRecipe }
   | { readonly ok: false; readonly issues: readonly RecipeIssue[] };
 
-const ROOT_FIELDS = ["recipeFormat", "seed", "world", "biases", "budgets", "toggles"];
+const ROOT_FIELDS = ["recipeFormat", "seed", "world", "biases", "budgets", "toggles", "landmarks"];
 const WORLD_FIELDS = ["sizePreset", "climatePreset"];
 
 export function validateRecipe(input: unknown): RecipeValidation {
@@ -113,6 +115,43 @@ export function validateRecipe(input: unknown): RecipeValidation {
           issues.push({ path: `$.toggles.${key}`, message: "toggle must be a boolean" });
         }
       }
+    }
+  }
+
+  const landmarks = input["landmarks"];
+  if (landmarks !== undefined) {
+    if (!Array.isArray(landmarks)) {
+      issues.push({ path: "$.landmarks", message: "landmarks must be an array" });
+    } else {
+      if (landmarks.length > 8) {
+        issues.push({ path: "$.landmarks", message: "at most 8 landmark requests are supported" });
+      }
+      const budgetsValue = input["budgets"];
+      const landmarkBudget =
+        budgetsValue !== undefined && isPlainObject(budgetsValue) && typeof budgetsValue["landmarkCount"] === "number"
+          ? (budgetsValue["landmarkCount"] as number)
+          : BUDGET_RANGES.landmarkCount.default;
+      if (landmarks.length > landmarkBudget) {
+        issues.push({
+          path: "$.landmarks",
+          message: `${landmarks.length} landmark requests exceed budgets.landmarkCount (${landmarkBudget})`,
+        });
+      }
+      landmarks.forEach((entry, position) => {
+        if (!isPlainObject(entry)) {
+          issues.push({ path: `$.landmarks[${position}]`, message: "must be an object" });
+          return;
+        }
+        for (const key of Object.keys(entry)) {
+          if (key !== "type" && key !== "relation") {
+            issues.push({ path: `$.landmarks[${position}].${key}`, message: `unknown field "${key}"` });
+          }
+        }
+        checkEnum(issues, entry, "type", `$.landmarks[${position}].type`, LANDMARK_TYPES);
+        if (entry["relation"] !== undefined) {
+          checkEnum(issues, entry, "relation", `$.landmarks[${position}].relation`, RELATION_KINDS);
+        }
+      });
     }
   }
 

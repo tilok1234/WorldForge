@@ -46,13 +46,22 @@ describe("recipe validation", () => {
     expectInvalid({ ...VALID_TINY, frobnicate: true }, "$.frobnicate", "unknown field");
   });
 
-  it("rejects premature relational vocabulary with the staged explanation", () => {
+  it("rejects premature vocabulary and malformed landmark requests", () => {
+    // constraints remains future vocabulary with the staged explanation.
+    expectInvalid({ ...VALID_TINY, constraints: {} }, "$.constraints", "W0 recipe vocabulary");
+    // landmarks is W5 vocabulary now; malformed entries fail on their merits.
     expectInvalid(
       { ...VALID_TINY, landmarks: [{ relation: "across_river_from_main_town" }] },
-      "$.landmarks",
-      "Staged vocabulary",
+      "$.landmarks[0]",
     );
-    expectInvalid({ ...VALID_TINY, constraints: {} }, "$.constraints", "W0 recipe vocabulary");
+    expectInvalid(
+      {
+        ...VALID_TINY,
+        budgets: { landmarkCount: 1 },
+        landmarks: [{ type: "ancient_fortress", relation: "beside_the_sea" }],
+      },
+      "$.landmarks[0].relation",
+    );
   });
 
   it("rejects wrong recipeFormat, bad seeds, and bad presets", () => {

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://worldforge.local/schemas/resolved-world-config-4.schema.json",
-  "title": "ResolvedWorldConfig (format 4)",
-  "description": "Deterministically derived generator parameters produced by the versioned recipe compiler (src/recipe/compile.ts). Format 4 adds route-graph rules (Milestone W4) atop the W3 lapse and water rules. Derived data: hashed for verification, never independently authored or edited.",
+  "$id": "https://worldforge.local/schemas/resolved-world-config-5.schema.json",
+  "title": "ResolvedWorldConfig (format 5)",
+  "description": "Deterministically derived generator parameters produced by the versioned recipe compiler (src/recipe/compile.ts). Format 5 adds settlement rules and landmark specs (Milestone W5) atop the W4 route rules. Derived data: hashed for verification, never independently authored or edited.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -16,13 +16,15 @@
     "macroFields",
     "water",
     "routes",
+    "settlements",
+    "landmarkSpecs",
     "biomes",
     "budgets",
     "passes",
     "dependencies"
   ],
   "properties": {
-    "resolvedConfigFormat": { "const": 4 },
+    "resolvedConfigFormat": { "const": 5 },
     "recipeCompilerVersion": { "type": "integer", "minimum": 1 },
     "generatorBehaviorVersion": { "type": "integer", "minimum": 1 },
     "rulePackVersions": {
@@ -116,6 +118,30 @@
         "detourWarnRatioPermille": { "type": "integer", "minimum": 1000 },
         "edgePenaltyRadius": { "type": "integer", "minimum": 1 },
         "edgePenaltyCost": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "settlements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["townRadius", "outpostRadius", "townLots", "outpostLots", "approachMaxLength"],
+      "properties": {
+        "townRadius": { "type": "integer", "minimum": 1 },
+        "outpostRadius": { "type": "integer", "minimum": 1 },
+        "townLots": { "type": "integer", "minimum": 1 },
+        "outpostLots": { "type": "integer", "minimum": 1 },
+        "approachMaxLength": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "landmarkSpecs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "relation"],
+        "properties": {
+          "type": { "type": "string" },
+          "relation": { "type": ["string", "null"] }
+        }
       }
     },
     "biomes": {

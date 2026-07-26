@@ -65,12 +65,12 @@ describe("cli", () => {
         recipeFormat: 1,
         seed: 1,
         world: { sizePreset: "tiny", climatePreset: "temperate" },
-        landmarks: [{ relation: "across_river_from_main_town" }],
+        constraints: { requireReachableLandmarks: true },
       }),
     );
     const { status, stderr } = run("validate-recipe", badRecipe);
     assert.equal(status, 1);
-    assert.match(stderr, /landmarks/);
+    assert.match(stderr, /constraints/);
     assert.match(stderr, /Staged vocabulary/);
   });
 

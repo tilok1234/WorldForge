@@ -23,12 +23,14 @@ import type { HydrologyResult } from "../hydrology/hydrology.js";
 import { WATER_DEEP, WATER_NONE, WATER_SHALLOW } from "../hydrology/hydrology.js";
 import { PALETTE_INDEX } from "../regions/biomes.js";
 import type { MacroFields } from "../fields/macroFields.js";
+import { loadStamp } from "../settlements/landmarks.js";
 
 const GRASS = PALETTE_INDEX["terrain.grass"];
 const DRY_GRASS = PALETTE_INDEX["terrain.dry_grass"];
 const MUD = PALETTE_INDEX["terrain.mud"];
 const SNOW = PALETTE_INDEX["terrain.snow"];
 const PACKED_ROAD = PALETTE_INDEX["terrain.packed_road"];
+const COBBLE = PALETTE_INDEX["terrain.cobble"];
 
 export interface Destination {
   readonly id: number;
@@ -72,7 +74,7 @@ export function buildRoutes(
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  const destinations = pickDestinations(grid, fields, hydro, config, warnings);
+  const destinations = pickDestinations(grid, fields, hydro, config, warnings, errors);
   const settlements = destinations.filter((d) => d.kind === "settlement_candidate");
   const landmarks = destinations.filter((d) => d.kind === "landmark_candidate");
 
@@ -198,6 +200,7 @@ function pickDestinations(
   hydro: HydrologyResult,
   config: ResolvedWorldConfig,
   warnings: string[],
+  errors: string[],
 ): Destination[] {
   const { width, height } = fields;
   const jitter = channel(config.seed, "routes.destinations");
@@ -298,7 +301,53 @@ function pickDestinations(
 
   const taken: Destination[] = [];
   bySpacing(scored, config.budgets.settlementCount, taken, "settlement_candidate", config.routes.minDestinationSpacing);
-  bySpacing(landmarkScored, config.budgets.landmarkCount, taken, "landmark_candidate", config.routes.minDestinationSpacing);
+
+  // Landmark slots honor their relational specs (W5 solver). Unsatisfiable
+  // constraints fail with a named error instead of being silently relaxed.
+  const town = taken.find((destination) => destination.kind === "settlement_candidate");
+  landmarkScored.sort((a, b) => b.score - a.score || a.index - b.index);
+  for (let slot = 0; slot < config.budgets.landmarkCount; slot += 1) {
+    const spec = config.landmarkSpecs[slot] ?? { type: "ancient_fortress", relation: null };
+    let placedSlot = false;
+    for (const candidate of landmarkScored) {
+      const cx = candidate.index % fields.width;
+      const cy = (candidate.index - cx) / fields.width;
+      let clear = true;
+      for (const existing of taken) {
+        const ex = existing.cell % fields.width;
+        const ey = (existing.cell - ex) / fields.width;
+        if (Math.max(Math.abs(cx - ex), Math.abs(cy - ey)) < config.routes.minDestinationSpacing) {
+          clear = false;
+          break;
+        }
+      }
+      if (!clear) {
+        continue;
+      }
+      if (spec.relation !== null) {
+        if (town === undefined) {
+          break;
+        }
+        if (!relationHolds(spec.relation, candidate.index, town.cell, hydro, fields.width)) {
+          continue;
+        }
+      }
+      // Candidates must satisfy footprint constraints (docs/GENERATION_RULES).
+      if (!stampFootprintClear(spec.type, candidate.index, fields, hydro)) {
+        continue;
+      }
+      taken.push({ id: taken.length, kind: "landmark_candidate", cell: candidate.index });
+      placedSlot = true;
+      break;
+    }
+    if (!placedSlot) {
+      errors.push(
+        spec.relation === null
+          ? `landmark slot ${slot} (${spec.type}) found no valid site`
+          : `landmark slot ${slot} (${spec.type}) constraint \"${spec.relation}\" is unsatisfiable in this world`,
+      );
+    }
+  }
 
   const settlementsPlaced = taken.filter((d) => d.kind === "settlement_candidate").length;
   if (settlementsPlaced < config.budgets.settlementCount) {
@@ -446,7 +495,7 @@ export function verifyRouteConnectivity(
   }
   const walkable = new Uint8Array(grid.length);
   for (let index = 0; index < grid.length; index += 1) {
-    if (grid[index] === PACKED_ROAD || pathLayer[index] === 1) {
+    if (grid[index] === PACKED_ROAD || grid[index] === COBBLE || pathLayer[index] === 1) {
       walkable[index] = 1;
     }
   }
@@ -483,6 +532,84 @@ export function verifyRouteConnectivity(
       errors.push(`destination ${destination.id} (${destination.kind}) is disconnected from the route network`);
     }
   }
+}
+
+/** The whole stamp footprint must be dry, unbuilt-on, and gently sloped. */
+function stampFootprintClear(
+  type: string,
+  cell: number,
+  fields: MacroFields,
+  hydro: HydrologyResult,
+): boolean {
+  const stamp = loadStamp(type);
+  const { width, height } = fields;
+  const anchorX = cell % width;
+  const anchorY = (cell - anchorX) / width;
+  const originX = anchorX - stamp.anchorX;
+  const originY = anchorY - stamp.anchorY;
+  if (originX < 1 || originY < 1 || originX + stamp.width >= width - 1 || originY + stamp.height >= height - 1) {
+    return false;
+  }
+  const anchorElevation = fields.elevation[cell] as number;
+  for (let sy = 0; sy < stamp.height; sy += 1) {
+    for (let sx = 0; sx < stamp.width; sx += 1) {
+      const index = (originY + sy) * width + originX + sx;
+      if (hydro.waterKind[index] !== 0 || hydro.isRiver[index] === 1) {
+        return false;
+      }
+      if (Math.abs((fields.elevation[index] as number) - anchorElevation) > stamp.maxSlopePermille) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+/** Relational predicates for landmark placement (W5 solver). */
+function relationHolds(
+  relation: string,
+  cell: number,
+  townCell: number,
+  hydro: HydrologyResult,
+  width: number,
+): boolean {
+  const distance = chebyshev(cell, townCell, width);
+  if (relation === "near_town") {
+    return distance <= Math.trunc(width / 5);
+  }
+  if (relation === "far_from_town") {
+    return distance >= Math.trunc(width / 3);
+  }
+  if (relation === "across_river_from_town") {
+    // Integer line walk from town to candidate; a major river or water body
+    // on the segment counts as separation.
+    let x0 = townCell % width;
+    let y0 = (townCell - x0) / width;
+    const x1 = cell % width;
+    const y1 = (cell - x1) / width;
+    const dx = Math.abs(x1 - x0);
+    const dy = -Math.abs(y1 - y0);
+    const sx = x0 < x1 ? 1 : -1;
+    const sy = y0 < y1 ? 1 : -1;
+    let error = dx + dy;
+    while (x0 !== x1 || y0 !== y1) {
+      const doubled = 2 * error;
+      if (doubled >= dy) {
+        error += dy;
+        x0 += sx;
+      }
+      if (doubled <= dx) {
+        error += dx;
+        y0 += sy;
+      }
+      const index = y0 * width + x0;
+      if (hydro.isMajorRiver[index] === 1 || hydro.waterKind[index] !== 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+  return false;
 }
 
 function chebyshev(a: number, b: number, width: number): number {

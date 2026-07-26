@@ -33,6 +33,10 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
       landmarkCount: recipe.budgets?.landmarkCount ?? BUDGET_RANGES.landmarkCount.default,
     },
     toggles: {},
+    landmarks: (recipe.landmarks ?? []).map((request) => ({
+      type: request.type,
+      relation: request.relation ?? null,
+    })),
   };
 }
 

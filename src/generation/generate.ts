@@ -13,9 +13,10 @@ import {
 } from "../core/version.js";
 import { composeWorld, type ComposedWorld } from "./composeWorld.js";
 import { WORLD_PALETTE } from "../regions/biomes.js";
+import { STRUCTURE_TYPES } from "../settlements/structures.js";
 
-/** Format 3 (Milestone W4): adds the path layer, destinations, and routes. */
-export const ARTIFACT_FORMAT_VERSION = 3;
+/** Format 4 (Milestone W5): adds the structure layer, settlements, landmarks. */
+export const ARTIFACT_FORMAT_VERSION = 4;
 
 export interface WorldArtifact {
   readonly formatVersion: number;
@@ -46,6 +47,8 @@ export interface WorldArtifact {
   readonly dependencies: { readonly tileforge: null };
   /** Material layer values index into this palette of semantic keys. */
   readonly semanticPalette: readonly string[];
+  /** Structure layer values are 1-based indexes into this list. */
+  readonly structureTypes: readonly string[];
   readonly hydrology: {
     readonly seaLevelPermille: number;
     readonly oceanCellCount: number;
@@ -65,8 +68,26 @@ export interface WorldArtifact {
     readonly biome: string;
     readonly cellCount: number;
   }>;
-  readonly settlements: readonly unknown[];
-  readonly landmarks: readonly unknown[];
+  readonly settlements: ReadonlyArray<{
+    readonly id: number;
+    readonly kind: string;
+    readonly purpose: string;
+    readonly anchor: readonly [number, number];
+    readonly radius: number;
+    readonly structures: ReadonlyArray<{
+      readonly type: string;
+      readonly cell: readonly [number, number];
+      readonly footprint: readonly [number, number];
+      readonly entrance: readonly [number, number];
+    }>;
+  }>;
+  readonly landmarks: ReadonlyArray<{
+    readonly id: number;
+    readonly type: string;
+    readonly cell: readonly [number, number];
+    readonly footprint: readonly [number, number];
+    readonly entrance: readonly [number, number];
+  }>;
   readonly routes: ReadonlyArray<{
     readonly id: number;
     readonly routeClass: string;
@@ -88,6 +109,8 @@ export interface WorldArtifact {
       readonly river: ReadonlyArray<readonly number[]>;
       /** 1 where the dirt-path band (trail class) runs, else 0. */
       readonly path: ReadonlyArray<readonly number[]>;
+      /** 0 = none, else 1-based index into structureTypes. */
+      readonly structure: ReadonlyArray<readonly number[]>;
     };
   }>;
 }
@@ -112,7 +135,7 @@ export function generateWorldDetailed(
   const chunksDown = height / chunkHeight;
   const chunks: Array<{
     coord: readonly [number, number];
-    layers: { material: number[][]; elevation: number[][]; river: number[][]; path: number[][] };
+    layers: { material: number[][]; elevation: number[][]; river: number[][]; path: number[][]; structure: number[][] };
   }> = [];
   for (let cy = 0; cy < chunksDown; cy += 1) {
     for (let cx = 0; cx < chunksAcross; cx += 1) {
@@ -120,11 +143,13 @@ export function generateWorldDetailed(
       const elevation: number[][] = [];
       const river: number[][] = [];
       const path: number[][] = [];
+      const structure: number[][] = [];
       for (let ly = 0; ly < chunkHeight; ly += 1) {
         const materialRow = new Array<number>(chunkWidth);
         const elevationRow = new Array<number>(chunkWidth);
         const riverRow = new Array<number>(chunkWidth);
         const pathRow = new Array<number>(chunkWidth);
+        const structureRow = new Array<number>(chunkWidth);
         const worldY = cy * chunkHeight + ly;
         for (let lx = 0; lx < chunkWidth; lx += 1) {
           const worldIndex = worldY * width + cx * chunkWidth + lx;
@@ -132,13 +157,15 @@ export function generateWorldDetailed(
           elevationRow[lx] = composed.fields.elevation[worldIndex] as number;
           riverRow[lx] = composed.hydro.isMajorRiver[worldIndex] as number;
           pathRow[lx] = composed.routesResult.pathLayer[worldIndex] as number;
+          structureRow[lx] = composed.structureLayer[worldIndex] as number;
         }
         material.push(materialRow);
         elevation.push(elevationRow);
         river.push(riverRow);
         path.push(pathRow);
+        structure.push(structureRow);
       }
-      chunks.push({ coord: [cx, cy], layers: { material, elevation, river, path } });
+      chunks.push({ coord: [cx, cy], layers: { material, elevation, river, path, structure } });
     }
   }
 
@@ -164,6 +191,7 @@ export function generateWorldDetailed(
     dimensions: { width, height, chunkWidth, chunkHeight },
     dependencies: { tileforge: null },
     semanticPalette: [...WORLD_PALETTE],
+    structureTypes: [...STRUCTURE_TYPES],
     hydrology: {
       seaLevelPermille: config.water.seaLevelPermille,
       oceanCellCount: composed.hydro.oceanCellCount,
@@ -183,8 +211,26 @@ export function generateWorldDetailed(
       biome: region.biome,
       cellCount: region.cellCount,
     })),
-    settlements: [],
-    landmarks: [],
+    settlements: composed.settlementPlans.map((plan) => ({
+      id: plan.id,
+      kind: plan.kind,
+      purpose: plan.purpose,
+      anchor: [plan.anchorX, plan.anchorY] as const,
+      radius: plan.radius,
+      structures: plan.structures.map((structure) => ({
+        type: structure.type,
+        cell: [structure.x, structure.y] as const,
+        footprint: [structure.width, structure.height] as const,
+        entrance: [structure.entranceX, structure.entranceY] as const,
+      })),
+    })),
+    landmarks: composed.landmarkPlans.map((plan) => ({
+      id: plan.id,
+      type: plan.type,
+      cell: [plan.x, plan.y] as const,
+      footprint: [plan.width, plan.height] as const,
+      entrance: [plan.entranceX, plan.entranceY] as const,
+    })),
     routes: composed.routesResult.routes.map((route) => ({
       id: route.id,
       routeClass: route.routeClass,

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://worldforge.local/schemas/worldrecipe-1.schema.json",
   "title": "WorldRecipe (format 1, W0 vocabulary)",
-  "description": "Author-facing root generation document. Mirrors src/recipe/validate.ts, which is the enforced validator. W0 vocabulary only: seed, named presets, integer permille biases, budgets, toggles (none defined). Relational and named-entity fields are rejected until their solver milestone.",
+  "description": "Author-facing root generation document. Mirrors src/recipe/validate.ts, which is the enforced validator. Staged vocabulary through W5: seed, named presets, integer permille biases, budgets, toggles (none defined), and landmark requests with relational constraints (backed by the W5 solver). Remaining named-entity fields stay rejected until their milestones.",
   "type": "object",
   "additionalProperties": false,
   "required": ["recipeFormat", "seed", "world"],
@@ -41,6 +41,19 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {}
+    },
+    "landmarks": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type"],
+        "properties": {
+          "type": { "enum": ["ancient_fortress"] },
+          "relation": { "enum": ["across_river_from_town", "near_town", "far_from_town"] }
+        }
+      }
     }
   }
 }

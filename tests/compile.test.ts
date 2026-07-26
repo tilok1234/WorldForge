@@ -39,8 +39,8 @@ describe("recipe compiler", () => {
   it("keeps the dependency state explicit and lists the W2 passes", () => {
     const config = compileRecipe(normalized(1, "tiny", "temperate"));
     assert.equal(config.dependencies.tileforge, null);
-    assert.deepEqual(config.passes, ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph"]);
-    assert.equal(config.resolvedConfigFormat, 4);
+    assert.deepEqual(config.passes, ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps"]);
+    assert.equal(config.resolvedConfigFormat, 5);
     assert.equal(config.water.seaLevelPermille, 310);
     assert.equal(config.macroFields.temperatureLapse.startElevationPermille, 640);
     assert.equal(config.routes.streetWidth, 2);

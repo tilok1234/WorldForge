@@ -102,7 +102,7 @@ describe("route planning", () => {
   it("exposes destinations, routes, and the path layer in the artifact", () => {
     const { normalized, config } = worldFor(1);
     const { artifact } = generateWorldDetailed(normalized, config);
-    assert.equal(artifact.formatVersion, 3);
+    assert.equal(artifact.formatVersion, 4);
     assert.ok(artifact.destinations.length > 0);
     for (const destination of artifact.destinations) {
       const [x, y] = destination.cell;
