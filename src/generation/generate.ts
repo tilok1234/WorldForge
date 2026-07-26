@@ -11,10 +11,11 @@ import {
   GENERATOR_VERSION,
   RECIPE_COMPILER_VERSION,
 } from "../core/version.js";
-import { buildMacroFields, type MacroFields } from "../fields/macroFields.js";
-import { BIOME_KEYS, buildBiomeWorld, type BiomeWorld } from "../regions/biomes.js";
+import { composeWorld, type ComposedWorld } from "./composeWorld.js";
+import { WORLD_PALETTE } from "../regions/biomes.js";
 
-export const ARTIFACT_FORMAT_VERSION = 1;
+/** Format 2 (Milestone W3): adds elevation + river chunk layers and hydrology. */
+export const ARTIFACT_FORMAT_VERSION = 2;
 
 export interface WorldArtifact {
   readonly formatVersion: number;
@@ -45,6 +46,14 @@ export interface WorldArtifact {
   readonly dependencies: { readonly tileforge: null };
   /** Material layer values index into this palette of semantic keys. */
   readonly semanticPalette: readonly string[];
+  readonly hydrology: {
+    readonly seaLevelPermille: number;
+    readonly oceanCellCount: number;
+    readonly lakeCount: number;
+    readonly riverCellCount: number;
+    readonly riverSourceCount: number;
+    readonly wetlandCellCount: number;
+  };
   readonly regions: ReadonlyArray<{
     readonly id: number;
     readonly biome: string;
@@ -55,22 +64,21 @@ export interface WorldArtifact {
   readonly routes: readonly unknown[];
   readonly chunks: ReadonlyArray<{
     readonly coord: readonly [number, number];
-    readonly layers: { readonly material: ReadonlyArray<readonly number[]> };
+    readonly layers: {
+      readonly material: ReadonlyArray<readonly number[]>;
+      /** Raw terrain elevation, permille. */
+      readonly elevation: ReadonlyArray<readonly number[]>;
+      /** 1 where a river runs on land, else 0. */
+      readonly river: ReadonlyArray<readonly number[]>;
+    };
   }>;
 }
 
 export interface GenerationResult {
   readonly artifact: WorldArtifact;
-  /** Intermediate data for debug rendering and validation; not persisted. */
-  readonly fields: MacroFields;
-  readonly biomeWorld: BiomeWorld;
+  readonly composed: ComposedWorld;
 }
 
-/**
- * W2 generation: macro fields (macro.fields pass) classified into biome
- * regions (regions.biomes pass); the material layer is the biome grid sliced
- * into chunks. Hydrology, routes, and placements arrive in later milestones.
- */
 export function generateWorldDetailed(
   normalized: NormalizedWorldRecipe,
   config: ResolvedWorldConfig,
@@ -80,28 +88,35 @@ export function generateWorldDetailed(
     throw new Error("resolved dimensions must be divisible by chunk dimensions");
   }
 
-  const fields = buildMacroFields(config);
-  const biomeWorld = buildBiomeWorld(fields, config);
+  const composed = composeWorld(config);
 
   const chunksAcross = width / chunkWidth;
   const chunksDown = height / chunkHeight;
   const chunks: Array<{
     coord: readonly [number, number];
-    layers: { material: number[][] };
+    layers: { material: number[][]; elevation: number[][]; river: number[][] };
   }> = [];
   for (let cy = 0; cy < chunksDown; cy += 1) {
     for (let cx = 0; cx < chunksAcross; cx += 1) {
       const material: number[][] = [];
+      const elevation: number[][] = [];
+      const river: number[][] = [];
       for (let ly = 0; ly < chunkHeight; ly += 1) {
-        const row = new Array<number>(chunkWidth);
+        const materialRow = new Array<number>(chunkWidth);
+        const elevationRow = new Array<number>(chunkWidth);
+        const riverRow = new Array<number>(chunkWidth);
         const worldY = cy * chunkHeight + ly;
         for (let lx = 0; lx < chunkWidth; lx += 1) {
-          const worldX = cx * chunkWidth + lx;
-          row[lx] = biomeWorld.biomeGrid[worldY * width + worldX] as number;
+          const worldIndex = worldY * width + cx * chunkWidth + lx;
+          materialRow[lx] = composed.grid[worldIndex] as number;
+          elevationRow[lx] = composed.fields.elevation[worldIndex] as number;
+          riverRow[lx] = composed.hydro.isRiver[worldIndex] as number;
         }
-        material.push(row);
+        material.push(materialRow);
+        elevation.push(elevationRow);
+        river.push(riverRow);
       }
-      chunks.push({ coord: [cx, cy], layers: { material } });
+      chunks.push({ coord: [cx, cy], layers: { material, elevation, river } });
     }
   }
 
@@ -126,8 +141,16 @@ export function generateWorldDetailed(
     },
     dimensions: { width, height, chunkWidth, chunkHeight },
     dependencies: { tileforge: null },
-    semanticPalette: [...BIOME_KEYS],
-    regions: biomeWorld.regions.map((region) => ({
+    semanticPalette: [...WORLD_PALETTE],
+    hydrology: {
+      seaLevelPermille: config.water.seaLevelPermille,
+      oceanCellCount: composed.hydro.oceanCellCount,
+      lakeCount: composed.hydro.lakeCount,
+      riverCellCount: composed.hydro.riverCellCount,
+      riverSourceCount: composed.hydro.riverTraces.length,
+      wetlandCellCount: composed.wetlandCellCount,
+    },
+    regions: composed.regions.map((region) => ({
       id: region.id,
       biome: region.biome,
       cellCount: region.cellCount,
@@ -138,7 +161,7 @@ export function generateWorldDetailed(
     chunks,
   };
 
-  return { artifact, fields, biomeWorld };
+  return { artifact, composed };
 }
 
 export function generateWorld(

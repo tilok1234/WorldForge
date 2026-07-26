@@ -7,9 +7,8 @@
 import { compileRecipe } from "../recipe/compile.js";
 import type { NormalizedWorldRecipe } from "../recipe/schema.js";
 import { SEED_MAX } from "../recipe/schema.js";
-import { buildMacroFields } from "../fields/macroFields.js";
-import { BIOME_KEYS, buildBiomeWorld, type BiomeKey } from "../regions/biomes.js";
-import { BIOME_DEBUG_COLORS } from "./macroRender.js";
+import { composeWorld } from "../generation/composeWorld.js";
+import { cellColor } from "./macroRender.js";
 import { encodePng } from "./png.js";
 
 const GUTTER = 2;
@@ -67,7 +66,7 @@ export function buildContactSheet(
     const seed = (normalized.seed + tile) % (SEED_MAX + 1);
     const tileRecipe: NormalizedWorldRecipe = { ...normalized, seed };
     const config = compileRecipe(tileRecipe);
-    const biomeWorld = buildBiomeWorld(buildMacroFields(config), config);
+    const composed = composeWorld(config);
 
     const column = tile % columns;
     const row = (tile - column) / columns;
@@ -75,15 +74,14 @@ export function buildContactSheet(
     const originY = GUTTER + row * (tileHeight + GUTTER);
     for (let y = 0; y < tileHeight; y += 1) {
       for (let x = 0; x < tileWidth; x += 1) {
-        const key = BIOME_KEYS[biomeWorld.biomeGrid[y * tileWidth + x] as number] as BiomeKey;
-        const [r, g, b] = BIOME_DEBUG_COLORS[key];
+        const [r, g, b] = cellColor(composed.grid[y * tileWidth + x] as number);
         const pixel = ((originY + y) * sheetWidth + originX + x) * 3;
         rgb[pixel] = r;
         rgb[pixel + 1] = g;
         rgb[pixel + 2] = b;
       }
     }
-    tiles.push({ seed, column, row, residualSmallRegions: biomeWorld.residualSmallRegions });
+    tiles.push({ seed, column, row, residualSmallRegions: composed.residualSmallRegions });
   }
 
   return {

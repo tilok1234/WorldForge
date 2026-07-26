@@ -57,6 +57,19 @@ export interface MacroFieldSpec {
   readonly northGradientPermille: number;
 }
 
+export interface WaterRules {
+  /** Cells at or below this (filled) elevation flood when reachable. */
+  readonly seaLevelPermille: number;
+  /** Water within this band below the surface renders/classifies shallow. */
+  readonly shallowBandPermille: number;
+  /** Flow-accumulation count at which a cell becomes river. */
+  readonly riverAccumulationThreshold: number;
+  /** Wetland (swamp) needs at least this moisture beside water. */
+  readonly wetlandMoistureMin: number;
+  /** Coastal moisture halo radius in cells (uses climate coastalInfluence). */
+  readonly coastalInfluenceRadius: number;
+}
+
 export interface BiomeRules {
   /** Regions smaller than this merge into a neighbor during smoothing. */
   readonly minRegionCells: number;
@@ -73,7 +86,7 @@ export interface BiomeRules {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 2;
+  readonly resolvedConfigFormat: 3;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -88,7 +101,13 @@ export interface ResolvedWorldConfig {
     readonly elevation: MacroFieldSpec;
     readonly moisture: MacroFieldSpec;
     readonly temperature: MacroFieldSpec;
+    /** Snow-elevation coupling: temperature drop above the start elevation. */
+    readonly temperatureLapse: {
+      readonly startElevationPermille: number;
+      readonly strengthPermille: number;
+    };
   };
+  readonly water: WaterRules;
   readonly biomes: BiomeRules;
   readonly budgets: NormalizedWorldRecipe["budgets"];
   /** Named generation passes enabled at this behavior version. */
@@ -97,19 +116,67 @@ export interface ResolvedWorldConfig {
   readonly dependencies: { readonly tileforge: null };
 }
 
-/** macro.fields rule pack v1: octave layouts per size preset. */
+/**
+ * macro.fields rule pack v2: octave layouts per size preset. The largest
+ * octave spans half the map and carries most of the weight so each world
+ * reads as one dominant landform (standing W2-acceptance review criterion),
+ * with smaller octaves adding detail rather than competing shapes.
+ */
 const OCTAVE_RULES: { readonly [key in SizePreset]: MacroFieldSpec["octaves"] } = {
   tiny: [
-    { cellSizeLog2: 5, weightPermille: 550 },
-    { cellSizeLog2: 4, weightPermille: 300 },
-    { cellSizeLog2: 3, weightPermille: 150 },
-  ],
-  small: [
-    { cellSizeLog2: 6, weightPermille: 550 },
+    { cellSizeLog2: 6, weightPermille: 450 },
     { cellSizeLog2: 5, weightPermille: 300 },
     { cellSizeLog2: 4, weightPermille: 150 },
+    { cellSizeLog2: 3, weightPermille: 100 },
+  ],
+  small: [
+    { cellSizeLog2: 7, weightPermille: 450 },
+    { cellSizeLog2: 6, weightPermille: 300 },
+    { cellSizeLog2: 5, weightPermille: 150 },
+    { cellSizeLog2: 4, weightPermille: 100 },
   ],
 };
+
+/** hydrology.water rule pack v1: water levels and thresholds per preset. */
+const WATER_RULES: {
+  readonly [key in ClimatePreset]: { readonly [size in SizePreset]: WaterRules };
+} = {
+  temperate: {
+    tiny: {
+      seaLevelPermille: 310,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 48,
+      wetlandMoistureMin: 560,
+      coastalInfluenceRadius: 8,
+    },
+    small: {
+      seaLevelPermille: 310,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 320,
+      wetlandMoistureMin: 560,
+      coastalInfluenceRadius: 16,
+    },
+  },
+  cold_coastal: {
+    tiny: {
+      seaLevelPermille: 370,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 48,
+      wetlandMoistureMin: 560,
+      coastalInfluenceRadius: 8,
+    },
+    small: {
+      seaLevelPermille: 370,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 320,
+      wetlandMoistureMin: 560,
+      coastalInfluenceRadius: 16,
+    },
+  },
+};
+
+/** macro.fields rule pack v2: snow-elevation coupling (W3 acceptance brief). */
+const TEMPERATURE_LAPSE = { startElevationPermille: 500, strengthPermille: 700 };
 
 /** macro.biomes rule pack v1: thresholds and region limits per size preset. */
 const BIOME_RULES: { readonly [key in SizePreset]: BiomeRules } = {
@@ -117,11 +184,11 @@ const BIOME_RULES: { readonly [key in SizePreset]: BiomeRules } = {
     minRegionCells: 12,
     smoothingPasses: 8,
     thresholds: {
-      rockElevationMin: 660,
+      rockElevationMin: 650,
       snowTemperatureMax: 320,
-      mudMoistureMin: 630,
+      mudMoistureMin: 600,
       mudElevationMax: 500,
-      dryMoistureMax: 380,
+      dryMoistureMax: 375,
       dryTemperatureMin: 460,
     },
   },
@@ -129,11 +196,11 @@ const BIOME_RULES: { readonly [key in SizePreset]: BiomeRules } = {
     minRegionCells: 80,
     smoothingPasses: 8,
     thresholds: {
-      rockElevationMin: 660,
+      rockElevationMin: 650,
       snowTemperatureMax: 320,
-      mudMoistureMin: 630,
+      mudMoistureMin: 600,
       mudElevationMax: 500,
-      dryMoistureMax: 380,
+      dryMoistureMax: 375,
       dryTemperatureMin: 460,
     },
   },
@@ -144,7 +211,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 2,
+    resolvedConfigFormat: 3,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -172,10 +239,12 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
         offsetPermille: climate.baseTemperaturePermille + normalized.biases.temperaturePermille,
         northGradientPermille: 0,
       },
+      temperatureLapse: TEMPERATURE_LAPSE,
     },
+    water: WATER_RULES[normalized.world.climatePreset][normalized.world.sizePreset],
     biomes: BIOME_RULES[normalized.world.sizePreset],
     budgets: normalized.budgets,
-    passes: ["macro.fields", "regions.biomes"],
+    passes: ["macro.fields", "hydrology.water", "regions.biomes"],
     dependencies: { tileforge: null },
   };
 }

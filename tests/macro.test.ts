@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { channel } from "../src/core/channels.js";
 import { fbmPermille, northGradientPermille, valueNoisePermille } from "../src/fields/valueNoise.js";
-import { buildMacroFields } from "../src/fields/macroFields.js";
-import { BIOME_KEYS, buildBiomeWorld, classifyCell } from "../src/regions/biomes.js";
+import { BIOME_KEYS, WORLD_PALETTE, classifyCell } from "../src/regions/biomes.js";
+import { composeWorld } from "../src/generation/composeWorld.js";
 import { buildContactSheet } from "../src/render/contactSheet.js";
 import { encodePng } from "../src/render/png.js";
 import { compileRecipe } from "../src/recipe/compile.js";
@@ -85,9 +85,9 @@ describe("biome classification and regions", () => {
 
   it("produces confetti-free regions that exactly cover the tiny world", () => {
     const { config } = tinyWorld();
-    const biomeWorld = buildBiomeWorld(buildMacroFields(config), config);
+    const composed = composeWorld(config);
     let total = 0;
-    for (const region of biomeWorld.regions) {
+    for (const region of composed.regions) {
       assert.ok(region.cellCount > 1, `region ${region.id} is one-cell confetti`);
       total += region.cellCount;
     }
@@ -96,9 +96,9 @@ describe("biome classification and regions", () => {
 
   it("reproduces the same macro map for the same seed", () => {
     const { config } = tinyWorld(42);
-    const first = buildBiomeWorld(buildMacroFields(config), config);
-    const second = buildBiomeWorld(buildMacroFields(config), config);
-    assert.equal(canonicalJson(first.biomeGrid), canonicalJson(second.biomeGrid));
+    const first = composeWorld(config);
+    const second = composeWorld(config);
+    assert.equal(canonicalJson(first.grid), canonicalJson(second.grid));
     assert.deepEqual(first.regions, second.regions);
   });
 
@@ -109,7 +109,7 @@ describe("biome classification and regions", () => {
       minRegionCells: config.biomes.minRegionCells,
     });
     assert.equal(report.status, "pass", report.errors.join("; "));
-    assert.deepEqual(result.artifact.semanticPalette, [...BIOME_KEYS]);
+    assert.deepEqual(result.artifact.semanticPalette, [...WORLD_PALETTE]);
     assert.ok(result.artifact.regions.length > 0);
   });
 });

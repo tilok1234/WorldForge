@@ -20,12 +20,26 @@ export interface MacroFields {
 
 export function buildMacroFields(config: ResolvedWorldConfig): MacroFields {
   const { width, height } = config.world;
+  const elevation = buildField(config, "macro.elevation", config.macroFields.elevation);
+  const temperature = buildField(config, "macro.temperature", config.macroFields.temperature);
+
+  // Snow-elevation coupling (macro.fields v2): above the start elevation,
+  // temperature falls with altitude so peaks read cold before biome rules run.
+  const lapse = config.macroFields.temperatureLapse;
+  for (let index = 0; index < temperature.length; index += 1) {
+    const above = (elevation[index] as number) - lapse.startElevationPermille;
+    if (above > 0) {
+      const drop = Math.trunc((above * lapse.strengthPermille) / 1000);
+      temperature[index] = clampInt((temperature[index] as number) - drop, 0, 999);
+    }
+  }
+
   return {
     width,
     height,
-    elevation: buildField(config, "macro.elevation", config.macroFields.elevation),
+    elevation,
     moisture: buildField(config, "macro.moisture", config.macroFields.moisture),
-    temperature: buildField(config, "macro.temperature", config.macroFields.temperature),
+    temperature,
   };
 }
 

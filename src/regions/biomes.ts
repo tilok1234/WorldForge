@@ -1,15 +1,14 @@
 /**
- * Region and biome compiler (docs/ARCHITECTURE_AND_CONTRACTS.md, component 6).
- * Classifies cells from integer fields via strict threshold order, then
- * removes sub-minimum "confetti" regions by merging them into their dominant
- * border neighbor. Smoothing is bounded (docs/GENERATION_RULES.md, performance
- * restraints); anything still small afterward is reported, never hidden.
+ * Region and biome primitives (docs/ARCHITECTURE_AND_CONTRACTS.md,
+ * component 6). Land classification uses strict threshold order; confetti
+ * smoothing merges sub-minimum regions into their dominant border neighbor
+ * with a bounded pass count. World composition (water, wetlands, regions)
+ * lives in src/generation/composeWorld.ts.
  */
 
-import type { BiomeRules, ResolvedWorldConfig } from "../recipe/compile.js";
-import type { MacroFields } from "../fields/macroFields.js";
+import type { BiomeRules } from "../recipe/compile.js";
 
-/** Alphabetical; material palette indexes point into this list. */
+/** Land biomes; the first five entries of WORLD_PALETTE. */
 export const BIOME_KEYS = [
   "terrain.dry_grass",
   "terrain.grass",
@@ -18,28 +17,30 @@ export const BIOME_KEYS = [
   "terrain.snow",
 ] as const;
 
-export type BiomeKey = (typeof BIOME_KEYS)[number];
+/** Complete semantic palette, alphabetical; material indexes point here. */
+export const WORLD_PALETTE = [
+  ...BIOME_KEYS,
+  "terrain.swamp",
+  "water.deep",
+  "water.shallow",
+] as const;
 
-const DRY_GRASS = BIOME_KEYS.indexOf("terrain.dry_grass");
-const GRASS = BIOME_KEYS.indexOf("terrain.grass");
-const MUD = BIOME_KEYS.indexOf("terrain.mud");
-const ROCK = BIOME_KEYS.indexOf("terrain.rock");
-const SNOW = BIOME_KEYS.indexOf("terrain.snow");
+export type PaletteKey = (typeof WORLD_PALETTE)[number];
+
+export const PALETTE_INDEX: { readonly [key in PaletteKey]: number } = Object.fromEntries(
+  WORLD_PALETTE.map((key, index) => [key, index]),
+) as { [key in PaletteKey]: number };
+
+const DRY_GRASS = PALETTE_INDEX["terrain.dry_grass"];
+const GRASS = PALETTE_INDEX["terrain.grass"];
+const MUD = PALETTE_INDEX["terrain.mud"];
+const ROCK = PALETTE_INDEX["terrain.rock"];
+const SNOW = PALETTE_INDEX["terrain.snow"];
 
 export interface RegionSummary {
   readonly id: number;
-  readonly biome: BiomeKey;
+  readonly biome: PaletteKey;
   readonly cellCount: number;
-}
-
-export interface BiomeWorld {
-  readonly width: number;
-  readonly height: number;
-  /** Row-major palette indexes into BIOME_KEYS. */
-  readonly biomeGrid: readonly number[];
-  readonly regions: readonly RegionSummary[];
-  /** Regions still below minRegionCells after bounded smoothing. */
-  readonly residualSmallRegions: number;
 }
 
 /** Strict first-match classification; order is part of the rule pack. */
@@ -64,46 +65,19 @@ export function classifyCell(
   return GRASS;
 }
 
-export function buildBiomeWorld(fields: MacroFields, config: ResolvedWorldConfig): BiomeWorld {
-  const { width, height } = fields;
-  const grid = new Array<number>(width * height);
-  for (let index = 0; index < grid.length; index += 1) {
-    grid[index] = classifyCell(
-      fields.elevation[index] as number,
-      fields.moisture[index] as number,
-      fields.temperature[index] as number,
-      config.biomes.thresholds,
-    );
-  }
-
-  smoothConfetti(grid, width, height, config.biomes);
-
-  const labeling = labelComponents(grid, width, height);
-  const regions: RegionSummary[] = labeling.components.map((component, id) => ({
-    id,
-    biome: BIOME_KEYS[component.biome] as BiomeKey,
-    cellCount: component.cellCount,
-  }));
-  const residualSmallRegions = labeling.components.filter(
-    (component) => component.cellCount < config.biomes.minRegionCells,
-  ).length;
-
-  return { width, height, biomeGrid: grid, regions, residualSmallRegions };
-}
-
-interface Component {
+export interface Component {
   readonly biome: number;
   readonly cellCount: number;
   readonly firstCell: number;
 }
 
-interface Labeling {
+export interface Labeling {
   readonly labels: Int32Array;
   readonly components: Component[];
 }
 
 /** Scan-order flood fill: component ids are deterministic first-encounter order. */
-function labelComponents(grid: readonly number[], width: number, height: number): Labeling {
+export function labelComponents(grid: readonly number[], width: number, height: number): Labeling {
   const labels = new Int32Array(width * height).fill(-1);
   const components: Component[] = [];
   const stack: number[] = [];
@@ -135,16 +109,22 @@ function labelComponents(grid: readonly number[], width: number, height: number)
 
 /**
  * Bounded confetti removal: each pass rewrites every sub-minimum component to
- * the biome of the neighbor component it shares the longest border with
+ * the value of the neighbor component it shares the longest border with
  * (ties: lower component id). Border counts come from the pass's snapshot, so
  * the result does not depend on processing order within a pass.
  */
-function smoothConfetti(grid: number[], width: number, height: number, rules: BiomeRules): void {
-  for (let pass = 0; pass < rules.smoothingPasses; pass += 1) {
+export function smoothConfetti(
+  grid: number[],
+  width: number,
+  height: number,
+  minRegionCells: number,
+  passes: number,
+): void {
+  for (let pass = 0; pass < passes; pass += 1) {
     const { labels, components } = labelComponents(grid, width, height);
     const smallLabels: number[] = [];
     for (let label = 0; label < components.length; label += 1) {
-      if ((components[label] as Component).cellCount < rules.minRegionCells) {
+      if ((components[label] as Component).cellCount < minRegionCells) {
         smallLabels.push(label);
       }
     }
@@ -152,20 +132,20 @@ function smoothConfetti(grid: number[], width: number, height: number, rules: Bi
       return;
     }
 
-    // Shared-border cell counts between adjacent components, from the snapshot.
     const borderCounts = new Map<number, Map<number, number>>();
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const index = y * width + x;
         const label = labels[index] as number;
-        for (const neighbor of [index + 1, index + width]) {
-          if (neighbor >= labels.length) {
-            continue;
+        if (x < width - 1) {
+          const neighborLabel = labels[index + 1] as number;
+          if (neighborLabel !== label) {
+            bumpBorder(borderCounts, label, neighborLabel);
+            bumpBorder(borderCounts, neighborLabel, label);
           }
-          if (x === width - 1 && neighbor === index + 1) {
-            continue;
-          }
-          const neighborLabel = labels[neighbor] as number;
+        }
+        if (y < height - 1) {
+          const neighborLabel = labels[index + width] as number;
           if (neighborLabel !== label) {
             bumpBorder(borderCounts, label, neighborLabel);
             bumpBorder(borderCounts, neighborLabel, label);
@@ -174,11 +154,11 @@ function smoothConfetti(grid: number[], width: number, height: number, rules: Bi
       }
     }
 
-    const targetBiome = new Map<number, number>();
+    const targetValue = new Map<number, number>();
     for (const label of smallLabels) {
       const neighbors = borderCounts.get(label);
       if (neighbors === undefined) {
-        continue; // single-component world; nothing to merge into
+        continue;
       }
       let bestLabel = -1;
       let bestCount = -1;
@@ -189,14 +169,14 @@ function smoothConfetti(grid: number[], width: number, height: number, rules: Bi
         }
       }
       if (bestLabel !== -1) {
-        targetBiome.set(label, (components[bestLabel] as Component).biome);
+        targetValue.set(label, (components[bestLabel] as Component).biome);
       }
     }
-    if (targetBiome.size === 0) {
+    if (targetValue.size === 0) {
       return;
     }
     for (let index = 0; index < grid.length; index += 1) {
-      const replacement = targetBiome.get(labels[index] as number);
+      const replacement = targetValue.get(labels[index] as number);
       if (replacement !== undefined) {
         grid[index] = replacement;
       }

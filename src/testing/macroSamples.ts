@@ -11,9 +11,9 @@ import { join } from "node:path";
 import { compileRecipe } from "../recipe/compile.js";
 import { normalizeRecipe } from "../recipe/normalize.js";
 import { validateRecipe } from "../recipe/validate.js";
-import { buildMacroFields } from "../fields/macroFields.js";
-import { BIOME_KEYS, buildBiomeWorld } from "../regions/biomes.js";
-import { renderBiomePng } from "../render/macroRender.js";
+import { composeWorld } from "../generation/composeWorld.js";
+import { WORLD_PALETTE } from "../regions/biomes.js";
+import { renderWorldGridPng } from "../render/macroRender.js";
 
 const ROOT = fileURLToPath(new URL("../../..", import.meta.url));
 
@@ -32,22 +32,20 @@ function worldFor(recipeName: string) {
   }
   const normalized = normalizeRecipe(validation.recipe);
   const config = compileRecipe(normalized);
-  const fields = buildMacroFields(config);
-  const biomeWorld = buildBiomeWorld(fields, config);
-  return { config, fields, biomeWorld };
+  return { config, composed: composeWorld(config) };
 }
 
 export function buildMacroSamples(): unknown {
   return {
     sampleFormat: 1,
     worlds: ["tiny-temperate", "small-cold-coastal"].map((name) => {
-      const { fields, biomeWorld } = worldFor(name);
+      const { composed } = worldFor(name);
       const biomeCellTotals: Record<string, number> = {};
-      for (const key of BIOME_KEYS) {
+      for (const key of WORLD_PALETTE) {
         biomeCellTotals[key] = 0;
       }
-      for (const index of biomeWorld.biomeGrid) {
-        const key = BIOME_KEYS[index] as string;
+      for (const index of composed.grid) {
+        const key = WORLD_PALETTE[index] as string;
         biomeCellTotals[key] = (biomeCellTotals[key] ?? 0) + 1;
       }
       return {
@@ -55,20 +53,29 @@ export function buildMacroSamples(): unknown {
         samples: SAMPLE_COORDS.map(([x, y]) => ({
           x,
           y,
-          elevation: fields.elevation[y * fields.width + x],
-          moisture: fields.moisture[y * fields.width + x],
-          temperature: fields.temperature[y * fields.width + x],
-          biome: BIOME_KEYS[biomeWorld.biomeGrid[y * fields.width + x] as number],
+          elevation: composed.fields.elevation[y * composed.width + x],
+          moisture: composed.moistureAdjusted[y * composed.width + x],
+          temperature: composed.fields.temperature[y * composed.width + x],
+          biome: WORLD_PALETTE[composed.grid[y * composed.width + x] as number],
+          river: composed.hydro.isRiver[y * composed.width + x],
         })),
-        regionCount: biomeWorld.regions.length,
-        residualSmallRegions: biomeWorld.residualSmallRegions,
+        regionCount: composed.regions.length,
+        residualSmallRegions: composed.residualSmallRegions,
         biomeCellTotals,
+        hydrology: {
+          oceanCellCount: composed.hydro.oceanCellCount,
+          lakeCount: composed.hydro.lakeCount,
+          riverCellCount: composed.hydro.riverCellCount,
+          riverSourceCount: composed.hydro.riverTraces.length,
+          wetlandCellCount: composed.wetlandCellCount,
+          topologyErrorCount: composed.hydro.topologyErrors.length,
+        },
       };
     }),
   };
 }
 
 export function buildTinyBiomePng(): Buffer {
-  const { biomeWorld } = worldFor("tiny-temperate");
-  return renderBiomePng(biomeWorld);
+  const { composed } = worldFor("tiny-temperate");
+  return renderWorldGridPng(composed.width, composed.height, composed.grid);
 }

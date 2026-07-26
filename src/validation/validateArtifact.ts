@@ -84,19 +84,42 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
       }
       seen.add(key);
 
-      const material = chunk.layers.material;
-      if (material.length !== chunkHeight) {
-        errors.push(`chunk [${key}] material must have ${chunkHeight} rows`);
-        continue;
-      }
-      for (const row of material) {
-        if (row.length !== chunkWidth) {
-          errors.push(`chunk [${key}] has a row of width ${row.length}, expected ${chunkWidth}`);
-          break;
+      const layerChecks: ReadonlyArray<{
+        name: string;
+        rows: ReadonlyArray<readonly number[]>;
+        min: number;
+        max: number;
+      }> = [
+        {
+          name: "material",
+          rows: chunk.layers.material,
+          min: 0,
+          max: artifact.semanticPalette.length - 1,
+        },
+        { name: "elevation", rows: chunk.layers.elevation, min: 0, max: 999 },
+        { name: "river", rows: chunk.layers.river, min: 0, max: 1 },
+      ];
+      for (const layer of layerChecks) {
+        if (layer.rows.length !== chunkHeight) {
+          errors.push(`chunk [${key}] ${layer.name} must have ${chunkHeight} rows`);
+          continue;
         }
-        for (const cell of row) {
-          if (!Number.isSafeInteger(cell) || cell < 0 || cell >= artifact.semanticPalette.length) {
-            errors.push(`chunk [${key}] references palette index ${String(cell)} out of range`);
+        for (const row of layer.rows) {
+          if (row.length !== chunkWidth) {
+            errors.push(
+              `chunk [${key}] ${layer.name} has a row of width ${row.length}, expected ${chunkWidth}`,
+            );
+            break;
+          }
+          let rowValid = true;
+          for (const cell of row) {
+            if (!Number.isSafeInteger(cell) || cell < layer.min || cell > layer.max) {
+              errors.push(`chunk [${key}] ${layer.name} value ${String(cell)} is out of range`);
+              rowValid = false;
+              break;
+            }
+          }
+          if (!rowValid) {
             break;
           }
         }

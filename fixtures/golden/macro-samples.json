@@ -4,52 +4,68 @@
     {
       "biomeCellTotals": {
         "terrain.dry_grass": 0,
-        "terrain.grass": 2419,
-        "terrain.mud": 51,
-        "terrain.rock": 1037,
-        "terrain.snow": 589
+        "terrain.grass": 2916,
+        "terrain.mud": 33,
+        "terrain.rock": 134,
+        "terrain.snow": 831,
+        "terrain.swamp": 7,
+        "water.deep": 0,
+        "water.shallow": 175
+      },
+      "hydrology": {
+        "lakeCount": 7,
+        "oceanCellCount": 0,
+        "riverCellCount": 104,
+        "riverSourceCount": 15,
+        "topologyErrorCount": 0,
+        "wetlandCellCount": 9
       },
       "name": "tiny-temperate",
-      "regionCount": 7,
-      "residualSmallRegions": 0,
+      "regionCount": 14,
+      "residualSmallRegions": 5,
       "samples": [
         {
           "biome": "terrain.grass",
-          "elevation": 358,
-          "moisture": 640,
-          "temperature": 323,
+          "elevation": 339,
+          "moisture": 645,
+          "river": 0,
+          "temperature": 343,
           "x": 0,
           "y": 0
         },
         {
           "biome": "terrain.grass",
-          "elevation": 424,
-          "moisture": 477,
-          "temperature": 418,
+          "elevation": 434,
+          "moisture": 533,
+          "river": 0,
+          "temperature": 430,
           "x": 13,
           "y": 7
         },
         {
-          "biome": "terrain.rock",
-          "elevation": 764,
-          "moisture": 866,
-          "temperature": 127,
+          "biome": "terrain.snow",
+          "elevation": 451,
+          "moisture": 448,
+          "river": 1,
+          "temperature": 252,
           "x": 32,
           "y": 32
         },
         {
-          "biome": "terrain.mud",
-          "elevation": 415,
-          "moisture": 753,
-          "temperature": 474,
+          "biome": "terrain.rock",
+          "elevation": 717,
+          "moisture": 819,
+          "river": 0,
+          "temperature": 38,
           "x": 63,
           "y": 63
         },
         {
-          "biome": "terrain.snow",
-          "elevation": 389,
-          "moisture": 459,
-          "temperature": 308,
+          "biome": "terrain.rock",
+          "elevation": 660,
+          "moisture": 436,
+          "river": 0,
+          "temperature": 422,
           "x": 5,
           "y": 60
         }
@@ -57,53 +73,69 @@
     },
     {
       "biomeCellTotals": {
-        "terrain.dry_grass": 1238,
-        "terrain.grass": 31735,
-        "terrain.mud": 634,
-        "terrain.rock": 15429,
-        "terrain.snow": 16500
+        "terrain.dry_grass": 0,
+        "terrain.grass": 8274,
+        "terrain.mud": 306,
+        "terrain.rock": 19875,
+        "terrain.snow": 29173,
+        "terrain.swamp": 170,
+        "water.deep": 1397,
+        "water.shallow": 6341
+      },
+      "hydrology": {
+        "lakeCount": 23,
+        "oceanCellCount": 3112,
+        "riverCellCount": 592,
+        "riverSourceCount": 34,
+        "topologyErrorCount": 0,
+        "wetlandCellCount": 185
       },
       "name": "small-cold-coastal",
-      "regionCount": 17,
-      "residualSmallRegions": 0,
+      "regionCount": 79,
+      "residualSmallRegions": 55,
       "samples": [
         {
           "biome": "terrain.snow",
-          "elevation": 494,
-          "moisture": 503,
-          "temperature": 212,
+          "elevation": 488,
+          "moisture": 493,
+          "river": 0,
+          "temperature": 182,
           "x": 0,
           "y": 0
         },
         {
           "biome": "terrain.snow",
-          "elevation": 622,
-          "moisture": 586,
-          "temperature": 277,
+          "elevation": 556,
+          "moisture": 550,
+          "river": 0,
+          "temperature": 202,
           "x": 13,
           "y": 7
         },
         {
-          "biome": "terrain.rock",
-          "elevation": 861,
-          "moisture": 655,
-          "temperature": 123,
+          "biome": "terrain.snow",
+          "elevation": 607,
+          "moisture": 583,
+          "river": 1,
+          "temperature": 215,
           "x": 32,
           "y": 32
         },
         {
-          "biome": "terrain.grass",
-          "elevation": 544,
-          "moisture": 698,
-          "temperature": 441,
+          "biome": "terrain.rock",
+          "elevation": 812,
+          "moisture": 659,
+          "river": 0,
+          "temperature": 0,
           "x": 63,
           "y": 63
         },
         {
-          "biome": "terrain.rock",
-          "elevation": 766,
-          "moisture": 578,
-          "temperature": 285,
+          "biome": "terrain.snow",
+          "elevation": 609,
+          "moisture": 520,
+          "river": 0,
+          "temperature": 290,
           "x": 5,
           "y": 60
         }

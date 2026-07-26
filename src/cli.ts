@@ -105,10 +105,13 @@ function runSmoke(): number {
   };
   const normalized = normalizeRecipe(recipe);
   const config = compileRecipe(normalized);
-  const artifact = generateWorldDetailed(normalized, config).artifact;
+  const result = generateWorldDetailed(normalized, config);
+  const artifact = result.artifact;
   const report = validateArtifact(artifact, { minRegionCells: config.biomes.minRegionCells });
-  if (report.status !== "pass") {
-    process.stderr.write(`smoke: FAIL\n${report.errors.join("\n")}\n`);
+  if (report.status !== "pass" || result.composed.hydro.topologyErrors.length > 0) {
+    process.stderr.write(
+      `smoke: FAIL\n${[...report.errors, ...result.composed.hydro.topologyErrors].join("\n")}\n`,
+    );
     return 1;
   }
   process.stdout.write(
@@ -191,10 +194,13 @@ function runGenerate(argv: readonly string[]): number {
   }
   const normalized = normalizeRecipe(loaded);
   const config = compileRecipe(normalized);
-  const artifact = generateWorldDetailed(normalized, config).artifact;
+  const generated = generateWorldDetailed(normalized, config);
+  const artifact = generated.artifact;
   const report = validateArtifact(artifact, { minRegionCells: config.biomes.minRegionCells });
-  if (report.status !== "pass") {
-    process.stderr.write(`validation FAILED; nothing written\n${report.errors.join("\n")}\n`);
+  if (report.status !== "pass" || generated.composed.hydro.topologyErrors.length > 0) {
+    process.stderr.write(
+      `validation FAILED; nothing written\n${[...report.errors, ...generated.composed.hydro.topologyErrors].join("\n")}\n`,
+    );
     return 1;
   }
   const written = writeWorldOutputs(guard.resolvedPath, {
@@ -227,14 +233,18 @@ function runRenderMacro(argv: readonly string[]): number {
   const config = compileRecipe(normalized);
   const result = generateWorldDetailed(normalized, config);
   const report = validateArtifact(result.artifact, { minRegionCells: config.biomes.minRegionCells });
-  if (report.status !== "pass") {
-    process.stderr.write(`validation FAILED; nothing written\n${report.errors.join("\n")}\n`);
+  const topologyErrors = result.composed.hydro.topologyErrors;
+  if (report.status !== "pass" || topologyErrors.length > 0) {
+    process.stderr.write(
+      `validation FAILED; nothing written\n${[...report.errors, ...topologyErrors].join("\n")}\n`,
+    );
     return 1;
   }
-  const renders = renderMacroSet(result.fields, result.biomeWorld);
+  const renders = renderMacroSet(result.composed);
   mkdirSync(parsed.outDir, { recursive: true });
   const files: Array<[string, Buffer | string]> = [
     ["macro-biomes.png", renders.biomes],
+    ["macro-hydrology.png", renders.hydrology],
     ["macro-elevation.png", renders.elevation],
     ["macro-moisture.png", renders.moisture],
     ["macro-temperature.png", renders.temperature],
@@ -243,8 +253,13 @@ function runRenderMacro(argv: readonly string[]): number {
       canonicalJson({
         generationIdentitySha256: result.artifact.generator.generationIdentitySha256,
         regionCount: result.artifact.regions.length,
-        residualSmallRegions: result.biomeWorld.residualSmallRegions,
+        residualSmallRegions: result.composed.residualSmallRegions,
         regions: result.artifact.regions,
+        hydrology: {
+          ...result.artifact.hydrology,
+          riverTraces: result.composed.hydro.riverTraces,
+          topologyErrors,
+        },
         validation: report,
       }),
     ],

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://worldforge.local/schemas/resolved-world-config-2.schema.json",
-  "title": "ResolvedWorldConfig (format 2)",
-  "description": "Deterministically derived generator parameters produced by the versioned recipe compiler (src/recipe/compile.ts). Format 2 adds macro-field and biome rule-pack expansions (Milestone W2). Derived data: hashed for verification, never independently authored or edited.",
+  "$id": "https://worldforge.local/schemas/resolved-world-config-3.schema.json",
+  "title": "ResolvedWorldConfig (format 3)",
+  "description": "Deterministically derived generator parameters produced by the versioned recipe compiler (src/recipe/compile.ts). Format 3 adds the temperature lapse (snow-elevation coupling) and hydrology water rules (Milestone W3). Derived data: hashed for verification, never independently authored or edited.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,13 +14,14 @@
     "world",
     "climate",
     "macroFields",
+    "water",
     "biomes",
     "budgets",
     "passes",
     "dependencies"
   ],
   "properties": {
-    "resolvedConfigFormat": { "const": 2 },
+    "resolvedConfigFormat": { "const": 3 },
     "recipeCompilerVersion": { "type": "integer", "minimum": 1 },
     "generatorBehaviorVersion": { "type": "integer", "minimum": 1 },
     "rulePackVersions": {
@@ -62,11 +63,38 @@
     "macroFields": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["elevation", "moisture", "temperature"],
+      "required": ["elevation", "moisture", "temperature", "temperatureLapse"],
       "properties": {
         "elevation": { "$ref": "#/$defs/macroFieldSpec" },
         "moisture": { "$ref": "#/$defs/macroFieldSpec" },
-        "temperature": { "$ref": "#/$defs/macroFieldSpec" }
+        "temperature": { "$ref": "#/$defs/macroFieldSpec" },
+        "temperatureLapse": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["startElevationPermille", "strengthPermille"],
+          "properties": {
+            "startElevationPermille": { "type": "integer", "minimum": 0, "maximum": 999 },
+            "strengthPermille": { "type": "integer", "minimum": 0, "maximum": 2000 }
+          }
+        }
+      }
+    },
+    "water": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "seaLevelPermille",
+        "shallowBandPermille",
+        "riverAccumulationThreshold",
+        "wetlandMoistureMin",
+        "coastalInfluenceRadius"
+      ],
+      "properties": {
+        "seaLevelPermille": { "type": "integer", "minimum": 0, "maximum": 999 },
+        "shallowBandPermille": { "type": "integer", "minimum": 0, "maximum": 999 },
+        "riverAccumulationThreshold": { "type": "integer", "minimum": 1 },
+        "wetlandMoistureMin": { "type": "integer", "minimum": 0, "maximum": 999 },
+        "coastalInfluenceRadius": { "type": "integer", "minimum": 1 }
       }
     },
     "biomes": {

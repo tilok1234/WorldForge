@@ -266,3 +266,8 @@ Every milestone with visual output requires:
 2. a chunk-border review;
 3. a native-scale TileForge-resolved review;
 4. explicit acceptance or an iteration brief.
+
+Standing macro-map criterion (from the W2 acceptance brief): a post-hydrology
+world SHOULD read as one dominant landform per map — a mountain mass, a basin,
+a coastline — not as same-scale biome blobs. If it does not, revisit the
+elevation octave weights before adding features.
