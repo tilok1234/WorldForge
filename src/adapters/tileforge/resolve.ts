@@ -67,6 +67,9 @@ const STRUCTURE_NAME: { readonly [key: string]: string } = {
   "structure.portal": "portal",
   "structure.monolith": "monolith",
   "structure.buried_statue": "buriedstatue",
+  "structure.world_tree": "worldtree",
+  "structure.crystal_spire": "crystalspire",
+  "structure.lighthouse": "lighthouse",
 };
 
 /** WorldForge semantic prop keys -> package prop species names. */

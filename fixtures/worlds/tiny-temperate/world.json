@@ -55857,12 +55857,12 @@
   ],
   "formatVersion": 8,
   "generator": {
-    "generationIdentitySha256": "01923b5ce21b8b0b2be3298b1213d40bcdca7b5f42177251dabe3274766e6819",
-    "generatorBehaviorVersion": 21,
+    "generationIdentitySha256": "7641c538e865e7361fc2dedadb8645dd0f95b2b3c1d3339f0c5e7dd3828dabfd",
+    "generatorBehaviorVersion": 22,
     "name": "worldforge",
-    "recipeCompilerVersion": 10,
+    "recipeCompilerVersion": 11,
     "recipeSha256": "b18720c7f09ed2b9bba855ce538cdb4f0c1e5b7fb3bf4de0de61a89ac242d994",
-    "resolvedConfigSha256": "846253abbe1d924678975fd93da2b7c7258f9c7577f2a567a2fc7865b960bddb",
+    "resolvedConfigSha256": "00e24a30891407fb3df2e83297912d3681c7e16f1b6503e4fff286753aaa545c",
     "seed": 1,
     "version": "0.1.0"
   },
@@ -56260,6 +56260,9 @@
     "structure.ruin_temple",
     "structure.portal",
     "structure.monolith",
-    "structure.buried_statue"
+    "structure.buried_statue",
+    "structure.world_tree",
+    "structure.crystal_spire",
+    "structure.lighthouse"
   ]
 }

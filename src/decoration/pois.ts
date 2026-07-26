@@ -318,7 +318,14 @@ export function planPois(
   // City records ride outside the wilderness budget (cityCount) and their
   // structures reach the loader through the normal POI pass-cell path.
   for (const plan of landmarkPlans) {
-    if (plan.type !== "ruined_city") continue;
+    if (
+      plan.type !== "ruined_city" &&
+      plan.type !== "world_tree" &&
+      plan.type !== "crystal_spire" &&
+      plan.type !== "lighthouse"
+    ) {
+      continue;
+    }
     // allowPath: the gate sits astride the old through-trail (its pass
     // cells keep the road open); everything else dodges trails so no
     // route gets walled off by a ruin.
@@ -373,33 +380,72 @@ export function planPois(
         return;
       }
     };
-    cityStamp("structure.ruined_gate", [[7, 11]], true);
-    cityStamp("structure.keep", [[4, 4], [10, 4], [4, 7], [10, 7]]);
-    cityStamp("structure.ruined_tower", [[1, 1], [1, 2]]);
-    cityStamp("structure.ruined_tower", [[14, 1], [14, 2]]);
-    cityStamp("structure.dungeon", [[4, 1], [2, 2], [10, 1]]);
-    cityStamp("structure.monolith", [[6, 1], [2, 4], [12, 1]]);
-    cityStamp("structure.ruin_temple", [[11, 2], [11, 1], [5, 2]]);
-    cityStamp("structure.buried_statue", [[1, 4], [1, 6], [14, 4]]);
-    cityStamp("structure.house_abandoned", [[10, 4], [9, 4], [11, 5]]);
-    cityStamp("structure.house_burned", [[13, 4], [12, 4], [13, 5]]);
-    cityStamp("structure.crypt", [[2, 8], [1, 8], [2, 9]]);
-    cityStamp("structure.house_abandoned", [[4, 8], [5, 8], [4, 9]]);
-    cityStamp("structure.house_burned", [[9, 8], [10, 8], [9, 9]]);
-    cityStamp("structure.portal", [[12, 8], [12, 9], [11, 8]]);
-    // Street furniture: the ruins between the ruins.
-    putProp(plan.x + 5, plan.y + 1, "prop.pillar");
-    putProp(plan.x + 12, plan.y + 1, "prop.pillar");
-    putProp(plan.x + 1, plan.y + 6, "prop.stone_blocks");
-    putProp(plan.x + 15, plan.y + 6, "prop.broken_boards");
-    putProp(plan.x + 5, plan.y + 10, "prop.ash_pile");
-    putProp(plan.x + 14, plan.y + 10, "prop.stone_blocks");
-    putDecal(plan.x + 6, plan.y + 2, "decal.rubble");
-    putDecal(plan.x + 10, plan.y + 6, "decal.cracks");
-    putDecal(plan.x + 4, plan.y + 6, "decal.webs");
-    putDecal(plan.x + 12, plan.y + 10, "decal.bones");
-    putDecal(plan.x + 8, plan.y + 3, "decal.scorch");
-    putDecal(plan.x + 2, plan.y + 10, "decal.rubble");
+    if (plan.type === "ruined_city") {
+      cityStamp("structure.ruined_gate", [[7, 11]], true);
+      cityStamp("structure.keep", [[4, 4], [10, 4], [4, 7], [10, 7]]);
+      cityStamp("structure.ruined_tower", [[1, 1], [1, 2]]);
+      cityStamp("structure.ruined_tower", [[14, 1], [14, 2]]);
+      cityStamp("structure.dungeon", [[4, 1], [2, 2], [10, 1]]);
+      cityStamp("structure.monolith", [[6, 1], [2, 4], [12, 1]]);
+      cityStamp("structure.ruin_temple", [[11, 2], [11, 1], [5, 2]]);
+      cityStamp("structure.buried_statue", [[1, 4], [1, 6], [14, 4]]);
+      cityStamp("structure.house_abandoned", [[10, 4], [9, 4], [11, 5]]);
+      cityStamp("structure.house_burned", [[13, 4], [12, 4], [13, 5]]);
+      cityStamp("structure.crypt", [[2, 8], [1, 8], [2, 9]]);
+      cityStamp("structure.house_abandoned", [[4, 8], [5, 8], [4, 9]]);
+      cityStamp("structure.house_burned", [[9, 8], [10, 8], [9, 9]]);
+      cityStamp("structure.portal", [[12, 8], [12, 9], [11, 8]]);
+      // Street furniture: the ruins between the ruins.
+      putProp(plan.x + 5, plan.y + 1, "prop.pillar");
+      putProp(plan.x + 12, plan.y + 1, "prop.pillar");
+      putProp(plan.x + 1, plan.y + 6, "prop.stone_blocks");
+      putProp(plan.x + 15, plan.y + 6, "prop.broken_boards");
+      putProp(plan.x + 5, plan.y + 10, "prop.ash_pile");
+      putProp(plan.x + 14, plan.y + 10, "prop.stone_blocks");
+      putDecal(plan.x + 6, plan.y + 2, "decal.rubble");
+      putDecal(plan.x + 10, plan.y + 6, "decal.cracks");
+      putDecal(plan.x + 4, plan.y + 6, "decal.webs");
+      putDecal(plan.x + 12, plan.y + 10, "decal.bones");
+      putDecal(plan.x + 8, plan.y + 3, "decal.scorch");
+      putDecal(plan.x + 2, plan.y + 10, "decal.rubble");
+    } else if (plan.type === "world_tree") {
+      // The World Tree: the eldest living thing, ringed by the stones of
+      // whoever worshipped here first. Walk beneath the canopy arch.
+      // The trail ends AT the tree (anchor inside the footprint): allowPath.
+      cityStamp("structure.world_tree", [[2, 2], [3, 2], [2, 3]], true);
+      putProp(plan.x + 1, plan.y + 1, "prop.standing_stone");
+      putProp(plan.x + 7, plan.y + 1, "prop.standing_stone");
+      putProp(plan.x + 1, plan.y + 6, "prop.standing_stone");
+      putProp(plan.x + 7, plan.y + 6, "prop.standing_stone");
+      putProp(plan.x + 4, plan.y + 7, "prop.runestone");
+      putProp(plan.x + 2, plan.y + 6, "prop.flowers");
+      putProp(plan.x + 6, plan.y + 6, "prop.mushrooms");
+      putProp(plan.x + 6, plan.y + 1, "prop.flowers");
+      putDecal(plan.x + 4, plan.y + 6, "decal.rune_circle");
+      putDecal(plan.x + 2, plan.y + 1, "decal.leaves");
+      putDecal(plan.x + 6, plan.y + 5, "decal.leaves");
+    } else if (plan.type === "crystal_spire") {
+      // The Crystal Spire: the vein the outcrops all lead back to.
+      cityStamp("structure.crystal_spire", [[2, 1], [3, 1], [2, 2]], true);
+      putProp(plan.x + 1, plan.y + 4, "prop.crystals");
+      putProp(plan.x + 5, plan.y + 3, "prop.crystals");
+      putProp(plan.x + 4, plan.y + 5, "prop.crystals");
+      putProp(plan.x + 1, plan.y + 1, "prop.crystals");
+      putProp(plan.x + 5, plan.y + 5, "prop.boulder");
+      putDecal(plan.x + 3, plan.y + 4, "decal.crystal_field");
+      putDecal(plan.x + 5, plan.y + 1, "decal.crystal_field");
+      putDecal(plan.x + 1, plan.y + 5, "decal.crystal_field");
+    } else if (plan.type === "lighthouse") {
+      // The lighthouse: still tended — someone keeps the lamp and the
+      // catch coming in.
+      cityStamp("structure.lighthouse", [[2, 1], [3, 1], [2, 2]], true);
+      putProp(plan.x + 1, plan.y + 4, "prop.fishnets");
+      putProp(plan.x + 5, plan.y + 4, "prop.crates");
+      putProp(plan.x + 1, plan.y + 1, "prop.firewood");
+      putProp(plan.x + 5, plan.y + 2, "prop.sacks");
+      putDecal(plan.x + 4, plan.y + 5, "decal.driftwood");
+      putDecal(plan.x + 1, plan.y + 5, "decal.puddles");
+    }
   }
 
   // Cave mouths seed first (the far reaches' anchors): rock-edge cells are

@@ -712,6 +712,12 @@ function relationHolds(
     // the rock masses live — and clear of the capital's sprawl.
     return (fields.elevation[cell] as number) >= 600 && distance >= Math.trunc(width / 6);
   }
+  if (relation === "coastal") {
+    // The shore relation (routes.graph v5): near the sea but with enough
+    // dry ground behind it for the stamp footprint.
+    const coast = hydro.coastDistance[cell] as number;
+    return coast >= 4 && coast <= 8;
+  }
   if (relation === "far_from_town") {
     return distance >= Math.trunc(width / 3);
   }

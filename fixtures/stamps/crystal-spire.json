@@ -1,0 +1,21 @@
+{
+  "stampFormat": 1,
+  "type": "crystal_spire",
+  "footprint": { "width": 7, "height": 7 },
+  "anchor": { "x": 3, "y": 3 },
+  "entrance": { "x": 3, "y": 6 },
+  "substrate": { "maxSlopePermille": 420 },
+  "blendRadius": 2,
+  "legend": {
+    "o": { "material": "terrain.gravel" }
+  },
+  "cells": [
+    "ooooooo",
+    "ooooooo",
+    "ooooooo",
+    "ooooooo",
+    "ooooooo",
+    "ooooooo",
+    "ooooooo"
+  ]
+}

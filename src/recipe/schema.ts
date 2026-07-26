@@ -44,10 +44,10 @@ export const DECORATION_RANGES = {
 export type DecorationField = keyof typeof DECORATION_RANGES;
 export const DECORATION_FIELD_NAMES = Object.keys(DECORATION_RANGES).sort() as readonly DecorationField[];
 
-export const LANDMARK_TYPES = ["ancient_fortress", "ruined_city"] as const;
+export const LANDMARK_TYPES = ["ancient_fortress", "ruined_city", "world_tree", "crystal_spire", "lighthouse"] as const;
 export type LandmarkType = (typeof LANDMARK_TYPES)[number];
 
-export const RELATION_KINDS = ["across_river_from_town", "near_town", "far_from_town", "high_ground"] as const;
+export const RELATION_KINDS = ["across_river_from_town", "near_town", "far_from_town", "high_ground", "coastal"] as const;
 export type RelationKind = (typeof RELATION_KINDS)[number];
 
 export interface LandmarkRequest {

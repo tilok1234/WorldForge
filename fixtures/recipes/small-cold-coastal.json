@@ -7,12 +7,15 @@
   },
   "landmarks": [
     { "type": "ancient_fortress", "relation": "across_river_from_town" },
-    { "type": "ruined_city", "relation": "high_ground" }
+    { "type": "ruined_city", "relation": "high_ground" },
+    { "type": "world_tree", "relation": "far_from_town" },
+    { "type": "crystal_spire", "relation": "high_ground" },
+    { "type": "lighthouse", "relation": "coastal" }
   ],
   "budgets": {
     "regionCount": 4,
     "settlementCount": 10,
     "primaryRouteCount": 3,
-    "landmarkCount": 2
+    "landmarkCount": 5
   }
 }

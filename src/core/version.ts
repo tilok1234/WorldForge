@@ -45,11 +45,15 @@ export const GENERATOR_VERSION = "0.1.0";
  *     near settlements (routes.graph 4), wilderness spur paths to worked
  *     discoveries, mountain approaches graded to gravel; thirteen new
  *     structure types (decoration.pois 6, settlements.plans 6).
+ * 22: three more great discoveries with roads — the World Tree (walk
+ *     beneath the canopy), the Crystal Spire, the tended lighthouse
+ *     (coastal relation; routes.graph 5, landmarks.stamps 3,
+ *     decoration.pois 7); every landmark trail graded and reachable.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 21;
+export const GENERATOR_BEHAVIOR_VERSION = 22;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 10;
+export const RECIPE_COMPILER_VERSION = 11;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -57,11 +61,11 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 4,
   "macro.biomes": 3,
   "hydrology.water": 2,
-  "routes.graph": 4,
+  "routes.graph": 5,
   "settlements.plans": 6,
-  "landmarks.stamps": 2,
+  "landmarks.stamps": 3,
   "decoration.props": 5,
-  "decoration.pois": 6,
+  "decoration.pois": 7,
   "adapter.tileforge": 3,
 };
 
