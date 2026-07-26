@@ -137,6 +137,18 @@ reading would show (bank under water beside a road corridor).
   `worldforge.local.json` (gitignored; recreate from the example file on a
   new machine).
 
+## Review loop (user-requested interface, ebd59c5)
+
+The user reviews worlds in the browser and iterates through chat: start
+`node dist/tools/serve-viewer.js` (or the `viewer` launch config), open
+`http://127.0.0.1:8787/tools/viewer.html?dir=outputs/w7-slice` — pan/zoom
+the native render, hover for per-cell inspection, destination markers,
+chunk grid. The user prompts changes in chat; the agent regenerates the
+SAME output directory (`resolve-tileforge ... --out outputs/w7-slice`);
+the user presses refresh (R) and the view reloads in place. The viewer
+stays read-only by contract — approvals and change requests flow through
+chat, never through the tool.
+
 ## Commands
 
 ```
