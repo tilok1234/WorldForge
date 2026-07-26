@@ -1,301 +1,149 @@
-# WorldForge — session handoff (2026-07-26)
+# WorldForge — session handoff (2026-07-26, account switch #2)
 
-For a fresh AI session with no prior context (including a new account: the
-previous assistant's local memory does NOT transfer — this file and the docs
-are the complete truth). Read `AGENTS.md` and the `README.md` reading list
-first; this file adds session state the docs don't carry.
+For a fresh AI session with no prior context. Read `AGENTS.md` and the
+`README.md` reading list first; this file carries session state the docs
+don't. Note: file-based assistant memory at
+`~/.claude/projects/C--Users-headc-Documents-WorldForge/memory/` DID survive
+the previous account switch (it is machine-local); if present, it
+cross-validates this file. HANDOFF.md is the tiebreaker.
 
 ## Where the project stands
 
-Milestones **W0–W5 complete and visually approved as baselines. W6 complete
-and approved at the data level** (commit `b605622` + this handoff commit).
-112 tests, CI green on ubuntu/windows/macos (`.github/workflows/ci.yml`).
-Behavior version 8, recipe compiler 8, artifact format 4, resolved-config
-format 6. The pinned TileForge forest package
-(`fixtures/tileforge-packages/forest-a5baf52-seed103991/`, lock at
-`tileforge.lock.json`) drives all semantic mapping and joins generation
-identity.
+**The entire starter roadmap W0–W9 is implemented** with machine-verified
+evidence, plus substantial post-roadmap work under the user's standing
+"alive worlds" direction. 152 tests; CI green on ubuntu/windows/macos
+through `968fa8b` (later commits pending CI at handoff time). Versions:
+behavior 17, recipe compiler 9, artifact format 8, resolved-config 7,
+TileForge adapter 3. Canonical recipe
+`fixtures/recipes/small-cold-coastal.json` (seed 103991): 256×256, now 10
+settlements / 3 primary routes / fortress across the river / 36 POIs.
 
-What exists, per milestone: deterministic kernel (integer-only, golden
-vectors) → macro fields + biomes (percentile-tuned thresholds) → hydrology
-(priority-flood, meandering rivers, basin-rule lakes, wetlands, coastal
-moisture) → routes (band-free packed-road corridors, bridges/fords from the
-two-tier river network, edge-penalty costs) → settlements (town+outposts,
-geography purposes, atomic structures with entrance reachability + rollback,
-fortress stamp with blend ring, relational recipe vocabulary + solver) →
-TileForge adapter (emits the package's `map-data.json` raw-grid source
-format; masks/atlas are consumer-derived per the package `FORMATS.md`; zero
-unresolved keys on the canonical world).
+What exists (beyond the W0–W6 base recorded in git history):
 
-## Next: W7 (Godot vertical slice) — DO NOT START UNSILENTLY
+- **W7**: both entry gates proven (§2 resolution forge-identical vs the
+  package's own map.tmj; chunked halo-2 == global over 2.2M comparisons);
+  §4 acceptance zero-diff (0/3.5M px) via a zero-dep PNG decode+composite
+  pipeline; packaged Godot importer runs headless (`consumers/godot/`,
+  EditorScript source executed with base swapped — 4.6 removed `-e -s`);
+  playable streamed slice (world.gd: 32-cell chunks, §3 ladder on tile
+  metadata, minimap, user:// deltas) + headless integration check.
+- **W8**: public TS loader `src/consumers/typescript/loader.ts` (ZERO
+  imports, test-enforced; format+dependency validation; typed access;
+  pass-cell walkability model rebuilt from structure/POI records; cache
+  stamps). Cell-exact cross-consumer parity: loader == in-engine grid on
+  all 65,536 canonical cells; identical BFS floods. Viewer runs on the
+  loader (walkability overlay). Parity caught real bugs: artifact lacked
+  network rivers (format 7 fixed), decal walk-granting ambiguity (below).
+- **W9**: authoring CLI — validate-brief / explain-recipe / diff-recipes /
+  compare-worlds / approve-recipe (sidecar with recipeSha256 drift check).
+- **Alive-worlds passes** (user verdicts drove each): decoration
+  (forests/overlays/decals/roadside), W5.1 town variety + fountain plazas,
+  town scale-up (street arms, approachMaxLength 8 forces street-lining),
+  farms/piers/waterline, sand beaches (corner16 live; margin machinery),
+  POIs phase A (camps/stones/battlefields/graveyards/shrines/fishing) and
+  phase B (mine/cave/stone circle/crypt/ruin/giant skeleton + loader
+  pass-cell model), viewer discoveries overlay (orange diamonds).
 
-The user said: **come back to them before starting W7.** Get an explicit go.
+## IN FLIGHT: the density pass (behavior 17, commit a0e137e)
 
-W7 entry gate (two W6 exit criteria the user transferred; they must not
-vanish):
+User verdict: "map still waaaay too dead — 10% cool, 90% unused. Fill it
+with more towns, bandit camps, smaller mountain peaks with dungeons."
+Implemented and committed: rocky knolls (macro.biomes 3, pre-routes rock
+blobs, 18/small), palisaded bandit camps (structure.camp_wall → package
+palisade; camp clutter props), POI budget 36/12, canonical recipe 5→10
+settlements (W9 diff flow). 152 tests green, goldens regenerated.
 
-1. Reference slice passes the TileForge acceptance procedure through the
-   packaged Godot importer, compared per the guide's map-reference method
-   (`GAME-GUIDE.md` §4: render `map.tmj` from stored gids vs
-   `map-reference.png` at zero pixel diff, then re-derive masks per §2 and
-   match the stored ones).
-2. Chunk-border matching at **resolution level** — mask/underlay agreement
-   across seams, not just raw-grid agreement.
+**REMAINING to finish the pass (user said complete it):**
+1. **Bandit camps placed ZERO on canonical** — with 10 settlements the
+   `settlementGap > 16` gate rarely coexists with the road band
+   (`nearRoad(14) && !nearRoad(4)`) + 9×8 clearRegion. Loosen (gap > 12?,
+   region 8×7?, widen band) and rerun until 2-3 place.
+2. Re-run the verify chain on the dense world:
+   `node dist/tools/godot-consumer.js --world outputs/w7-slice` (expect
+   0 errors, note the flood number) and
+   `node consumers/typescript/traverse.mjs outputs/w7-slice/world.json`
+   (flood must EQUAL the Godot number).
+3. Visual self-review then user refresh: knolls (do they read as small
+   peaks? do cave mouths land on them?), a bandit camp crop, the denser
+   macro overview. Send crops via SendUserFile + tell the user to refresh
+   the viewer (see review loop below).
+4. Watch CI (gh run watch) for a0e137e and later commits.
 
-Standing native-scale check: if the resolved town reads as a row of boxes,
-**W5.1** is footprint variety (package pool: cottage, tavern, smithy, chapel,
-manor, farmhouse, barn, stall…) and plaza legibility (fountain exists).
+## Working agreements (unchanged, plus additions)
 
-Recon already done: **Godot 4.6.2 is installed and on PATH.**
-`tileforge_worldgen_example.gd` in the package is a complete §2 reference
-implementation with a deliberately portable integer hash. Suggested order:
-build the pure-TS mask/underlay verifier (entry gate 2) before any Godot
-work, then a Godot project under `consumers/godot/` (copy the package folder
-in per its `README.txt` quick start; run `tileforge_importer.gd` headless).
+- **Milestone/iteration loop**: implement → tests + goldens
+  (`node dist/tools/update-golden.js`, never hand-edit) → CI green →
+  visual candidates → user verdict → iterate. Structural success never
+  implies visual approval.
+- **Review loop (primary)**: serve `node dist/tools/serve-viewer.js`
+  (launch config `viewer`, port 8787); user watches
+  `http://127.0.0.1:8787/tools/viewer.html?dir=outputs/w7-slice`.
+  Regenerate INTO THE SAME DIR (`resolve-tileforge <recipe> --out
+  outputs/w7-slice`); the user presses refresh. Prompt→regenerate→refresh
+  is the iteration contract. Viewer is read-only by contract.
+- **Versioning discipline**: any generation change bumps
+  GENERATOR_BEHAVIOR_VERSION + the touched rule packs; adapter-only
+  changes bump TILEFORGE_ADAPTER_VERSION + adapter.tileforge; artifact
+  shape changes bump ARTIFACT_FORMAT_VERSION + loader SUPPORTED format +
+  test literals (routes/settlements tests assert it).
+- **Parity discipline**: every new blocking prop species goes in BOTH
+  decorate.ts BLOCKING and loader BLOCKING_PROPS; every new structure
+  with pass cells goes in loader STRUCTURE_PASS_CELLS (+ records carry
+  footprints). The parity fixture catches misses; the full-grid oracle
+  is tests/parity.test.ts's ladderWalkable + consumers/godot/
+  dump_walkable.gd for in-engine truth.
+- **Git**: fetch/rebase before push; never force. The PREVIOUS session
+  held standing commit/push authorization — **re-confirm with the user**.
+  TileForge (`C:\Users\headc\Documents\Semantic tile generator design`)
+  is read-only upstream; guard denylist in gitignored
+  `worldforge.local.json`.
+- **User-gated, still open**: windowed Godot playthrough
+  (`godot --path consumers/godot` after the driver run); FORMAL visual
+  baseline (`approve-recipe fixtures/recipes/small-cold-coastal.json
+  --baseline` when the user blesses it); end-of-plan taste-polish round.
 
-**W7 progress (2026-07-26, explicit user go, verifier-first):** entry gate 2
-is DONE in pure TS — `src/adapters/tileforge/resolution.ts` implements the
-full §2.4-2.8 derivation (blob47 + ladder, underlay incl. open-side rule,
-corner16 sand field, net16 with river-mouth and wall-gate rules, overlays,
-decals, cliffs/ramps); `verifyResolution.ts` proves it two ways:
-forge-identical against the package's own `map.tmj` (every layer, all 3456
-underlays; only unverifiable border sand excluded — the workbench map was
-cropped from a larger canvas, so its border sand ring carries pre-crop data,
-240 points / 16 divergent, reported not compared) and seam-clean (chunked
-halo-2 resolution == global, zero mismatches over 2.2M comparisons on the
-canonical 256x256 world at 16- and 32-cell chunks; window over-reads throw,
-so the halo bound is proven too). CLI: `verify-resolution`. 125 tests.
-**§4 acceptance now passes at both steps in pure TS**: step 1 — map.tmj
-rendered from stored gids (painter's algorithm, shipped layer order, binary
-alpha, frame 0, sand +16 offset) is pixel-identical to `map-reference.png`,
-0/3538944 differing; step 2 — the §2-derived masks match the stored ones
-(the truth test above). Zero-dep RGBA8 PNG decoder at
-`src/render/pngDecode.ts` (node:zlib inflate).
-**Entry gate 1 importer leg DONE — both W7 entry gates are now discharged.**
-`consumers/godot/` + `node dist/tools/godot-consumer.js`: copies the pinned
-package in (gitignored), runs `godot --headless --import`, executes the
-PACKAGED `tileforge_importer.gd` headless, then verifies the built TileSet
-in-engine — 22,029 frame-0 tiles across all 81 families, 0 errors
-(semantic_id, per-tile walkable overrides, hazard/depth/swim/wade,
-collision, animation counts, all blob47 peering bits vs manifest).
-Godot 4.6 gotchas learned: the `-e -s` EditorScript entry point is GONE
-(-s demands SceneTree/MainLoop even with -e) and EditorScript cannot
-instantiate outside the editor, so `import_tileforge.gd` executes the
-packaged importer's own source with ONLY `extends EditorScript` swapped to
-RefCounted (its _run() touches no editor API). A GDScript error aborting
-_init() leaves headless Godot idling forever — the driver enforces
-per-step timeouts.
+## Upstream questions parked for the user (TileForge is theirs)
 
-**Slice progress (9a8e6fe):** `emitTmj.ts` authors a §2.13 map.tmj for any
-resolved world (tilesets block verbatim from the package; §2.4 selector v2
-variants + tone field on channels tileforge.variant/tileforge.tone;
-structures share the anchor variant; overhangs reuse the ground variant).
-`resolve-tileforge` now also writes resolved-map.tmj + resolved-render.png
-through the §4-proven compositor — every resolve yields a native-scale
-visual candidate. **Adapter v2** (TILEFORGE_ADAPTER_VERSION 2, rule pack
-adapter.tileforge 2, goldens = identity-only churn): the emitted river
-layer carries the FULL two-tier network; before, fords sat on unrendered
-crossing-tier cells (canonical world had a ford ON GRASS — package
-substrate violation). Artifact river layer stays majors-only.
-**Native-scale self-review verdicts:** fortress stamp + blend ring good,
-corridor→cobble junctions good, stair-stepped streams + fords good after
-the fix. **The STANDING W5.1 FLAG FIRED**: the town reads as one house
-metatile repeated (no plaza/fountain, no footprint variety). Candidates
-sent to the user (outputs/w7-slice/: overview-8x, town-core-crop,
-fortress-crop, ford-crop + full resolved-render.png); W5.1 verdict and
-visual approval PENDING. Remaining slice work: Godot streamed-chunk scene
-consuming resolved-map.tmj, traversal on the §3 walkability ladder,
-minimap (mappings.minimap), explicit deltas, headless integration check.
-Known contract question: GAME-GUIDE §2.6 includes packed road in the
-wet-bank list, FORMATS.md + the worldgen example omit it, the workbench map
-never exercises it — we follow FORMATS; bridge approaches are where a wrong
-reading would show (bank under water beside a road corridor).
+1. Guide §2.6 wet-bank list includes packed road; FORMATS.md + worldgen
+   example omit it. We follow FORMATS. Shows at bridge-approach banks.
+2. Guide PROSE limits walk-granting decals to stepping stones/frost/ford
+   over water/river; the packaged reference is_walkable grants for ANY
+   walkable-true decal over ANY blocked terrain. We follow prose AND keep
+   cosmetic decals off blocked/stream cells (decoration v3).
 
-## Working agreements with the user
+## Gotchas that cost time (don't relearn)
 
-- **Milestone loop**: implement → tests + goldens → 3-OS CI green → send
-  visual candidates (`SendUserFile`) → the user gives a verdict (approve as
-  baseline, or an iteration brief) → iterate until approved. Structural
-  success never implies visual approval (`AGENTS.md`).
-- **Review artifacts**: contact sheet (16 seeds — judge the distribution,
-  never one blessed seed), macro renders, and 3–4× crops for anything at
-  gameplay scale (full-size renders hide line artifacts).
-- **Tune by measurement**: never adjust thresholds by eye. Probe percentiles
-  across ≥8 seeds (`tmp/` scripts pattern), set values from the data, re-run
-  the contact sheet. Recipes need explicit budgets or no settlements/roads
-  generate (defaults are 0).
-- **Versioning discipline**: any behavior change bumps
-  `GENERATOR_BEHAVIOR_VERSION` (+ compiler/rule packs as applicable) and
-  regenerates goldens via `node dist/tools/update-golden.js` — never edit
-  goldens by hand. Docs get the smallest amendment at milestone boundaries,
-  no full-document passes.
-- **Git**: the user pushes from other sessions — always `git fetch` +
-  rebase before pushing; never force-push. The PREVIOUS session held standing
-  commit/push authorization; **re-confirm it with the user** before assuming
-  it. TileForge (`C:\Users\headc\Documents\Semantic tile generator design`)
-  is read-only upstream — the machine-local guard denylist lives in
-  `worldforge.local.json` (gitignored; recreate from the example file on a
-  new machine).
-
-## Alive-worlds direction (user verdict on the first candidates)
-
-"Looks cool but very bare bones — utilize the tileset, detailed intricate
-maps that feel alive." Standing creative direction, staged through the
-decoration compiler. **Stage 1 SHIPPED (5957d52)**: behavior 9, compiler 9
-(decoration.densityPermille, default 400), artifact format 5
-(prop/moss/tallgrass/decal layers + key tables), adapter v3. Forests with
-closed cores and open meadows (gate = patch−350; measured 4..160 trees per
-16-block), biome species tables, overlays in patches, causal decals,
-roadside milestones/signposts. Adapter v3 lesson: streams sever streets
-(streets never paint over water), so any river cell on or between corridor
-material gets a STREET FORD — canonical world: 2 route + 12 street fords.
-**Stage 2 (W5.1) SHIPPED (d57eebf)**: behavior 10, settlements.plans 2 —
-civic specials + channel-rolled village fill, purpose-driven outposts,
-plaza fountain with dynamic perimeter entrance. Model fix: streetFordCells
-now computed once in composeWorld, honored by the entrance validator, and
-rendered by the adapter (towns straddling streams validated blind before).
-STRUCTURE_TYPES is append-only — layer values must never shift.
-**Stage 3 SHIPPED (8e47fd6)**: behavior 11, artifact format 6 —
-crop/fence/pier layers (crop = typeIndex*16+stage). Fenced wheat/pumpkin/
-corn plots with gates beside farmsteads (src/settlements/farms.ts), harbor
-piers, reeds/cattails on lake fringes, rowboat/fishnets/buoy pier clutter.
-Remaining alive-worlds idea: sand beaches (material-level; §2.7 corner16
-would activate for the first time — keep the sand margin at world borders,
-the tmj emitter throws on dual −1 occupancy). All layers flow through the
-§2-proven pipeline automatically (viewer, render, seams, Godot).
-**Town scale-up (108ea03, behavior 12, settlements.plans 4)** after the
-user's "settlements way too small" verdict: radius 18 / 28 lots (small),
-7x7 plaza, four 2-wide street arms with stream gaps becoming street fords,
-approachMaxLength 8 forces street-lining — the fabric constraint.
-Structure cells 119->246 canonical.
-
-## POIs phase B SHIPPED (c805a2e, behavior 16, decoration.pois 2)
-
-Structure discoveries live: mine shafts (+carts/ore veins), cave mouths on
-rock edges, THE stone circle (cap 1), crypts, ruins, the giant skeleton
-(cap 1). Loader gained the PASS-CELL MODEL: footprint indexes rebuilt from
-settlement+POI records, public pass table mirroring package pass arrays;
-per-footprint-cell walkability test + parity (caught mine_cart/ore_vein
-missing from the loader blocking mirror). Budgets tiny 8 / small 20.
-Floods identical at 34,444. LESSON: every new blocking prop species must
-be added to BOTH decorate.ts BLOCKING and loader BLOCKING_PROPS — parity
-catches it, but add both up front. Remaining POI ideas: dens, portal,
-more kinds per biome; recipe knobs for poi density; POI markers in the
-viewer overlay.
-
-## POIs phase A SHIPPED (f8ff836, behavior 15, decoration.pois 1)
-
-The too-empty verdict answered: hunter camps, standing-stone rings,
-battlefields, iron-fenced graveyards, wayside shrines, fishing spots —
-channel-driven, spaced, per-type-capped (variety over abundance), stamps
-overwrite ambient decoration but never traversal-critical cells. Artifact
-format 8 adds pois records; 12 new prop species + 3 battlefield decals +
-iron fence flow end to end. Rule-table budget (tiny 6 / small 16).
-**Phase B queued**: structure POIs (mine shaft, cave mouth, stone circle,
-crypt, ruined temple, giant skeleton) require the loader pass-cell model —
-semantic structure layer stores TYPE, not cellIndex; the loader must
-derive cellIndex from structure/POI records to mirror package pass arrays,
-else parity breaks. Floods identical at 34,426.
-
-## W9 COMPLETE (ef4eee8) — the starter roadmap is fully implemented
-
-Authoring tooling: validate-brief / explain-recipe / diff-recipes /
-compare-worlds / approve-recipe (sidecar approval with recipeSha256 drift
-detection). The whole W0–W9 plan now has machine-verified evidence.
-Remaining, all user-gated: windowed Godot playthrough (seams/feel), the
-end-of-plan taste-polish round (use compare-worlds + diff-recipes), and
-the FORMAL visual baseline approval (`approve-recipe
-fixtures/recipes/small-cold-coastal.json --baseline` once the user
-blesses the look).
-
-## W8 COMPLETE (af35d0e)
-
-Viewer semantic mode runs on the public loader (dynamic import of
-/dist/src/consumers/typescript/loader.js when served; rejects render with
-issues; hover reads handle accessors; WALKABILITY OVERLAY toggle from
-world.walkableAt). All W8 exit criteria hold — see the commit message for
-the sweep. README + ROADMAP statuses updated. Remaining plan: W9 (AI
-authoring workflow: brief→draft recipe, structured recipe diffs,
-validator-feedback loop, candidate comparison, approval states) + the
-end-of-plan taste-polish round + formal visual baseline approval + the
-user's windowed Godot playthrough.
-
-## Sand beaches SHIPPED (246a76b, behavior 14, macro.biomes 2)
-
-corner16 live in production. Contract machinery: §2.7 margin (no sand in
-row/col 0; emitter throws), wetlands BEFORE beaches (marsh coasts
-survive), enclosed-pocket fixpoint fill, smoothing barred from absorbing
-INTO sand (new smoothConfetti barredTargets param), beaches ≥2 contiguous
-cells with lone-cell revert AFTER settlement paving (harbor towns pave
-waterfronts and orphan sand). All proofs green with sand active; both
-consumers flood exactly 34,502 cells. LESSON: every pass that rewrites
-shoreline materials must precede the lone-sand revert.
-
-## W8 increment 1 SHIPPED (e6979d9)
-
-Public TS loader (src/consumers/typescript/loader.ts, ZERO imports —
-parity-test-enforced), traverse.mjs harness, artifact format 7 (river
-0/1/2 full network), decoration v3/behavior 13 (cosmetic decals off
-streams + blocked terrain), Godot ladder follows guide PROSE on
-walk-granting decals. **UPSTREAM QUESTION for TileForge**: the guide
-prose limits walk-granting decals to stepping stones/frost/ford over
-water/river, but the packaged reference is_walkable grants for ANY
-walkable-true decal over ANY blocked terrain (cosmetic rubble on rock =
-passage) — which is authoritative? Parity evidence: cell-exact loader ==
-in-engine grid on all 65,536 canonical cells (dump_walkable.gd tool);
-both consumers flood exactly 34,490 cells. Remaining W8: viewer on the
-public loader, sand-beach coverage pass, parity-report artifact
-(document), W8 exit-criteria sweep.
-
-## W8 underway (user go 2026-07-26)
-
-The user blessed the current look as a PROVISIONAL baseline ("ye this is
-better" on the town scale-up; formal approval deferred to the end-of-plan
-polish round) and approved: finish the plan first, polish later, user files
-annoyances as they strike, sand-beach coverage pass woven into W8, one
-deliberate taste round at the end with W9 tooling. W8 increment 1: public
-TS loader (src/consumers/typescript/), artifact format 7 (river layer
-carries 0 none / 1 network / 2 major — the artifact previously omitted
-network streams, so no consumer could reproduce ladder walkability),
-resolve-tileforge also writes world.json + identity-stamped slice manifest,
-walkability parity fixture (loader semantics vs the §3 ladder over
-map-data), no-private-imports guard, traversal harness. Increment 2:
-viewer on the public loader + sand beaches.
-
-## Review loop (user-requested interface, ebd59c5)
-
-The user reviews worlds in the browser and iterates through chat: start
-`node dist/tools/serve-viewer.js` (or the `viewer` launch config), open
-`http://127.0.0.1:8787/tools/viewer.html?dir=outputs/w7-slice` — pan/zoom
-the native render, hover for per-cell inspection, destination markers,
-chunk grid. The user prompts changes in chat; the agent regenerates the
-SAME output directory (`resolve-tileforge ... --out outputs/w7-slice`);
-the user presses refresh (R) and the view reloads in place. The viewer
-stays read-only by contract — approvals and change requests flow through
-chat, never through the tool.
-
-**Playable slice (8489f81):** `world.gd`/`world.tscn` stream the resolved
-world in 32-cell chunks through the packaged-importer TileSet — grid player
-on the §3 ladder (importer tile metadata), M minimap (mappings.minimap), E
-mark-deltas persisted in user:// over the deterministic base.
-`verify_world.gd` (via `node dist/tools/godot-consumer.js --world
-outputs/w7-slice`) proves headlessly: chunk re-entry byte-stable, walkable
-flood 42,888 cells with ALL 6 destinations reachable (fortress included),
-wall/deep-water block + ford walks, deltas round-trip. Play:
-`godot --path consumers/godot`. Remaining W7 evidence: windowed visual
-review (seams, minimap look) + the user's visual approval + W5.1 verdict.
+- Godot 4.6: `-e -s` EditorScript entry REMOVED; EditorScript can't
+  instantiate outside the editor → run its SOURCE with base swapped
+  (consumers/godot/import_tileforge.gd). `--import` IS a real flag.
+  A GDScript error aborting _init() leaves headless Godot idling forever
+  → the driver enforces per-step timeouts. SceneTree._init add_child
+  does NOT run _ready until the first process frame (connect
+  process_frame ONE_SHOT). `:=` can't infer through Variant boundaries.
+- The workbench map.tmj was cropped from a larger canvas: its border
+  sand ring (16/240 dual points) is unverifiable from raw grids —
+  excluded by design in the truth test.
+- Sand: §2.7 margin (no sand row/col 0 — emitTmj THROWS), smoothing must
+  not absorb INTO sand (barredTargets), beaches ≥2 cells, lone-sand
+  revert runs AFTER settlement paving.
+- Streams sever streets: streetFordCells computed once in composeWorld,
+  honored by the entrance validator, rendered as fords by the adapter.
+- STRUCTURE_TYPES / palette / DECOR / DECAL lists are APPEND-ONLY.
 
 ## Commands
 
 ```
-npm test                     # build + full suite (Node --test needs the glob)
+npm test                          # build + 152 tests (~2s)
 node dist/tools/update-golden.js
 node dist/src/cli.js smoke | generate | render-macro | contact-sheet |
-                     resolve-tileforge <recipe> --out outputs/<dir> |
-                     verify-resolution [<recipe>] |
-                     import-package | verify-package | validate-recipe | hash
-tools/viewer.html            # read-only artifact viewer (file input or ?url=)
+    resolve-tileforge <recipe> --out outputs/<dir> |   # + world.json, tmj,
+                                                       #   8k render, slice
+    verify-resolution [<recipe>] | import-package | verify-package |
+    validate-recipe | hash | validate-brief | explain-recipe |
+    diff-recipes <a> <b> | compare-worlds <a> <b> |
+    approve-recipe <recipe> [--baseline]
+node dist/tools/godot-consumer.js [--world outputs/w7-slice]  # headless Godot chain
+node consumers/typescript/traverse.mjs [world.json]           # TS consumer demo
+node dist/tools/serve-viewer.js                               # viewer on :8787
+godot --path consumers/godot                                  # play the slice
 ```
-
-Canonical recipe: `fixtures/recipes/small-cold-coastal.json` (seed 103991,
-north-elevation bias, fortress across the river from the town).
