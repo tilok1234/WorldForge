@@ -169,6 +169,20 @@ user's "settlements way too small" verdict: radius 18 / 28 lots (small),
 approachMaxLength 8 forces street-lining — the fabric constraint.
 Structure cells 119->246 canonical.
 
+## POIs phase B SHIPPED (c805a2e, behavior 16, decoration.pois 2)
+
+Structure discoveries live: mine shafts (+carts/ore veins), cave mouths on
+rock edges, THE stone circle (cap 1), crypts, ruins, the giant skeleton
+(cap 1). Loader gained the PASS-CELL MODEL: footprint indexes rebuilt from
+settlement+POI records, public pass table mirroring package pass arrays;
+per-footprint-cell walkability test + parity (caught mine_cart/ore_vein
+missing from the loader blocking mirror). Budgets tiny 8 / small 20.
+Floods identical at 34,444. LESSON: every new blocking prop species must
+be added to BOTH decorate.ts BLOCKING and loader BLOCKING_PROPS — parity
+catches it, but add both up front. Remaining POI ideas: dens, portal,
+more kinds per biome; recipe knobs for poi density; POI markers in the
+viewer overlay.
+
 ## POIs phase A SHIPPED (f8ff836, behavior 15, decoration.pois 1)
 
 The too-empty verdict answered: hunter camps, standing-stone rings,
