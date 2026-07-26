@@ -5,16 +5,33 @@ Status: **Draft**
 This roadmap deliberately begins with a small, testable compiler. Later systems
 remain gated until the foundation proves deterministic and integrable.
 
+## Adopted implementation direction
+
+TypeScript is the adopted language for the engine-neutral compiler and CLI. See
+`decisions/ADR-0001-typescript.md`.
+
+The remaining pre-W0 input is the first real TileForge export that will serve as
+the compatibility package.
+
 ## Milestone W0 — Repository and contracts
 
 Deliverables:
 
 - independent WorldForge repository;
-- `AGENTS.md` derived from `AI_AGENT_RULES.md`;
+- repository-local `AGENTS.md`;
 - adopted vision, boundary, architecture, and generation documents;
+- TypeScript project, test, and CLI skeleton using a pinned toolchain;
 - source, test, fixture, schema, and output directories;
+- canonical `WorldRecipe` schema and normalized recipe identity;
+- one manually authored and one AI-drafted example using the same recipe
+  contract;
+- documented AI authoring boundary and structured recipe-diff format;
 - normalized configuration schema;
 - dependency-lock schema;
+- explicit import of one real user-selected TileForge package into an ignored
+  WorldForge-owned cache;
+- dependency lock generated from that real package;
+- minimal committed TileForge contract fixture if redistribution is approved;
 - no-write path guard for TileForge and external repositories;
 - minimal command-line entry point.
 
@@ -24,6 +41,11 @@ Exit criteria:
 - invalid output roots are rejected;
 - a TileForge repository path cannot be used as an output;
 - configuration normalization is deterministic;
+- equivalent manual and AI-drafted recipes normalize identically;
+- an accepted recipe can generate without any AI connection;
+- the real package manifest and required guides can be read without relying on
+  TileForge source internals;
+- the dependency lock detects a changed package or manifest;
 - repository ownership rules are documented.
 
 ## Milestone W1 — Deterministic kernel
@@ -31,16 +53,22 @@ Exit criteria:
 Deliverables:
 
 - coordinate conventions;
+- fixed-width integer hash primitives and documented wrapping behavior;
+- fixed-point or explicitly pinned numeric field policy;
 - named hash channels;
 - deterministic sampling utilities;
+- canonical artifact serialization;
 - generator identity calculation;
 - world and chunk coordinate conversions;
+- cross-platform golden vectors;
 - fixture snapshot framework.
 
 Exit criteria:
 
 - repeated runs are byte-identical;
+- every supported platform reproduces the kernel and small-world golden vectors;
 - generation order does not alter channel results;
+- threshold classifications do not drift from floating-point differences;
 - negative-coordinate tests pass if negative coordinates are supported;
 - adding a new test channel does not change existing channels.
 
@@ -164,6 +192,27 @@ Exit criteria:
 - TileForge metadata drives walkability and hazards correctly;
 - a clean checkout can reproduce the demonstration.
 
+## Milestone W8 — Optional AI authoring workflow
+
+Deliverables:
+
+- natural-language intent brief format;
+- AI-assisted draft recipe flow;
+- human-readable recipe explanation;
+- structured recipe-diff proposals;
+- validator-feedback-to-revision loop;
+- comparison summary for two generated candidates;
+- clear approval state for accepted recipes and visual baselines.
+
+Exit criteria:
+
+- AI and manual authoring use the same public recipe schema;
+- invalid AI suggestions fail before generation;
+- accepted recipes regenerate offline and without model access;
+- the user can inspect every proposed recipe change;
+- AI cannot bypass validators or modify generated artifacts as a hidden repair;
+- TileForge remains a pinned, read-only package dependency.
+
 ## Deferred until after W7
 
 - infinite worlds;
@@ -175,6 +224,7 @@ Exit criteria:
 - faction territory simulation;
 - economy simulation;
 - graphical world editor;
+- runtime AI as a requirement for generation or loading;
 - Unity support;
 - automatic TileForge upstream changes;
 - multiple simultaneous TileForge packages.

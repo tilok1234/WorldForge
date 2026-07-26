@@ -6,6 +6,20 @@ It plans what exists in a world—regions, terrain, elevation, hydrology, routes
 settlements, landmarks, structures, and decoration—then emits versioned semantic
 world data that a game can stream and render.
 
+WorldForge's core is procedural, not generative AI. AI is an optional authoring
+layer that can translate a user's natural-language intent into a structured,
+validated world recipe. The same recipe can be written manually and must
+generate without an AI connection.
+
+```text
+User intent
+    -> manual settings or optional AI-authored settings
+    -> validated WorldRecipe + seed
+    -> deterministic WorldForge generation
+    -> TileForge resolution
+    -> versioned game artifact
+```
+
 The first visual integration target is TileForge, but the projects remain
 strictly separate:
 
@@ -32,8 +46,9 @@ policy.
 
 ## Project status
 
-**Documentation and architecture foundation. No implementation language or
-runtime architecture has been finalized yet.**
+**Documentation and architecture foundation. TypeScript has been selected for
+the engine-neutral compiler and command-line tools. Runtime implementation has
+not started.**
 
 The intended first release is a small finite seeded world that:
 
@@ -52,8 +67,10 @@ Developers and AI agents should read:
 2. [Vision and Scope](docs/VISION_AND_SCOPE.md)
 3. [Repository Boundaries](docs/REPOSITORY_BOUNDARIES.md)
 4. [Architecture and Contracts](docs/ARCHITECTURE_AND_CONTRACTS.md)
-5. [Generation Rules](docs/GENERATION_RULES.md)
-6. [Starter Roadmap](docs/ROADMAP.md)
+5. [AI Authoring Model](docs/AI_AUTHORING_MODEL.md)
+6. [Generation Rules](docs/GENERATION_RULES.md)
+7. [Starter Roadmap](docs/ROADMAP.md)
+8. [ADR-0001: TypeScript](docs/decisions/ADR-0001-typescript.md)
 
 Boundary and agent rules override convenience and implementation shortcuts.
 
@@ -61,8 +78,10 @@ Boundary and agent rules override convenience and implementation shortcuts.
 
 | System | Responsibility |
 |---|---|
+| User | Creative intent, constraints, review, and approval |
+| AI authoring client | Optional translation of intent into draft WorldRecipes |
 | TileForge | Tile art, masks, atlases, semantic tile IDs, integration package |
-| WorldForge | World planning, semantic generation, chunks, compatibility adapter |
+| WorldForge | Recipe validation, world planning, deterministic generation, chunks, compatibility adapter |
 | Game | Runtime streaming, gameplay, combat, quests, persistence |
 
 ## Initial design principles
@@ -73,6 +92,8 @@ Boundary and agent rules override convenience and implementation shortcuts.
 - Chunks consume one global plan rather than becoming isolated worlds.
 - Every major pass must be inspectable and testable.
 - TileForge is a pinned external dependency, never an editable subproject.
+- AI-authored and manually authored settings use the same schema and validators.
+- Accepted worlds regenerate offline without requiring an AI model.
 - Game-specific content attaches through extensions instead of entering the
   reusable core.
 

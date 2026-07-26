@@ -15,6 +15,10 @@ Before changing WorldForge, an AI agent must:
 5. State the files and systems within the current task.
 6. Confirm that no planned write resolves into the TileForge repository.
 
+The adopted implementation language is TypeScript. Read
+`docs/decisions/ADR-0001-typescript.md` before changing the core toolchain,
+numeric kernel, or runtime boundaries.
+
 ## Absolute TileForge rule
 
 TileForge is read-only upstream.
@@ -55,6 +59,8 @@ Do not make the change merely because filesystem permissions allow it.
 
 ## Source-of-truth discipline
 
+- Treat the accepted normalized `WorldRecipe` as the source of truth for world
+  intent; prose chat history is optional provenance, not the world contract.
 - Read mappings from the pinned TileForge manifest.
 - Read rendering behavior from the package guide and formats.
 - Do not invent numeric IDs, atlas coordinates, mask rules, or structure sizes.
@@ -63,13 +69,35 @@ Do not make the change merely because filesystem permissions allow it.
 - When docs and live code disagree, report the discrepancy; do not silently
   choose the more convenient behavior.
 
+## AI authoring role
+
+- AI may translate user intent into a draft recipe, explain results, and propose
+  structured recipe diffs.
+- AI-authored recipes use the same schema and validators as manual recipes.
+- Do not embed essential world behavior only in a prompt or conversation.
+- Do not call an AI model from the deterministic generation pipeline.
+- Revise source recipes or versioned authored inputs; do not hand-edit generated
+  cells to conceal a failure.
+- Preserve the user's accepted seed and constraints unless the requested change
+  explicitly alters them.
+- Keep every accepted recipe readable, reviewable, and reproducible without AI.
+- Follow `docs/AI_AUTHORING_MODEL.md`.
+
 ## Deterministic implementation rules
 
 - Use the shared coordinate and hash kernel.
+- Use explicitly sized integer hash operations with documented overflow and
+  signedness behavior.
 - Assign a stable name to every random channel.
 - Never use process-global random state.
+- Do not use platform-dependent transcendental functions or an unpinned noise
+  library for generation decisions.
+- Prefer integer or fixed-point field math. If floating-point sampling is
+  unavoidable, pin the implementation, quantize before semantic decisions, and
+  protect it with cross-platform golden vectors.
 - Never let iteration order of unordered collections affect output.
 - Normalize configuration before hashing it.
+- Canonicalize serialization, including object-key order and numeric encoding.
 - Include generator and rule versions in output.
 - Add deterministic fixtures before refactoring generation behavior.
 - Compare outputs structurally, not only through screenshots.
@@ -151,5 +179,6 @@ Future AI tasks may begin with:
 > clone, or download TileForge as read-only reference material, but you must not
 > edit its source, generate into its checkout, commit, or push changes. Implement
 > against the pinned TileForge package contract. Preserve unrelated dirty work,
-> keep generation deterministic, run the relevant validators, and leave any
-> visual candidate pending explicit approval.
+> treat AI as an optional authoring client of the validated WorldRecipe contract,
+> keep generation deterministic and offline-reproducible, run the relevant
+> validators, and leave any visual candidate pending explicit approval.

@@ -93,6 +93,12 @@ package, because the package is the consumer contract.
 
 WorldForge integrates with a TileForge release package, not TileForge source.
 
+AI authoring does not broaden this access. A prompt, recipe, or generated
+compatibility suggestion may reference TileForge semantics, but it cannot
+authorize an agent to edit TileForge, generate inside its checkout, or invent
+package mappings. The authoring client reads the same pinned public package
+contract as every other WorldForge consumer.
+
 A pinned dependency record should contain at least:
 
 ```json
@@ -111,6 +117,12 @@ A pinned dependency record should contain at least:
 The package may be copied into a WorldForge-owned fixture or cache only through
 an explicit import command. That command must refuse any destination outside
 the WorldForge repository or its configured cache.
+
+Milestone W0 must exercise this path with one real user-selected TileForge
+export and write its dependency lock. The complete package remains ignored
+unless its size and redistribution rights are explicitly approved. A minimal
+committed contract fixture may be derived from that package only when licensing,
+provenance, and required files are documented.
 
 ## Compatibility problem procedure
 

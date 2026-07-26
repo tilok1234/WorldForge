@@ -15,6 +15,48 @@ strength.
 6. Invalid topology MUST be reported; it MUST NOT be silently hidden.
 7. Global systems MUST derive from a global plan, not isolated chunk noise.
 8. WorldForge MUST NOT modify the TileForge repository.
+9. WorldForge MUST accept the same recipe contract from human and AI authoring
+   clients.
+10. Deterministic generation MUST NOT require an AI model.
+11. Semantic generation decisions MUST NOT depend on unspecified
+    floating-point, hash, iteration-order, or serialization behavior.
+
+## Numeric determinism
+
+- Coordinate hashing MUST use explicitly sized integers and documented wrapping
+  semantics.
+- Language-default string or object hash functions MUST NOT define generation.
+- Integer or fixed-point values SHOULD drive thresholds and classifications.
+- A floating-point noise implementation, when unavoidable, MUST be pinned and
+  covered by golden vectors on every supported platform.
+- Floating-point field output MUST be quantized before it changes semantic
+  identity.
+- Platform transcendental functions MUST NOT serve as undocumented random
+  sources.
+- Artifact serialization MUST define key order, number encoding, text encoding,
+  and newline behavior.
+- A supported platform MUST reproduce the canonical kernel and small-world
+  vectors byte-for-byte.
+
+## AI and recipe authoring
+
+- Natural-language intent MAY be translated into a draft `WorldRecipe`.
+- A prose prompt or conversation transcript MUST NOT be the only canonical
+  world definition.
+- Every draft MUST pass schema validation and normalization before generation.
+- AI-authored recipes MUST obey the same topology, budget, path-safety,
+  compatibility, and validation rules as manually authored recipes.
+- AI MUST NOT silently change an accepted seed, constraint, dependency, or
+  baseline.
+- AI-suggested iterations SHOULD be expressed as structured recipe diffs.
+- AI MUST NOT directly rewrite generated cells to hide a generator or validator
+  failure.
+- AI-authored landmark stamps MUST pass the same footprint, substrate,
+  traversal, and overlap checks as manually authored stamps.
+- Accepted recipes MUST remain readable, editable, and reproducible offline.
+- Prompt and model metadata MAY be stored as provenance, but MUST NOT replace
+  the normalized recipe in generation identity.
+- AI access to TileForge remains read-only and package-based.
 
 ## World-scale coherence
 
@@ -161,6 +203,7 @@ A world fails release validation if any of these occur:
 - route through forbidden terrain without a crossing;
 - orphan river segment;
 - missing dependency identity;
+- missing or invalid recipe identity;
 - incompatible TileForge manifest format;
 - generator error silently replaced with default terrain.
 

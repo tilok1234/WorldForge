@@ -2,6 +2,9 @@
 
 Status: **Draft**
 
+Implementation language: **TypeScript**, adopted in
+`decisions/ADR-0001-typescript.md`.
+
 ## Concept identity
 
 WorldForge is a deterministic, reusable world-planning and world-generation
@@ -15,6 +18,10 @@ remain consistent with the world around them.
 WorldForge is not a replacement for authored design. It combines procedural
 systems, constraints, and authored rules into a reproducible world plan that
 can be inspected, tested, regenerated, and extended.
+
+AI may provide a natural-language authoring interface, but it is not the world
+generator. It proposes structured settings that enter the same validated,
+deterministic pipeline as settings written by a person, editor, script, or test.
 
 ## The problem it solves
 
@@ -48,6 +55,8 @@ The long-term system can produce:
 - chunk-streamable semantic data;
 - deterministic rebuilds and generator-version migrations;
 - engine adapters, starting with Godot;
+- optional AI-assisted translation of creative briefs into validated recipes;
+- structured recipe diffs and validation explanations for iterative design;
 - compatibility with multiple visual packages through explicit adapters.
 
 ## Design pillars
@@ -89,6 +98,13 @@ Terrain and settlement planning can be reused. Quests, enemy populations,
 economy, faction control, and progression logic can attach through extension
 interfaces owned by the game.
 
+### 8. AI translates intent; WorldForge owns generation
+
+AI is an optional authoring client. Its output is a draft until it becomes a
+schema-valid, normalized `WorldRecipe`. The accepted recipe, seed, generator
+version, rules, and pinned dependencies—not a chat transcript—define the world.
+WorldForge must regenerate that world offline without an AI model.
+
 ## Intended player-facing result
 
 Although WorldForge is a developer tool, its quality is measured in play:
@@ -104,7 +120,10 @@ Although WorldForge is a developer tool, its quality is measured in play:
 ## Core generation loop
 
 ```text
-Configuration + world seed + generator version
+User intent
+    -> manual recipe or optional AI-authored draft
+    -> validated and normalized WorldRecipe
+    -> world seed + generator version + pinned dependencies
     -> global world graph
     -> macro fields and regions
     -> hydrology
@@ -124,6 +143,8 @@ Configuration + world seed + generator version
 - Make the complete world reproducible from a small configuration.
 - Support deterministic chunk streaming.
 - Make integration safe for AI-assisted game development.
+- Let AI help express and revise intent without becoming a runtime dependency.
+- Make accepted recipes readable and editable without AI.
 - Preserve authored landmark and override lanes.
 - Provide automated evidence for topology and visual-integration correctness.
 - Allow future games to reuse the generator without inheriting one game's lore.
@@ -142,11 +163,17 @@ WorldForge does not:
 - promise every generated world is automatically fun without review;
 - begin with planet-scale simulation, multiplayer authority, or infinite terrain;
 - hide invalid output behind best-effort silent correction.
+- require an AI model to generate, load, or replay an accepted world;
+- treat a prose prompt or conversation transcript as the canonical world file;
+- allow AI-generated settings to bypass normal validation.
 
 ## Product boundaries
 
 | Concern | Owner |
 |---|---|
+| Creative direction and acceptance | User |
+| Natural-language-to-recipe drafting | Optional AI authoring client |
+| Accepted world settings | Versioned WorldRecipe |
 | Tile art, masks, atlases, semantic tile IDs | TileForge |
 | World regions, terrain meaning, routes, settlements | WorldForge |
 | Semantic-to-TileForge resolution | WorldForge adapter using the public package |
@@ -176,10 +203,10 @@ The first meaningful demonstration should be one small finite world containing:
 4. Allowing new passes to reshuffle unrelated existing content.
 5. Expanding into quests, simulation, or an editor before the core world
    compiler is stable.
+6. Confusing an AI-authored prompt with the reproducible world specification.
 
 ## Draft decisions still open
 
-- Implementation language for the engine-neutral core.
 - Canonical world and chunk dimensions.
 - Whether the first build compiles entirely offline or also supports runtime
   generation.
