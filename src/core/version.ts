@@ -14,8 +14,10 @@ export const GENERATOR_VERSION = "0.1.0";
  * 9: decoration stage 1 (vegetation, ground cover, roadside markers).
  * 10: settlements.plans v2 — the W5.1 variety pool and the plaza fountain.
  * 11: stage 3 — farm plots with pen fences, harbor piers, waterline life.
+ * 12: settlements.plans v4 — town scale-up: street arms, bigger plazas and
+ *     radii, market stalls, short street-hugging approaches.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 11;
+export const GENERATOR_BEHAVIOR_VERSION = 12;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 9;
@@ -27,7 +29,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 1,
   "hydrology.water": 2,
   "routes.graph": 2,
-  "settlements.plans": 3,
+  "settlements.plans": 4,
   "landmarks.stamps": 1,
   "decoration.props": 2,
   "adapter.tileforge": 3,

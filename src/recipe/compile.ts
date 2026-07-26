@@ -102,8 +102,16 @@ export interface SettlementRules {
   readonly outpostRadius: number;
   readonly townLots: number;
   readonly outpostLots: number;
-  /** Longest carved approach from a structure entrance to a street. */
+  /**
+   * Longest carved approach from a structure entrance to a street. Short on
+   * purpose (settlements.plans v4): buildings must sit close to the plaza or
+   * a street arm, which is what makes a town read as connected fabric.
+   */
   readonly approachMaxLength: number;
+  readonly townPlazaRadius: number;
+  readonly outpostPlazaRadius: number;
+  /** Street arms radiate from the plaza and buildings line them. */
+  readonly streetArmLength: number;
 }
 
 export interface LandmarkSpec {
@@ -269,8 +277,14 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
 
 /** settlements.plans rule pack v1: settlement geometry per size preset. */
 const SETTLEMENT_RULES: { readonly [key in SizePreset]: SettlementRules } = {
-  tiny: { townRadius: 7, outpostRadius: 4, townLots: 5, outpostLots: 2, approachMaxLength: 48 },
-  small: { townRadius: 9, outpostRadius: 5, townLots: 8, outpostLots: 3, approachMaxLength: 96 },
+  tiny: {
+    townRadius: 12, outpostRadius: 6, townLots: 14, outpostLots: 4,
+    approachMaxLength: 8, townPlazaRadius: 2, outpostPlazaRadius: 1, streetArmLength: 9,
+  },
+  small: {
+    townRadius: 18, outpostRadius: 8, townLots: 28, outpostLots: 6,
+    approachMaxLength: 8, townPlazaRadius: 3, outpostPlazaRadius: 1, streetArmLength: 14,
+  },
 };
 
 /** macro.biomes rule pack v1: thresholds and region limits per size preset. */

@@ -20,26 +20,34 @@ import {
   type StructureType,
 } from "./structures.js";
 
-/** settlements.plans v2 (W5.1): purpose-led lots plus a rolled village mix. */
+/**
+ * settlements.plans v4: towns lead with civic specials and market stalls,
+ * then fill from a rolled village mix along the plaza and street arms.
+ */
 const TOWN_SPECIALS: readonly StructureType[] = [
   "structure.town_hall",
   "structure.tavern",
   "structure.smithy",
+  "structure.stall",
+  "structure.stall",
   "structure.chapel",
   "structure.manor",
+  "structure.bakery",
 ];
 const TOWN_FILL: readonly { readonly type: StructureType; readonly weight: number }[] = [
-  { type: "structure.cottage", weight: 45 },
-  { type: "structure.house", weight: 30 },
-  { type: "structure.bakery", weight: 15 },
-  { type: "structure.well", weight: 10 },
+  { type: "structure.cottage", weight: 40 },
+  { type: "structure.house", weight: 28 },
+  { type: "structure.bakery", weight: 10 },
+  { type: "structure.stall", weight: 8 },
+  { type: "structure.tavern", weight: 6 },
+  { type: "structure.well", weight: 8 },
 ];
 const OUTPOST_SEQUENCES: { readonly [key in SettlementPlan["purpose"]]: readonly StructureType[] } = {
-  farming: ["structure.farmhouse", "structure.barn", "structure.stall", "structure.cottage"],
-  mining: ["structure.watchtower", "structure.cottage", "structure.stall", "structure.cottage"],
-  harbor: ["structure.watchtower", "structure.cottage", "structure.stall", "structure.cottage"],
-  crossing: ["structure.watchtower", "structure.tavern", "structure.cottage", "structure.cottage"],
-  waypoint: ["structure.watchtower", "structure.cottage", "structure.cottage", "structure.cottage"],
+  farming: ["structure.farmhouse", "structure.barn", "structure.stall", "structure.cottage", "structure.cottage", "structure.well"],
+  mining: ["structure.watchtower", "structure.cottage", "structure.stall", "structure.cottage", "structure.house", "structure.well"],
+  harbor: ["structure.watchtower", "structure.cottage", "structure.stall", "structure.cottage", "structure.house", "structure.well"],
+  crossing: ["structure.watchtower", "structure.tavern", "structure.cottage", "structure.cottage", "structure.house", "structure.well"],
+  waypoint: ["structure.watchtower", "structure.cottage", "structure.cottage", "structure.cottage", "structure.house", "structure.well"],
 };
 
 const COBBLE = PALETTE_INDEX["terrain.cobble"];
@@ -93,12 +101,39 @@ export function planSettlements(
     const purpose = derivePurpose(anchorX, anchorY, radius, grid, hydro, width, height);
 
     // Plaza and settlement streets are cobble areas (band-free doctrine).
-    const plazaRadius = kind === "town" ? 2 : 1;
+    const plazaRadius = kind === "town" ? rules.townPlazaRadius : rules.outpostPlazaRadius;
     for (let dy = -plazaRadius; dy <= plazaRadius; dy += 1) {
       for (let dx = -plazaRadius; dx <= plazaRadius; dx += 1) {
         const cell = cellAt(anchorX + dx, anchorY + dy, width, height);
         if (cell !== -1 && isOpenLand(cell, grid, hydro)) {
           grid[cell] = COBBLE;
+        }
+      }
+    }
+    // Street arms (v4): two-cell-wide cobble streets radiate from the plaza
+    // so buildings line them and the settlement reads as connected fabric.
+    // Streams interrupt an arm without stopping it — the gap cells become
+    // street fords downstream.
+    if (kind === "town") {
+      for (const [dirX, dirY] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+        let skippedWet = 0;
+        for (let step = plazaRadius + 1; step <= plazaRadius + rules.streetArmLength; step += 1) {
+          const armX = anchorX + dirX * step;
+          const armY = anchorY + dirY * step;
+          const lane = cellAt(armX, armY, width, height);
+          const side = cellAt(armX + Math.abs(dirY), armY + Math.abs(dirX), width, height);
+          if (lane === -1) break;
+          if (!isOpenLand(lane, grid, hydro) && grid[lane] !== COBBLE && grid[lane] !== PACKED_ROAD) {
+            // A stream or pond: allow a short gap, stop at real water bodies.
+            if (hydro.isRiver[lane] === 1 && skippedWet < 2) {
+              skippedWet += 1;
+              continue;
+            }
+            break;
+          }
+          skippedWet = 0;
+          if (isOpenLand(lane, grid, hydro)) grid[lane] = COBBLE;
+          if (side !== -1 && isOpenLand(side, grid, hydro)) grid[side] = COBBLE;
         }
       }
     }
