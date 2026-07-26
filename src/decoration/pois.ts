@@ -50,6 +50,10 @@ export const POI_TYPES = [
   "poi.crystal_outcrop",
   "poi.ruined_watch",
   "poi.trapper_camp",
+  "poi.abandoned_caravan",
+  "poi.witch_circle",
+  "poi.frozen_wreck",
+  "poi.mountain_shrine",
 ] as const;
 export type PoiType = (typeof POI_TYPES)[number];
 
@@ -196,7 +200,14 @@ export function planPois(
   const putDecal = (x: number, y: number, key: string): void => {
     const index = cellAt(x, y);
     if (index === -1 || !claimable(index)) return;
-    if (decoration.propLayer[index] !== 0) return;
+    // Decoration v3 discipline: cosmetic decals never sit on blocked
+    // terrain (the packaged reference would ambiguously grant passage).
+    if (grid[index] === rockValue || grid[index] === PALETTE_INDEX["terrain.swamp"]) return;
+    // Deliberate beats ambient (v5): a story decal clears the ambient prop
+    // under it — otherwise forest vignettes lose their ground marks to
+    // random trees. Vignettes keep their own props and decals on disjoint
+    // cells, so a POI never erases its own work.
+    decoration.propLayer[index] = 0;
     decoration.decalLayer[index] = decal(key);
   };
 
@@ -221,6 +232,10 @@ export function planPois(
     "poi.crystal_outcrop": 3,
     "poi.ruined_watch": 2,
     "poi.trapper_camp": 3,
+    "poi.abandoned_caravan": 2,
+    "poi.witch_circle": 1,
+    "poi.frozen_wreck": 2,
+    "poi.mountain_shrine": 2,
   };
   // Far-reach quota (decoration.pois v4): rock- and snow-bound kinds get a
   // reserved slice of the budget. Rock edges are ~2% of cells, so without a
@@ -234,6 +249,8 @@ export function planPois(
     "poi.crystal_outcrop",
     "poi.ruined_watch",
     "poi.trapper_camp",
+    "poi.frozen_wreck",
+    "poi.mountain_shrine",
   ]);
   const farQuota = Math.max(2, Math.trunc(budget / 4));
   const generalBudget = budget - farQuota;
@@ -301,17 +318,22 @@ export function planPois(
     const center = cellAt(x, y);
     if (center === -1 || !claimable(center) || grid[center] !== rockValue) continue;
     if (!farEnough(x, y)) continue;
-    let facesOpen = false;
+    let openX = -1;
+    let openY = -1;
     for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
       const index = cellAt(x + dx, y + dy);
       if (index !== -1 && grid[index] !== rockValue && hydro.waterKind[index] === WATER_NONE) {
-        facesOpen = true;
+        openX = x + dx;
+        openY = y + dy;
         break;
       }
     }
-    if (!facesOpen) continue;
+    if (openX === -1) continue;
     const stamp = stampStructure("structure.cave_mouth", x, y);
     if (stamp !== null) {
+      // Someone camped at the mouth once; something drags bones out still.
+      putProp(openX + (openX === x ? 1 : 0), openY + (openY === y ? 1 : 0), "prop.ash_pile");
+      putDecal(openX, openY + (openY > y ? 1 : openY < y ? -1 : 0), "decal.bones");
       record("poi.cave", x, y, stamp);
     }
   }
@@ -374,7 +396,33 @@ export function planPois(
       putProp(x + 2, y + 4, "prop.skull_pole");
       putProp(x - 3, y + 4, "prop.spikes");
       putProp(x + 4, y + 4, "prop.spikes");
+      // The story: a robbed wagon dumped outside, the strongbox dragged in.
+      putProp(x + 1, y, "prop.chest");
+      putProp(x - 5, y + 2, "prop.cart");
+      putDecal(x + 1, y + 5, "decal.bones");
       record("poi.bandit_camp", x, y);
+      continue;
+    }
+
+    // Abandoned caravan: a merchant train that never made town — wagons
+    // ransacked mid-road, cargo scattered, arrows still in the ground.
+    if (
+      (material === grass || material === dryGrass) &&
+      !capped("poi.abandoned_caravan") &&
+      nearRoad(x, y, 8) &&
+      !nearRoad(x, y, 2) &&
+      settlementGap > 14 &&
+      clearRegion(x - 2, y - 1, 5, 4)
+    ) {
+      putProp(x - 1, y, "prop.broken_wagon");
+      putProp(x + 1, y + 1, "prop.cart");
+      putProp(x - 2, y + 1, "prop.crates");
+      putProp(x + 1, y - 1, "prop.sacks");
+      putProp(x + 2, y, "prop.chest");
+      putDecal(x, y + 1, "decal.arrows");
+      putDecal(x - 1, y - 1, "decal.arrows");
+      putDecal(x, y + 2, "decal.bones");
+      record("poi.abandoned_caravan", x, y);
       continue;
     }
 
@@ -392,6 +440,10 @@ export function planPois(
       if (stamp !== null) {
         putProp(x - 2, y, "prop.bone_pile");
         putProp(x + 4, y + 2, "prop.bone_pile");
+        // The ground still remembers the fall.
+        putDecal(x - 2, y + 3, "decal.cracks");
+        putDecal(x + 5, y, "decal.cracks");
+        putDecal(x - 3, y + 1, "decal.bones");
         record("poi.giant_skeleton", x, y, stamp);
         continue;
       }
@@ -409,6 +461,10 @@ export function planPois(
         putProp(x - 1, y + 1, "prop.mine_cart");
         putProp(x + 2, y, "prop.ore_vein");
         putProp(x + 2, y + 2, "prop.log_pile");
+        // Shift's end: ore sacked up, the cookfire long cold.
+        putProp(x - 2, y + 1, "prop.sacks");
+        putProp(x - 1, y - 1, "prop.ash_pile");
+        putDecal(x + 1, y + 2, "decal.rubble");
         record("poi.mine", x, y, stamp);
         continue;
       }
@@ -420,17 +476,21 @@ export function planPois(
       !capped("poi.cave") &&
       variant < 700
     ) {
-      let facesOpen = false;
+      let openX = -1;
+      let openY = -1;
       for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
         const index = cellAt(x + dx, y + dy);
         if (index !== -1 && grid[index] !== rockValue && hydro.waterKind[index] === WATER_NONE) {
-          facesOpen = true;
+          openX = x + dx;
+          openY = y + dy;
           break;
         }
       }
-      if (facesOpen) {
+      if (openX !== -1) {
         const stamp = stampStructure("structure.cave_mouth", x, y);
         if (stamp !== null) {
+          putProp(openX + (openX === x ? 1 : 0), openY + (openY === y ? 1 : 0), "prop.ash_pile");
+          putDecal(openX, openY + (openY > y ? 1 : openY < y ? -1 : 0), "decal.bones");
           record("poi.cave", x, y, stamp);
           continue;
         }
@@ -456,6 +516,9 @@ export function planPois(
       putProp(x + 1, y + 1, "prop.wheelbarrow");
       putProp(x + 2, y, "prop.tool_rack");
       putProp(x - 1, y + 1, "prop.sacks");
+      // The claim's strongbox, and the spoil heap that paid for it.
+      putProp(x + 2, y - 1, "prop.chest");
+      putDecal(x, y + 2, "decal.rubble");
       record("poi.prospector_camp", x, y);
       continue;
     }
@@ -472,11 +535,37 @@ export function planPois(
         }
       }
       if (interior) {
+        // A whole vein blooming through the ridge — big enough to spot
+        // from the valley floor.
         putProp(x, y, "prop.crystals");
         putProp(x + 1, y + 1, "prop.crystals");
         putProp(x - 1, y + 1, "prop.boulder");
         putProp(x + 1, y - 1, "prop.crystals");
+        putProp(x - 1, y - 1, "prop.crystals");
+        putProp(x + 2, y, "prop.crystals");
+        putProp(x - 2, y, "prop.boulder");
         record("poi.crystal_outcrop", x, y);
+        continue;
+      }
+    }
+
+    // Mountain shrine: braziers kept lit beside a worn statue, high in the
+    // rock — someone still climbs up here to tend them.
+    if (material === rockValue && !capped("poi.mountain_shrine") && variant >= 350 && variant < 550) {
+      let interior = true;
+      for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
+        const index = cellAt(x + dx, y + dy);
+        if (index === -1 || grid[index] !== rockValue) {
+          interior = false;
+          break;
+        }
+      }
+      if (interior) {
+        putProp(x, y, "prop.statue");
+        putProp(x - 1, y + 1, "prop.brazier");
+        putProp(x + 1, y + 1, "prop.brazier");
+        putProp(x, y - 1, "prop.stone_blocks");
+        record("poi.mountain_shrine", x, y);
         continue;
       }
     }
@@ -495,6 +584,11 @@ export function planPois(
       putProp(x, y, "prop.statue");
       putProp(x + 1, y + 1, "prop.stone_blocks");
       putDecal(x - 1, y + 1, "decal.rubble");
+      // It did not fall to time — it burned, and the webs came after.
+      putProp(x - 1, y, "prop.broken_boards");
+      putDecal(x + 1, y, "decal.scorch");
+      putDecal(x + 2, y + 1, "decal.cracks");
+      putDecal(x, y - 1, "decal.webs");
       record("poi.ruined_watch", x, y);
       continue;
     }
@@ -511,8 +605,37 @@ export function planPois(
       putProp(x + 1, y - 1, "prop.game_rack");
       putProp(x + 1, y + 1, "prop.firewood");
       putProp(x - 1, y + 1, "prop.log_pile");
+      // The winter larder: a chopping block and the kill pile beside it.
+      putProp(x + 2, y, "prop.chopping_block");
+      putDecal(x - 2, y, "decal.bones");
       record("poi.trapper_camp", x, y);
       continue;
+    }
+
+    // Frozen wreck: a ship the ice caught and never gave back, its cargo
+    // still crated on the shore.
+    if (
+      material === snow &&
+      !capped("poi.frozen_wreck") &&
+      clearRegion(x - 1, y, 3, 2)
+    ) {
+      let shoreWater = false;
+      for (let dy = -3; dy <= 3 && !shoreWater; dy += 1) {
+        for (let dx = -3; dx <= 3 && !shoreWater; dx += 1) {
+          const index = cellAt(x + dx, y + dy);
+          if (index !== -1 && hydro.waterKind[index] !== WATER_NONE && hydro.isRiver[index] === 0) {
+            shoreWater = true;
+          }
+        }
+      }
+      if (shoreWater) {
+        putProp(x, y, "prop.wreck");
+        putProp(x + 1, y + 1, "prop.crates");
+        putProp(x - 1, y + 1, "prop.broken_boards");
+        putDecal(x - 1, y, "decal.driftwood");
+        record("poi.frozen_wreck", x, y);
+        continue;
+      }
     }
 
     // Stone circle: the grand sacred site, one per world at most.
@@ -525,6 +648,11 @@ export function planPois(
     ) {
       const stamp = stampStructure("structure.stone_circle", x - 1, y - 1);
       if (stamp !== null) {
+        // The processional way: braziers flank the approach, the ground
+        // ring still shimmers where the rites were held.
+        putProp(x - 3, y + 3, "prop.brazier");
+        putProp(x + 3, y + 3, "prop.brazier");
+        putDecal(x, y + 4, "decal.rune_circle");
         record("poi.stone_circle", x, y, stamp);
         continue;
       }
@@ -541,6 +669,9 @@ export function planPois(
       const stamp = stampStructure("structure.crypt", x, y);
       if (stamp !== null) {
         putProp(x - 1, y + 1, "prop.lone_grave");
+        // Sealed long ago; the door says otherwise.
+        putDecal(x + 1, y + 3, "decal.webs");
+        putDecal(x + 3, y + 2, "decal.bones");
         record("poi.crypt", x, y, stamp);
         continue;
       }
@@ -557,6 +688,12 @@ export function planPois(
       const stamp = stampStructure("structure.ruin", x, y);
       if (stamp !== null) {
         putProp(x - 1, y - 1, "prop.broken_wagon");
+        // The homestead burned: a charred tree, cold ashes, what the
+        // family dropped when they ran.
+        putProp(x - 2, y + 2, "prop.burned_tree");
+        putProp(x + 3, y + 1, "prop.ash_pile");
+        putProp(x + 2, y + 3, "prop.broken_boards");
+        putDecal(x - 1, y + 3, "decal.scorch");
         record("poi.ruin", x, y, stamp);
         continue;
       }
@@ -587,16 +724,45 @@ export function planPois(
       putProp(x + 2, y, "prop.gravestones");
       putProp(x + 1, y + 2, "prop.gravestones");
       putProp(x + 3, y + 1, "prop.lone_grave");
+      // One grave dug outside the fence — whoever it was, the village
+      // would not bury them inside.
+      putProp(x + 6, y + 4, "prop.lone_grave");
+      putDecal(x + 1, y + 1, "decal.webs");
       record("poi.graveyard", x, y);
       continue;
     }
 
-    // Hunter camp: a clearing inside real forest.
+    // Witch circle: deep in the woods where nobody sensible goes — a rune
+    // ring, cold braziers, skulls on poles, webs in the branches.
+    if (
+      material === grass &&
+      !capped("poi.witch_circle") &&
+      treesNear(x, y, 4) >= 8 &&
+      !nearRoad(x, y, 6) &&
+      settlementGap > 18 &&
+      clearRegion(x - 1, y - 1, 3, 3)
+    ) {
+      putDecal(x, y, "decal.rune_circle");
+      putProp(x - 1, y - 1, "prop.skull_pole");
+      putProp(x + 1, y - 1, "prop.brazier");
+      putProp(x - 1, y + 1, "prop.brazier");
+      putProp(x + 1, y + 1, "prop.mushrooms");
+      putDecal(x, y - 1, "decal.webs");
+      putDecal(x + 2, y, "decal.webs");
+      record("poi.witch_circle", x, y);
+      continue;
+    }
+
+    // Hunter camp: a clearing inside real forest, the practice target
+    // still standing from the last quiet evening.
     if (material === grass && !capped("poi.hunters_camp") && treesNear(x, y, 4) >= 10 && clearRegion(x - 1, y - 1, 3, 3)) {
       putProp(x, y, "prop.campfire");
       putProp(x - 1, y, "prop.bedroll");
       putProp(x + 1, y - 1, "prop.game_rack");
       putProp(x + 1, y + 1, "prop.log_pile");
+      putProp(x + 3, y, "prop.archery_target");
+      putProp(x - 1, y + 2, "prop.chopping_block");
+      putDecal(x + 2, y, "decal.arrows");
       record("poi.hunters_camp", x, y);
       continue;
     }
@@ -617,6 +783,10 @@ export function planPois(
       putDecal(x - 1, y - 1, "decal.battle_gear");
       putProp(x + 1, y + 2, "prop.broken_wagon");
       putProp(x - 2, y - 2, "prop.bone_pile");
+      // The standard nobody came back for still flies over the burned line.
+      putProp(x + 2, y - 1, "prop.banner");
+      putDecal(x, y + 1, "decal.scorch");
+      putDecal(x - 2, y, "decal.bones");
       record("poi.battlefield", x, y);
       continue;
     }
@@ -634,14 +804,20 @@ export function planPois(
       putProp(x, y + 2, "prop.standing_stone");
       putProp(x - 2, y, "prop.standing_stone");
       putProp(x, y, "prop.runestone");
+      // The ground between the stones still carries the working.
+      putDecal(x + 1, y, "decal.rune_circle");
+      putDecal(x - 1, y, "decal.rune_circle");
       record("poi.standing_stones", x, y);
       continue;
     }
 
-    // Wayside shrine: right beside the road.
+    // Wayside shrine: right beside the road, fresh flowers at its base —
+    // somebody stops here every day.
     if ((material === grass || material === dryGrass || material === snow) && !capped("poi.wayside_shrine") && nearRoad(x, y, 2) && variant < 350 && clearRegion(x, y, 2, 1)) {
       putProp(x, y, "prop.altar");
       putProp(x + 1, y, "prop.brazier");
+      putProp(x - 1, y, "prop.flowers");
+      putProp(x + 1, y + 1, "prop.flowers");
       record("poi.wayside_shrine", x, y);
       continue;
     }
@@ -664,6 +840,9 @@ export function planPois(
           decoration.propLayer[shoreWater] = prop("prop.rowboat");
         }
         putProp(x + 1, y, "prop.fishnets");
+        // The catch crated up, the boards of an older jetty gone soft.
+        putProp(x - 1, y, "prop.crates");
+        putProp(x, y + 1, "prop.broken_boards");
         void wx;
         void wy;
         record("poi.fishing_spot", x, y);

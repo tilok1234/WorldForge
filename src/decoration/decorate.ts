@@ -76,6 +76,16 @@ export const DECOR_TYPES = [
   "prop.tool_rack",
   "prop.sacks",
   "prop.firewood",
+  "prop.ash_pile",
+  "prop.burned_tree",
+  "prop.cart",
+  "prop.chest",
+  "prop.archery_target",
+  "prop.chopping_block",
+  "prop.hay_bales",
+  "prop.trough",
+  "prop.wreck",
+  "prop.broken_boards",
 ] as const;
 
 /** Semantic ground-decal keys, stage 1. Layer stores index + 1 (0 = none). */
@@ -88,6 +98,12 @@ export const DECAL_TYPES = [
   "decal.crater",
   "decal.arrows",
   "decal.battle_gear",
+  "decal.bones",
+  "decal.scorch",
+  "decal.cracks",
+  "decal.webs",
+  "decal.rune_circle",
+  "decal.crystal_field",
 ] as const;
 
 /** Species that block movement (mirrors the package's prop walkability). */
@@ -103,6 +119,10 @@ const BLOCKING = new Set<string>([
   "prop.crystals", "prop.statue", "prop.pillar", "prop.stone_blocks",
   "prop.crates", "prop.wheelbarrow", "prop.tool_rack", "prop.sacks",
   "prop.firewood",
+  // Story props (v5): ash_pile and broken_boards are walkable in the
+  // package (ground litter); the rest block.
+  "prop.burned_tree", "prop.cart", "prop.chest", "prop.archery_target",
+  "prop.chopping_block", "prop.hay_bales", "prop.trough", "prop.wreck",
 ]);
 
 /** Two-part canopy species (§2.10): skip when a structure sits above. */

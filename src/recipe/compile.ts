@@ -388,7 +388,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
     budgets: normalized.budgets,
     decoration: {
       densityPermille: normalized.decoration.densityPermille,
-      poiCount: normalized.world.sizePreset === "tiny" ? 14 : 48,
+      poiCount: normalized.world.sizePreset === "tiny" ? 16 : 64,
     },
     passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "decoration.props", "adapter.tileforge"],
     dependencies: { tileforge: pinnedTileForgeDependency() },

@@ -114,6 +114,16 @@ const PROP_NAME: { readonly [key: string]: string } = {
   "prop.tool_rack": "toolrack",
   "prop.sacks": "sacks",
   "prop.firewood": "firewood",
+  "prop.ash_pile": "ashpile",
+  "prop.burned_tree": "burnedtree",
+  "prop.cart": "cart",
+  "prop.chest": "chest",
+  "prop.archery_target": "archerytarget",
+  "prop.chopping_block": "choppingblock",
+  "prop.hay_bales": "haybales",
+  "prop.trough": "trough",
+  "prop.wreck": "wreck",
+  "prop.broken_boards": "brokenboards",
 };
 
 /** WorldForge crop keys -> package crop names. */
@@ -140,6 +150,12 @@ const DECAL_NAME: { readonly [key: string]: string } = {
   "decal.crater": "crater",
   "decal.arrows": "arrows",
   "decal.battle_gear": "battlegear",
+  "decal.bones": "bones",
+  "decal.scorch": "scorch",
+  "decal.cracks": "cracks",
+  "decal.webs": "webs",
+  "decal.rune_circle": "runecircle",
+  "decal.crystal_field": "crystalfield",
 };
 
 /** Matches the package map-data.json schema exactly: layers at top level. */

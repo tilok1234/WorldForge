@@ -34,8 +34,13 @@ export const GENERATOR_VERSION = "0.1.0";
  *     mountains and deep snow get deliberate content: prospector camps,
  *     crystal outcrops, ruined watches, trapper camps, forgotten
  *     battlefields; poi budget 48/14; nine new prop species.
+ * 20: every discoverable tells a story (decoration.pois 5, decoration.props
+ *     5) — existing POIs grow into composed vignettes (story decals: bones,
+ *     scorch, cracks, webs, rune circles); new kinds: abandoned caravan,
+ *     witch circle, frozen wreck, mountain shrine; poi budget 64/16; ten
+ *     more prop species.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 19;
+export const GENERATOR_BEHAVIOR_VERSION = 20;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 9;
@@ -49,8 +54,8 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "routes.graph": 3,
   "settlements.plans": 5,
   "landmarks.stamps": 1,
-  "decoration.props": 4,
-  "decoration.pois": 4,
+  "decoration.props": 5,
+  "decoration.pois": 5,
   "adapter.tileforge": 3,
 };
 
