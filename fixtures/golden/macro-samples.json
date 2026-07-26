@@ -97,10 +97,10 @@
         "terrain.cobble": 3378,
         "terrain.dry_grass": 493,
         "terrain.grass": 21992,
-        "terrain.gravel": 874,
+        "terrain.gravel": 1225,
         "terrain.mud": 961,
         "terrain.packed_road": 820,
-        "terrain.rock": 18431,
+        "terrain.rock": 18080,
         "terrain.sand": 69,
         "terrain.snow": 9790,
         "terrain.swamp": 747,
@@ -117,15 +117,15 @@
         "wetlandCellCount": 932
       },
       "name": "small-cold-coastal",
-      "regionCount": 319,
-      "residualSmallRegions": 258,
+      "regionCount": 333,
+      "residualSmallRegions": 271,
       "routes": {
         "crossingCount": 9,
-        "destinationCount": 16,
+        "destinationCount": 18,
         "errorCount": 0,
         "roadCellCount": 671,
-        "routeCount": 18,
-        "trailCellCount": 651
+        "routeCount": 20,
+        "trailCellCount": 761
       },
       "samples": [
         {
@@ -175,7 +175,7 @@
         }
       ],
       "settlements": {
-        "landmarkCount": 6,
+        "landmarkCount": 8,
         "planCount": 10,
         "purposes": [
           "harbor",

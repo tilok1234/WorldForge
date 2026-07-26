@@ -323,7 +323,8 @@ export function planPois(
       plan.type !== "world_tree" &&
       plan.type !== "crystal_spire" &&
       plan.type !== "lighthouse" &&
-      plan.type !== "hunters_lodge"
+      plan.type !== "hunters_lodge" &&
+      plan.type !== "mountain_hamlet"
     ) {
       continue;
     }
@@ -458,6 +459,21 @@ export function planPois(
       putProp(plan.x + 4, plan.y + 5, "prop.signpost");
       putProp(plan.x + 1, plan.y + 5, "prop.campfire");
       putDecal(plan.x + 2, plan.y + 5, "decal.bones");
+    } else if (plan.type === "mountain_hamlet") {
+      // A hamlet in the high bowl: shepherds and stonecutters who never
+      // come down. Cottages around a well, fodder for the winter.
+      cityStamp("structure.well", [[5, 5], [5, 4], [4, 5]], true);
+      cityStamp("structure.watchtower", [[2, 2], [7, 2], [2, 3]]);
+      cityStamp("structure.cottage", [[7, 4], [7, 5], [8, 4]]);
+      cityStamp("structure.cottage", [[2, 6], [1, 6], [2, 5]]);
+      cityStamp("structure.cottage", [[6, 7], [7, 7], [5, 7]]);
+      putProp(plan.x + 4, plan.y + 7, "prop.hay_bales");
+      putProp(plan.x + 3, plan.y + 3, "prop.trough");
+      putProp(plan.x + 8, plan.y + 7, "prop.chopping_block");
+      putProp(plan.x + 5, plan.y + 9, "prop.signpost");
+      putProp(plan.x + 2, plan.y + 8, "prop.firewood");
+      putProp(plan.x + 8, plan.y + 2, "prop.boulder");
+      putDecal(plan.x + 6, plan.y + 3, "decal.puddles");
     }
   }
 

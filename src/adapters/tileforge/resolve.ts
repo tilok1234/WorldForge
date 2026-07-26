@@ -572,6 +572,34 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
         }
       }
     }
+
+    // Mountain water (adapter v5): where a highland stream drops a level it
+    // falls — waterfall decals on the lip cells — and up on the terraces it
+    // runs white (sparse rapids). Fords and other deliberate decals
+    // out-rank both.
+    const waterfallId = manifest.decalIdByKey.get("waterfall");
+    const rapidsId = manifest.decalIdByKey.get("rapids");
+    for (let index = 0; index < cellCount; index += 1) {
+      if (composed.hydro.isRiver[index] !== 1 || decal[index] !== 0) continue;
+      const x = index % width;
+      const y = Math.trunc(index / width);
+      let drop = false;
+      for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+        const neighbor = ny * width + nx;
+        if (composed.hydro.isRiver[neighbor] === 1 && (elev[neighbor] as number) < (elev[index] as number)) {
+          drop = true;
+          break;
+        }
+      }
+      if (drop && waterfallId !== undefined) {
+        decal[index] = waterfallId;
+      } else if ((elev[index] as number) >= 1 && rapidsId !== undefined && (x * 7 + y * 13) % 5 === 0) {
+        decal[index] = rapidsId;
+      }
+    }
   }
 
   const mapData: TileForgeMapData = {

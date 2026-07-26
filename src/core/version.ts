@@ -65,11 +65,15 @@ export const GENERATOR_VERSION = "0.1.0";
  * 26: density dial (decoration.props 7) — ambient scatter roughly doubled
  *     per biome, sparser biomes' forest bases raised, tall-grass and moss
  *     patches widened, character zones more numerous and larger.
+ * 27: mountain hamlets — high-bowl villages (cottages, well, watchtower)
+ *     placed as landmarks on the terraces with graded climbing trails
+ *     (landmarks.stamps 5, decoration.pois 9); recipe vocabulary gains
+ *     mountain_hamlet.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 26;
+export const GENERATOR_BEHAVIOR_VERSION = 27;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 13;
+export const RECIPE_COMPILER_VERSION = 14;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -79,10 +83,10 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "hydrology.water": 2,
   "routes.graph": 7,
   "settlements.plans": 7,
-  "landmarks.stamps": 4,
+  "landmarks.stamps": 5,
   "decoration.props": 7,
-  "decoration.pois": 8,
-  "adapter.tileforge": 4,
+  "decoration.pois": 9,
+  "adapter.tileforge": 5,
 };
 
 /**
@@ -92,5 +96,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
  * so the §3 walkability ladder never severs a street.
  * 4: mountain relief — quantized elevation levels inside the rock mass
  * (walkable cells stay level 0), rendered by the §2.8 cliff pass.
+ * 5: mountain water — waterfall decals on stream drop lips, sparse rapids
+ * on terrace runs.
  */
-export const TILEFORGE_ADAPTER_VERSION = 4;
+export const TILEFORGE_ADAPTER_VERSION = 5;
