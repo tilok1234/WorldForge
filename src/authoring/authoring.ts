@@ -234,6 +234,7 @@ export function compareWorlds(a: WorldArtifact, b: WorldArtifact): string {
     lines.push(`${label}: ${x} vs ${y}${delta === 0 ? "" : ` (${delta > 0 ? "+" : ""}${delta})`}`);
   };
   number("settlement plans", left.settlements, right.settlements);
+  number("points of interest", a.pois.length, b.pois.length);
   number("structure cells", left.structures, right.structures);
   number("routes", left.routes, right.routes);
   number("route/street cells", left.routeCells, right.routeCells);

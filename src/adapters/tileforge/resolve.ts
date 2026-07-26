@@ -79,6 +79,18 @@ const PROP_NAME: { readonly [key: string]: string } = {
   "prop.rowboat": "rowboat",
   "prop.fishnets": "fishnets",
   "prop.buoy": "buoy",
+  "prop.campfire": "campfire",
+  "prop.bedroll": "bedroll",
+  "prop.game_rack": "gamerack",
+  "prop.log_pile": "logpile",
+  "prop.standing_stone": "standingstone",
+  "prop.runestone": "runestone",
+  "prop.broken_wagon": "brokenwagon",
+  "prop.bone_pile": "bonepile",
+  "prop.altar": "altar",
+  "prop.brazier": "brazier",
+  "prop.gravestones": "gravestones",
+  "prop.lone_grave": "lonegrave",
 };
 
 /** WorldForge crop keys -> package crop names. */
@@ -89,7 +101,10 @@ const CROP_NAME: { readonly [key: string]: string } = {
 };
 
 /** WorldForge fence/pier keys -> package family keys. */
-const FENCE_NAME: { readonly [key: string]: string } = { "fence.pen": "penfence" };
+const FENCE_NAME: { readonly [key: string]: string } = {
+  "fence.pen": "penfence",
+  "fence.iron": "ironfence",
+};
 const PIER_NAME: { readonly [key: string]: string } = { "pier.pier": "pier" };
 
 /** WorldForge semantic decal keys -> package decal family keys. */
@@ -99,6 +114,9 @@ const DECAL_NAME: { readonly [key: string]: string } = {
   "decal.lilypads": "lilypads",
   "decal.driftwood": "driftwood",
   "decal.rubble": "rubble",
+  "decal.crater": "crater",
+  "decal.arrows": "arrows",
+  "decal.battle_gear": "battlegear",
 };
 
 /** Matches the package map-data.json schema exactly: layers at top level. */

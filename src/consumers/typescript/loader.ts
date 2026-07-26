@@ -13,7 +13,7 @@
  * proves them cell-identical to the resolved ladder on generated worlds.
  */
 
-export const SUPPORTED_ARTIFACT_FORMAT = 7;
+export const SUPPORTED_ARTIFACT_FORMAT = 8;
 
 export interface LoaderIssue {
   readonly path: string;
@@ -69,6 +69,12 @@ export interface WorldDestination {
   readonly cell: readonly [number, number];
 }
 
+export interface WorldPoi {
+  readonly id: number;
+  readonly type: string;
+  readonly cell: readonly [number, number];
+}
+
 interface RawChunk {
   readonly coord: readonly [number, number];
   readonly layers: Readonly<Record<string, readonly (readonly number[])[]>>;
@@ -94,6 +100,7 @@ interface RawArtifact {
   readonly pierTypes: readonly string[];
   readonly destinations: readonly WorldDestination[];
   readonly routes: readonly WorldRoute[];
+  readonly pois: readonly WorldPoi[];
   readonly chunks: readonly RawChunk[];
   readonly [key: string]: unknown;
 }
@@ -124,7 +131,10 @@ const BLOCKING_PROPS = new Set<string>([
   "prop.oak", "prop.birch", "prop.pine", "prop.willow", "prop.dead_tree",
   "prop.fruit_tree", "prop.stump", "prop.fallen_log", "prop.boulder",
   "prop.rock_outcrop", "prop.milestone", "prop.signpost", "prop.rowboat",
-  "prop.buoy",
+  "prop.buoy", "prop.campfire", "prop.game_rack", "prop.log_pile",
+  "prop.standing_stone", "prop.runestone", "prop.broken_wagon",
+  "prop.bone_pile", "prop.altar", "prop.brazier", "prop.gravestones",
+  "prop.lone_grave",
 ]);
 
 /** Corridor materials whose street grid streams must not sever. */
@@ -240,6 +250,7 @@ export class WorldHandle {
   readonly pierTypes: readonly string[];
   readonly destinations: readonly WorldDestination[];
   readonly routes: readonly WorldRoute[];
+  readonly pois: readonly WorldPoi[];
   readonly tileforge: RawArtifact["dependencies"]["tileforge"];
 
   private readonly layers: Record<ChunkLayerName, Uint16Array>;
@@ -257,6 +268,7 @@ export class WorldHandle {
     this.pierTypes = raw.pierTypes;
     this.destinations = raw.destinations;
     this.routes = raw.routes;
+    this.pois = raw.pois ?? [];
     this.tileforge = raw.dependencies.tileforge;
 
     const { width, height, chunkWidth, chunkHeight } = raw.dimensions;

@@ -18,7 +18,7 @@ import type { SettlementPlan } from "./settlements.js";
 /** Crop layer: 0 = none, else cropTypeIndex * 16 + stage (stage 1-4). */
 export const CROP_TYPES = ["crop.wheat", "crop.pumpkin", "crop.corn"] as const;
 /** Fence layer: 0 = none, else 1-based index into FENCE_TYPES. */
-export const FENCE_TYPES = ["fence.pen"] as const;
+export const FENCE_TYPES = ["fence.pen", "fence.iron"] as const;
 /** Pier layer: 0 = none, else 1-based index into PIER_TYPES. */
 export const PIER_TYPES = ["pier.pier"] as const;
 

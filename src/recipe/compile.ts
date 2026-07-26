@@ -169,8 +169,11 @@ export interface ResolvedWorldConfig {
   readonly landmarkSpecs: readonly LandmarkSpec[];
   readonly biomes: BiomeRules;
   readonly budgets: NormalizedWorldRecipe["budgets"];
-  /** Decoration stage 1: ambient density (0 disables the pass). */
-  readonly decoration: { readonly densityPermille: number };
+  /**
+   * Decoration: ambient density (0 disables) and the wilderness POI budget
+   * (decoration.pois rule pack; size-scaled, not yet recipe vocabulary).
+   */
+  readonly decoration: { readonly densityPermille: number; readonly poiCount: number };
   /** Named generation passes enabled at this behavior version. */
   readonly passes: readonly string[];
   /** Pinned package identity from tileforge.lock.json (null if absent). */
@@ -359,7 +362,10 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
     }),
     biomes: BIOME_RULES[normalized.world.sizePreset],
     budgets: normalized.budgets,
-    decoration: { densityPermille: normalized.decoration.densityPermille },
+    decoration: {
+      densityPermille: normalized.decoration.densityPermille,
+      poiCount: normalized.world.sizePreset === "tiny" ? 6 : 16,
+    },
     passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "decoration.props", "adapter.tileforge"],
     dependencies: { tileforge: pinnedTileForgeDependency() },
   };

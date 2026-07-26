@@ -48,6 +48,18 @@ export const DECOR_TYPES = [
   "prop.rowboat",
   "prop.fishnets",
   "prop.buoy",
+  "prop.campfire",
+  "prop.bedroll",
+  "prop.game_rack",
+  "prop.log_pile",
+  "prop.standing_stone",
+  "prop.runestone",
+  "prop.broken_wagon",
+  "prop.bone_pile",
+  "prop.altar",
+  "prop.brazier",
+  "prop.gravestones",
+  "prop.lone_grave",
 ] as const;
 
 /** Semantic ground-decal keys, stage 1. Layer stores index + 1 (0 = none). */
@@ -57,6 +69,9 @@ export const DECAL_TYPES = [
   "decal.lilypads",
   "decal.driftwood",
   "decal.rubble",
+  "decal.crater",
+  "decal.arrows",
+  "decal.battle_gear",
 ] as const;
 
 /** Species that block movement (mirrors the package's prop walkability). */
@@ -64,7 +79,10 @@ const BLOCKING = new Set<string>([
   "prop.oak", "prop.birch", "prop.pine", "prop.willow", "prop.dead_tree",
   "prop.fruit_tree", "prop.stump", "prop.fallen_log", "prop.boulder",
   "prop.rock_outcrop", "prop.milestone", "prop.signpost", "prop.rowboat",
-  "prop.buoy",
+  "prop.buoy", "prop.campfire", "prop.game_rack", "prop.log_pile",
+  "prop.standing_stone", "prop.runestone", "prop.broken_wagon",
+  "prop.bone_pile", "prop.altar", "prop.brazier", "prop.gravestones",
+  "prop.lone_grave",
 ]);
 
 /** Two-part canopy species (§2.10): skip when a structure sits above. */

@@ -17964,7 +17964,7 @@
             1,
             0,
             0,
-            1,
+            0,
             0,
             0,
             0,
@@ -19993,8 +19993,8 @@
             0,
             0,
             2,
-            2,
-            0,
+            26,
+            24,
             0,
             0,
             0,
@@ -20011,7 +20011,7 @@
             0,
             1,
             14,
-            0,
+            23,
             0,
             0,
             0,
@@ -23379,7 +23379,7 @@
             0,
             0,
             0,
-            1
+            27
           ],
           [
             0,
@@ -24805,7 +24805,7 @@
           ],
           [
             0,
-            1,
+            0,
             0,
             0,
             0,
@@ -24822,7 +24822,7 @@
             0
           ],
           [
-            1,
+            0,
             0,
             0,
             0,
@@ -26835,7 +26835,7 @@
           ],
           [
             0,
-            0,
+            28,
             2,
             0,
             0,
@@ -26852,7 +26852,7 @@
             0
           ],
           [
-            0,
+            26,
             0,
             0,
             8,
@@ -26871,7 +26871,7 @@
           ],
           [
             1,
-            0,
+            29,
             0,
             0,
             0,
@@ -33938,9 +33938,9 @@
           [
             0,
             0,
-            0,
-            0,
-            0,
+            23,
+            26,
+            24,
             0,
             0,
             0,
@@ -51188,7 +51188,7 @@
             0,
             0,
             0,
-            0,
+            28,
             0,
             0,
             0,
@@ -51204,8 +51204,8 @@
             1,
             2,
             2,
-            0,
-            8,
+            27,
+            26,
             0,
             0,
             0,
@@ -51224,7 +51224,7 @@
             0,
             0,
             0,
-            0,
+            29,
             0,
             0,
             0,
@@ -55826,7 +55826,10 @@
     "decal.puddles",
     "decal.lilypads",
     "decal.driftwood",
-    "decal.rubble"
+    "decal.rubble",
+    "decal.crater",
+    "decal.arrows",
+    "decal.battle_gear"
   ],
   "dependencies": {
     "tileforge": {
@@ -55843,16 +55846,17 @@
     "width": 64
   },
   "fenceTypes": [
-    "fence.pen"
+    "fence.pen",
+    "fence.iron"
   ],
-  "formatVersion": 7,
+  "formatVersion": 8,
   "generator": {
-    "generationIdentitySha256": "e4d2081b5c2f83c0b15df6d8420ab62cbf1d8df4524d9747302f226568a24b16",
-    "generatorBehaviorVersion": 14,
+    "generationIdentitySha256": "b081200be0cdd46a03e93684a12aad01fe6e0dd34ada75d8452edae0c0920346",
+    "generatorBehaviorVersion": 15,
     "name": "worldforge",
     "recipeCompilerVersion": 9,
     "recipeSha256": "b18720c7f09ed2b9bba855ce538cdb4f0c1e5b7fb3bf4de0de61a89ac242d994",
-    "resolvedConfigSha256": "b237da233f234bfe2b56e60a2dbc8e7f94681e81c7f22f42f9169bb065a94226",
+    "resolvedConfigSha256": "9a02402aa4a6dc3eaeb080dead2b068b6bf9228565132d9d7b00b6f58fd6e257",
     "seed": 1,
     "version": "0.1.0"
   },
@@ -55868,6 +55872,40 @@
   "landmarks": [],
   "pierTypes": [
     "pier.pier"
+  ],
+  "pois": [
+    {
+      "cell": [
+        48,
+        22
+      ],
+      "id": 0,
+      "type": "poi.hunters_camp"
+    },
+    {
+      "cell": [
+        41,
+        50
+      ],
+      "id": 1,
+      "type": "poi.hunters_camp"
+    },
+    {
+      "cell": [
+        25,
+        28
+      ],
+      "id": 2,
+      "type": "poi.fishing_spot"
+    },
+    {
+      "cell": [
+        19,
+        44
+      ],
+      "id": 3,
+      "type": "poi.fishing_spot"
+    }
   ],
   "propTypes": [
     "prop.oak",
@@ -55894,7 +55932,19 @@
     "prop.signpost",
     "prop.rowboat",
     "prop.fishnets",
-    "prop.buoy"
+    "prop.buoy",
+    "prop.campfire",
+    "prop.bedroll",
+    "prop.game_rack",
+    "prop.log_pile",
+    "prop.standing_stone",
+    "prop.runestone",
+    "prop.broken_wagon",
+    "prop.bone_pile",
+    "prop.altar",
+    "prop.brazier",
+    "prop.gravestones",
+    "prop.lone_grave"
   ],
   "regions": [
     {

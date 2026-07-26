@@ -12,6 +12,7 @@ import { buildMacroFields, type MacroFields } from "../fields/macroFields.js";
 import { buildHydrology, WATER_DEEP, WATER_NONE, WATER_SHALLOW, type HydrologyResult } from "../hydrology/hydrology.js";
 import { decorateWorld, type DecorationResult } from "../decoration/decorate.js";
 import { planFarmsAndPiers, type FarmResult } from "../settlements/farms.js";
+import { planPois, type PlacedPoi } from "../decoration/pois.js";
 import {
   classifyCell,
   labelComponents,
@@ -50,6 +51,7 @@ export interface ComposedWorld {
   readonly landmarkPlans: readonly LandmarkPlan[];
   readonly decoration: DecorationResult;
   readonly farms: FarmResult;
+  readonly pois: readonly PlacedPoi[];
   /**
    * Street-level crossings: river cells that carry corridor material or run
    * between corridor cells on opposite sides. Walkable in every model; the
@@ -343,6 +345,10 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   }
   const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config, farms);
 
+  // Points of interest stamp after ambient decoration and overwrite it:
+  // deliberate discoveries beat scattered flavor.
+  const pois = planPois(grid, structureLayer, hydro, routesResult, settlementPlans, farms, decoration, config);
+
   const labeling = labelComponents(grid, width, height);
   const regions: RegionSummary[] = labeling.components.map((component, id) => ({
     id,
@@ -369,6 +375,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     landmarkPlans,
     decoration,
     farms,
+    pois,
     streetFordCells,
   };
 }

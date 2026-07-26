@@ -26,8 +26,9 @@ import { CROP_TYPES, FENCE_TYPES, PIER_TYPES } from "../settlements/farms.js";
  * Format 7 (W8): the river layer carries the FULL two-tier network —
  * 0 none, 1 network stream, 2 major river. Consumers need the network tier
  * to reproduce walkability (streams block; majors carried it alone before).
+ * Format 8: wilderness points of interest (pois records).
  */
-export const ARTIFACT_FORMAT_VERSION = 7;
+export const ARTIFACT_FORMAT_VERSION = 8;
 
 export interface WorldArtifact {
   readonly formatVersion: number;
@@ -114,6 +115,11 @@ export interface WorldArtifact {
     readonly cell: readonly [number, number];
     readonly footprint: readonly [number, number];
     readonly entrance: readonly [number, number];
+  }>;
+  readonly pois: ReadonlyArray<{
+    readonly id: number;
+    readonly type: string;
+    readonly cell: readonly [number, number];
   }>;
   readonly routes: ReadonlyArray<{
     readonly id: number;
@@ -290,6 +296,11 @@ export function generateWorldDetailed(
       cell: [plan.x, plan.y] as const,
       footprint: [plan.width, plan.height] as const,
       entrance: [plan.entranceX, plan.entranceY] as const,
+    })),
+    pois: composed.pois.map((poi) => ({
+      id: poi.id,
+      type: poi.type,
+      cell: [poi.x, poi.y] as const,
     })),
     routes: composed.routesResult.routes.map((route) => ({
       id: route.id,

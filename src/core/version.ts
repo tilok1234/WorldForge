@@ -20,8 +20,10 @@ export const GENERATOR_VERSION = "0.1.0";
  *     (the package reference walkability would turn them into passage).
  * 14: sand beaches on low sea-level shores (macro.biomes 2) — the first
  *     production use of the package's corner16 dual-grid sand system.
+ * 15: wilderness points of interest, phase A (decoration.pois 1) — camps,
+ *     stone rings, battlefields, graveyards, shrines, fishing spots.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 14;
+export const GENERATOR_BEHAVIOR_VERSION = 15;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 9;
@@ -36,6 +38,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "settlements.plans": 4,
   "landmarks.stamps": 1,
   "decoration.props": 3,
+  "decoration.pois": 1,
   "adapter.tileforge": 3,
 };
 

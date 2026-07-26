@@ -223,10 +223,10 @@ describe("relational vocabulary", () => {
     assert.ok(satisfied + named === 6 && satisfied > 0, "solver both satisfies and honestly fails");
   });
 
-  it("artifact format 7 carries settlements, landmarks, and the structure layer", () => {
+  it("artifact format 8 carries settlements, landmarks, and the structure layer", () => {
     const { normalized, config } = worldFor(1);
     const result = generateWorldDetailed(normalized, config);
-    assert.equal(result.artifact.formatVersion, 7);
+    assert.equal(result.artifact.formatVersion, 8);
     assert.deepEqual(result.artifact.semanticPalette, [...WORLD_PALETTE]);
     const report = validateArtifact(result.artifact, { minRegionCells: config.biomes.minRegionCells });
     assert.equal(report.status, "pass", report.errors.join("; "));
