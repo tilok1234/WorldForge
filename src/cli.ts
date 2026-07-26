@@ -32,6 +32,7 @@ import {
   verifyTileForgePackage,
 } from "./package/importPackage.js";
 import { resolveToTileForge } from "./adapters/tileforge/resolve.js";
+import { loadPinnedManifest } from "./adapters/tileforge/manifest.js";
 import {
   renderTmjDocument,
   verifyAgainstPackageMap,
@@ -449,6 +450,45 @@ function runResolveTileForge(argv: readonly string[]): number {
     rgb[p * 3 + 2] = render.rgba[p * 4 + 2] as number;
   }
   writeFileSync(join(parsed.outDir, "resolved-render.png"), encodePng(render.width, render.height, rgb));
+  // Slice manifest for game consumers and the viewer: destination and route
+  // endpoints in cell coordinates plus the small id->name tables hover
+  // inspection needs (CLI-composed; not adapter output).
+  const w = resolved.mapData.mapW;
+  const { manifest: pinned } = loadPinnedManifest();
+  const denseTable = (table: readonly string[]): Record<string, string> => {
+    const out: Record<string, string> = {};
+    for (let id = 0; id < table.length; id += 1) {
+      const key = table[id];
+      if (key !== undefined) out[String(id)] = key;
+    }
+    return out;
+  };
+  const sliceManifest = {
+    mapW: resolved.mapData.mapW,
+    mapH: resolved.mapData.mapH,
+    destinations: result.composed.routesResult.destinations.map((destination) => ({
+      id: destination.id,
+      kind: destination.kind,
+      x: destination.cell % w,
+      y: Math.floor(destination.cell / w),
+    })),
+    routes: result.composed.routesResult.routes.map((route) => ({
+      id: route.id,
+      routeClass: route.routeClass,
+      fromX: route.fromCell % w,
+      fromY: Math.floor(route.fromCell / w),
+      toX: route.toCell % w,
+      toY: Math.floor(route.toCell / w),
+    })),
+    materials: denseTable(pinned.materialFamilyById),
+    decals: denseTable(pinned.decalFamilyById),
+    roadTypes: denseTable(pinned.roadFamilyByType),
+    wallTypes: denseTable(pinned.wallFamilyByType),
+    structures: Object.fromEntries(
+      [...pinned.structureById].map(([id, def]) => [String(id), def.name]),
+    ),
+  };
+  writeFileSync(join(parsed.outDir, "tileforge-slice.json"), canonicalJson(sliceManifest));
   process.stdout.write(
     [
       `resolved ${resolved.mapData.mapW}x${resolved.mapData.mapH} world against ${resolved.diagnostics.packageId}`,
@@ -458,6 +498,7 @@ function runResolveTileForge(argv: readonly string[]): number {
       `wrote ${join(parsed.outDir, "tileforge-diagnostics.json")}`,
       `wrote ${join(parsed.outDir, "resolved-map.tmj")}`,
       `wrote ${join(parsed.outDir, "resolved-render.png")} (${render.width}x${render.height})`,
+      `wrote ${join(parsed.outDir, "tileforge-slice.json")}`,
     ].join("\n") + "\n",
   );
   return 0;

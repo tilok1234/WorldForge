@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WorldForge Artifact Viewer</title>
+<title>WorldForge Viewer</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; margin: 0; }
@@ -13,27 +13,33 @@
   header .readonly { color: #8f8fa0; font-size: 12px; }
   #layers { display: flex; gap: 10px; flex-wrap: wrap; }
   #layers label { user-select: none; cursor: pointer; }
+  .semantic-only.hidden { display: none; }
   main { flex: 1; display: flex; min-height: 0; }
   #stage { flex: 1; position: relative; overflow: hidden; background: #0d0d10; }
   canvas { position: absolute; inset: 0; image-rendering: pixelated; }
-  aside { width: 250px; padding: 10px 12px; background: #1a1a20; border-left: 1px solid #34343e; overflow-y: auto; }
+  aside { width: 260px; padding: 10px 12px; background: #1a1a20; border-left: 1px solid #34343e; overflow-y: auto; }
   aside h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: #8f8fa0; margin: 10px 0 4px; }
-  aside .value { font-family: ui-monospace, monospace; font-size: 12px; }
+  aside .value { font-family: ui-monospace, monospace; font-size: 12px; white-space: pre-wrap; }
   #drop { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #6d6d80; font-size: 15px; text-align: center; pointer-events: none; }
-  input[type="file"] { max-width: 220px; }
+  input[type="file"] { max-width: 200px; }
+  button { background: #2b2b34; color: #d8d8de; border: 1px solid #45454f; border-radius: 4px; padding: 3px 10px; cursor: pointer; }
+  button:hover { background: #34343e; }
+  #refreshState { color: #8f8fa0; font-size: 12px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>WorldForge Artifact Viewer</h1>
+  <h1>WorldForge Viewer</h1>
   <span class="readonly">read-only by contract — this tool never writes world data</span>
   <input type="file" id="file" accept=".json,application/json">
+  <button id="refresh" title="re-fetch the loaded directory (R)">refresh</button>
+  <span id="refreshState"></span>
   <div id="layers">
-    <label><input type="checkbox" data-layer="material" checked> material</label>
-    <label><input type="checkbox" data-layer="elevation"> elevation</label>
-    <label><input type="checkbox" data-layer="river" checked> rivers</label>
-    <label><input type="checkbox" data-layer="path" checked> paths</label>
-    <label><input type="checkbox" data-layer="structures" checked> structures</label>
+    <label class="semantic-only"><input type="checkbox" data-layer="material" checked> material</label>
+    <label class="semantic-only"><input type="checkbox" data-layer="elevation"> elevation</label>
+    <label class="semantic-only"><input type="checkbox" data-layer="river" checked> rivers</label>
+    <label class="semantic-only"><input type="checkbox" data-layer="path" checked> paths</label>
+    <label class="semantic-only"><input type="checkbox" data-layer="structures" checked> structures</label>
     <label><input type="checkbox" data-layer="routes" checked> routes</label>
     <label><input type="checkbox" data-layer="chunks"> chunk grid</label>
   </div>
@@ -41,18 +47,21 @@
 <main>
   <div id="stage">
     <canvas id="canvas"></canvas>
-    <div id="drop">drop a world.json here,<br>use the file picker, or add ?url=&lt;path&gt;</div>
+    <div id="drop">semantic mode: drop a world.json here, use the file picker, or add ?url=&lt;path&gt;<br>
+      native mode: add ?dir=&lt;resolve output dir&gt; (e.g. ?dir=outputs/w7-slice)</div>
   </div>
   <aside>
-    <h2>World</h2><div id="worldInfo" class="value">no artifact loaded</div>
+    <h2>World</h2><div id="worldInfo" class="value">nothing loaded</div>
     <h2>Hover</h2><div id="hoverInfo" class="value">—</div>
     <h2>Routes</h2><div id="routeInfo" class="value">—</div>
   </aside>
 </main>
 <script>
 "use strict";
-// Read-only artifact viewer (Milestone W4). Loads a WorldForge world artifact
-// and renders its layers. It has no code path that writes world data.
+// Read-only viewer (W4 semantic artifact mode; W7 native TileForge mode).
+// It has no code path that writes world data. Native mode is the review
+// surface for the iterate-with-an-agent loop: the agent regenerates the
+// resolve output directory, refresh re-fetches it in place.
 const PALETTE_COLORS = {
   "terrain.cobble": [156, 146, 130],
   "terrain.dry_grass": [162, 154, 84],
@@ -67,7 +76,14 @@ const PALETTE_COLORS = {
   "water.shallow": [86, 156, 205],
 };
 const RIVER = [50, 110, 190], TRAIL = [206, 162, 74];
-const state = { world: null, cells: null, view: { x: 0, y: 0, scale: 4 }, layers: {} };
+const TILE = 32, CHUNK = 32;
+const state = {
+  mode: null, // "semantic" | "native"
+  world: null, cells: null,               // semantic
+  native: null,                            // {img, mapData, slice, diagnostics}
+  view: { x: 0, y: 0, scale: 4 },          // scale = screen px per CELL
+  dir: null,
+};
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const stage = document.getElementById("stage");
@@ -78,6 +94,21 @@ function fallbackColor(key) {
   return [96 + ((h >>> 8) & 63), 96 + ((h >>> 16) & 63), 96 + ((h >>> 24) & 63)];
 }
 
+function dims() {
+  if (state.mode === "semantic") return state.world.dimensions;
+  const d = state.native.mapData;
+  return { width: d.mapW, height: d.mapH, chunkWidth: CHUNK, chunkHeight: CHUNK };
+}
+
+function setMode(mode) {
+  state.mode = mode;
+  for (const label of document.querySelectorAll(".semantic-only")) {
+    label.classList.toggle("hidden", mode === "native");
+  }
+  document.getElementById("drop").style.display = "none";
+}
+
+// ---- semantic mode (W4 artifact view, unchanged behavior) ----
 function flatten(world) {
   const { width, height, chunkWidth, chunkHeight } = world.dimensions;
   const material = new Uint8Array(width * height);
@@ -102,9 +133,9 @@ function flatten(world) {
 }
 
 function loadWorld(world) {
+  setMode("semantic");
   state.world = world;
   state.cells = flatten(world);
-  document.getElementById("drop").style.display = "none";
   const g = world.generator;
   document.getElementById("worldInfo").textContent =
     `${world.dimensions.width}×${world.dimensions.height}, ${world.chunks.length} chunks\n` +
@@ -113,9 +144,50 @@ function loadWorld(world) {
   document.getElementById("routeInfo").textContent = (world.routes || [])
     .map((r) => `#${r.id} ${r.routeClass} len ${r.length} crossings ${r.crossings.length}`)
     .join("\n") || "none";
-  const fit = Math.max(1, Math.floor(Math.min(stage.clientWidth / world.dimensions.width, stage.clientHeight / world.dimensions.height)));
-  state.view = { x: 10, y: 10, scale: fit };
+  fitView(world.dimensions.width, world.dimensions.height);
   draw();
+}
+
+// ---- native mode (W7 TileForge-resolved view) ----
+async function loadNativeDir(rawDir, keepView) {
+  // A bare repo-relative dir ("outputs/w7-slice") anchors at the site root,
+  // not at /tools/ where this page lives.
+  const dir = rawDir.startsWith("http") || rawDir.startsWith("/") ? rawDir : `/${rawDir}`;
+  const bust = `t=${Date.now()}`;
+  const fetchJson = async (name) => {
+    const response = await fetch(`${dir}/${name}?${bust}`);
+    if (!response.ok) throw new Error(`${name}: ${response.status}`);
+    return response.json();
+  };
+  const [mapData, slice, diagnostics] = await Promise.all([
+    fetchJson("tileforge-map-data.json"),
+    fetchJson("tileforge-slice.json"),
+    fetchJson("tileforge-diagnostics.json"),
+  ]);
+  const img = new Image();
+  img.src = `${dir}/resolved-render.png?${bust}`;
+  await img.decode();
+  setMode("native");
+  state.dir = dir;
+  state.native = { img, mapData, slice, diagnostics };
+  document.getElementById("worldInfo").textContent =
+    `${mapData.mapW}×${mapData.mapH} native (${img.naturalWidth}×${img.naturalHeight}px)\n` +
+    `package ${diagnostics.packageId}\n` +
+    `${diagnostics.metaCells} structure cells, ${diagnostics.fordDecals} fords, ` +
+    `${diagnostics.bridgeStructures} bridges\n` +
+    (diagnostics.adapterNotes || []).join("\n");
+  document.getElementById("routeInfo").textContent = (slice.routes || [])
+    .map((r) => `#${r.id} ${r.routeClass} (${r.fromX},${r.fromY})→(${r.toX},${r.toY})`)
+    .join("\n") || "none";
+  if (!keepView) fitView(mapData.mapW, mapData.mapH);
+  draw();
+  document.getElementById("refreshState").textContent =
+    `loaded ${new Date().toLocaleTimeString()}`;
+}
+
+function fitView(width, height) {
+  const fit = Math.max(1, Math.floor(Math.min(stage.clientWidth / width, stage.clientHeight / height)));
+  state.view = { x: 10, y: 10, scale: fit };
 }
 
 function draw() {
@@ -125,60 +197,100 @@ function draw() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, stage.clientWidth, stage.clientHeight);
-  const world = state.world;
-  if (!world) return;
-  const { width, height } = world.dimensions;
+  if (!state.mode) return;
+  const { width, height, chunkWidth, chunkHeight } = dims();
   const on = (name) => document.querySelector(`[data-layer="${name}"]`).checked;
-  const buffer = document.createElement("canvas");
-  buffer.width = width; buffer.height = height;
-  const bctx = buffer.getContext("2d");
-  const image = bctx.createImageData(width, height);
-  for (let i = 0; i < width * height; i += 1) {
-    let color = [20, 20, 24];
-    if (on("material")) {
-      const key = world.semanticPalette[state.cells.material[i]];
-      color = PALETTE_COLORS[key] || fallbackColor(key);
-    }
-    if (on("elevation")) {
-      const gray = Math.trunc((state.cells.elevation[i] * 255) / 999);
-      color = on("material") ? [(color[0] + gray) >> 1, (color[1] + gray) >> 1, (color[2] + gray) >> 1] : [gray, gray, gray];
-    }
-    if (on("river") && state.cells.river[i] === 1) color = RIVER;
-    if (on("path") && state.cells.path[i] === 1) color = TRAIL;
-    if (on("structures") && state.cells.structure[i] !== 0) color = state.cells.structure[i] === 1 ? [128, 64, 44] : [70, 40, 36];
-    image.data[i * 4] = color[0]; image.data[i * 4 + 1] = color[1];
-    image.data[i * 4 + 2] = color[2]; image.data[i * 4 + 3] = 255;
-  }
-  bctx.putImageData(image, 0, 0);
   const { x, y, scale } = state.view;
-  ctx.drawImage(buffer, x, y, width * scale, height * scale);
+
+  if (state.mode === "semantic") {
+    const world = state.world;
+    const buffer = document.createElement("canvas");
+    buffer.width = width; buffer.height = height;
+    const bctx = buffer.getContext("2d");
+    const image = bctx.createImageData(width, height);
+    for (let i = 0; i < width * height; i += 1) {
+      let color = [20, 20, 24];
+      if (on("material")) {
+        const key = world.semanticPalette[state.cells.material[i]];
+        color = PALETTE_COLORS[key] || fallbackColor(key);
+      }
+      if (on("elevation")) {
+        const gray = Math.trunc((state.cells.elevation[i] * 255) / 999);
+        color = on("material") ? [(color[0] + gray) >> 1, (color[1] + gray) >> 1, (color[2] + gray) >> 1] : [gray, gray, gray];
+      }
+      if (on("river") && state.cells.river[i] === 1) color = RIVER;
+      if (on("path") && state.cells.path[i] === 1) color = TRAIL;
+      if (on("structures") && state.cells.structure[i] !== 0) color = state.cells.structure[i] === 1 ? [128, 64, 44] : [70, 40, 36];
+      image.data[i * 4] = color[0]; image.data[i * 4 + 1] = color[1];
+      image.data[i * 4 + 2] = color[2]; image.data[i * 4 + 3] = 255;
+    }
+    bctx.putImageData(image, 0, 0);
+    ctx.drawImage(buffer, x, y, width * scale, height * scale);
+  } else {
+    ctx.drawImage(state.native.img, x, y, width * scale, height * scale);
+  }
+
   if (on("chunks")) {
     ctx.strokeStyle = "rgba(255,255,255,0.25)";
     ctx.lineWidth = 1;
-    const { chunkWidth, chunkHeight } = world.dimensions;
     for (let cx = 0; cx <= width; cx += chunkWidth) line(x + cx * scale, y, x + cx * scale, y + height * scale);
     for (let cy = 0; cy <= height; cy += chunkHeight) line(x, y + cy * scale, x + width * scale, y + cy * scale);
   }
   if (on("routes")) {
-    for (const destination of world.destinations || []) {
-      const landmark = destination.kind === "landmark_candidate";
-      ctx.fillStyle = landmark ? "#9a1e9a" : "#101010";
-      ctx.fillRect(x + (destination.cell[0] - 1) * scale, y + (destination.cell[1] - 1) * scale, 3 * scale, 3 * scale);
-    }
-    for (const route of world.routes || []) {
-      for (const crossing of route.crossings) {
-        ctx.fillStyle = crossing.kind === "bridge" ? "#28282c" : "#96b4d2";
-        ctx.fillRect(x + crossing.cell[0] * scale, y + crossing.cell[1] * scale, scale, scale);
+    if (state.mode === "semantic") {
+      for (const destination of state.world.destinations || []) {
+        const landmark = destination.kind === "landmark_candidate";
+        ctx.fillStyle = landmark ? "#9a1e9a" : "#101010";
+        ctx.fillRect(x + (destination.cell[0] - 1) * scale, y + (destination.cell[1] - 1) * scale, 3 * scale, 3 * scale);
+      }
+      for (const route of state.world.routes || []) {
+        for (const crossing of route.crossings) {
+          ctx.fillStyle = crossing.kind === "bridge" ? "#28282c" : "#96b4d2";
+          ctx.fillRect(x + crossing.cell[0] * scale, y + crossing.cell[1] * scale, scale, scale);
+        }
+      }
+    } else {
+      for (const destination of state.native.slice.destinations || []) {
+        const landmark = destination.kind === "landmark_candidate";
+        ctx.strokeStyle = landmark ? "#c92ec9" : "#ffd23c";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + (destination.x - 1.5) * scale, y + (destination.y - 1.5) * scale, 4 * scale, 4 * scale);
       }
     }
   }
   function line(x1, y1, x2, y2) { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
 }
 
+function nativeHover(cx, cy) {
+  const { mapData, slice } = state.native;
+  const i = cy * mapData.mapW + cx;
+  const parts = [`cell (${cx}, ${cy})  chunk (${Math.floor(cx / CHUNK)}, ${Math.floor(cy / CHUNK)})`];
+  const mat = mapData.mat[i];
+  parts.push(`material ${slice.materials?.[mat] ?? mat} (${mat})`);
+  if (mapData.river[i]) parts.push("river run");
+  if (mapData.road[i]) parts.push(`road: ${slice.roadTypes?.[mapData.road[i]] ?? mapData.road[i]}`);
+  if (mapData.wall[i]) parts.push(`wall: ${slice.wallTypes?.[mapData.wall[i]] ?? mapData.wall[i]}`);
+  if (mapData.fence[i]) parts.push(`fence type ${mapData.fence[i]}`);
+  if (mapData.pier[i]) parts.push(`pier type ${mapData.pier[i]}`);
+  if (mapData.decal[i]) parts.push(`decal: ${slice.decals?.[mapData.decal[i]] ?? mapData.decal[i]}`);
+  if (mapData.meta[i]) {
+    const code = mapData.meta[i];
+    parts.push(`structure: ${slice.structures?.[code >> 8] ?? code >> 8} cell ${code % 256}`);
+  }
+  if (mapData.prop[i]) parts.push(`prop type ${mapData.prop[i]}`);
+  if (mapData.crop[i]) parts.push(`crop code ${mapData.crop[i]}`);
+  if (mapData.elev[i]) parts.push(`elevation ${mapData.elev[i]}`);
+  if (mapData.ramp[i]) parts.push(`ramp code ${mapData.ramp[i]}`);
+  if (mapData.moss[i]) parts.push("moss");
+  if (mapData.tall[i]) parts.push("tall grass");
+  return parts.join("\n");
+}
+
 stage.addEventListener("wheel", (event) => {
   event.preventDefault();
   const factor = event.deltaY < 0 ? 1.25 : 0.8;
-  const next = Math.min(64, Math.max(1, state.view.scale * factor));
+  const max = state.mode === "native" ? 96 : 64;
+  const next = Math.min(max, Math.max(1, state.view.scale * factor));
   const rect = stage.getBoundingClientRect();
   const mx = event.clientX - rect.left, my = event.clientY - rect.top;
   state.view.x = mx - ((mx - state.view.x) * next) / state.view.scale;
@@ -198,13 +310,17 @@ window.addEventListener("pointermove", (event) => {
     draw();
     return;
   }
-  if (!state.world) return;
+  if (!state.mode) return;
   const rect = stage.getBoundingClientRect();
   const cx = Math.floor((event.clientX - rect.left - state.view.x) / state.view.scale);
   const cy = Math.floor((event.clientY - rect.top - state.view.y) / state.view.scale);
-  const { width, height, chunkWidth, chunkHeight } = state.world.dimensions;
+  const { width, height, chunkWidth, chunkHeight } = dims();
   if (cx < 0 || cy < 0 || cx >= width || cy >= height) {
     document.getElementById("hoverInfo").textContent = "—";
+    return;
+  }
+  if (state.mode === "native") {
+    document.getElementById("hoverInfo").textContent = nativeHover(cx, cy);
     return;
   }
   const i = cy * width + cx;
@@ -214,6 +330,21 @@ window.addEventListener("pointermove", (event) => {
     `elevation ${state.cells.elevation[i]}‰` +
     (state.cells.structure[i] !== 0 && state.world.structureTypes ? `\n${state.world.structureTypes[state.cells.structure[i] - 1]}` : "") +
     `${state.cells.river[i] ? "\nriver" : ""}${state.cells.path[i] ? "\ntrail" : ""}`;
+});
+
+async function refresh() {
+  if (state.mode === "native" && state.dir) {
+    document.getElementById("refreshState").textContent = "refreshing…";
+    try {
+      await loadNativeDir(state.dir, true);
+    } catch (error) {
+      document.getElementById("refreshState").textContent = `refresh failed: ${error}`;
+    }
+  }
+}
+document.getElementById("refresh").addEventListener("click", refresh);
+window.addEventListener("keydown", (event) => {
+  if (event.key === "r" || event.key === "R") refresh();
 });
 
 document.getElementById("layers").addEventListener("change", draw);
@@ -230,7 +361,10 @@ stage.addEventListener("drop", async (event) => {
   if (file) loadWorld(JSON.parse(await file.text()));
 });
 const params = new URLSearchParams(location.search);
-if (params.get("url")) {
+if (params.get("dir")) {
+  loadNativeDir(params.get("dir"), false)
+    .catch((error) => { document.getElementById("drop").textContent = `failed to load: ${error}`; });
+} else if (params.get("url")) {
   fetch(params.get("url")).then((response) => response.json()).then(loadWorld)
     .catch((error) => { document.getElementById("drop").textContent = `failed to load: ${error}`; });
 }

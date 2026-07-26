@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "viewer",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["dist/tools/serve-viewer.js"],
+      "port": 8787
+    }
+  ]
+}
