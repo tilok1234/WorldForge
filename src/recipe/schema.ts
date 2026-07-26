@@ -37,6 +37,13 @@ export const BUDGET_RANGES = {
 export type BudgetField = keyof typeof BUDGET_RANGES;
 export const BUDGET_FIELD_NAMES = Object.keys(BUDGET_RANGES).sort() as readonly BudgetField[];
 
+/** Decoration vocabulary (stage 1): ambient density around a 400 baseline. */
+export const DECORATION_RANGES = {
+  densityPermille: { min: 0, max: 1000, default: 400 },
+} as const;
+export type DecorationField = keyof typeof DECORATION_RANGES;
+export const DECORATION_FIELD_NAMES = Object.keys(DECORATION_RANGES).sort() as readonly DecorationField[];
+
 export const LANDMARK_TYPES = ["ancient_fortress"] as const;
 export type LandmarkType = (typeof LANDMARK_TYPES)[number];
 
@@ -69,6 +76,8 @@ export interface WorldRecipe {
   readonly toggles?: { readonly [key: string]: boolean };
   /** W5 relational vocabulary: one entry per requested landmark. */
   readonly landmarks?: readonly LandmarkRequest[];
+  /** Decoration stage 1: ambient vegetation/ground-cover density. */
+  readonly decoration?: { readonly [key in DecorationField]?: number };
 }
 
 /** Recipe after deterministic normalization: every default made explicit. */
@@ -83,6 +92,7 @@ export interface NormalizedWorldRecipe {
   readonly budgets: { readonly [key in BudgetField]: number };
   readonly toggles: { readonly [key: string]: boolean };
   readonly landmarks: readonly NormalizedLandmarkRequest[];
+  readonly decoration: { readonly [key in DecorationField]: number };
 }
 
 /**
@@ -96,6 +106,5 @@ export const FUTURE_VOCABULARY = new Set([
   "routes",
   "settlements",
   "structures",
-  "decoration",
   "constraints",
 ]);

@@ -9,6 +9,7 @@
 import type { ComposedWorld } from "../../generation/composeWorld.js";
 import { WORLD_PALETTE, type PaletteKey } from "../../regions/biomes.js";
 import { STRUCTURE_TYPES } from "../../settlements/structures.js";
+import { DECAL_TYPES as DECAL_TYPES_LIST, DECOR_TYPES as DECOR_TYPES_LIST } from "../../decoration/decorate.js";
 import { WATER_NONE } from "../../hydrology/hydrology.js";
 import { loadPinnedManifest, type TileForgeManifest } from "./manifest.js";
 
@@ -33,6 +34,41 @@ const STRUCTURE_NAME: { readonly [key: string]: string } = {
   "structure.town_hall": "townhall",
   "structure.watchtower": "tower",
   "structure.well": "well",
+};
+
+/** WorldForge semantic prop keys -> package prop species names. */
+const PROP_NAME: { readonly [key: string]: string } = {
+  "prop.oak": "oak",
+  "prop.birch": "birch",
+  "prop.pine": "pine",
+  "prop.willow": "willow",
+  "prop.dead_tree": "deadtree",
+  "prop.fruit_tree": "fruittree",
+  "prop.stump": "stump",
+  "prop.fallen_log": "fallenlog",
+  "prop.boulder": "boulder",
+  "prop.rock_outcrop": "rockoutcrop",
+  "prop.bush": "bush",
+  "prop.flowers": "flowers",
+  "prop.sapling": "sapling",
+  "prop.mushrooms": "mushrooms",
+  "prop.ferns": "ferns",
+  "prop.snow_shrub": "snowshrub",
+  "prop.desert_shrub": "desertshrub",
+  "prop.roots": "roots",
+  "prop.reeds": "reeds",
+  "prop.cattails": "cattails",
+  "prop.milestone": "milestone",
+  "prop.signpost": "signpost",
+};
+
+/** WorldForge semantic decal keys -> package decal family keys. */
+const DECAL_NAME: { readonly [key: string]: string } = {
+  "decal.leaves": "leaves",
+  "decal.puddles": "puddles",
+  "decal.lilypads": "lilypads",
+  "decal.driftwood": "driftwood",
+  "decal.rubble": "rubble",
 };
 
 /** Matches the package map-data.json schema exactly: layers at top level. */
@@ -65,6 +101,9 @@ export interface ResolveDiagnostics {
   readonly fordDecals: number;
   readonly bridgeStructures: number;
   readonly dirtPathCells: number;
+  readonly propCells: number;
+  readonly decorationDecals: number;
+  readonly overlayCells: number;
 }
 
 export interface ResolvedWorld {
@@ -96,6 +135,56 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
   const river = zeros();
   const decal = zeros();
   const meta = zeros();
+  const prop = zeros();
+  const moss = zeros();
+  const tall = zeros();
+
+  // Decoration (stage 1): semantic prop/decal keys resolve through the
+  // manifest tables; overlays pass through as flags.
+  const propIds = new Array<number>(DECOR_TYPES_LIST.length).fill(-1);
+  for (let index = 0; index < DECOR_TYPES_LIST.length; index += 1) {
+    const key = DECOR_TYPES_LIST[index] as string;
+    const name = PROP_NAME[key];
+    const id = name === undefined ? undefined : manifest.propIdByName.get(name);
+    if (id === undefined) {
+      unresolved.add(`${key} -> ${name ?? "?"}`);
+    } else {
+      propIds[index] = id;
+    }
+  }
+  const decalIds = new Array<number>(DECAL_TYPES_LIST.length).fill(-1);
+  for (let index = 0; index < DECAL_TYPES_LIST.length; index += 1) {
+    const key = DECAL_TYPES_LIST[index] as string;
+    const name = DECAL_NAME[key];
+    const id = name === undefined ? undefined : manifest.decalIdByKey.get(name);
+    if (id === undefined) {
+      unresolved.add(`${key} -> ${name ?? "?"}`);
+    } else {
+      decalIds[index] = id;
+    }
+  }
+  let propCells = 0;
+  let decorationDecals = 0;
+  for (let index = 0; index < cellCount; index += 1) {
+    const propValue = composed.decoration.propLayer[index] as number;
+    if (propValue !== 0) {
+      const id = propIds[propValue - 1] as number;
+      if (id >= 0) {
+        prop[index] = id;
+        propCells += 1;
+      }
+    }
+    const decalValue = composed.decoration.decalLayer[index] as number;
+    if (decalValue !== 0) {
+      const id = decalIds[decalValue - 1] as number;
+      if (id >= 0) {
+        decal[index] = id;
+        decorationDecals += 1;
+      }
+    }
+    moss[index] = composed.decoration.mossLayer[index] as number;
+    tall[index] = composed.decoration.tallGrassLayer[index] as number;
+  }
 
   const materialCells: Record<string, number> = {};
   for (let index = 0; index < cellCount; index += 1) {
@@ -163,13 +252,40 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
   // oriented across the river run (stone for highways, wood otherwise).
   const fordId = manifest.decalIdByKey.get("ford");
   let fordDecals = 0;
+  // Street-level crossings: a stream cell severs a street when it carries a
+  // corridor material itself OR runs between corridor cells on opposite
+  // sides (streets never paint over water, so the gap cells stay terrain).
+  // Without a ford the §3 ladder blocks the cell and the street splits.
+  {
+    const roadMatId = manifest.materialIdByKey.get("packedroad");
+    const cobbleMatId = manifest.materialIdByKey.get("cobble");
+    const corridor = (index: number): boolean =>
+      mat[index] === roadMatId || mat[index] === cobbleMatId;
+    for (let index = 0; index < cellCount; index += 1) {
+      if (river[index] === 0) continue;
+      const x = index % width;
+      const y = (index - x) / width;
+      const northSouth =
+        y > 0 && y < height - 1 && corridor(index - width) && corridor(index + width);
+      const eastWest =
+        x > 0 && x < width - 1 && corridor(index - 1) && corridor(index + 1);
+      if (!corridor(index) && !northSouth && !eastWest) continue;
+      if (fordId === undefined) {
+        unresolved.add("crossing.street_ford -> decal ford");
+        break;
+      }
+      decal[index] = fordId;
+      fordDecals += 1;
+    }
+  }
   let bridgeStructures = 0;
   for (const route of composed.routesResult.routes) {
     for (const crossing of route.crossings) {
       if (crossing.kind === "ford") {
         if (fordId === undefined) {
           unresolved.add("crossing.ford -> decal ford");
-        } else if (decal[crossing.cell] === 0) {
+        } else {
+          // Crossings out-rank decoration decals (one decal per cell).
           decal[crossing.cell] = fordId;
           fordDecals += 1;
         }
@@ -197,11 +313,11 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
     fence: zeros(),
     wall,
     river,
-    moss: zeros(),
-    tall: zeros(),
+    moss,
+    tall,
     pier: zeros(),
     decal,
-    prop: zeros(),
+    prop,
     crop: zeros(),
     meta,
     elev: zeros(),
@@ -220,6 +336,9 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
       fordDecals,
       bridgeStructures,
       dirtPathCells,
+      propCells,
+      decorationDecals,
+      overlayCells: composed.decoration.overlayCount,
     },
   };
 }

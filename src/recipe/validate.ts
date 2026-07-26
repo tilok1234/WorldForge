@@ -1,5 +1,7 @@
 import {
   BIAS_FIELD_NAMES,
+  DECORATION_FIELD_NAMES,
+  DECORATION_RANGES,
   LANDMARK_TYPES,
   RELATION_KINDS,
   BUDGET_FIELD_NAMES,
@@ -25,7 +27,7 @@ export type RecipeValidation =
   | { readonly ok: true; readonly recipe: WorldRecipe }
   | { readonly ok: false; readonly issues: readonly RecipeIssue[] };
 
-const ROOT_FIELDS = ["recipeFormat", "seed", "world", "biases", "budgets", "toggles", "landmarks"];
+const ROOT_FIELDS = ["recipeFormat", "seed", "world", "biases", "budgets", "toggles", "landmarks", "decoration"];
 const WORLD_FIELDS = ["sizePreset", "climatePreset"];
 
 export function validateRecipe(input: unknown): RecipeValidation {
@@ -96,6 +98,22 @@ export function validateRecipe(input: unknown): RecipeValidation {
         }
         const range = BUDGET_RANGES[key as keyof typeof BUDGET_RANGES];
         checkInteger(issues, budgets, key, `$.budgets.${key}`, range.min, range.max, true);
+      }
+    }
+  }
+
+  const decoration = input["decoration"];
+  if (decoration !== undefined) {
+    if (!isPlainObject(decoration)) {
+      issues.push({ path: "$.decoration", message: "decoration must be an object" });
+    } else {
+      for (const key of Object.keys(decoration)) {
+        if (!(DECORATION_FIELD_NAMES as readonly string[]).includes(key)) {
+          issues.push({ path: `$.decoration.${key}`, message: `unknown field "${key}"` });
+          continue;
+        }
+        const range = DECORATION_RANGES[key as keyof typeof DECORATION_RANGES];
+        checkInteger(issues, decoration, key, `$.decoration.${key}`, range.min, range.max, true);
       }
     }
   }

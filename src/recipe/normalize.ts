@@ -1,6 +1,7 @@
 import { canonicalSha256 } from "../core/identity.js";
 import {
   BUDGET_RANGES,
+  DECORATION_RANGES,
   RECIPE_FORMAT,
   type NormalizedWorldRecipe,
   type WorldRecipe,
@@ -37,6 +38,10 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
       type: request.type,
       relation: request.relation ?? null,
     })),
+    decoration: {
+      densityPermille:
+        recipe.decoration?.densityPermille ?? DECORATION_RANGES.densityPermille.default,
+    },
   };
 }
 

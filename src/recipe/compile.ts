@@ -133,7 +133,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 6;
+  readonly resolvedConfigFormat: 7;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -161,6 +161,8 @@ export interface ResolvedWorldConfig {
   readonly landmarkSpecs: readonly LandmarkSpec[];
   readonly biomes: BiomeRules;
   readonly budgets: NormalizedWorldRecipe["budgets"];
+  /** Decoration stage 1: ambient density (0 disables the pass). */
+  readonly decoration: { readonly densityPermille: number };
   /** Named generation passes enabled at this behavior version. */
   readonly passes: readonly string[];
   /** Pinned package identity from tileforge.lock.json (null if absent). */
@@ -304,7 +306,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 6,
+    resolvedConfigFormat: 7,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -343,7 +345,8 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
     }),
     biomes: BIOME_RULES[normalized.world.sizePreset],
     budgets: normalized.budgets,
-    passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "adapter.tileforge"],
+    decoration: { densityPermille: normalized.decoration.densityPermille },
+    passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "decoration.props", "adapter.tileforge"],
     dependencies: { tileforge: pinnedTileForgeDependency() },
   };
 }

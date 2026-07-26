@@ -100,6 +100,10 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
         { name: "river", rows: chunk.layers.river, min: 0, max: 1 },
         { name: "path", rows: chunk.layers.path, min: 0, max: 1 },
         { name: "structure", rows: chunk.layers.structure, min: 0, max: artifact.structureTypes.length },
+        { name: "prop", rows: chunk.layers.prop, min: 0, max: artifact.propTypes.length },
+        { name: "moss", rows: chunk.layers.moss, min: 0, max: 1 },
+        { name: "tallgrass", rows: chunk.layers.tallgrass, min: 0, max: 1 },
+        { name: "decal", rows: chunk.layers.decal, min: 0, max: artifact.decalTypes.length },
       ];
       for (const layer of layerChecks) {
         if (layer.rows.length !== chunkHeight) {

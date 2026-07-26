@@ -10,6 +10,7 @@ import { floorDiv } from "../core/coords.js";
 import type { ResolvedWorldConfig } from "../recipe/compile.js";
 import { buildMacroFields, type MacroFields } from "../fields/macroFields.js";
 import { buildHydrology, WATER_DEEP, WATER_SHALLOW, type HydrologyResult } from "../hydrology/hydrology.js";
+import { decorateWorld, type DecorationResult } from "../decoration/decorate.js";
 import {
   classifyCell,
   labelComponents,
@@ -46,6 +47,7 @@ export interface ComposedWorld {
   readonly structureLayer: Uint8Array;
   readonly settlementPlans: readonly SettlementPlan[];
   readonly landmarkPlans: readonly LandmarkPlan[];
+  readonly decoration: DecorationResult;
 }
 
 export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
@@ -181,6 +183,19 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     routesResult = { ...routesResult, errors: [...routesResult.errors, ...postCleanupErrors] };
   }
 
+  // Decoration (stage 1) runs last: every traversal-critical pass is final,
+  // and it never writes corridor, crossing, structure, or entrance cells.
+  const entranceCells: number[] = [];
+  for (const plan of settlementPlans) {
+    for (const structure of plan.structures) {
+      entranceCells.push(structure.entranceY * width + structure.entranceX);
+    }
+  }
+  for (const plan of landmarkPlans) {
+    entranceCells.push(plan.entranceY * width + plan.entranceX);
+  }
+  const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config);
+
   const labeling = labelComponents(grid, width, height);
   const regions: RegionSummary[] = labeling.components.map((component, id) => ({
     id,
@@ -205,6 +220,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     structureLayer,
     settlementPlans,
     landmarkPlans,
+    decoration,
   };
 }
 

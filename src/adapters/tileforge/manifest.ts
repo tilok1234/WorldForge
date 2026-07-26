@@ -93,6 +93,10 @@ export interface TileForgeManifest {
   readonly structureById: ReadonlyMap<number, StructureDef>;
   /** decal family key -> decal id. */
   readonly decalIdByKey: ReadonlyMap<string, number>;
+  /** prop species name -> prop type id. */
+  readonly propIdByName: ReadonlyMap<string, number>;
+  /** prop type id -> species name (index by id). */
+  readonly propNameById: readonly string[];
   /** road family key -> road layer byte. */
   readonly roadTypeByKey: ReadonlyMap<string, number>;
   /** wall family key -> wall layer byte. */
@@ -152,6 +156,7 @@ export function loadPinnedManifest(): { lock: TileForgeLock; manifest: TileForge
       materials: Record<string, string>;
       structures: Record<string, StructureDef>;
       decals: Record<string, string>;
+      props: Record<string, string>;
       roadTypes: Record<string, string>;
       wallTypes: Record<string, string>;
       pierTypes: Record<string, string>;
@@ -191,6 +196,10 @@ export function loadPinnedManifest(): { lock: TileForgeLock; manifest: TileForge
   const decalIdByKey = new Map<string, number>();
   for (const [id, key] of Object.entries(raw.mappings.decals)) {
     decalIdByKey.set(key, Number(id));
+  }
+  const propIdByName = new Map<string, number>();
+  for (const [id, name] of Object.entries(raw.mappings.props)) {
+    propIdByName.set(name, Number(id));
   }
   const roadTypeByKey = new Map<string, number>();
   for (const [id, key] of Object.entries(raw.mappings.roadTypes)) {
@@ -289,6 +298,8 @@ export function loadPinnedManifest(): { lock: TileForgeLock; manifest: TileForge
       structureByName,
       structureById,
       decalIdByKey,
+      propIdByName,
+      propNameById: denseByIdTable(raw.mappings.props),
       roadTypeByKey,
       wallTypeByKey,
       materialFamilyById,

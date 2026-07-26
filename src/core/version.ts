@@ -9,11 +9,14 @@ export const GENERATOR_NAME = "worldforge";
 /** Keep in sync with package.json. */
 export const GENERATOR_VERSION = "0.1.0";
 
-/** Behavior version of the generation passes. W2 macro: 2. W3 hydrology: 3. */
-export const GENERATOR_BEHAVIOR_VERSION = 8;
+/**
+ * Behavior version of the generation passes. W2 macro: 2. W3 hydrology: 3.
+ * 9: decoration stage 1 (vegetation, ground cover, roadside markers).
+ */
+export const GENERATOR_BEHAVIOR_VERSION = 9;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 8;
+export const RECIPE_COMPILER_VERSION = 9;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -24,11 +27,14 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "routes.graph": 2,
   "settlements.plans": 1,
   "landmarks.stamps": 1,
-  "adapter.tileforge": 2,
+  "decoration.props": 1,
+  "adapter.tileforge": 3,
 };
 
 /**
  * Version of the TileForge resolution adapter itself. 2: the emitted river
  * layer carries the full two-tier network so fords sit on rendered runs.
+ * 3: street-level ford decals wherever a stream crosses a corridor material,
+ * so the §3 walkability ladder never severs a street.
  */
-export const TILEFORGE_ADAPTER_VERSION = 2;
+export const TILEFORGE_ADAPTER_VERSION = 3;
