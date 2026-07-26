@@ -1,0 +1,22 @@
+{
+  "stampFormat": 1,
+  "type": "hunters_lodge",
+  "footprint": { "width": 7, "height": 7 },
+  "anchor": { "x": 3, "y": 3 },
+  "entrance": { "x": 3, "y": 6 },
+  "substrate": { "maxSlopePermille": 220 },
+  "blendRadius": 2,
+  "legend": {
+    "s": { "material": "terrain.snow" },
+    "o": { "material": "terrain.gravel" }
+  },
+  "cells": [
+    "sssssss",
+    "sssssss",
+    "ssoooss",
+    "ssoooss",
+    "ssoooss",
+    "sssosss",
+    "sssosss"
+  ]
+}

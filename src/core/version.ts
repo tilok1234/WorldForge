@@ -49,11 +49,15 @@ export const GENERATOR_VERSION = "0.1.0";
  *     beneath the canopy), the Crystal Spire, the tended lighthouse
  *     (coastal relation; routes.graph 5, landmarks.stamps 3,
  *     decoration.pois 7); every landmark trail graded and reachable.
+ * 23: the road into the back country — hunters_lodge landmark in the
+ *     remote_corner (the quarter farthest from the capital; routes.graph
+ *     6, landmarks.stamps 4, decoration.pois 8); trapper camps join the
+ *     spur-path kinds.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 22;
+export const GENERATOR_BEHAVIOR_VERSION = 23;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 11;
+export const RECIPE_COMPILER_VERSION = 12;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -61,11 +65,11 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 4,
   "macro.biomes": 3,
   "hydrology.water": 2,
-  "routes.graph": 5,
+  "routes.graph": 6,
   "settlements.plans": 6,
-  "landmarks.stamps": 3,
+  "landmarks.stamps": 4,
   "decoration.props": 5,
-  "decoration.pois": 7,
+  "decoration.pois": 8,
   "adapter.tileforge": 3,
 };
 

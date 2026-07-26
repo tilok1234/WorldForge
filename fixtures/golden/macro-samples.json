@@ -94,13 +94,13 @@
       "biomeCellTotals": {
         "terrain.cobble": 2526,
         "terrain.dry_grass": 493,
-        "terrain.grass": 22426,
-        "terrain.gravel": 809,
+        "terrain.grass": 22485,
+        "terrain.gravel": 846,
         "terrain.mud": 969,
         "terrain.packed_road": 660,
-        "terrain.rock": 18273,
+        "terrain.rock": 18214,
         "terrain.sand": 78,
-        "terrain.snow": 10489,
+        "terrain.snow": 10452,
         "terrain.swamp": 835,
         "water.deep": 1348,
         "water.shallow": 6630
@@ -115,15 +115,15 @@
         "wetlandCellCount": 932
       },
       "name": "small-cold-coastal",
-      "regionCount": 293,
-      "residualSmallRegions": 235,
+      "regionCount": 299,
+      "residualSmallRegions": 241,
       "routes": {
         "crossingCount": 8,
-        "destinationCount": 15,
+        "destinationCount": 16,
         "errorCount": 0,
         "roadCellCount": 562,
-        "routeCount": 17,
-        "trailCellCount": 494
+        "routeCount": 18,
+        "trailCellCount": 667
       },
       "samples": [
         {
@@ -173,7 +173,7 @@
         }
       ],
       "settlements": {
-        "landmarkCount": 5,
+        "landmarkCount": 6,
         "planCount": 10,
         "purposes": [
           "harbor",

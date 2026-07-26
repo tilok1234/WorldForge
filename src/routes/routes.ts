@@ -718,6 +718,33 @@ function relationHolds(
     const coast = hydro.coastDistance[cell] as number;
     return coast >= 4 && coast <= 8;
   }
+  if (relation === "remote_corner") {
+    // The back-country relation (routes.graph v6): the site sits in the
+    // quarter of the map whose corner lies farthest from the capital —
+    // and its trail becomes the road into the emptiest quadrant.
+    const tx = townCell % width;
+    const ty = Math.trunc(townCell / width);
+    const corners: ReadonlyArray<readonly [number, number]> = [
+      [0, 0],
+      [width - 1, 0],
+      [0, width - 1],
+      [width - 1, width - 1],
+    ];
+    let far: readonly [number, number] = corners[0] as readonly [number, number];
+    let farDist = -1;
+    for (const corner of corners) {
+      // Manhattan distance: discriminates diagonal corners where Chebyshev
+      // ties (a capital at mid-height ties two same-side corners).
+      const d = Math.abs(corner[0] - tx) + Math.abs(corner[1] - ty);
+      if (d > farDist) {
+        farDist = d;
+        far = corner;
+      }
+    }
+    const cx = cell % width;
+    const cy = Math.trunc(cell / width);
+    return Math.max(Math.abs(cx - far[0]), Math.abs(cy - far[1])) <= Math.trunc(width / 4);
+  }
   if (relation === "far_from_town") {
     return distance >= Math.trunc(width / 3);
   }

@@ -322,7 +322,8 @@ export function planPois(
       plan.type !== "ruined_city" &&
       plan.type !== "world_tree" &&
       plan.type !== "crystal_spire" &&
-      plan.type !== "lighthouse"
+      plan.type !== "lighthouse" &&
+      plan.type !== "hunters_lodge"
     ) {
       continue;
     }
@@ -445,6 +446,18 @@ export function planPois(
       putProp(plan.x + 5, plan.y + 2, "prop.sacks");
       putDecal(plan.x + 4, plan.y + 5, "decal.driftwood");
       putDecal(plan.x + 1, plan.y + 5, "decal.puddles");
+    } else if (plan.type === "hunters_lodge") {
+      // The Winterlodge: the last warm roof before the deep snow — every
+      // trapper in the quarter hauls their furs here.
+      cityStamp("structure.hunter_lodge", [[2, 2], [2, 1], [1, 2]], true);
+      putProp(plan.x + 1, plan.y + 4, "prop.game_rack");
+      putProp(plan.x + 5, plan.y + 4, "prop.game_rack");
+      putProp(plan.x + 5, plan.y + 2, "prop.firewood");
+      putProp(plan.x + 1, plan.y + 1, "prop.log_pile");
+      putProp(plan.x + 5, plan.y + 1, "prop.chopping_block");
+      putProp(plan.x + 4, plan.y + 5, "prop.signpost");
+      putProp(plan.x + 1, plan.y + 5, "prop.campfire");
+      putDecal(plan.x + 2, plan.y + 5, "decal.bones");
     }
   }
 
