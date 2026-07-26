@@ -82,7 +82,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "landmarks.stamps": 4,
   "decoration.props": 7,
   "decoration.pois": 8,
-  "adapter.tileforge": 3,
+  "adapter.tileforge": 4,
 };
 
 /**
@@ -90,5 +90,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
  * layer carries the full two-tier network so fords sit on rendered runs.
  * 3: street-level ford decals wherever a stream crosses a corridor material,
  * so the §3 walkability ladder never severs a street.
+ * 4: mountain relief — quantized elevation levels inside the rock mass
+ * (walkable cells stay level 0), rendered by the §2.8 cliff pass.
  */
-export const TILEFORGE_ADAPTER_VERSION = 3;
+export const TILEFORGE_ADAPTER_VERSION = 4;

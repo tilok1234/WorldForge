@@ -1,6 +1,6 @@
 {
   "adapterNotes": [
-    "elev emitted flat (level 0): WorldForge cliff/ramp integration is a later milestone",
+    "elev quantized inside the rock mass (adapter v4): walkable cells stay level 0, cliffs render as terraced peaks",
     "fortress gate emitted as a wall-layer opening (package gate structure is 3x2)"
   ],
   "bridgeStructures": 3,

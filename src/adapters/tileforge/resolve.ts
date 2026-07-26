@@ -7,7 +7,7 @@
  */
 
 import type { ComposedWorld } from "../../generation/composeWorld.js";
-import { WORLD_PALETTE, type PaletteKey } from "../../regions/biomes.js";
+import { PALETTE_INDEX, WORLD_PALETTE, type PaletteKey } from "../../regions/biomes.js";
 import { STRUCTURE_TYPES } from "../../settlements/structures.js";
 import { DECAL_TYPES as DECAL_TYPES_LIST, DECOR_TYPES as DECOR_TYPES_LIST } from "../../decoration/decorate.js";
 import {
@@ -371,7 +371,7 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
   }
 
   const notes: string[] = [
-    "elev emitted flat (level 0): WorldForge cliff/ramp integration is a later milestone",
+    "elev quantized inside the rock mass (adapter v4): walkable cells stay level 0, cliffs render as terraced peaks",
     "fortress gate emitted as a wall-layer opening (package gate structure is 3x2)",
   ];
 
@@ -507,6 +507,73 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
     if (value !== 0) dirtPathCells += 1;
   }
 
+  // Mountain relief (adapter v4): quantized elevation levels INSIDE the
+  // rock mass only. Every walkable cell stays level 0 — a cliff can never
+  // cross traversal, so the §3 ladder and both consumers are untouched —
+  // and the §2.8 cliff pass renders the rises as terraced peaks. Levels
+  // climb with distance from open land (flat apron at the edges) and are
+  // relaxed so neighbors differ by at most one.
+  const elev = zeros();
+  {
+    const rockIndex = PALETTE_INDEX["terrain.rock"];
+    const distance = new Int32Array(cellCount).fill(-1);
+    const queue: number[] = [];
+    for (let index = 0; index < cellCount; index += 1) {
+      if (grid[index] !== rockIndex) {
+        distance[index] = 0;
+        queue.push(index);
+      }
+    }
+    for (let head = 0; head < queue.length; head += 1) {
+      const index = queue[head] as number;
+      const x = index % width;
+      for (const neighbor of [index - width, index + width, index - 1, index + 1]) {
+        if (neighbor < 0 || neighbor >= cellCount) continue;
+        if (x === 0 && neighbor === index - 1) continue;
+        if (x === width - 1 && neighbor === index + 1) continue;
+        if (distance[neighbor] === -1) {
+          distance[neighbor] = (distance[index] as number) + 1;
+          queue.push(neighbor);
+        }
+      }
+    }
+    // Elevation bands within the mass: quartiles of the rock cells' own
+    // field elevation, so every mass gets a full relief range.
+    let rockMin = Number.MAX_SAFE_INTEGER;
+    let rockMax = -1;
+    for (let index = 0; index < cellCount; index += 1) {
+      if (grid[index] !== rockIndex) continue;
+      const value = composed.fields.elevation[index] as number;
+      if (value < rockMin) rockMin = value;
+      if (value > rockMax) rockMax = value;
+    }
+    const band = Math.max(1, Math.trunc((rockMax - rockMin + 1) / 4));
+    for (let index = 0; index < cellCount; index += 1) {
+      if (grid[index] !== rockIndex) continue;
+      const byField = Math.min(3, Math.trunc(((composed.fields.elevation[index] as number) - rockMin) / band));
+      const byDistance = Math.max(0, Math.trunc(((distance[index] as number) - 2) / 2));
+      elev[index] = Math.min(byField, byDistance, 3);
+    }
+    // Relaxation: no neighbor may sit more than one level below.
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let index = 0; index < cellCount; index += 1) {
+        if (elev[index] === 0) continue;
+        const x = index % width;
+        for (const neighbor of [index - width, index + width, index - 1, index + 1]) {
+          if (neighbor < 0 || neighbor >= cellCount) continue;
+          if (x === 0 && neighbor === index - 1) continue;
+          if (x === width - 1 && neighbor === index + 1) continue;
+          if ((elev[index] as number) > (elev[neighbor] as number) + 1) {
+            elev[index] = (elev[neighbor] as number) + 1;
+            changed = true;
+          }
+        }
+      }
+    }
+  }
+
   const mapData: TileForgeMapData = {
     mapW: width,
     mapH: height,
@@ -522,7 +589,7 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
     prop,
     crop,
     meta,
-    elev: zeros(),
+    elev,
     ramp: zeros(),
   };
 
