@@ -1,0 +1,857 @@
+{
+  "channels": [
+    {
+      "name": "macro.elevation",
+      "samples": [
+        {
+          "hash": 3672929167,
+          "int0to100": 67,
+          "permille": 167,
+          "pickOf5": 2,
+          "weighted": 3,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "hash": 628691230,
+          "int0to100": 30,
+          "permille": 230,
+          "pickOf5": 0,
+          "weighted": 3,
+          "x": 1,
+          "y": 0
+        },
+        {
+          "hash": 2683291156,
+          "int0to100": 56,
+          "permille": 156,
+          "pickOf5": 1,
+          "weighted": 2,
+          "x": 0,
+          "y": 1
+        },
+        {
+          "hash": 634256527,
+          "int0to100": 27,
+          "permille": 527,
+          "pickOf5": 2,
+          "weighted": 3,
+          "x": -1,
+          "y": -1
+        },
+        {
+          "hash": 3286476168,
+          "int0to100": 68,
+          "permille": 168,
+          "pickOf5": 3,
+          "weighted": 3,
+          "x": 2,
+          "y": 2
+        },
+        {
+          "hash": 4013288204,
+          "int0to100": 4,
+          "permille": 204,
+          "pickOf5": 4,
+          "weighted": 3,
+          "x": 1000,
+          "y": -1000
+        }
+      ],
+      "worldSeed": 1
+    },
+    {
+      "name": "decor.oak",
+      "samples": [
+        {
+          "hash": 1779497208,
+          "int0to100": 8,
+          "permille": 208,
+          "pickOf5": 3,
+          "weighted": 3,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "hash": 3527910158,
+          "int0to100": 58,
+          "permille": 158,
+          "pickOf5": 3,
+          "weighted": 3,
+          "x": 1,
+          "y": 0
+        },
+        {
+          "hash": 1753406942,
+          "int0to100": 42,
+          "permille": 942,
+          "pickOf5": 2,
+          "weighted": 3,
+          "x": 0,
+          "y": 1
+        },
+        {
+          "hash": 2618280338,
+          "int0to100": 38,
+          "permille": 338,
+          "pickOf5": 3,
+          "weighted": 1,
+          "x": -1,
+          "y": -1
+        },
+        {
+          "hash": 1644831506,
+          "int0to100": 6,
+          "permille": 506,
+          "pickOf5": 1,
+          "weighted": 1,
+          "x": 2,
+          "y": 2
+        },
+        {
+          "hash": 2537461627,
+          "int0to100": 27,
+          "permille": 627,
+          "pickOf5": 2,
+          "weighted": 3,
+          "x": 1000,
+          "y": -1000
+        }
+      ],
+      "worldSeed": 1
+    },
+    {
+      "name": "test.channel",
+      "samples": [
+        {
+          "hash": 3638953321,
+          "int0to100": 21,
+          "permille": 321,
+          "pickOf5": 1,
+          "weighted": 3,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "hash": 1156761264,
+          "int0to100": 64,
+          "permille": 264,
+          "pickOf5": 4,
+          "weighted": 0,
+          "x": 1,
+          "y": 0
+        },
+        {
+          "hash": 4196734141,
+          "int0to100": 41,
+          "permille": 141,
+          "pickOf5": 1,
+          "weighted": 3,
+          "x": 0,
+          "y": 1
+        },
+        {
+          "hash": 2973308180,
+          "int0to100": 80,
+          "permille": 180,
+          "pickOf5": 0,
+          "weighted": 2,
+          "x": -1,
+          "y": -1
+        },
+        {
+          "hash": 3305607220,
+          "int0to100": 20,
+          "permille": 220,
+          "pickOf5": 0,
+          "weighted": 2,
+          "x": 2,
+          "y": 2
+        },
+        {
+          "hash": 2367524251,
+          "int0to100": 51,
+          "permille": 251,
+          "pickOf5": 1,
+          "weighted": 3,
+          "x": 1000,
+          "y": -1000
+        }
+      ],
+      "worldSeed": 1
+    },
+    {
+      "name": "macro.elevation",
+      "samples": [
+        {
+          "hash": 2020946491,
+          "int0to100": 91,
+          "permille": 491,
+          "pickOf5": 1,
+          "weighted": 3,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "hash": 991725985,
+          "int0to100": 85,
+          "permille": 985,
+          "pickOf5": 0,
+          "weighted": 1,
+          "x": 1,
+          "y": 0
+        },
+        {
+          "hash": 1550765051,
+          "int0to100": 51,
+          "permille": 51,
+          "pickOf5": 1,
+          "weighted": 3,
+          "x": 0,
+          "y": 1
+        },
+        {
+          "hash": 2749132081,
+          "int0to100": 81,
+          "permille": 81,
+          "pickOf5": 1,
+          "weighted": 1,
+          "x": -1,
+          "y": -1
+        },
+        {
+          "hash": 637336565,
+          "int0to100": 65,
+          "permille": 565,
+          "pickOf5": 0,
+          "weighted": 2,
+          "x": 2,
+          "y": 2
+        },
+        {
+          "hash": 359468464,
+          "int0to100": 64,
+          "permille": 464,
+          "pickOf5": 4,
+          "weighted": 0,
+          "x": 1000,
+          "y": -1000
+        }
+      ],
+      "worldSeed": 103991
+    },
+    {
+      "name": "decor.oak",
+      "samples": [
+        {
+          "hash": 3139074574,
+          "int0to100": 74,
+          "permille": 574,
+          "pickOf5": 4,
+          "weighted": 3,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "hash": 4135250690,
+          "int0to100": 90,
+          "permille": 690,
+          "pickOf5": 0,
+          "weighted": 1,
+          "x": 1,
+          "y": 0
+        },
+        {
+          "hash": 2450608164,
+          "int0to100": 64,
+          "permille": 164,
+          "pickOf5": 4,
+          "weighted": 2,
+          "x": 0,
+          "y": 1
+        },
+        {
+          "hash": 847352626,
+          "int0to100": 26,
+          "permille": 626,
+          "pickOf5": 1,
+          "weighted": 1,
+          "x": -1,
+          "y": -1
+        },
+        {
+          "hash": 2078686832,
+          "int0to100": 32,
+          "permille": 832,
+          "pickOf5": 2,
+          "weighted": 0,
+          "x": 2,
+          "y": 2
+        },
+        {
+          "hash": 2998239122,
+          "int0to100": 22,
+          "permille": 122,
+          "pickOf5": 2,
+          "weighted": 1,
+          "x": 1000,
+          "y": -1000
+        }
+      ],
+      "worldSeed": 103991
+    },
+    {
+      "name": "test.channel",
+      "samples": [
+        {
+          "hash": 587373899,
+          "int0to100": 99,
+          "permille": 899,
+          "pickOf5": 4,
+          "weighted": 3,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "hash": 1359256043,
+          "int0to100": 43,
+          "permille": 43,
+          "pickOf5": 3,
+          "weighted": 3,
+          "x": 1,
+          "y": 0
+        },
+        {
+          "hash": 1603537775,
+          "int0to100": 75,
+          "permille": 775,
+          "pickOf5": 0,
+          "weighted": 3,
+          "x": 0,
+          "y": 1
+        },
+        {
+          "hash": 1154593197,
+          "int0to100": 97,
+          "permille": 197,
+          "pickOf5": 2,
+          "weighted": 3,
+          "x": -1,
+          "y": -1
+        },
+        {
+          "hash": 566350160,
+          "int0to100": 60,
+          "permille": 160,
+          "pickOf5": 0,
+          "weighted": 0,
+          "x": 2,
+          "y": 2
+        },
+        {
+          "hash": 440534533,
+          "int0to100": 33,
+          "permille": 533,
+          "pickOf5": 3,
+          "weighted": 2,
+          "x": 1000,
+          "y": -1000
+        }
+      ],
+      "worldSeed": 103991
+    }
+  ],
+  "combine32": [
+    {
+      "output": 0,
+      "state": 0,
+      "value": 0
+    },
+    {
+      "output": 407831557,
+      "state": 1,
+      "value": 2
+    },
+    {
+      "output": 3003782383,
+      "state": 2,
+      "value": 1
+    },
+    {
+      "output": 1339731620,
+      "state": 3735928559,
+      "value": 103991
+    }
+  ],
+  "coordConversions": [
+    {
+      "cellIndex": 255,
+      "chunkH": 16,
+      "chunkW": 16,
+      "cx": -1,
+      "cy": -1,
+      "lx": 15,
+      "ly": 15,
+      "originX": -16,
+      "originY": -16,
+      "x": -1,
+      "y": -1
+    },
+    {
+      "cellIndex": 0,
+      "chunkH": 16,
+      "chunkW": 16,
+      "cx": 0,
+      "cy": 0,
+      "lx": 0,
+      "ly": 0,
+      "originX": 0,
+      "originY": 0,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "cellIndex": 255,
+      "chunkH": 16,
+      "chunkW": 16,
+      "cx": 1,
+      "cy": 2,
+      "lx": 15,
+      "ly": 15,
+      "originX": 16,
+      "originY": 32,
+      "x": 31,
+      "y": 47
+    },
+    {
+      "cellIndex": 511,
+      "chunkH": 32,
+      "chunkW": 32,
+      "cx": -2,
+      "cy": 0,
+      "lx": 31,
+      "ly": 15,
+      "originX": -64,
+      "originY": 0,
+      "x": -33,
+      "y": 15
+    }
+  ],
+  "fixedPoint": {
+    "clamp": [
+      {
+        "max": 10,
+        "min": 0,
+        "output": 0,
+        "value": -5
+      },
+      {
+        "max": 10,
+        "min": 0,
+        "output": 10,
+        "value": 15
+      },
+      {
+        "max": 10,
+        "min": 0,
+        "output": 5,
+        "value": 5
+      }
+    ],
+    "classify": [
+      {
+        "output": 0,
+        "thresholds": [
+          0,
+          250,
+          700
+        ],
+        "value": -50
+      },
+      {
+        "output": 1,
+        "thresholds": [
+          0,
+          250,
+          700
+        ],
+        "value": 0
+      },
+      {
+        "output": 2,
+        "thresholds": [
+          0,
+          250,
+          700
+        ],
+        "value": 250
+      },
+      {
+        "output": 2,
+        "thresholds": [
+          0,
+          250,
+          700
+        ],
+        "value": 699
+      },
+      {
+        "output": 3,
+        "thresholds": [
+          0,
+          250,
+          700
+        ],
+        "value": 700
+      },
+      {
+        "output": 3,
+        "thresholds": [
+          0,
+          250,
+          700
+        ],
+        "value": 5000
+      }
+    ],
+    "lerpPermille": [
+      {
+        "a": 0,
+        "b": 1000,
+        "output": 500,
+        "t": 500
+      },
+      {
+        "a": -1000,
+        "b": 1000,
+        "output": -500,
+        "t": 250
+      },
+      {
+        "a": 7,
+        "b": -13,
+        "output": 0,
+        "t": 333
+      },
+      {
+        "a": 0,
+        "b": 3,
+        "output": 1,
+        "t": 500
+      },
+      {
+        "a": 3,
+        "b": 0,
+        "output": 1,
+        "t": 500
+      },
+      {
+        "a": -3,
+        "b": 0,
+        "output": -2,
+        "t": 500
+      }
+    ],
+    "remapInt": [
+      {
+        "fromHi": 1000,
+        "fromLo": 0,
+        "output": 127,
+        "toHi": 255,
+        "toLo": 0,
+        "value": 500
+      },
+      {
+        "fromHi": 1000,
+        "fromLo": -1000,
+        "output": 3,
+        "toHi": 8,
+        "toLo": 0,
+        "value": -250
+      },
+      {
+        "fromHi": 1000,
+        "fromLo": 0,
+        "output": 10,
+        "toHi": 10,
+        "toLo": 0,
+        "value": 2000
+      }
+    ]
+  },
+  "floorDivMod": [
+    {
+      "div": 2,
+      "divisor": 3,
+      "mod": 1,
+      "value": 7
+    },
+    {
+      "div": -3,
+      "divisor": 3,
+      "mod": 2,
+      "value": -7
+    },
+    {
+      "div": -3,
+      "divisor": -3,
+      "mod": -2,
+      "value": 7
+    },
+    {
+      "div": 2,
+      "divisor": -3,
+      "mod": -1,
+      "value": -7
+    },
+    {
+      "div": 0,
+      "divisor": 5,
+      "mod": 0,
+      "value": 0
+    },
+    {
+      "div": -1,
+      "divisor": 16,
+      "mod": 15,
+      "value": -1
+    },
+    {
+      "div": 0,
+      "divisor": 16,
+      "mod": 15,
+      "value": 15
+    },
+    {
+      "div": -1,
+      "divisor": 16,
+      "mod": 0,
+      "value": -16
+    },
+    {
+      "div": 134217727,
+      "divisor": 16,
+      "mod": 15,
+      "value": 2147483647
+    },
+    {
+      "div": -134217728,
+      "divisor": 16,
+      "mod": 0,
+      "value": -2147483648
+    },
+    {
+      "div": 3002399751580330,
+      "divisor": 3,
+      "mod": 1,
+      "value": 9007199254740991
+    },
+    {
+      "div": -3002399751580331,
+      "divisor": 3,
+      "mod": 2,
+      "value": -9007199254740991
+    }
+  ],
+  "hashCoords": [
+    {
+      "output": 804215951,
+      "salt": 0,
+      "seed": 1,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "output": 1079277285,
+      "salt": 0,
+      "seed": 1,
+      "x": 1,
+      "y": 0
+    },
+    {
+      "output": 4256408055,
+      "salt": 0,
+      "seed": 1,
+      "x": 0,
+      "y": 1
+    },
+    {
+      "output": 3906308066,
+      "salt": 0,
+      "seed": 1,
+      "x": 1,
+      "y": 1
+    },
+    {
+      "output": 2524439441,
+      "salt": 0,
+      "seed": 1,
+      "x": -1,
+      "y": -1
+    },
+    {
+      "output": 1822288013,
+      "salt": 0,
+      "seed": 1,
+      "x": 2147483647,
+      "y": -2147483648
+    },
+    {
+      "output": 1565755446,
+      "salt": 0,
+      "seed": 103991,
+      "x": 7,
+      "y": -13
+    },
+    {
+      "output": 3333947859,
+      "salt": 5,
+      "seed": 103991,
+      "x": 7,
+      "y": -13
+    },
+    {
+      "output": 3313060146,
+      "salt": 0,
+      "seed": 103991,
+      "x": -1000,
+      "y": 1000
+    }
+  ],
+  "hashString32": [
+    {
+      "output": 2872998923,
+      "text": ""
+    },
+    {
+      "output": 444641715,
+      "text": "a"
+    },
+    {
+      "output": 2563531789,
+      "text": "ab"
+    },
+    {
+      "output": 653647533,
+      "text": "macro.elevation"
+    },
+    {
+      "output": 3783667696,
+      "text": "decor.oak"
+    },
+    {
+      "output": 2474668469,
+      "text": "terrain.grass"
+    },
+    {
+      "output": 3848792076,
+      "text": "🌲🗺️"
+    },
+    {
+      "output": 3134391024,
+      "text": "Straße"
+    }
+  ],
+  "meta": {
+    "generatorVersion": "0.1.0",
+    "vectorFormat": 1
+  },
+  "mix32": [
+    {
+      "input": 0,
+      "output": 0
+    },
+    {
+      "input": 1,
+      "output": 1364076727
+    },
+    {
+      "input": 2,
+      "output": 821347078
+    },
+    {
+      "input": 42,
+      "output": 142593372
+    },
+    {
+      "input": 3735928559,
+      "output": 233162409
+    },
+    {
+      "input": 4294967295,
+      "output": 2180083513
+    },
+    {
+      "input": 2654435769,
+      "output": 2462723854
+    },
+    {
+      "input": 103991,
+      "output": 286716835
+    }
+  ],
+  "streams": [
+    {
+      "firstEight": [
+        3811025646,
+        4107620755,
+        188985743,
+        2925444388,
+        2977386578,
+        3637690429,
+        840684648,
+        2284685846
+      ],
+      "saltedFirstFour": [
+        3498951441,
+        2570117784,
+        3813262842,
+        1448673931
+      ],
+      "shuffledTen": [
+        1,
+        9,
+        3,
+        5,
+        0,
+        6,
+        4,
+        7,
+        2,
+        8
+      ],
+      "worldSeed": 1
+    },
+    {
+      "firstEight": [
+        4129086826,
+        1617181211,
+        1352310294,
+        3487593977,
+        4074076389,
+        2721851616,
+        3384662146,
+        2991277577
+      ],
+      "saltedFirstFour": [
+        760959742,
+        1976472951,
+        2611780766,
+        906544288
+      ],
+      "shuffledTen": [
+        9,
+        0,
+        5,
+        6,
+        1,
+        8,
+        3,
+        2,
+        4,
+        7
+      ],
+      "worldSeed": 103991
+    }
+  ]
+}

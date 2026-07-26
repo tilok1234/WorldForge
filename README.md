@@ -77,12 +77,13 @@ policy.
 
 ## Project status
 
-**Milestone W0 complete: pinned TypeScript toolchain, W0 `WorldRecipe`
-contract, recipe compiler, path guard, walking-skeleton pipeline, and the
-approved TileForge forest package (the `a5baf52` export set, band-free road
-doctrine) pinned at `fixtures/tileforge-packages/forest-a5baf52-seed103991/`
-with its dependency lock (`tileforge.lock.json`). Next: Milestone W1, the
-deterministic kernel.**
+**Milestones W0 and W1 complete: pinned TypeScript toolchain, W0 `WorldRecipe`
+contract, recipe compiler, path guard, walking-skeleton pipeline, the approved
+TileForge forest package (the `a5baf52` export set) pinned with its dependency
+lock (`tileforge.lock.json`), and the deterministic kernel — integer hash
+primitives, named channels, coordinate conversions, and fixed-point helpers,
+protected by cross-platform golden vectors. Next: Milestone W2, the finite
+macro world.**
 
 The intended first release is a small finite seeded world that:
 

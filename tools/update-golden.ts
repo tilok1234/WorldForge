@@ -10,6 +10,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { canonicalJson } from "../src/core/canonicalJson.js";
+import { buildKernelVectors } from "../src/testing/kernelVectors.js";
 import { validateRecipe } from "../src/recipe/validate.js";
 import { normalizeRecipe, recipeIdentity } from "../src/recipe/normalize.js";
 import {
@@ -63,3 +64,10 @@ writeFileSync(join(WORLDS_DIR, "expected-hashes.json"), canonicalJson(expectedHa
   encoding: "utf8",
 });
 process.stdout.write(`updated ${join(WORLDS_DIR, "expected-hashes.json")}\n`);
+
+const GOLDEN_DIR = join(ROOT, "fixtures", "golden");
+mkdirSync(GOLDEN_DIR, { recursive: true });
+writeFileSync(join(GOLDEN_DIR, "kernel-vectors.json"), canonicalJson(buildKernelVectors()), {
+  encoding: "utf8",
+});
+process.stdout.write(`updated ${join(GOLDEN_DIR, "kernel-vectors.json")}\n`);
