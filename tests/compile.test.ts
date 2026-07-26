@@ -30,7 +30,7 @@ describe("recipe compiler", () => {
 
   it("expands climate presets and carries biases separately", () => {
     const config = compileRecipe(normalized(1, "small", "cold_coastal"));
-    assert.equal(config.climate.baseTemperaturePermille, -150);
+    assert.equal(config.climate.baseTemperaturePermille, -60);
     assert.equal(config.climate.baseMoisturePermille, 80);
     assert.equal(config.climate.coastalInfluencePermille, 500);
     assert.equal(config.climate.temperatureBiasPermille, 0);
@@ -42,7 +42,7 @@ describe("recipe compiler", () => {
     assert.deepEqual(config.passes, ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph"]);
     assert.equal(config.resolvedConfigFormat, 4);
     assert.equal(config.water.seaLevelPermille, 310);
-    assert.equal(config.macroFields.temperatureLapse.startElevationPermille, 500);
+    assert.equal(config.macroFields.temperatureLapse.startElevationPermille, 640);
     assert.equal(config.routes.streetWidth, 2);
     assert.equal(config.routes.highwayWidth, 3);
     assert.equal(config.macroFields.temperature.offsetPermille, 0);
@@ -51,7 +51,7 @@ describe("recipe compiler", () => {
 
   it("feeds climate presets and biases into the field specs", () => {
     const config = compileRecipe(normalized(1, "small", "cold_coastal"));
-    assert.equal(config.macroFields.temperature.offsetPermille, -150);
+    assert.equal(config.macroFields.temperature.offsetPermille, -60);
     assert.equal(config.macroFields.moisture.offsetPermille, 80);
     assert.equal(config.macroFields.elevation.northGradientPermille, 0);
     assert.equal(config.biomes.minRegionCells, 80);

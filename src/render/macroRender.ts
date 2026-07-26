@@ -52,7 +52,7 @@ export function renderHydrologyPng(composed: ComposedWorld): Buffer {
   return encodePng(width, height, rgb);
 }
 
-const TRAIL_COLOR: readonly [number, number, number] = [122, 92, 58];
+const TRAIL_COLOR: readonly [number, number, number] = [206, 162, 74];
 const BRIDGE_COLOR: readonly [number, number, number] = [40, 40, 44];
 const FORD_COLOR: readonly [number, number, number] = [150, 180, 210];
 const SETTLEMENT_COLOR: readonly [number, number, number] = [16, 16, 16];

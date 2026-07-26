@@ -252,14 +252,19 @@ function pickDestinations(
     }
     const coast = hydro.coastDistance[index] as number;
     const coastBonus = coast >= 2 && coast <= 10 ? 25 : 0;
+    const edgeDist = Math.min(x, y, width - 1 - x, height - 1 - y);
+    const edgePenalty =
+      edgeDist < config.routes.edgePenaltyRadius
+        ? Math.trunc((30 * (config.routes.edgePenaltyRadius - edgeDist)) / config.routes.edgePenaltyRadius)
+        : 0;
     const riverBonus = riverNear[index] === 1 ? 20 : 0;
     const roll = jitter.intAt(x, y, 0, 10);
     if (base > 0) {
-      scored.push({ score: base + (flat ? 20 : 0) + coastBonus + riverBonus + roll, index });
+      scored.push({ score: base + (flat ? 20 : 0) + coastBonus + riverBonus + roll - edgePenalty, index });
     }
     // Landmarks prefer dramatic ground: high or snowy, still reachable.
     const drama = own >= 550 ? 40 : 0;
-    landmarkScored.push({ score: 40 + drama + (flat ? 10 : 0) + roll, index });
+    landmarkScored.push({ score: 40 + drama + (flat ? 10 : 0) + roll - edgePenalty, index });
   }
 
   const bySpacing = (
@@ -354,6 +359,12 @@ function dijkstra(
         continue; // deep water is impassable for routes
       }
       let cost = rules.stepCost;
+      const nx2 = neighbor % width;
+      const ny2 = (neighbor - nx2) / width;
+      const edgeDist = Math.min(nx2, ny2, width - 1 - nx2, height - 1 - ny2);
+      if (edgeDist < rules.edgePenaltyRadius) {
+        cost += Math.trunc((rules.edgePenaltyCost * (rules.edgePenaltyRadius - edgeDist)) / rules.edgePenaltyRadius);
+      }
       cost +=
         Math.abs((hydro.filledElevation[neighbor] as number) - (hydro.filledElevation[current] as number)) *
         rules.slopeCostPerPermille;

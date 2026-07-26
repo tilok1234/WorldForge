@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://worldforge.local/schemas/resolved-world-config-3.schema.json",
-  "title": "ResolvedWorldConfig (format 3)",
-  "description": "Deterministically derived generator parameters produced by the versioned recipe compiler (src/recipe/compile.ts). Format 3 adds the temperature lapse (snow-elevation coupling) and hydrology water rules (Milestone W3). Derived data: hashed for verification, never independently authored or edited.",
+  "$id": "https://worldforge.local/schemas/resolved-world-config-4.schema.json",
+  "title": "ResolvedWorldConfig (format 4)",
+  "description": "Deterministically derived generator parameters produced by the versioned recipe compiler (src/recipe/compile.ts). Format 4 adds route-graph rules (Milestone W4) atop the W3 lapse and water rules. Derived data: hashed for verification, never independently authored or edited.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -15,13 +15,14 @@
     "climate",
     "macroFields",
     "water",
+    "routes",
     "biomes",
     "budgets",
     "passes",
     "dependencies"
   ],
   "properties": {
-    "resolvedConfigFormat": { "const": 3 },
+    "resolvedConfigFormat": { "const": 4 },
     "recipeCompilerVersion": { "type": "integer", "minimum": 1 },
     "generatorBehaviorVersion": { "type": "integer", "minimum": 1 },
     "rulePackVersions": {
@@ -97,6 +98,24 @@
         "majorRiverAccumulationThreshold": { "type": "integer", "minimum": 1 },
         "wetlandMoistureMin": { "type": "integer", "minimum": 0, "maximum": 999 },
         "coastalInfluenceRadius": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "routes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stepCost", "slopeCostPerPermille", "networkRiverCrossCost", "majorRiverCrossCost", "shallowWaterCrossCost", "minDestinationSpacing", "streetWidth", "highwayWidth", "detourWarnRatioPermille", "edgePenaltyRadius", "edgePenaltyCost"],
+      "properties": {
+        "stepCost": { "type": "integer", "minimum": 1 },
+        "slopeCostPerPermille": { "type": "integer", "minimum": 0 },
+        "networkRiverCrossCost": { "type": "integer", "minimum": 0 },
+        "majorRiverCrossCost": { "type": "integer", "minimum": 0 },
+        "shallowWaterCrossCost": { "type": "integer", "minimum": 0 },
+        "minDestinationSpacing": { "type": "integer", "minimum": 1 },
+        "streetWidth": { "type": "integer", "minimum": 1 },
+        "highwayWidth": { "type": "integer", "minimum": 1 },
+        "detourWarnRatioPermille": { "type": "integer", "minimum": 1000 },
+        "edgePenaltyRadius": { "type": "integer", "minimum": 1 },
+        "edgePenaltyCost": { "type": "integer", "minimum": 0 }
       }
     },
     "biomes": {

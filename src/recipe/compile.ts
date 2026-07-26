@@ -30,7 +30,9 @@ const CLIMATE_RULES: { readonly [key in ClimatePreset]: ClimateBase } = {
   cold_coastal: {
     // Offsets shift the tight fbm bell (p50 ≈ 470) without saturating one
     // class; tuned against measured percentiles during W2 review.
-    baseTemperaturePermille: -150,
+    // W4 iteration: warmed so snow concentrates on peaks and the far
+    // north (target 15-25% snow+rock in mid-map seeds, measured).
+    baseTemperaturePermille: -60,
     baseMoisturePermille: 80,
     coastalInfluencePermille: 500,
   },
@@ -86,6 +88,10 @@ export interface RouteRules {
   readonly highwayWidth: number;
   /** Route length over Chebyshev distance beyond this ratio warns. */
   readonly detourWarnRatioPermille: number;
+  /** Cells within this distance of the world border cost extra to enter. */
+  readonly edgePenaltyRadius: number;
+  /** Maximum extra cost at the border itself, tapering to 0 at the radius. */
+  readonly edgePenaltyCost: number;
 }
 
 export interface BiomeRules {
@@ -201,7 +207,7 @@ const WATER_RULES: {
 };
 
 /** macro.fields rule pack v2: snow-elevation coupling (W3 acceptance brief). */
-const TEMPERATURE_LAPSE = { startElevationPermille: 500, strengthPermille: 700 };
+const TEMPERATURE_LAPSE = { startElevationPermille: 640, strengthPermille: 700 };
 
 /** routes.graph rule pack v1: costs, widths, spacing per size preset. */
 const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
@@ -215,6 +221,8 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     streetWidth: 2,
     highwayWidth: 3,
     detourWarnRatioPermille: 1800,
+    edgePenaltyRadius: 6,
+    edgePenaltyCost: 40,
   },
   small: {
     stepCost: 10,
@@ -226,6 +234,8 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     streetWidth: 2,
     highwayWidth: 3,
     detourWarnRatioPermille: 1800,
+    edgePenaltyRadius: 12,
+    edgePenaltyCost: 40,
   },
 };
 
