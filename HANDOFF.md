@@ -155,9 +155,14 @@ plaza fountain with dynamic perimeter entrance. Model fix: streetFordCells
 now computed once in composeWorld, honored by the entrance validator, and
 rendered by the adapter (towns straddling streams validated blind before).
 STRUCTURE_TYPES is append-only — layer values must never shift.
-Stage 3 = coast/water dressing (piers, sand, boats, crop plots). All
-layers flow through the §2-proven pipeline automatically (viewer, render,
-seams, Godot).
+**Stage 3 SHIPPED (8e47fd6)**: behavior 11, artifact format 6 —
+crop/fence/pier layers (crop = typeIndex*16+stage). Fenced wheat/pumpkin/
+corn plots with gates beside farmsteads (src/settlements/farms.ts), harbor
+piers, reeds/cattails on lake fringes, rowboat/fishnets/buoy pier clutter.
+Remaining alive-worlds idea: sand beaches (material-level; §2.7 corner16
+would activate for the first time — keep the sand margin at world borders,
+the tmj emitter throws on dual −1 occupancy). All layers flow through the
+§2-proven pipeline automatically (viewer, render, seams, Godot).
 
 ## Review loop (user-requested interface, ebd59c5)
 
