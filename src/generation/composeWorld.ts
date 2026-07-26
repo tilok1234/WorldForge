@@ -302,12 +302,26 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     const roadValue = PALETTE_INDEX["terrain.packed_road"];
     const corridor = (index: number): boolean =>
       grid[index] === roadValue || grid[index] === cobbleValue;
+    const river = (index: number): boolean => hydro.isRiver[index] === 1;
+    // A run of one or two stream cells with corridor at both ends fords —
+    // two matches the street arms' skippedWet allowance, which would
+    // otherwise sever settlement fabric on double-wide streams.
+    const bridged = (index: number, stride: number, room: boolean, room2: boolean): boolean => {
+      if (!room) return false;
+      const before = corridor(index - stride);
+      const after = corridor(index + stride);
+      if (before && after) return true;
+      if (!room2) return false;
+      if (before && river(index + stride) && corridor(index + 2 * stride)) return true;
+      if (after && river(index - stride) && corridor(index - 2 * stride)) return true;
+      return false;
+    };
     for (let index = 0; index < grid.length; index += 1) {
-      if (hydro.isRiver[index] !== 1) continue;
+      if (!river(index)) continue;
       const x = index % width;
       const y = (index - x) / width;
-      const northSouth = y > 0 && y < height - 1 && corridor(index - width) && corridor(index + width);
-      const eastWest = x > 0 && x < width - 1 && corridor(index - 1) && corridor(index + 1);
+      const northSouth = bridged(index, width, y > 0 && y < height - 1, y > 1 && y < height - 2);
+      const eastWest = bridged(index, 1, x > 0 && x < width - 1, x > 1 && x < width - 2);
       if (corridor(index) || northSouth || eastWest) {
         streetFordCells.push(index);
       }

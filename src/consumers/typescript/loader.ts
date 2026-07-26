@@ -353,12 +353,25 @@ export class WorldHandle {
     const river = this.layers.river;
     const corridorAt = (index: number): boolean =>
       CORRIDOR_MATERIALS.has(this.semanticPalette[material[index] as number] as string);
+    const riverAt = (index: number): boolean => (river[index] as number) !== 0;
+    // Runs of one or two stream cells between corridor ends ford (matches
+    // the generator's street-arm skippedWet allowance since behavior 18).
+    const bridged = (index: number, stride: number, room: boolean, room2: boolean): boolean => {
+      if (!room) return false;
+      const before = corridorAt(index - stride);
+      const after = corridorAt(index + stride);
+      if (before && after) return true;
+      if (!room2) return false;
+      if (before && riverAt(index + stride) && corridorAt(index + 2 * stride)) return true;
+      if (after && riverAt(index - stride) && corridorAt(index - 2 * stride)) return true;
+      return false;
+    };
     for (let index = 0; index < width * height; index += 1) {
-      if ((river[index] as number) === 0) continue;
+      if (!riverAt(index)) continue;
       const x = index % width;
       const y = (index - x) / width;
-      const northSouth = y > 0 && y < height - 1 && corridorAt(index - width) && corridorAt(index + width);
-      const eastWest = x > 0 && x < width - 1 && corridorAt(index - 1) && corridorAt(index + 1);
+      const northSouth = bridged(index, width, y > 0 && y < height - 1, y > 1 && y < height - 2);
+      const eastWest = bridged(index, 1, x > 0 && x < width - 1, x > 1 && x < width - 2);
       if (corridorAt(index) || northSouth || eastWest) {
         this.crossingCells.add(index);
       }

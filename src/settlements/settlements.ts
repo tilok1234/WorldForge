@@ -1,10 +1,12 @@
 /**
  * Settlement planner (docs/ARCHITECTURE_AND_CONTRACTS.md, component 8;
- * Milestone W5). The first (best-scored) candidate becomes the town, the rest
- * outposts. Purposes derive from geography; plazas and settlement streets are
- * cobble areas per the corridor doctrine; structures place atomically with a
- * one-cell gap, entrances face the street network, and approaches are carved
- * as cobble so every entrance joins required traversal.
+ * Milestone W5). Three tiers since settlements.plans v5: the first
+ * (best-scored) candidate becomes the capital city, the next townCount
+ * candidates towns, the rest outposts. Purposes derive from geography; plazas
+ * and settlement streets are cobble areas per the corridor doctrine;
+ * structures place atomically with a one-cell gap, entrances face the street
+ * network, and approaches are carved as cobble so every entrance joins
+ * required traversal.
  */
 
 import type { ResolvedWorldConfig } from "../recipe/compile.js";
@@ -21,9 +23,34 @@ import {
 } from "./structures.js";
 
 /**
- * settlements.plans v4: towns lead with civic specials and market stalls,
- * then fill from a rolled village mix along the plaza and street arms.
+ * settlements.plans v5: three tiers. The city leads with a civic core and a
+ * market row, towns with civic specials and market stalls; both then fill
+ * from a rolled mix along the plaza, street arms, and (city) the ring road.
+ * Outposts grew into villages: nine-lot purpose kits instead of six.
  */
+const CITY_SPECIALS: readonly StructureType[] = [
+  "structure.town_hall",
+  "structure.manor",
+  "structure.chapel",
+  "structure.smithy",
+  "structure.tavern",
+  "structure.stall",
+  "structure.stall",
+  "structure.bakery",
+  "structure.stall",
+  "structure.tavern",
+  "structure.manor",
+  "structure.well",
+];
+const CITY_FILL: readonly { readonly type: StructureType; readonly weight: number }[] = [
+  { type: "structure.house", weight: 38 },
+  { type: "structure.cottage", weight: 26 },
+  { type: "structure.bakery", weight: 9 },
+  { type: "structure.stall", weight: 9 },
+  { type: "structure.tavern", weight: 6 },
+  { type: "structure.smithy", weight: 5 },
+  { type: "structure.well", weight: 7 },
+];
 const TOWN_SPECIALS: readonly StructureType[] = [
   "structure.town_hall",
   "structure.tavern",
@@ -43,11 +70,11 @@ const TOWN_FILL: readonly { readonly type: StructureType; readonly weight: numbe
   { type: "structure.well", weight: 8 },
 ];
 const OUTPOST_SEQUENCES: { readonly [key in SettlementPlan["purpose"]]: readonly StructureType[] } = {
-  farming: ["structure.farmhouse", "structure.barn", "structure.stall", "structure.cottage", "structure.cottage", "structure.well"],
-  mining: ["structure.watchtower", "structure.cottage", "structure.stall", "structure.cottage", "structure.house", "structure.well"],
-  harbor: ["structure.watchtower", "structure.cottage", "structure.stall", "structure.cottage", "structure.house", "structure.well"],
-  crossing: ["structure.watchtower", "structure.tavern", "structure.cottage", "structure.cottage", "structure.house", "structure.well"],
-  waypoint: ["structure.watchtower", "structure.cottage", "structure.cottage", "structure.cottage", "structure.house", "structure.well"],
+  farming: ["structure.farmhouse", "structure.barn", "structure.stall", "structure.cottage", "structure.cottage", "structure.house", "structure.cottage", "structure.barn", "structure.well"],
+  mining: ["structure.watchtower", "structure.cottage", "structure.stall", "structure.cottage", "structure.house", "structure.smithy", "structure.cottage", "structure.house", "structure.well"],
+  harbor: ["structure.watchtower", "structure.cottage", "structure.stall", "structure.cottage", "structure.house", "structure.tavern", "structure.cottage", "structure.house", "structure.well"],
+  crossing: ["structure.watchtower", "structure.tavern", "structure.cottage", "structure.cottage", "structure.house", "structure.stall", "structure.cottage", "structure.house", "structure.well"],
+  waypoint: ["structure.watchtower", "structure.cottage", "structure.cottage", "structure.cottage", "structure.house", "structure.stall", "structure.cottage", "structure.house", "structure.well"],
 };
 
 const COBBLE = PALETTE_INDEX["terrain.cobble"];
@@ -69,7 +96,7 @@ export interface PlacedStructure {
 
 export interface SettlementPlan {
   readonly id: number;
-  readonly kind: "town" | "outpost";
+  readonly kind: "city" | "town" | "outpost";
   readonly anchorX: number;
   readonly anchorY: number;
   readonly purpose: "harbor" | "crossing" | "farming" | "mining" | "waypoint";
@@ -95,13 +122,15 @@ export function planSettlements(
     const anchor = (candidates[rank] as { cell: number }).cell;
     const anchorX = anchor % width;
     const anchorY = (anchor - anchorX) / width;
-    const kind = rank === 0 ? "town" : "outpost";
-    const radius = kind === "town" ? rules.townRadius : rules.outpostRadius;
+    const kind = rank === 0 ? "city" : rank <= rules.townCount ? "town" : "outpost";
+    const radius =
+      kind === "city" ? rules.cityRadius : kind === "town" ? rules.townRadius : rules.outpostRadius;
 
     const purpose = derivePurpose(anchorX, anchorY, radius, grid, hydro, width, height);
 
     // Plaza and settlement streets are cobble areas (band-free doctrine).
-    const plazaRadius = kind === "town" ? rules.townPlazaRadius : rules.outpostPlazaRadius;
+    const plazaRadius =
+      kind === "city" ? rules.cityPlazaRadius : kind === "town" ? rules.townPlazaRadius : rules.outpostPlazaRadius;
     for (let dy = -plazaRadius; dy <= plazaRadius; dy += 1) {
       for (let dx = -plazaRadius; dx <= plazaRadius; dx += 1) {
         const cell = cellAt(anchorX + dx, anchorY + dy, width, height);
@@ -114,10 +143,12 @@ export function planSettlements(
     // so buildings line them and the settlement reads as connected fabric.
     // Streams interrupt an arm without stopping it — the gap cells become
     // street fords downstream.
-    if (kind === "town") {
+    const armLength =
+      kind === "city" ? rules.cityStreetArmLength : kind === "town" ? rules.streetArmLength : 0;
+    if (armLength > 0) {
       for (const [dirX, dirY] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
         let skippedWet = 0;
-        for (let step = plazaRadius + 1; step <= plazaRadius + rules.streetArmLength; step += 1) {
+        for (let step = plazaRadius + 1; step <= plazaRadius + armLength; step += 1) {
           const armX = anchorX + dirX * step;
           const armY = anchorY + dirY * step;
           const lane = cellAt(armX, armY, width, height);
@@ -134,6 +165,26 @@ export function planSettlements(
           skippedWet = 0;
           if (isOpenLand(lane, grid, hydro)) grid[lane] = COBBLE;
           if (side !== -1 && isOpenLand(side, grid, hydro)) grid[side] = COBBLE;
+        }
+      }
+    }
+    // City ring road (v5): a one-wide cobble square at the ring radius ties
+    // the four arms into an urban grid. Best-effort per cell — streams stay
+    // wet (composeWorld turns corridor-flanked stream cells into fords) and
+    // blocked terrain simply gaps the ring; approaches provide connectivity.
+    if (kind === "city" && rules.cityRingRadius > 0) {
+      const ring = rules.cityRingRadius;
+      for (let d = -ring; d <= ring; d += 1) {
+        for (const [rx, ry] of [
+          [anchorX + d, anchorY - ring],
+          [anchorX + d, anchorY + ring],
+          [anchorX - ring, anchorY + d],
+          [anchorX + ring, anchorY + d],
+        ] as const) {
+          const cell = cellAt(rx, ry, width, height);
+          if (cell !== -1 && isOpenLand(cell, grid, hydro)) {
+            grid[cell] = COBBLE;
+          }
         }
       }
     }
@@ -172,15 +223,18 @@ export function planSettlements(
     }
 
     // Structures spiral outward from the plaza in deterministic ring order.
-    // Towns lead with civic specials then a channel-rolled village mix;
-    // outposts follow their purpose (settlements.plans v2, the W5.1 brief).
+    // The city and towns lead with civic specials then a channel-rolled fill
+    // mix; outposts follow their purpose kit (settlements.plans v5).
     const variety = channel(config.seed, "settlements.variety");
     let sequence: StructureType[];
-    if (kind === "town") {
-      sequence = [...TOWN_SPECIALS.slice(0, Math.min(TOWN_SPECIALS.length, rules.townLots))];
-      for (let slot = sequence.length; slot < rules.townLots; slot += 1) {
-        const pick = variety.weightedPickAt(anchorX, anchorY, TOWN_FILL.map((f) => f.weight), slot);
-        sequence.push((TOWN_FILL[pick] as { type: StructureType }).type);
+    if (kind === "city" || kind === "town") {
+      const specials = kind === "city" ? CITY_SPECIALS : TOWN_SPECIALS;
+      const fill = kind === "city" ? CITY_FILL : TOWN_FILL;
+      const lots = kind === "city" ? rules.cityLots : rules.townLots;
+      sequence = [...specials.slice(0, Math.min(specials.length, lots))];
+      for (let slot = sequence.length; slot < lots; slot += 1) {
+        const pick = variety.weightedPickAt(anchorX, anchorY, fill.map((f) => f.weight), slot);
+        sequence.push((fill[pick] as { type: StructureType }).type);
       }
     } else {
       const pool = OUTPOST_SEQUENCES[purpose];
@@ -191,7 +245,7 @@ export function planSettlements(
     }
     const placed: PlacedStructure[] = [];
 
-    if (kind === "town") {
+    if (kind === "city" || kind === "town") {
       // Plaza legibility (W5.1): the fountain anchors the square. Its 2x2
       // footprint centers on the plaza; the south-side cobble is the
       // approach. Falls back to the classic well if the plaza is clipped.

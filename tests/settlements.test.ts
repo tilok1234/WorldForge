@@ -24,15 +24,16 @@ function worldFor(seed: number, landmarks?: unknown) {
 }
 
 describe("settlement planning", () => {
-  it("plans a town plus outposts with geography-derived purposes (seeds 1-4)", () => {
+  it("plans a city, towns, then outposts with geography-derived purposes (seeds 1-4)", () => {
     for (let seed = 1; seed <= 4; seed += 1) {
-      const { composed } = worldFor(seed);
+      const { composed, config } = worldFor(seed);
       assert.deepEqual(composed.routesResult.errors, [], `seed ${seed}`);
       const plans = composed.settlementPlans;
       assert.ok(plans.length >= 1, `seed ${seed} produced settlements`);
-      assert.equal(plans[0]?.kind, "town");
-      for (const plan of plans.slice(1)) {
-        assert.equal(plan.kind, "outpost");
+      const townCount = config.settlements.townCount;
+      for (const plan of plans) {
+        const expected = plan.id === 0 ? "city" : plan.id <= townCount ? "town" : "outpost";
+        assert.equal(plan.kind, expected, `seed ${seed} settlement ${plan.id}`);
       }
       for (const plan of plans) {
         assert.ok(
@@ -202,7 +203,7 @@ describe("relational vocabulary", () => {
     let satisfied = 0;
     let named = 0;
     for (let seed = 1; seed <= 6; seed += 1) {
-      const { composed } = worldFor(seed, [{ type: "ancient_fortress", relation: "near_town" }]);
+      const { composed, config } = worldFor(seed, [{ type: "ancient_fortress", relation: "near_town" }]);
       const town = composed.settlementPlans[0];
       if (composed.landmarkPlans.length === 1 && town !== undefined) {
         const plan = composed.landmarkPlans[0]!;
@@ -210,7 +211,12 @@ describe("relational vocabulary", () => {
           Math.abs(plan.x + Math.trunc(plan.width / 2) - town.anchorX),
           Math.abs(plan.y + Math.trunc(plan.height / 2) - town.anchorY),
         );
-        assert.ok(distance <= Math.trunc(composed.width / 5) + 5, `seed ${seed}: near_town distance ${distance}`);
+        // near_town measures from the city's outskirts since behavior 18.
+        const cityReach = config.settlements.cityPlazaRadius + config.settlements.cityStreetArmLength;
+        assert.ok(
+          distance <= Math.trunc(composed.width / 5) + cityReach + 5,
+          `seed ${seed}: near_town distance ${distance}`,
+        );
         satisfied += 1;
       } else {
         assert.ok(

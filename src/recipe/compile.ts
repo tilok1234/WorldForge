@@ -98,6 +98,15 @@ export interface RouteRules {
 }
 
 export interface SettlementRules {
+  /** The capital (settlements.plans v5): rank 0 becomes the one city. */
+  readonly cityRadius: number;
+  readonly cityLots: number;
+  readonly cityPlazaRadius: number;
+  readonly cityStreetArmLength: number;
+  /** Chebyshev radius of the city ring road; 0 disables it. */
+  readonly cityRingRadius: number;
+  /** Ranks 1..townCount are towns; later ranks are outposts. */
+  readonly townCount: number;
   readonly townRadius: number;
   readonly outpostRadius: number;
   readonly townLots: number;
@@ -143,7 +152,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 7;
+  readonly resolvedConfigFormat: 8;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -280,14 +289,25 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
   },
 };
 
-/** settlements.plans rule pack v1: settlement geometry per size preset. */
+/**
+ * settlements.plans rule pack v5: three-tier settlement geometry per size
+ * preset. Rank 0 is the capital city, ranks 1..townCount towns, the rest
+ * outposts — grown lots all around so the hierarchy reads at a glance.
+ */
 const SETTLEMENT_RULES: { readonly [key in SizePreset]: SettlementRules } = {
   tiny: {
-    townRadius: 12, outpostRadius: 6, townLots: 14, outpostLots: 4,
+    // Tiny worlds stay cramped: the city keeps the old town street reach
+    // (plaza 2 + arms 9) so near_town landmarks remain satisfiable, and
+    // grows through lots and the ring road instead of sprawl.
+    cityRadius: 14, cityLots: 22, cityPlazaRadius: 2, cityStreetArmLength: 9,
+    cityRingRadius: 6, townCount: 1,
+    townRadius: 12, outpostRadius: 7, townLots: 14, outpostLots: 6,
     approachMaxLength: 8, townPlazaRadius: 2, outpostPlazaRadius: 1, streetArmLength: 9,
   },
   small: {
-    townRadius: 18, outpostRadius: 8, townLots: 28, outpostLots: 6,
+    cityRadius: 26, cityLots: 64, cityPlazaRadius: 4, cityStreetArmLength: 20,
+    cityRingRadius: 11, townCount: 3,
+    townRadius: 20, outpostRadius: 10, townLots: 34, outpostLots: 9,
     approachMaxLength: 8, townPlazaRadius: 3, outpostPlazaRadius: 1, streetArmLength: 14,
   },
 };
@@ -327,7 +347,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 7,
+    resolvedConfigFormat: 8,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,

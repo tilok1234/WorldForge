@@ -308,6 +308,25 @@ function pickDestinations(
   landmarkScored.sort((a, b) => b.score - a.score || a.index - b.index);
   for (let slot = 0; slot < config.budgets.landmarkCount; slot += 1) {
     const spec = config.landmarkSpecs[slot] ?? { type: "ancient_fortress", relation: null };
+    // Tier-aware clearance (routes.graph v3): a settlement's street fabric
+    // (plaza + arms) must not reach the stamp footprint, or the landmark
+    // stamp is rejected downstream. The stamp's farthest footprint cell
+    // from its anchor plus one breathing cell is the landmark side of the
+    // margin (the gravel blend is cosmetic and never rejects).
+    const stampSpec = loadStamp(spec.type);
+    const stampMargin =
+      Math.max(
+        stampSpec.anchorX,
+        stampSpec.width - 1 - stampSpec.anchorX,
+        stampSpec.anchorY,
+        stampSpec.height - 1 - stampSpec.anchorY,
+      ) + 1;
+    const streetReach = (rank: number): number => {
+      const rules = config.settlements;
+      if (rank === 0) return rules.cityPlazaRadius + rules.cityStreetArmLength;
+      if (rank <= rules.townCount) return rules.townPlazaRadius + rules.streetArmLength;
+      return rules.outpostPlazaRadius;
+    };
     let placedSlot = false;
     for (const candidate of landmarkScored) {
       const cx = candidate.index % fields.width;
@@ -316,7 +335,11 @@ function pickDestinations(
       for (const existing of taken) {
         const ex = existing.cell % fields.width;
         const ey = (existing.cell - ex) / fields.width;
-        if (Math.max(Math.abs(cx - ex), Math.abs(cy - ey)) < config.routes.minDestinationSpacing) {
+        const required =
+          existing.kind === "settlement_candidate"
+            ? Math.max(config.routes.minDestinationSpacing, streetReach(existing.id) + stampMargin)
+            : config.routes.minDestinationSpacing;
+        if (Math.max(Math.abs(cx - ex), Math.abs(cy - ey)) < required) {
           clear = false;
           break;
         }
@@ -328,7 +351,16 @@ function pickDestinations(
         if (town === undefined) {
           break;
         }
-        if (!relationHolds(spec.relation, candidate.index, town.cell, hydro, fields.width)) {
+        if (
+          !relationHolds(
+            spec.relation,
+            candidate.index,
+            town.cell,
+            hydro,
+            fields.width,
+            config.settlements.cityPlazaRadius + config.settlements.cityStreetArmLength,
+          )
+        ) {
           continue;
         }
       }
@@ -566,17 +598,23 @@ function stampFootprintClear(
   return true;
 }
 
-/** Relational predicates for landmark placement (W5 solver). */
+/**
+ * Relational predicates for landmark placement (W5 solver). cityReach is the
+ * capital's street fabric radius (plaza + arms): near_town measures from the
+ * city's outskirts, not its anchor, so a grown capital (settlements.plans
+ * v5) cannot render its own relation unsatisfiable.
+ */
 function relationHolds(
   relation: string,
   cell: number,
   townCell: number,
   hydro: HydrologyResult,
   width: number,
+  cityReach: number,
 ): boolean {
   const distance = chebyshev(cell, townCell, width);
   if (relation === "near_town") {
-    return distance <= Math.trunc(width / 5);
+    return distance <= Math.trunc(width / 5) + cityReach;
   }
   if (relation === "far_from_town") {
     return distance >= Math.trunc(width / 3);

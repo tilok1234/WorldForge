@@ -27,8 +27,11 @@ export const GENERATOR_VERSION = "0.1.0";
  * 17: the density pass (the 90%-unused verdict) — rocky knolls
  *     (macro.biomes 3), palisaded bandit camps, poi budget 36/12
  *     (decoration.pois 3).
+ * 18: settlements.plans v5 — the settlement hierarchy: rank 0 becomes the
+ *     capital city (ring road, longer arms, 64-lot civic core), ranks
+ *     1..townCount towns, and outposts grow into nine-lot villages.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 17;
+export const GENERATOR_BEHAVIOR_VERSION = 18;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 9;
@@ -39,8 +42,8 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 4,
   "macro.biomes": 3,
   "hydrology.water": 2,
-  "routes.graph": 2,
-  "settlements.plans": 4,
+  "routes.graph": 3,
+  "settlements.plans": 5,
   "landmarks.stamps": 1,
   "decoration.props": 3,
   "decoration.pois": 3,
