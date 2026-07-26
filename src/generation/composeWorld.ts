@@ -411,7 +411,113 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
 
   // Points of interest stamp after ambient decoration and overwrite it:
   // deliberate discoveries beat scattered flavor.
-  const pois = planPois(grid, structureLayer, hydro, routesResult, settlementPlans, farms, decoration, config);
+  const pois = planPois(grid, structureLayer, hydro, routesResult, settlementPlans, landmarkPlans, farms, decoration, config);
+
+  // Wilderness spur paths (behavior 21): worked or visited discoveries —
+  // mines, crypts, graveyards, stone rings, fishing spots, cave mouths,
+  // prospector camps — earn a rough dirt path to the nearest corridor.
+  // Hidden or lost places (witch circles, bandit camps, wrecks, the
+  // skeleton) stay pathless by design. Purely additive: pathLayer only.
+  {
+    const SPUR_KINDS = new Set([
+      "poi.mine",
+      "poi.crypt",
+      "poi.graveyard",
+      "poi.standing_stones",
+      "poi.stone_circle",
+      "poi.fishing_spot",
+      "poi.cave",
+      "poi.prospector_camp",
+      "poi.ruin",
+    ]);
+    const cobbleValue = PALETTE_INDEX["terrain.cobble"];
+    const roadValue = PALETTE_INDEX["terrain.packed_road"];
+    const rockIdx = PALETTE_INDEX["terrain.rock"];
+    const swampIdx = PALETTE_INDEX["terrain.swamp"];
+    const pathLayer = routesResult.pathLayer;
+    const maxSpur = 20;
+    for (const poi of pois) {
+      if (!SPUR_KINDS.has(poi.type)) continue;
+      // BFS over open walkable land from the POI's doorstep to the nearest
+      // corridor cell (path, road, or cobble), bounded by maxSpur steps.
+      const start = poi.y * width + poi.x;
+      const previous = new Map<number, number>();
+      const depth = new Map<number, number>();
+      previous.set(start, -1);
+      depth.set(start, 0);
+      const queue = [start];
+      let goal = -1;
+      for (let head = 0; head < queue.length && goal === -1; head += 1) {
+        const cell = queue[head] as number;
+        const steps = depth.get(cell) as number;
+        if (steps >= maxSpur) continue;
+        const cx = cell % width;
+        const cy = (cell - cx) / width;
+        for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
+          const nx = cx + dx;
+          const ny = cy + dy;
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+          const next = ny * width + nx;
+          if (previous.has(next)) continue;
+          if (pathLayer[next] === 1 || grid[next] === roadValue || grid[next] === cobbleValue) {
+            previous.set(next, cell);
+            goal = next;
+            break;
+          }
+          if (hydro.waterKind[next] !== WATER_NONE || hydro.isRiver[next] === 1) continue;
+          if (grid[next] === rockIdx || grid[next] === swampIdx) continue;
+          if (structureLayer[next] !== 0) continue;
+          if (decoration.propLayer[next] !== 0) continue; // no paths under props
+          previous.set(next, cell);
+          depth.set(next, steps + 1);
+          queue.push(next);
+        }
+      }
+      if (goal === -1) continue;
+      let cursor = previous.get(goal) as number;
+      while (cursor !== -1 && cursor !== start) {
+        if (pathLayer[cursor] === 0) pathLayer[cursor] = 1;
+        cursor = previous.get(cursor) as number;
+      }
+    }
+  }
+
+  // Lone-cobble cleanup (behavior 21): an approach or street stump with no
+  // orthogonal corridor neighbor is one-cell confetti, not a corridor —
+  // orthogonal chains mean nothing routes THROUGH a lone cell, so reverting
+  // it to a land neighbor's material can never sever traversal. A street
+  // ford IS a corridor continuation: the far bank of a ford keeps its
+  // cobble, or the ford's own justification (corridor on both sides)
+  // silently evaporates and consumers disagree.
+  {
+    const cobbleValue = PALETTE_INDEX["terrain.cobble"];
+    const roadValue = PALETTE_INDEX["terrain.packed_road"];
+    const fordSet = new Set(streetFordCells);
+    for (let index = 0; index < grid.length; index += 1) {
+      if (grid[index] !== cobbleValue || structureLayer[index] !== 0) continue;
+      const x = index % width;
+      const y = (index - x) / width;
+      let corridorNeighbor = false;
+      let landFallback = -1;
+      for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+        const neighbor = ny * width + nx;
+        const material = grid[neighbor] as number;
+        if (material === cobbleValue || material === roadValue || fordSet.has(neighbor)) {
+          corridorNeighbor = true;
+          break;
+        }
+        if (landFallback === -1 && hydro.waterKind[neighbor] === WATER_NONE && hydro.isRiver[neighbor] === 0) {
+          landFallback = material;
+        }
+      }
+      if (!corridorNeighbor && landFallback !== -1) {
+        grid[index] = landFallback;
+      }
+    }
+  }
 
   const labeling = labelComponents(grid, width, height);
   const regions: RegionSummary[] = labeling.components.map((component, id) => ({

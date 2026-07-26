@@ -146,6 +146,9 @@ const STRUCTURE_PASS_CELLS: Readonly<Record<string, readonly number[]>> = {
   "structure.den": [2, 3],
   "structure.crypt": [2, 3],
   "structure.giant_skeleton": [5, 6, 7],
+  "structure.ruined_gate": [1, 4],
+  "structure.ruin_temple": [3, 4],
+  "structure.portal": [1, 4],
 };
 
 /** Prop species that block movement; unlisted species never block. */

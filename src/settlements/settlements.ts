@@ -327,7 +327,7 @@ export function planSettlements(
           const [fw, fh] = footprint;
           const originX = anchorX + dx;
           const originY = anchorY + dy;
-          if (!footprintFits(originX, originY, fw, fh, grid, structureLayer, hydro, width, height)) {
+          if (!footprintFits(originX, originY, fw, fh, grid, structureLayer, routes.pathLayer, hydro, width, height)) {
             continue;
           }
           // Stamp provisionally; a placement whose entrance cannot join the
@@ -432,6 +432,7 @@ function footprintFits(
   fh: number,
   grid: readonly number[],
   structureLayer: Uint8Array,
+  pathLayer: Uint8Array,
   hydro: HydrologyResult,
   width: number,
   height: number,
@@ -448,6 +449,11 @@ function footprintFits(
       }
       const inFootprint = sx >= 0 && sx < fw && sy >= 0 && sy < fh;
       if (inFootprint && !isOpenLand(cell, grid, hydro)) {
+        return false;
+      }
+      // Trails are corridors (behavior 21): a house on a dirt path would
+      // sever a route the network already promised.
+      if (inFootprint && pathLayer[cell] !== 0) {
         return false;
       }
     }

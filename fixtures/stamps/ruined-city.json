@@ -1,0 +1,29 @@
+{
+  "stampFormat": 1,
+  "type": "ruined_city",
+  "footprint": { "width": 17, "height": 13 },
+  "anchor": { "x": 8, "y": 6 },
+  "entrance": { "x": 8, "y": 12 },
+  "substrate": { "maxSlopePermille": 420 },
+  "blendRadius": 3,
+  "legend": {
+    "W": { "structure": "structure.ruined_wall", "material": "terrain.gravel" },
+    "r": { "material": "terrain.gravel", "road": "ruined" },
+    "o": { "material": "terrain.gravel" }
+  },
+  "cells": [
+    "WWWWWW...WWWWWWWW",
+    "WoooooooooooooooW",
+    "WoorrrrrrrrrrrooW",
+    "WooroooooooooroW.",
+    "WooroooooooooroW.",
+    ".ooroooooooooroW.",
+    ".oorrrrrrrrrrroW.",
+    "WooroooooooooroW.",
+    "WooroooooooooroW.",
+    "WooroooooooooroW.",
+    "WoorrrrrrrrrrrooW",
+    "WoooooooroooooooW",
+    "WWWWWWW...WWWWWWW"
+  ]
+}

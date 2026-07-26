@@ -24,6 +24,7 @@ import { WATER_NONE, type HydrologyResult } from "../hydrology/hydrology.js";
 import type { RoutesResult } from "../routes/routes.js";
 import type { ResolvedWorldConfig } from "../recipe/compile.js";
 import type { SettlementPlan } from "../settlements/settlements.js";
+import type { LandmarkPlan } from "../settlements/landmarks.js";
 import type { FarmResult } from "../settlements/farms.js";
 import { DECAL_TYPES, DECOR_TYPES, type DecorationResult } from "./decorate.js";
 import {
@@ -54,6 +55,7 @@ export const POI_TYPES = [
   "poi.witch_circle",
   "poi.frozen_wreck",
   "poi.mountain_shrine",
+  "poi.city_ruin",
 ] as const;
 export type PoiType = (typeof POI_TYPES)[number];
 
@@ -84,6 +86,7 @@ export function planPois(
   hydro: HydrologyResult,
   routesResult: RoutesResult,
   settlementPlans: readonly SettlementPlan[],
+  landmarkPlans: readonly LandmarkPlan[],
   farms: FarmResult,
   decoration: DecorationResult,
   config: ResolvedWorldConfig,
@@ -236,6 +239,7 @@ export function planPois(
     "poi.witch_circle": 1,
     "poi.frozen_wreck": 2,
     "poi.mountain_shrine": 2,
+    "poi.city_ruin": budget,
   };
   // Far-reach quota (decoration.pois v4): rock- and snow-bound kinds get a
   // reserved slice of the budget. Rock edges are ~2% of cells, so without a
@@ -255,9 +259,10 @@ export function planPois(
   const farQuota = Math.max(2, Math.trunc(budget / 4));
   const generalBudget = budget - farQuota;
   let farCount = 0;
+  let cityCount = 0;
   const capped = (type: PoiType): boolean => {
     if ((typeCounts.get(type) ?? 0) >= TYPE_CAPS[type]) return true;
-    const generalUsed = pois.length - farCount;
+    const generalUsed = pois.length - farCount - cityCount;
     if (FAR_KINDS.has(type)) {
       return farCount >= farQuota && generalUsed >= generalBudget;
     }
@@ -307,6 +312,96 @@ export function planPois(
   // whichever POI its surroundings support best.
   const attempts = budget * 28;
 
+  // The old kingdom (decoration.pois v6): a ruined_city landmark gets its
+  // furniture — a broken keep, collapsed houses, and FOUR distinct delves
+  // (dungeon, temple, portal, crypt) at fixed offsets inside the walls.
+  // City records ride outside the wilderness budget (cityCount) and their
+  // structures reach the loader through the normal POI pass-cell path.
+  for (const plan of landmarkPlans) {
+    if (plan.type !== "ruined_city") continue;
+    // allowPath: the gate sits astride the old through-trail (its pass
+    // cells keep the road open); everything else dodges trails so no
+    // route gets walled off by a ruin.
+    const cityCell = (cell: number, allowPath: boolean): boolean =>
+      cell !== -1 &&
+      hydro.waterKind[cell] === WATER_NONE &&
+      hydro.isRiver[cell] === 0 &&
+      grid[cell] !== road &&
+      grid[cell] !== cobble &&
+      (allowPath || routesResult.pathLayer[cell] === 0) &&
+      structureLayer[cell] === 0 &&
+      farms.cropLayer[cell] === 0 &&
+      farms.fenceLayer[cell] === 0 &&
+      farms.pierLayer[cell] === 0 &&
+      !crossings.has(cell) &&
+      !entrances.has(cell);
+    const cityStamp = (
+      type: StructureType,
+      spots: ReadonlyArray<readonly [number, number]>,
+      allowPath = false,
+    ): void => {
+      const footprint = STRUCTURE_FOOTPRINTS[type];
+      if (footprint === undefined) return;
+      const [w, h] = footprint;
+      for (const [sx, sy] of spots) {
+        const originX = plan.x + sx;
+        const originY = plan.y + sy;
+        let fits = true;
+        for (let yy = 0; yy < h && fits; yy += 1) {
+          for (let xx = 0; xx < w && fits; xx += 1) {
+            if (!cityCell(cellAt(originX + xx, originY + yy), allowPath)) fits = false;
+          }
+        }
+        if (!fits) continue;
+        for (let yy = 0; yy < h; yy += 1) {
+          for (let xx = 0; xx < w; xx += 1) {
+            const cell = (originY + yy) * width + originX + xx;
+            structureLayer[cell] = STRUCTURE_LAYER_VALUE[type];
+            decoration.propLayer[cell] = 0;
+            decoration.decalLayer[cell] = 0;
+          }
+        }
+        typeCounts.set("poi.city_ruin", (typeCounts.get("poi.city_ruin") ?? 0) + 1);
+        cityCount += 1;
+        pois.push({
+          id: pois.length,
+          type: "poi.city_ruin",
+          x: originX,
+          y: originY,
+          structure: { type, x: originX, y: originY, w, h },
+        });
+        return;
+      }
+    };
+    cityStamp("structure.ruined_gate", [[7, 11]], true);
+    cityStamp("structure.keep", [[4, 4], [10, 4], [4, 7], [10, 7]]);
+    cityStamp("structure.ruined_tower", [[1, 1], [1, 2]]);
+    cityStamp("structure.ruined_tower", [[14, 1], [14, 2]]);
+    cityStamp("structure.dungeon", [[4, 1], [2, 2], [10, 1]]);
+    cityStamp("structure.monolith", [[6, 1], [2, 4], [12, 1]]);
+    cityStamp("structure.ruin_temple", [[11, 2], [11, 1], [5, 2]]);
+    cityStamp("structure.buried_statue", [[1, 4], [1, 6], [14, 4]]);
+    cityStamp("structure.house_abandoned", [[10, 4], [9, 4], [11, 5]]);
+    cityStamp("structure.house_burned", [[13, 4], [12, 4], [13, 5]]);
+    cityStamp("structure.crypt", [[2, 8], [1, 8], [2, 9]]);
+    cityStamp("structure.house_abandoned", [[4, 8], [5, 8], [4, 9]]);
+    cityStamp("structure.house_burned", [[9, 8], [10, 8], [9, 9]]);
+    cityStamp("structure.portal", [[12, 8], [12, 9], [11, 8]]);
+    // Street furniture: the ruins between the ruins.
+    putProp(plan.x + 5, plan.y + 1, "prop.pillar");
+    putProp(plan.x + 12, plan.y + 1, "prop.pillar");
+    putProp(plan.x + 1, plan.y + 6, "prop.stone_blocks");
+    putProp(plan.x + 15, plan.y + 6, "prop.broken_boards");
+    putProp(plan.x + 5, plan.y + 10, "prop.ash_pile");
+    putProp(plan.x + 14, plan.y + 10, "prop.stone_blocks");
+    putDecal(plan.x + 6, plan.y + 2, "decal.rubble");
+    putDecal(plan.x + 10, plan.y + 6, "decal.cracks");
+    putDecal(plan.x + 4, plan.y + 6, "decal.webs");
+    putDecal(plan.x + 12, plan.y + 10, "decal.bones");
+    putDecal(plan.x + 8, plan.y + 3, "decal.scorch");
+    putDecal(plan.x + 2, plan.y + 10, "decal.rubble");
+  }
+
   // Cave mouths seed first (the far reaches' anchors): rock-edge cells are
   // ~2% of the world, so the general stream rarely samples one before the
   // budget fills. A dedicated bounded scan on its own channel lane places
@@ -338,7 +433,7 @@ export function planPois(
     }
   }
 
-  for (let attempt = 0; attempt < attempts && pois.length < budget; attempt += 1) {
+  for (let attempt = 0; attempt < attempts && pois.length < budget + cityCount; attempt += 1) {
     const x = roll.intAt(attempt, 0, 4, width - 8, 0) + 4;
     const y = roll.intAt(attempt, 1, 4, height - 8, 0) + 4;
     const center = cellAt(x, y);

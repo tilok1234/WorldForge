@@ -57,6 +57,16 @@ const STRUCTURE_NAME: { readonly [key: string]: string } = {
   "structure.crypt": "crypt",
   "structure.ruin": "ruin",
   "structure.giant_skeleton": "giantskeleton",
+  "structure.ruined_gate": "gate_ruined",
+  "structure.keep": "keep",
+  "structure.ruined_tower": "rtower",
+  "structure.house_abandoned": "house_abandoned",
+  "structure.house_burned": "house_burned",
+  "structure.dungeon": "dungeon",
+  "structure.ruin_temple": "ruintemple",
+  "structure.portal": "portal",
+  "structure.monolith": "monolith",
+  "structure.buried_statue": "buriedstatue",
 };
 
 /** WorldForge semantic prop keys -> package prop species names. */
@@ -357,12 +367,16 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
   ];
 
   // Wall-painting structures: fortress walls are stone city wall (type 1),
-  // bandit-camp palisades are the palisade family (type 2); gates stay open.
+  // bandit-camp palisades are the palisade family (type 2), and the old
+  // kingdom's broken circuit is the ruined wall family (type 3); gates
+  // stay open.
   const stoneWallType = manifest.wallTypeByKey.get("wall") ?? 1;
   const palisadeType = manifest.wallTypeByKey.get("palisade") ?? 2;
+  const ruinedWallType = manifest.wallTypeByKey.get("ruinedwall") ?? 3;
   const gateValue = 1; // structure.fortress_gate in STRUCTURE_TYPES order
   const wallValue = 2; // structure.fortress_wall
   const campWallValue = RESOLVED_STRUCTURE_TYPES.indexOf("structure.camp_wall") + 1;
+  const ruinedWallValue = RESOLVED_STRUCTURE_TYPES.indexOf("structure.ruined_wall") + 1;
   let wallCells = 0;
   for (let index = 0; index < cellCount; index += 1) {
     const structure = composed.structureLayer[index] as number;
@@ -372,6 +386,22 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
     } else if (structure === campWallValue) {
       wall[index] = palisadeType;
       wallCells += 1;
+    } else if (structure === ruinedWallValue) {
+      wall[index] = ruinedWallType;
+      wallCells += 1;
+    }
+  }
+
+  // The old kingdom's streets: landmark plans may carry ruined-road cells
+  // (stamp legend road: "ruined"); they render on the road layer.
+  {
+    const ruinedRoadType = manifest.roadTypeByKey.get("ruinedroad") ?? 0;
+    for (const plan of composed.landmarkPlans) {
+      for (const cell of plan.ruinedRoadCells ?? []) {
+        if (road[cell] === 0) {
+          road[cell] = ruinedRoadType;
+        }
+      }
     }
   }
 

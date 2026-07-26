@@ -5,11 +5,14 @@
   "biases": {
     "northElevationPermille": 350
   },
-  "landmarks": [{ "type": "ancient_fortress", "relation": "across_river_from_town" }],
+  "landmarks": [
+    { "type": "ancient_fortress", "relation": "across_river_from_town" },
+    { "type": "ruined_city", "relation": "high_ground" }
+  ],
   "budgets": {
     "regionCount": 4,
     "settlementCount": 10,
     "primaryRouteCount": 3,
-    "landmarkCount": 1
+    "landmarkCount": 2
   }
 }

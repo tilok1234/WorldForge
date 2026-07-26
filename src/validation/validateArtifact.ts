@@ -141,8 +141,23 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
   }
 
   if (errors.length === 0) {
+    // Structures claim cells exactly once. Landmarks claim into their own
+    // zone set (behavior 21): a landmark is a district — the ruined city
+    // deliberately hosts poi structures inside its walls — so poi
+    // footprints may sit inside a landmark rect but never overlap another
+    // structure, and landmark rects never overlap settlements' structures
+    // or each other.
     const occupied = new Set<number>();
-    const claim = (label: string, cellX: number, cellY: number, fw: number, fh: number): void => {
+    const landmarkZone = new Set<number>();
+    const claim = (
+      label: string,
+      cellX: number,
+      cellY: number,
+      fw: number,
+      fh: number,
+      checkSets: ReadonlyArray<Set<number>>,
+      addTo: Set<number>,
+    ): void => {
       for (let sy = 0; sy < fh; sy += 1) {
         for (let sx = 0; sx < fw; sx += 1) {
           const cx = cellX + sx;
@@ -152,11 +167,13 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
             return;
           }
           const key = cy * width + cx;
-          if (occupied.has(key)) {
-            errors.push(`${label} overlaps another structure at (${cx}, ${cy})`);
-            return;
+          for (const set of checkSets) {
+            if (set.has(key)) {
+              errors.push(`${label} overlaps another structure at (${cx}, ${cy})`);
+              return;
+            }
           }
-          occupied.add(key);
+          addTo.add(key);
         }
       }
     };
@@ -168,15 +185,25 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
           structure.cell[1],
           structure.footprint[0],
           structure.footprint[1],
+          [occupied, landmarkZone],
+          occupied,
         );
       }
     }
     for (const landmark of artifact.landmarks) {
-      claim(`landmark ${landmark.id}`, landmark.cell[0], landmark.cell[1], landmark.footprint[0], landmark.footprint[1]);
+      claim(
+        `landmark ${landmark.id}`,
+        landmark.cell[0],
+        landmark.cell[1],
+        landmark.footprint[0],
+        landmark.footprint[1],
+        [occupied, landmarkZone],
+        landmarkZone,
+      );
     }
     for (const poi of artifact.pois) {
       if (poi.structure !== undefined) {
-        claim(`poi ${poi.id} ${poi.structure.type}`, poi.structure.x, poi.structure.y, poi.structure.w, poi.structure.h);
+        claim(`poi ${poi.id} ${poi.structure.type}`, poi.structure.x, poi.structure.y, poi.structure.w, poi.structure.h, [occupied], occupied);
       }
     }
   }

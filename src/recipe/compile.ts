@@ -95,6 +95,9 @@ export interface RouteRules {
   readonly edgePenaltyRadius: number;
   /** Maximum extra cost at the border itself, tapering to 0 at the radius. */
   readonly edgePenaltyCost: number;
+  /** Shortcut trails (routes.graph v4): rough paths between near pairs. */
+  readonly shortcutTrailMax: number;
+  readonly shortcutTrailSpan: number;
 }
 
 export interface SettlementRules {
@@ -152,7 +155,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 8;
+  readonly resolvedConfigFormat: 9;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -259,7 +262,7 @@ const WATER_RULES: {
 /** macro.fields rule pack v2: snow-elevation coupling (W3 acceptance brief). */
 const TEMPERATURE_LAPSE = { startElevationPermille: 640, strengthPermille: 700 };
 
-/** routes.graph rule pack v1: costs, widths, spacing per size preset. */
+/** routes.graph rule pack v4: costs, widths, spacing, shortcut trails. */
 const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
   tiny: {
     stepCost: 10,
@@ -273,6 +276,8 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     detourWarnRatioPermille: 1800,
     edgePenaltyRadius: 6,
     edgePenaltyCost: 40,
+    shortcutTrailMax: 2,
+    shortcutTrailSpan: 40,
   },
   small: {
     stepCost: 10,
@@ -286,6 +291,8 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     detourWarnRatioPermille: 1800,
     edgePenaltyRadius: 12,
     edgePenaltyCost: 40,
+    shortcutTrailMax: 4,
+    shortcutTrailSpan: 80,
   },
 };
 
@@ -347,7 +354,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 8,
+    resolvedConfigFormat: 9,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,

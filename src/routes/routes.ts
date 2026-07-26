@@ -31,6 +31,31 @@ const MUD = PALETTE_INDEX["terrain.mud"];
 const SNOW = PALETTE_INDEX["terrain.snow"];
 const PACKED_ROAD = PALETTE_INDEX["terrain.packed_road"];
 const COBBLE = PALETTE_INDEX["terrain.cobble"];
+const ROCK = PALETTE_INDEX["terrain.rock"];
+const GRAVEL = PALETTE_INDEX["terrain.gravel"];
+
+/**
+ * Grade a rock cell a trail crosses (routes.graph v4). A lone rock cell
+ * between open land adopts a walkable neighbor's material so it merges with
+ * that region (no one-cell confetti); longer rock crossings become a
+ * connected gravel line.
+ */
+function gradeRockCell(cell: number, grid: number[], width: number, height: number): void {
+  const x = cell % width;
+  const y = (cell - x) / width;
+  const adoptable = new Set([GRASS, DRY_GRASS, SNOW, MUD, GRAVEL]);
+  for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+    const nx = x + dx;
+    const ny = y + dy;
+    if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+    const neighbor = grid[ny * width + nx] as number;
+    if (adoptable.has(neighbor)) {
+      grid[cell] = neighbor;
+      return;
+    }
+  }
+  grid[cell] = GRAVEL;
+}
 
 export interface Destination {
   readonly id: number;
@@ -84,6 +109,7 @@ export function buildRoutes(
   let trailCellCount = 0;
 
   // Prim MST over settlement candidates, Chebyshev edge weights.
+  const connectedPairs = new Set<string>();
   if (settlements.length > 1) {
     const inTree = new Set<number>([0]);
     const edges: Array<{ a: number; b: number; weight: number }> = [];
@@ -117,6 +143,7 @@ export function buildRoutes(
     const highwaySet = new Set(byLength.slice(0, highwayCount));
 
     for (const edge of edges) {
+      connectedPairs.add(`${Math.min(edge.a, edge.b)}:${Math.max(edge.a, edge.b)}`);
       const routeClass = highwaySet.has(edge) ? "highway" : "street";
       const fromCell = (settlements[edge.a] as Destination).cell;
       const toCell = (settlements[edge.b] as Destination).cell;
@@ -169,6 +196,11 @@ export function buildRoutes(
       } else {
         pathLayer[cell] = 1;
         trailCellCount += 1;
+        // Mountain trails are graded (routes.graph v4): the path is
+        // genuinely walkable, not just drawn.
+        if (grid[cell] === ROCK) {
+          gradeRockCell(cell, grid, width, height);
+        }
       }
     }
     routes.push({
@@ -179,6 +211,60 @@ export function buildRoutes(
       length: path.length,
       crossings,
     });
+  }
+
+  // Shortcut trails (routes.graph v4): rough paths between near settlement
+  // pairs the MST left apart — the wilderness gains small roads and the
+  // network gains loops. Trail class: dirt path band, never a paved road.
+  if (settlements.length > 2 && rules.shortcutTrailMax > 0) {
+    const shortcuts: Array<{ a: number; b: number; weight: number }> = [];
+    for (let a = 0; a < settlements.length; a += 1) {
+      for (let b = a + 1; b < settlements.length; b += 1) {
+        if (connectedPairs.has(`${a}:${b}`)) continue;
+        const weight = chebyshev(
+          (settlements[a] as Destination).cell,
+          (settlements[b] as Destination).cell,
+          width,
+        );
+        if (weight <= rules.shortcutTrailSpan) {
+          shortcuts.push({ a, b, weight });
+        }
+      }
+    }
+    shortcuts.sort((p, q) => p.weight - q.weight || p.a - q.a || p.b - q.b);
+    const used = new Set<number>();
+    let made = 0;
+    for (const shortcut of shortcuts) {
+      if (made >= rules.shortcutTrailMax) break;
+      if (used.has(shortcut.a) || used.has(shortcut.b)) continue; // spread them
+      const fromCell = (settlements[shortcut.a] as Destination).cell;
+      const toCell = (settlements[shortcut.b] as Destination).cell;
+      const path = dijkstra(fromCell, new Set([toCell]), grid, hydro, config, width, height);
+      if (path === null) continue;
+      const crossings: Crossing[] = [];
+      for (const cell of path) {
+        if (hydro.waterKind[cell] !== WATER_NONE || hydro.isRiver[cell] === 1) {
+          crossings.push({ cell, kind: hydro.isMajorRiver[cell] === 1 ? "bridge" : "ford" });
+        } else if (pathLayer[cell] === 0) {
+          pathLayer[cell] = 1;
+          trailCellCount += 1;
+          if (grid[cell] === ROCK) {
+            gradeRockCell(cell, grid, width, height);
+          }
+        }
+      }
+      routes.push({
+        id: routes.length,
+        routeClass: "trail",
+        fromCell,
+        toCell,
+        length: path.length,
+        crossings,
+      });
+      used.add(shortcut.a);
+      used.add(shortcut.b);
+      made += 1;
+    }
   }
 
   verifyRouteConnectivity(grid, pathLayer, routes, destinations, width, height, errors);
@@ -321,11 +407,14 @@ function pickDestinations(
         stampSpec.anchorY,
         stampSpec.height - 1 - stampSpec.anchorY,
       ) + 1;
+    // A settlement's true extent is its structure radius (streets AND the
+    // outermost lots) — the stamp must clear all of it. Lot origins sit on
+    // the ring, so footprints spill up to two more cells outward.
     const streetReach = (rank: number): number => {
       const rules = config.settlements;
-      if (rank === 0) return rules.cityPlazaRadius + rules.cityStreetArmLength;
-      if (rank <= rules.townCount) return rules.townPlazaRadius + rules.streetArmLength;
-      return rules.outpostPlazaRadius;
+      if (rank === 0) return Math.max(rules.cityRadius + 2, rules.cityPlazaRadius + rules.cityStreetArmLength);
+      if (rank <= rules.townCount) return Math.max(rules.townRadius + 2, rules.townPlazaRadius + rules.streetArmLength);
+      return rules.outpostRadius + 2;
     };
     let placedSlot = false;
     for (const candidate of landmarkScored) {
@@ -357,6 +446,7 @@ function pickDestinations(
             candidate.index,
             town.cell,
             hydro,
+            fields,
             fields.width,
             config.settlements.cityPlazaRadius + config.settlements.cityStreetArmLength,
           )
@@ -609,12 +699,18 @@ function relationHolds(
   cell: number,
   townCell: number,
   hydro: HydrologyResult,
+  fields: MacroFields,
   width: number,
   cityReach: number,
 ): boolean {
   const distance = chebyshev(cell, townCell, width);
   if (relation === "near_town") {
     return distance <= Math.trunc(width / 5) + cityReach;
+  }
+  if (relation === "high_ground") {
+    // The mountain relation (routes.graph v4): the site sits high — where
+    // the rock masses live — and clear of the capital's sprawl.
+    return (fields.elevation[cell] as number) >= 600 && distance >= Math.trunc(width / 6);
   }
   if (relation === "far_from_town") {
     return distance >= Math.trunc(width / 3);

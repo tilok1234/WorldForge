@@ -37,6 +37,8 @@ interface Stamp {
   /** Per cell: material palette index or -1, structure layer value or 0. */
   readonly material: readonly number[];
   readonly structure: readonly number[];
+  /** 1 where the legend marks road: "ruined" (the old kingdom's streets). */
+  readonly ruinedRoad: readonly number[];
 }
 
 export interface LandmarkPlan {
@@ -48,6 +50,8 @@ export interface LandmarkPlan {
   readonly height: number;
   readonly entranceX: number;
   readonly entranceY: number;
+  /** World cell indexes rendered as ruined road by the adapter. */
+  readonly ruinedRoadCells?: readonly number[];
 }
 
 const stampCache = new Map<string, Stamp>();
@@ -66,7 +70,7 @@ export function loadStamp(type: string): Stamp {
     entrance: { x: number; y: number };
     substrate: { maxSlopePermille: number };
     blendRadius: number;
-    legend: Record<string, { structure?: string; material?: string }>;
+    legend: Record<string, { structure?: string; material?: string; road?: string }>;
     cells: string[];
   };
   if (raw.stampFormat !== 1 || raw.type !== type) {
@@ -78,6 +82,7 @@ export function loadStamp(type: string): Stamp {
   }
   const material = new Array<number>(width * height).fill(-1);
   const structure = new Array<number>(width * height).fill(0);
+  const ruinedRoad = new Array<number>(width * height).fill(0);
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const token = (raw.cells[y] as string)[x] as string;
@@ -101,6 +106,12 @@ export function loadStamp(type: string): Stamp {
         }
         structure[y * width + x] = value;
       }
+      if (entry.road !== undefined) {
+        if (entry.road !== "ruined") {
+          throw new Error(`stamp ${type}: unknown road kind ${entry.road}`);
+        }
+        ruinedRoad[y * width + x] = 1;
+      }
     }
   }
   const stamp: Stamp = {
@@ -115,6 +126,7 @@ export function loadStamp(type: string): Stamp {
     blendRadius: raw.blendRadius,
     material,
     structure,
+    ruinedRoad,
   };
   stampCache.set(type, stamp);
   return stamp;
@@ -165,10 +177,19 @@ export function placeLandmarks(
       }
     }
 
-    // Gate approach joins the trail network so the landmark stays reachable.
+    // Gate approach joins the trail network so the landmark stays
+    // reachable. Approach cells that cross bare rock are graded to gravel
+    // (landmarks.stamps v2): a mountain landmark earns a real climbing
+    // path, and the walkable network reaches its gate.
     const gateX = originX + stamp.entranceX;
     const gateY = originY + stamp.entranceY;
-    carveTrailApproach(gateX, gateY + 1, grid, structureLayer, pathLayer, hydro, width, height);
+    const approach = carveTrailApproach(gateX, gateY + 1, grid, structureLayer, pathLayer, hydro, width, height);
+    const rockIndex = PALETTE_INDEX["terrain.rock"];
+    for (const cell of approach) {
+      if (grid[cell] === rockIndex) {
+        grid[cell] = GRAVEL;
+      }
+    }
 
     // Procedural blending: gravel scatter fading outward, never a hard edge.
     const probabilities = [650, 400, 180];
@@ -202,6 +223,15 @@ export function placeLandmarks(
       }
     }
 
+    const ruinedRoadCells: number[] = [];
+    for (let sy = 0; sy < stamp.height; sy += 1) {
+      for (let sx = 0; sx < stamp.width; sx += 1) {
+        if (stamp.ruinedRoad[sy * stamp.width + sx] === 1) {
+          ruinedRoadCells.push((originY + sy) * width + originX + sx);
+        }
+      }
+    }
+
     plans.push({
       id: slot,
       type: spec.type,
@@ -211,6 +241,7 @@ export function placeLandmarks(
       height: stamp.height,
       entranceX: gateX,
       entranceY: gateY,
+      ...(ruinedRoadCells.length === 0 ? {} : { ruinedRoadCells }),
     });
   }
   return plans;
@@ -260,10 +291,11 @@ function carveTrailApproach(
   hydro: HydrologyResult,
   width: number,
   height: number,
-): void {
+): number[] {
+  const carved: number[] = [];
   const start = startY * width + startX;
   if (startX < 0 || startY < 0 || startX >= width || startY >= height) {
-    return;
+    return carved;
   }
   const previous = new Map<number, number>();
   const queue = [start];
@@ -277,10 +309,11 @@ function carveTrailApproach(
       while (cursor !== -1) {
         if (pathLayer[cursor] === 0 && hydro.waterKind[cursor] === WATER_NONE && hydro.isRiver[cursor] === 0) {
           pathLayer[cursor] = 1;
+          carved.push(cursor);
         }
         cursor = previous.get(cursor) as number;
       }
-      return;
+      return carved;
     }
     const x = cell % width;
     const y = (cell - x) / width;
@@ -300,4 +333,5 @@ function carveTrailApproach(
       }
     }
   }
+  return carved;
 }

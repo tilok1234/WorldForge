@@ -55857,12 +55857,12 @@
   ],
   "formatVersion": 8,
   "generator": {
-    "generationIdentitySha256": "d0d9c9635e0aa99758b5bc277af445ab42016ed2f8011e42247c94095c50aa0d",
-    "generatorBehaviorVersion": 20,
+    "generationIdentitySha256": "01923b5ce21b8b0b2be3298b1213d40bcdca7b5f42177251dabe3274766e6819",
+    "generatorBehaviorVersion": 21,
     "name": "worldforge",
-    "recipeCompilerVersion": 9,
+    "recipeCompilerVersion": 10,
     "recipeSha256": "b18720c7f09ed2b9bba855ce538cdb4f0c1e5b7fb3bf4de0de61a89ac242d994",
-    "resolvedConfigSha256": "d27a760f72dc6c78d1c274d97877b7e8a8e04b476889ba4c8b3c996e48bb9504",
+    "resolvedConfigSha256": "846253abbe1d924678975fd93da2b7c7258f9c7577f2a567a2fc7865b960bddb",
     "seed": 1,
     "version": "0.1.0"
   },
@@ -56249,6 +56249,17 @@
     "structure.crypt",
     "structure.ruin",
     "structure.giant_skeleton",
-    "structure.camp_wall"
+    "structure.camp_wall",
+    "structure.ruined_wall",
+    "structure.ruined_gate",
+    "structure.keep",
+    "structure.ruined_tower",
+    "structure.house_abandoned",
+    "structure.house_burned",
+    "structure.dungeon",
+    "structure.ruin_temple",
+    "structure.portal",
+    "structure.monolith",
+    "structure.buried_statue"
   ]
 }

@@ -39,11 +39,17 @@ export const GENERATOR_VERSION = "0.1.0";
  *     scorch, cracks, webs, rune circles); new kinds: abandoned caravan,
  *     witch circle, frozen wreck, mountain shrine; poi budget 64/16; ten
  *     more prop species.
+ * 21: the old kingdom and the path network — ruined_city landmark stamp
+ *     (walls, streets, keep, four delves: dungeon/temple/portal/crypt;
+ *     landmarks.stamps 2), high_ground relation, shortcut trails between
+ *     near settlements (routes.graph 4), wilderness spur paths to worked
+ *     discoveries, mountain approaches graded to gravel; thirteen new
+ *     structure types (decoration.pois 6, settlements.plans 6).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 20;
+export const GENERATOR_BEHAVIOR_VERSION = 21;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 9;
+export const RECIPE_COMPILER_VERSION = 10;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -51,11 +57,11 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 4,
   "macro.biomes": 3,
   "hydrology.water": 2,
-  "routes.graph": 3,
-  "settlements.plans": 5,
-  "landmarks.stamps": 1,
+  "routes.graph": 4,
+  "settlements.plans": 6,
+  "landmarks.stamps": 2,
   "decoration.props": 5,
-  "decoration.pois": 5,
+  "decoration.pois": 6,
   "adapter.tileforge": 3,
 };
 

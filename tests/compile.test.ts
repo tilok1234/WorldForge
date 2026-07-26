@@ -41,7 +41,7 @@ describe("recipe compiler", () => {
     assert.equal(config.dependencies.tileforge?.packageId, "forest-a5baf52-seed103991");
     assert.match(config.dependencies.tileforge?.packageSha256 ?? "", /^3e58c902/);
     assert.deepEqual(config.passes, ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "decoration.props", "adapter.tileforge"]);
-    assert.equal(config.resolvedConfigFormat, 8);
+    assert.equal(config.resolvedConfigFormat, 9);
     assert.equal(config.water.seaLevelPermille, 310);
     assert.equal(config.macroFields.temperatureLapse.startElevationPermille, 640);
     assert.equal(config.routes.streetWidth, 2);

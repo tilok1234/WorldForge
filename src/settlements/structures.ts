@@ -27,6 +27,17 @@ export const STRUCTURE_TYPES = [
   "structure.ruin",
   "structure.giant_skeleton",
   "structure.camp_wall",
+  "structure.ruined_wall",
+  "structure.ruined_gate",
+  "structure.keep",
+  "structure.ruined_tower",
+  "structure.house_abandoned",
+  "structure.house_burned",
+  "structure.dungeon",
+  "structure.ruin_temple",
+  "structure.portal",
+  "structure.monolith",
+  "structure.buried_statue",
 ] as const;
 
 export type StructureType = (typeof STRUCTURE_TYPES)[number];
@@ -59,4 +70,14 @@ export const STRUCTURE_FOOTPRINTS: { readonly [key in StructureType]?: readonly 
   "structure.crypt": [2, 2],
   "structure.ruin": [3, 2],
   "structure.giant_skeleton": [4, 2],
+  "structure.ruined_gate": [3, 2],
+  "structure.keep": [4, 4],
+  "structure.ruined_tower": [2, 2],
+  "structure.house_abandoned": [3, 3],
+  "structure.house_burned": [3, 3],
+  "structure.dungeon": [2, 2],
+  "structure.ruin_temple": [3, 2],
+  "structure.portal": [3, 2],
+  "structure.monolith": [2, 2],
+  "structure.buried_statue": [2, 2],
 };
