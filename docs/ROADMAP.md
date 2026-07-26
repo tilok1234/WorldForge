@@ -10,8 +10,12 @@ remain gated until the foundation proves deterministic and integrable.
 TypeScript is the adopted language for the engine-neutral compiler and CLI. See
 `decisions/ADR-0001-typescript.md`.
 
-Status 2026-07-26: W0-W5 are complete and visually approved as baselines; W6
-is complete and approved at the data level. Two W6 exit criteria transfer to
+Status 2026-07-26 (late session): W0–W6 complete and approved; W7 and W8
+functionally complete with machine-verified evidence (entry gates, §4
+acceptance, playable streamed Godot slice, public TS loader with cell-exact
+walkability parity, viewer on the loader); the current look is a PROVISIONAL
+baseline — formal visual approval deferred to the end-of-plan polish round.
+W9 remains. Earlier per-milestone status: Two W6 exit criteria transfer to
 the W7 entry gate and must not quietly vanish: (1) the reference slice passing
 the TileForge acceptance procedure through the packaged Godot importer per the
 guide map-reference method; (2) chunk-border matching at resolution level —

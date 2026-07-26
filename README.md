@@ -77,13 +77,14 @@ policy.
 
 ## Project status
 
-**Milestones W0 and W1 complete: pinned TypeScript toolchain, W0 `WorldRecipe`
-contract, recipe compiler, path guard, walking-skeleton pipeline, the approved
-TileForge forest package (the `a5baf52` export set) pinned with its dependency
-lock (`tileforge.lock.json`), and the deterministic kernel — integer hash
-primitives, named channels, coordinate conversions, and fixed-point helpers,
-protected by cross-platform golden vectors. Next: Milestone W2, the finite
-macro world.**
+**Milestones W0–W6 complete and approved; W7 (Godot vertical slice) and W8
+(TypeScript consumer) functionally complete — both entry-gate proofs, the §4
+acceptance test, a streamed playable Godot world, a public TypeScript loader
+with cell-exact cross-consumer walkability parity, and the read-only viewer
+running on that loader. Worlds carry forests, varied settlements with plaza
+fountains, farms, piers, beaches, and stream fords. Final visual baseline
+approval and W9 (AI authoring workflow) remain; `HANDOFF.md` carries live
+session state.**
 
 The intended first release is a small finite seeded world that:
 

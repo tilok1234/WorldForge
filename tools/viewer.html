@@ -40,6 +40,7 @@
     <label class="semantic-only"><input type="checkbox" data-layer="river" checked> rivers</label>
     <label class="semantic-only"><input type="checkbox" data-layer="path" checked> paths</label>
     <label class="semantic-only"><input type="checkbox" data-layer="structures" checked> structures</label>
+    <label class="semantic-only"><input type="checkbox" data-layer="walkable"> walkability</label>
     <label><input type="checkbox" data-layer="routes" checked> routes</label>
     <label><input type="checkbox" data-layer="chunks"> chunk grid</label>
   </div>
@@ -81,10 +82,18 @@ const TILE = 32, CHUNK = 32;
 const state = {
   mode: null, // "semantic" | "native"
   world: null, cells: null,               // semantic
+  handle: null,                            // public-loader WorldHandle
+  walkable: null,                          // Uint8Array from handle.walkableAt
   native: null,                            // {img, mapData, slice, diagnostics}
   view: { x: 0, y: 0, scale: 4 },          // scale = screen px per CELL
   dir: null,
 };
+// W8: the viewer runs on the PUBLIC loader — opening a world exercises the
+// same consumer contract a game uses (validation, typed access, walkability).
+let loaderModule = null;
+const loaderReady = import("/dist/src/consumers/typescript/loader.js")
+  .then((module) => { loaderModule = module; })
+  .catch(() => { loaderModule = null; });
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const stage = document.getElementById("stage");
@@ -133,7 +142,32 @@ function flatten(world) {
   return { material, elevation, river, path, structure };
 }
 
-function loadWorld(world) {
+async function loadWorld(world) {
+  await loaderReady;
+  let loaderLine = "legacy mode (public loader unavailable over file://)";
+  state.handle = null;
+  state.walkable = null;
+  if (loaderModule !== null) {
+    const result = loaderModule.loadWorldArtifact(world);
+    if (!result.ok) {
+      const drop = document.getElementById("drop");
+      drop.style.display = "flex";
+      drop.textContent = "artifact REJECTED by the public loader:\n" +
+        result.issues.map((issue) => `${issue.path}: ${issue.message}`).join("\n");
+      document.getElementById("worldInfo").textContent = "rejected — see stage";
+      return;
+    }
+    state.handle = result.world;
+    const { width, height } = result.world.dimensions;
+    const walkable = new Uint8Array(width * height);
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        walkable[y * width + x] = result.world.walkableAt(x, y) ? 1 : 0;
+      }
+    }
+    state.walkable = walkable;
+    loaderLine = "validated by the public loader ✓";
+  }
   setMode("semantic");
   state.world = world;
   state.cells = flatten(world);
@@ -141,7 +175,8 @@ function loadWorld(world) {
   document.getElementById("worldInfo").textContent =
     `${world.dimensions.width}×${world.dimensions.height}, ${world.chunks.length} chunks\n` +
     `seed ${g.seed}, behavior v${g.generatorBehaviorVersion}\n` +
-    `regions ${world.regions.length}, destinations ${(world.destinations || []).length}`;
+    `regions ${world.regions.length}, destinations ${(world.destinations || []).length}\n` +
+    loaderLine;
   document.getElementById("routeInfo").textContent = (world.routes || [])
     .map((r) => `#${r.id} ${r.routeClass} len ${r.length} crossings ${r.crossings.length}`)
     .join("\n") || "none";
@@ -222,6 +257,9 @@ function draw() {
       if (on("river") && state.cells.river[i] >= 1) color = state.cells.river[i] === 2 ? [30, 80, 160] : RIVER;
       if (on("path") && state.cells.path[i] === 1) color = TRAIL;
       if (on("structures") && state.cells.structure[i] !== 0) color = state.cells.structure[i] === 1 ? [128, 64, 44] : [70, 40, 36];
+      if (on("walkable") && state.walkable !== null && state.walkable[i] === 0) {
+        color = [(color[0] * 2 + 200) / 3, color[1] / 2, color[2] / 2];
+      }
       image.data[i * 4] = color[0]; image.data[i * 4 + 1] = color[1];
       image.data[i * 4 + 2] = color[2]; image.data[i * 4 + 3] = 255;
     }
@@ -325,12 +363,20 @@ window.addEventListener("pointermove", (event) => {
     return;
   }
   const i = cy * width + cx;
+  const handleExtras = state.handle === null ? "" :
+    `${state.handle.propAt(cx, cy) ? `\n${state.handle.propAt(cx, cy)}` : ""}` +
+    `${state.handle.decalAt(cx, cy) ? `\n${state.handle.decalAt(cx, cy)}` : ""}` +
+    `${state.handle.fenceAt(cx, cy) ? `\n${state.handle.fenceAt(cx, cy)}` : ""}` +
+    `${state.handle.pierAt(cx, cy) ? `\n${state.handle.pierAt(cx, cy)}` : ""}` +
+    `${state.handle.cropAt(cx, cy) ? `\n${state.handle.cropAt(cx, cy).type} stage ${state.handle.cropAt(cx, cy).stage}` : ""}` +
+    `\n${state.handle.walkableAt(cx, cy) ? "walkable" : "blocked"}`;
   document.getElementById("hoverInfo").textContent =
     `cell (${cx}, ${cy})\nchunk (${Math.floor(cx / chunkWidth)}, ${Math.floor(cy / chunkHeight)})\n` +
     `${state.world.semanticPalette[state.cells.material[i]]}\n` +
     `elevation ${state.cells.elevation[i]}‰` +
     (state.cells.structure[i] !== 0 && state.world.structureTypes ? `\n${state.world.structureTypes[state.cells.structure[i] - 1]}` : "") +
-    `${state.cells.river[i] ? "\nriver" : ""}${state.cells.path[i] ? "\ntrail" : ""}`;
+    `${state.cells.river[i] ? "\nriver" : ""}${state.cells.path[i] ? "\ntrail" : ""}` +
+    handleExtras;
 });
 
 async function refresh() {
