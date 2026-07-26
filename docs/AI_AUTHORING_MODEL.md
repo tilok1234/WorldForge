@@ -188,7 +188,24 @@ An AI authoring client must not:
 - execute arbitrary code embedded in a recipe;
 - declare a generated world approved without the required evidence and review.
 
-## Future W9 iteration model
+## W9 tooling (implemented)
+
+The workflow above is carried by CLI contracts — no model call ever enters
+the deterministic pipeline:
+
+- `validate-brief <brief.json>` — the intent-brief format (prose,
+  constraints, provenance).
+- `explain-recipe <recipe.json>` — human-readable explanation with both
+  identity hashes.
+- `diff-recipes <from> <to>` — the structured proposal format; normalized
+  field diffs plus the identity impact.
+- `compare-worlds <a/world.json> <b/world.json>` — candidate comparison
+  summary (biome/structure/route/decoration counts).
+- `approve-recipe <recipe> [--baseline]` — records the user's approval
+  state in a sidecar (`<recipe>.approval.json`); any later recipe change
+  no longer matches the recorded `recipeSha256`, making drift visible.
+
+## W9 iteration model
 
 A useful AI-assisted iteration is expressed as a recipe diff:
 

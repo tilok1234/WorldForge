@@ -35,6 +35,15 @@ import { resolveToTileForge } from "./adapters/tileforge/resolve.js";
 import { loadPinnedManifest } from "./adapters/tileforge/manifest.js";
 import { TILEFORGE_ADAPTER_VERSION } from "./core/version.js";
 import {
+  buildApproval,
+  compareWorlds,
+  diffRecipes,
+  explainRecipe,
+  renderRecipeDiff,
+  validateBrief,
+} from "./authoring/authoring.js";
+import type { WorldArtifact } from "./generation/generate.js";
+import {
   renderTmjDocument,
   verifyAgainstPackageMap,
   verifyChunkedResolution,
@@ -70,6 +79,16 @@ const USAGE = `worldforge <command>
                                chunked resolution matches global resolution
                                for the recipe's world (default: the canonical
                                recipe)
+  validate-brief <file>        validate a W9 intent brief (prose + provenance)
+  explain-recipe <file>        human-readable explanation of a recipe and its
+                               identities
+  diff-recipes <a> <b>         structured normalized diff between two recipes
+                               (the W9 proposal format)
+  compare-worlds <a> <b>       comparison summary of two generated worlds
+                               (world.json paths)
+  approve-recipe <file> [--baseline] [--note <text>] [--date <iso>]
+                               record the user's approval state beside the
+                               recipe (<file>.approval.json)
 `;
 
 main(process.argv.slice(2));
@@ -109,6 +128,21 @@ function main(argv: readonly string[]): void {
       break;
     case "verify-resolution":
       exitWith(runVerifyResolution(argv[1]));
+      break;
+    case "validate-brief":
+      exitWith(runValidateBrief(argv[1]));
+      break;
+    case "explain-recipe":
+      exitWith(runExplainRecipe(argv[1]));
+      break;
+    case "diff-recipes":
+      exitWith(runDiffRecipes(argv[1], argv[2]));
+      break;
+    case "compare-worlds":
+      exitWith(runCompareWorlds(argv[1], argv[2]));
+      break;
+    case "approve-recipe":
+      exitWith(runApproveRecipe(argv.slice(1)));
       break;
     case undefined:
     case "help":
@@ -599,6 +633,94 @@ function runVerifyResolution(file: string | undefined): number {
     return 1;
   }
   process.stdout.write("resolution verification: pass\n");
+  return 0;
+}
+
+function runValidateBrief(file: string | undefined): number {
+  if (file === undefined) {
+    process.stderr.write("usage: worldforge validate-brief <brief.json>\n");
+    return 2;
+  }
+  const result = validateBrief(JSON.parse(readFileSync(file, "utf8")));
+  if (!result.ok) {
+    for (const issue of result.issues) {
+      process.stderr.write(`${issue.path}: ${issue.message}\n`);
+    }
+    return 1;
+  }
+  process.stdout.write(
+    `valid brief: "${result.brief.intent.slice(0, 72)}${result.brief.intent.length > 72 ? "…" : ""}"\n` +
+      `constraints: ${result.brief.constraints?.length ?? 0}\n`,
+  );
+  return 0;
+}
+
+function runExplainRecipe(file: string | undefined): number {
+  const loaded = loadRecipe(file);
+  if (typeof loaded === "number") {
+    return loaded;
+  }
+  process.stdout.write(explainRecipe(loaded) + "\n");
+  return 0;
+}
+
+function runDiffRecipes(fileA: string | undefined, fileB: string | undefined): number {
+  if (fileA === undefined || fileB === undefined) {
+    process.stderr.write("usage: worldforge diff-recipes <from.json> <to.json>\n");
+    return 2;
+  }
+  const from = loadRecipe(fileA);
+  if (typeof from === "number") return from;
+  const to = loadRecipe(fileB);
+  if (typeof to === "number") return to;
+  process.stdout.write(renderRecipeDiff(diffRecipes(from, to)) + "\n");
+  return 0;
+}
+
+function runCompareWorlds(fileA: string | undefined, fileB: string | undefined): number {
+  if (fileA === undefined || fileB === undefined) {
+    process.stderr.write("usage: worldforge compare-worlds <a/world.json> <b/world.json>\n");
+    return 2;
+  }
+  const a = JSON.parse(readFileSync(fileA, "utf8")) as WorldArtifact;
+  const b = JSON.parse(readFileSync(fileB, "utf8")) as WorldArtifact;
+  process.stdout.write(compareWorlds(a, b) + "\n");
+  return 0;
+}
+
+function runApproveRecipe(argv: readonly string[]): number {
+  const positional: string[] = [];
+  let baseline = false;
+  let note: string | undefined;
+  let date: string | undefined;
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === "--baseline") baseline = true;
+    else if (arg === "--note" && argv[i + 1] !== undefined) {
+      note = argv[i + 1] as string;
+      i += 1;
+    } else if (arg === "--date" && argv[i + 1] !== undefined) {
+      date = argv[i + 1] as string;
+      i += 1;
+    } else if (arg !== undefined) positional.push(arg);
+  }
+  const file = positional[0];
+  const loaded = loadRecipe(file);
+  if (typeof loaded === "number") {
+    return loaded;
+  }
+  const approval = buildApproval(loaded, {
+    accept: true,
+    baseline,
+    ...(note !== undefined ? { note } : {}),
+    ...(date !== undefined ? { date } : {}),
+  });
+  const target = `${file}.approval.json`;
+  writeFileSync(target, canonicalJson(approval));
+  process.stdout.write(
+    `recorded: recipe accepted${baseline ? " + visual baseline approved" : ""}\n` +
+      `recipeSha256 ${approval.recipeSha256}\nwrote ${target}\n`,
+  );
   return 0;
 }
 

@@ -15,7 +15,10 @@ functionally complete with machine-verified evidence (entry gates, §4
 acceptance, playable streamed Godot slice, public TS loader with cell-exact
 walkability parity, viewer on the loader); the current look is a PROVISIONAL
 baseline — formal visual approval deferred to the end-of-plan polish round.
-W9 remains. Earlier per-milestone status: Two W6 exit criteria transfer to
+W9 tooling is implemented (brief validation, recipe explanation, structured
+diffs, candidate comparison, recorded approval states). Remaining before the
+plan closes: the user's windowed Godot playthrough, the end-of-plan polish
+round, and formal visual baseline approval. Earlier per-milestone status: Two W6 exit criteria transfer to
 the W7 entry gate and must not quietly vanish: (1) the reference slice passing
 the TileForge acceptance procedure through the packaged Godot importer per the
 guide map-reference method; (2) chunk-border matching at resolution level —
