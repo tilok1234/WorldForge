@@ -151,6 +151,12 @@ User intent
 ## Goals
 
 - Generate a coherent finite world before pursuing infinite generation.
+- Serve the first consumer game's open-world ambition through offline-generated,
+  chunk-streamed artifacts. This is a deliberate compromise, not an oversight:
+  the game concept calls for runtime terrain generation, and WorldForge answers
+  it first with a finite pregenerated world streamed in chunks. In-process
+  runtime generation stays a deferred, explicit later capability that must not
+  change the artifact contract.
 - Keep output engine-neutral until the adapter layer.
 - Make the complete world reproducible from a small configuration.
 - Support deterministic chunk streaming.

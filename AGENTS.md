@@ -50,6 +50,12 @@ If a task appears to require a TileForge change:
 
 Do not make the change merely because filesystem permissions allow it.
 
+This path works in practice: WorldForge needed a stable package identity for
+its dependency lock, the request became a user-scoped TileForge task, and the
+manifest `sourceCommit` field shipped upstream the same day (TileForge commit
+`a5baf52`, 2026-07-26). Ask for the smallest upstream change; do not work
+around the package.
+
 ## Scope discipline
 
 - Modify only files required by the current WorldForge task.

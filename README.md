@@ -79,7 +79,9 @@ policy.
 
 **W0A in progress: pinned TypeScript toolchain, W0 `WorldRecipe` contract,
 recipe compiler, path guard, and walking-skeleton pipeline. W0B (import of the
-first approved TileForge package) is pending the first real export.**
+first approved TileForge package) is unblocked: the first pin candidate is the
+TileForge `a5baf52` export set (2026-07-26) — band-free road doctrine, the
+packed-road family, and the manifest `sourceCommit` identity field.**
 
 The intended first release is a small finite seeded world that:
 

@@ -105,19 +105,27 @@ strength.
 
 ## Roads and routes
 
+Aligned with the upstream TileForge road doctrine as of the 2026-07-26 ruling
+(packages `a5baf52` and later): routes are corridors of ground material, and
+the one-cell road band is deprecated for route display.
+
 - A primary route MUST connect meaningful destinations.
 - Route generation MUST distinguish graph intent from rendered cell paths.
-- Country roads SHOULD use a wider semantic corridor with a one-cell road
-  centerline rather than a bare line across uniform terrain.
-- A TileForge country-road corridor SHOULD be two to three cells of soil or
-  gravel beneath and beside the road band.
-- Mixed road-type junctions MUST use the wider family at the shared junction
-  cell.
-- Road type MUST NOT switch at an arbitrary mid-run butt joint.
-- Dirt paths SHOULD serve local spurs, shortcuts, shrines, and minor access.
-- Primary settlement and inter-region routes SHOULD prefer road or ruined road.
-- Widths equivalent to TileForge's 8–10 px road setting are curb or alley
-  treatments and MUST have a painted supporting area.
+- Roads MUST be rendered as corridors of ground material. The default route
+  floor is the packed-road material; soil and gravel corridors serve character
+  routes such as farm lanes and quarry tracks.
+- Country roads MUST render as bare corridors two to four cells wide. The
+  one-cell road band MUST NOT be laid along routes; it re-creates the
+  line-drawn-on-the-map failure the corridor doctrine replaced.
+- The dirt-path band remains valid for faint backtrails and minor local spurs
+  (the one band retaining a display job in the pinned doctrine).
+- Town streets are cobble areas. The corridor rim, not a painted centerline,
+  carries the organic read.
+- Route legs SHOULD stay axis-aligned with explicit corner turns; diagonal
+  legs stair-step at gameplay zoom in the pinned tile system.
+- Major water crossings MUST be bridge structures; minor crossings SHOULD use
+  the ford decal at valid route-water intersections.
+- Corridor material MUST NOT switch at an arbitrary mid-run butt joint.
 - Roads SHOULD prefer plausible grade and crossing cost.
 - Required route connectivity MUST be validated after decoration.
 

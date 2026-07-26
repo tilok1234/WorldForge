@@ -107,6 +107,7 @@ A pinned dependency record should contain at least:
   "generator": "tileforge-proto/0.4.0",
   "manifestFormat": 1,
   "theme": "forest",
+  "sourceCommit": "<manifest sourceCommit, e.g. a5baf52>",
   "packageSha256": "<sha256>",
   "manifestSha256": "<sha256>",
   "importedAt": "<timestamp>",
@@ -202,13 +203,18 @@ A TileForge upgrade is a deliberate compatibility event:
 1. Import the new package into a new versioned fixture directory under
    `fixtures/tileforge-packages/`.
 2. Validate manifest format and required mappings.
-3. If useful, inspect or download the corresponding TileForge tag or commit
-   without modifying it.
-4. Run semantic lookup tests.
-5. Run the full reference-map acceptance test.
-6. Compare generated world fixtures.
-7. Record expected visual or semantic changes.
-8. Update the WorldForge dependency lock only after approval.
+3. Diff the packaged `GAME-GUIDE.md` generation doctrine (route recipes,
+   walkability ladder, layer order, deprecations) against
+   `docs/GENERATION_RULES.md` and reconcile explicitly. Upstream doctrine can
+   move between packages — precedent: the 2026-07-26 road-band deprecation
+   landed upstream the same day the first draft of the rules was written.
+4. If useful, inspect or download the corresponding TileForge tag or commit
+   without modifying it (the manifest `sourceCommit` field identifies it).
+5. Run semantic lookup tests.
+6. Run the full reference-map acceptance test.
+7. Compare generated world fixtures.
+8. Record expected visual or semantic changes.
+9. Update the WorldForge dependency lock only after approval.
 
 Never overwrite or remove the previously pinned package before comparison and
 approval are complete.
