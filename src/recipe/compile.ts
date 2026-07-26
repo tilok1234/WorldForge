@@ -74,6 +74,20 @@ export interface WaterRules {
   readonly coastalInfluenceRadius: number;
 }
 
+export interface RouteRules {
+  readonly stepCost: number;
+  /** Added per permille of |filled elevation delta| between cells. */
+  readonly slopeCostPerPermille: number;
+  readonly networkRiverCrossCost: number;
+  readonly majorRiverCrossCost: number;
+  readonly shallowWaterCrossCost: number;
+  readonly minDestinationSpacing: number;
+  readonly streetWidth: number;
+  readonly highwayWidth: number;
+  /** Route length over Chebyshev distance beyond this ratio warns. */
+  readonly detourWarnRatioPermille: number;
+}
+
 export interface BiomeRules {
   /** Regions smaller than this merge into a neighbor during smoothing. */
   readonly minRegionCells: number;
@@ -90,7 +104,7 @@ export interface BiomeRules {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 3;
+  readonly resolvedConfigFormat: 4;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -112,6 +126,7 @@ export interface ResolvedWorldConfig {
     };
   };
   readonly water: WaterRules;
+  readonly routes: RouteRules;
   readonly biomes: BiomeRules;
   readonly budgets: NormalizedWorldRecipe["budgets"];
   /** Named generation passes enabled at this behavior version. */
@@ -188,6 +203,32 @@ const WATER_RULES: {
 /** macro.fields rule pack v2: snow-elevation coupling (W3 acceptance brief). */
 const TEMPERATURE_LAPSE = { startElevationPermille: 500, strengthPermille: 700 };
 
+/** routes.graph rule pack v1: costs, widths, spacing per size preset. */
+const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
+  tiny: {
+    stepCost: 10,
+    slopeCostPerPermille: 1,
+    networkRiverCrossCost: 70,
+    majorRiverCrossCost: 120,
+    shallowWaterCrossCost: 160,
+    minDestinationSpacing: 12,
+    streetWidth: 2,
+    highwayWidth: 3,
+    detourWarnRatioPermille: 1800,
+  },
+  small: {
+    stepCost: 10,
+    slopeCostPerPermille: 1,
+    networkRiverCrossCost: 70,
+    majorRiverCrossCost: 120,
+    shallowWaterCrossCost: 160,
+    minDestinationSpacing: 28,
+    streetWidth: 2,
+    highwayWidth: 3,
+    detourWarnRatioPermille: 1800,
+  },
+};
+
 /** macro.biomes rule pack v1: thresholds and region limits per size preset. */
 const BIOME_RULES: { readonly [key in SizePreset]: BiomeRules } = {
   tiny: {
@@ -221,7 +262,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 3,
+    resolvedConfigFormat: 4,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -252,9 +293,10 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
       temperatureLapse: TEMPERATURE_LAPSE,
     },
     water: WATER_RULES[normalized.world.climatePreset][normalized.world.sizePreset],
+    routes: ROUTE_RULES[normalized.world.sizePreset],
     biomes: BIOME_RULES[normalized.world.sizePreset],
     budgets: normalized.budgets,
-    passes: ["macro.fields", "hydrology.water", "regions.biomes"],
+    passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph"],
     dependencies: { tileforge: null },
   };
 }

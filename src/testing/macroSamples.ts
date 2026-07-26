@@ -62,6 +62,14 @@ export function buildMacroSamples(): unknown {
         regionCount: composed.regions.length,
         residualSmallRegions: composed.residualSmallRegions,
         biomeCellTotals,
+        routes: {
+          destinationCount: composed.routesResult.destinations.length,
+          routeCount: composed.routesResult.routes.length,
+          roadCellCount: composed.routesResult.roadCellCount,
+          trailCellCount: composed.routesResult.trailCellCount,
+          crossingCount: composed.routesResult.routes.reduce((sum, route) => sum + route.crossings.length, 0),
+          errorCount: composed.routesResult.errors.length,
+        },
         hydrology: {
           oceanCellCount: composed.hydro.oceanCellCount,
           lakeCount: composed.hydro.lakeCount,

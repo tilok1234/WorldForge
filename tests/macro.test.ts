@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { channel } from "../src/core/channels.js";
 import { fbmPermille, northGradientPermille, valueNoisePermille } from "../src/fields/valueNoise.js";
-import { BIOME_KEYS, WORLD_PALETTE, classifyCell } from "../src/regions/biomes.js";
+import { WORLD_PALETTE, classifyCell } from "../src/regions/biomes.js";
 import { composeWorld } from "../src/generation/composeWorld.js";
 import { buildContactSheet } from "../src/render/contactSheet.js";
 import { encodePng } from "../src/render/png.js";
@@ -75,12 +75,12 @@ describe("biome classification and regions", () => {
   };
 
   it("classifies threshold edges in strict rule order", () => {
-    assert.equal(BIOME_KEYS[classifyCell(780, 0, 0, thresholds)], "terrain.rock");
-    assert.equal(BIOME_KEYS[classifyCell(779, 500, 249, thresholds)], "terrain.snow");
-    assert.equal(BIOME_KEYS[classifyCell(400, 750, 250, thresholds)], "terrain.mud");
-    assert.equal(BIOME_KEYS[classifyCell(401, 750, 250, thresholds)], "terrain.grass");
-    assert.equal(BIOME_KEYS[classifyCell(500, 299, 550, thresholds)], "terrain.dry_grass");
-    assert.equal(BIOME_KEYS[classifyCell(500, 300, 550, thresholds)], "terrain.grass");
+    assert.equal(WORLD_PALETTE[classifyCell(780, 0, 0, thresholds)], "terrain.rock");
+    assert.equal(WORLD_PALETTE[classifyCell(779, 500, 249, thresholds)], "terrain.snow");
+    assert.equal(WORLD_PALETTE[classifyCell(400, 750, 250, thresholds)], "terrain.mud");
+    assert.equal(WORLD_PALETTE[classifyCell(401, 750, 250, thresholds)], "terrain.grass");
+    assert.equal(WORLD_PALETTE[classifyCell(500, 299, 550, thresholds)], "terrain.dry_grass");
+    assert.equal(WORLD_PALETTE[classifyCell(500, 300, 550, thresholds)], "terrain.grass");
   });
 
   it("produces confetti-free regions that exactly cover the tiny world", () => {

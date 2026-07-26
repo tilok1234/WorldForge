@@ -149,7 +149,10 @@ Exit criteria:
 - routes cross water only at valid crossings;
 - country roads include supporting corridors;
 - mixed road junction rules are represented;
-- decoration cannot sever required paths.
+- decoration cannot sever required paths;
+- the read-only viewer opens a generated world artifact in a browser and
+  renders material, elevation, river, path, route, and chunk-grid layers with
+  hover inspection, without any capability to write world data.
 
 ## Milestone W5 — Settlements and landmark stamps
 

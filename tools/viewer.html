@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WorldForge Artifact Viewer</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; }
+  body { font: 13px/1.5 system-ui, sans-serif; background: #16161a; color: #d8d8de; display: flex; flex-direction: column; height: 100vh; }
+  header { padding: 8px 12px; background: #1f1f26; border-bottom: 1px solid #34343e; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  header h1 { font-size: 14px; font-weight: 600; }
+  header .readonly { color: #8f8fa0; font-size: 12px; }
+  #layers { display: flex; gap: 10px; flex-wrap: wrap; }
+  #layers label { user-select: none; cursor: pointer; }
+  main { flex: 1; display: flex; min-height: 0; }
+  #stage { flex: 1; position: relative; overflow: hidden; background: #0d0d10; }
+  canvas { position: absolute; inset: 0; image-rendering: pixelated; }
+  aside { width: 250px; padding: 10px 12px; background: #1a1a20; border-left: 1px solid #34343e; overflow-y: auto; }
+  aside h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: #8f8fa0; margin: 10px 0 4px; }
+  aside .value { font-family: ui-monospace, monospace; font-size: 12px; }
+  #drop { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #6d6d80; font-size: 15px; text-align: center; pointer-events: none; }
+  input[type="file"] { max-width: 220px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>WorldForge Artifact Viewer</h1>
+  <span class="readonly">read-only by contract — this tool never writes world data</span>
+  <input type="file" id="file" accept=".json,application/json">
+  <div id="layers">
+    <label><input type="checkbox" data-layer="material" checked> material</label>
+    <label><input type="checkbox" data-layer="elevation"> elevation</label>
+    <label><input type="checkbox" data-layer="river" checked> rivers</label>
+    <label><input type="checkbox" data-layer="path" checked> paths</label>
+    <label><input type="checkbox" data-layer="routes" checked> routes</label>
+    <label><input type="checkbox" data-layer="chunks"> chunk grid</label>
+  </div>
+</header>
+<main>
+  <div id="stage">
+    <canvas id="canvas"></canvas>
+    <div id="drop">drop a world.json here,<br>use the file picker, or add ?url=&lt;path&gt;</div>
+  </div>
+  <aside>
+    <h2>World</h2><div id="worldInfo" class="value">no artifact loaded</div>
+    <h2>Hover</h2><div id="hoverInfo" class="value">—</div>
+    <h2>Routes</h2><div id="routeInfo" class="value">—</div>
+  </aside>
+</main>
+<script>
+"use strict";
+// Read-only artifact viewer (Milestone W4). Loads a WorldForge world artifact
+// and renders its layers. It has no code path that writes world data.
+const PALETTE_COLORS = {
+  "terrain.dry_grass": [162, 154, 84],
+  "terrain.grass": [79, 143, 62],
+  "terrain.mud": [97, 70, 47],
+  "terrain.packed_road": [174, 144, 102],
+  "terrain.rock": [138, 141, 144],
+  "terrain.snow": [232, 237, 242],
+  "terrain.swamp": [70, 105, 82],
+  "water.deep": [36, 86, 148],
+  "water.shallow": [86, 156, 205],
+};
+const RIVER = [50, 110, 190], TRAIL = [122, 92, 58];
+const state = { world: null, cells: null, view: { x: 0, y: 0, scale: 4 }, layers: {} };
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const stage = document.getElementById("stage");
+
+function fallbackColor(key) {
+  let h = 2166136261;
+  for (const ch of key) { h = Math.imul(h ^ ch.charCodeAt(0), 16777619); }
+  return [96 + ((h >>> 8) & 63), 96 + ((h >>> 16) & 63), 96 + ((h >>> 24) & 63)];
+}
+
+function flatten(world) {
+  const { width, height, chunkWidth, chunkHeight } = world.dimensions;
+  const material = new Uint8Array(width * height);
+  const elevation = new Uint16Array(width * height);
+  const river = new Uint8Array(width * height);
+  const path = new Uint8Array(width * height);
+  for (const chunk of world.chunks) {
+    const ox = chunk.coord[0] * chunkWidth, oy = chunk.coord[1] * chunkHeight;
+    for (let ly = 0; ly < chunkHeight; ly += 1) {
+      for (let lx = 0; lx < chunkWidth; lx += 1) {
+        const w = (oy + ly) * width + ox + lx;
+        material[w] = chunk.layers.material[ly][lx];
+        elevation[w] = chunk.layers.elevation[ly][lx];
+        river[w] = chunk.layers.river[ly][lx];
+        path[w] = chunk.layers.path ? chunk.layers.path[ly][lx] : 0;
+      }
+    }
+  }
+  return { material, elevation, river, path };
+}
+
+function loadWorld(world) {
+  state.world = world;
+  state.cells = flatten(world);
+  document.getElementById("drop").style.display = "none";
+  const g = world.generator;
+  document.getElementById("worldInfo").textContent =
+    `${world.dimensions.width}×${world.dimensions.height}, ${world.chunks.length} chunks\n` +
+    `seed ${g.seed}, behavior v${g.generatorBehaviorVersion}\n` +
+    `regions ${world.regions.length}, destinations ${(world.destinations || []).length}`;
+  document.getElementById("routeInfo").textContent = (world.routes || [])
+    .map((r) => `#${r.id} ${r.routeClass} len ${r.length} crossings ${r.crossings.length}`)
+    .join("\n") || "none";
+  const fit = Math.max(1, Math.floor(Math.min(stage.clientWidth / world.dimensions.width, stage.clientHeight / world.dimensions.height)));
+  state.view = { x: 10, y: 10, scale: fit };
+  draw();
+}
+
+function draw() {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = stage.clientWidth * dpr;
+  canvas.height = stage.clientHeight * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, stage.clientWidth, stage.clientHeight);
+  const world = state.world;
+  if (!world) return;
+  const { width, height } = world.dimensions;
+  const on = (name) => document.querySelector(`[data-layer="${name}"]`).checked;
+  const buffer = document.createElement("canvas");
+  buffer.width = width; buffer.height = height;
+  const bctx = buffer.getContext("2d");
+  const image = bctx.createImageData(width, height);
+  for (let i = 0; i < width * height; i += 1) {
+    let color = [20, 20, 24];
+    if (on("material")) {
+      const key = world.semanticPalette[state.cells.material[i]];
+      color = PALETTE_COLORS[key] || fallbackColor(key);
+    }
+    if (on("elevation")) {
+      const gray = Math.trunc((state.cells.elevation[i] * 255) / 999);
+      color = on("material") ? [(color[0] + gray) >> 1, (color[1] + gray) >> 1, (color[2] + gray) >> 1] : [gray, gray, gray];
+    }
+    if (on("river") && state.cells.river[i] === 1) color = RIVER;
+    if (on("path") && state.cells.path[i] === 1) color = TRAIL;
+    image.data[i * 4] = color[0]; image.data[i * 4 + 1] = color[1];
+    image.data[i * 4 + 2] = color[2]; image.data[i * 4 + 3] = 255;
+  }
+  bctx.putImageData(image, 0, 0);
+  const { x, y, scale } = state.view;
+  ctx.drawImage(buffer, x, y, width * scale, height * scale);
+  if (on("chunks")) {
+    ctx.strokeStyle = "rgba(255,255,255,0.25)";
+    ctx.lineWidth = 1;
+    const { chunkWidth, chunkHeight } = world.dimensions;
+    for (let cx = 0; cx <= width; cx += chunkWidth) line(x + cx * scale, y, x + cx * scale, y + height * scale);
+    for (let cy = 0; cy <= height; cy += chunkHeight) line(x, y + cy * scale, x + width * scale, y + cy * scale);
+  }
+  if (on("routes")) {
+    for (const destination of world.destinations || []) {
+      const landmark = destination.kind === "landmark_candidate";
+      ctx.fillStyle = landmark ? "#9a1e9a" : "#101010";
+      ctx.fillRect(x + (destination.cell[0] - 1) * scale, y + (destination.cell[1] - 1) * scale, 3 * scale, 3 * scale);
+    }
+    for (const route of world.routes || []) {
+      for (const crossing of route.crossings) {
+        ctx.fillStyle = crossing.kind === "bridge" ? "#28282c" : "#96b4d2";
+        ctx.fillRect(x + crossing.cell[0] * scale, y + crossing.cell[1] * scale, scale, scale);
+      }
+    }
+  }
+  function line(x1, y1, x2, y2) { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
+}
+
+stage.addEventListener("wheel", (event) => {
+  event.preventDefault();
+  const factor = event.deltaY < 0 ? 1.25 : 0.8;
+  const next = Math.min(64, Math.max(1, state.view.scale * factor));
+  const rect = stage.getBoundingClientRect();
+  const mx = event.clientX - rect.left, my = event.clientY - rect.top;
+  state.view.x = mx - ((mx - state.view.x) * next) / state.view.scale;
+  state.view.y = my - ((my - state.view.y) * next) / state.view.scale;
+  state.view.scale = next;
+  draw();
+}, { passive: false });
+
+let dragging = null;
+stage.addEventListener("pointerdown", (event) => { dragging = { x: event.clientX, y: event.clientY }; });
+window.addEventListener("pointerup", () => { dragging = null; });
+window.addEventListener("pointermove", (event) => {
+  if (dragging) {
+    state.view.x += event.clientX - dragging.x;
+    state.view.y += event.clientY - dragging.y;
+    dragging = { x: event.clientX, y: event.clientY };
+    draw();
+    return;
+  }
+  if (!state.world) return;
+  const rect = stage.getBoundingClientRect();
+  const cx = Math.floor((event.clientX - rect.left - state.view.x) / state.view.scale);
+  const cy = Math.floor((event.clientY - rect.top - state.view.y) / state.view.scale);
+  const { width, height, chunkWidth, chunkHeight } = state.world.dimensions;
+  if (cx < 0 || cy < 0 || cx >= width || cy >= height) {
+    document.getElementById("hoverInfo").textContent = "—";
+    return;
+  }
+  const i = cy * width + cx;
+  document.getElementById("hoverInfo").textContent =
+    `cell (${cx}, ${cy})\nchunk (${Math.floor(cx / chunkWidth)}, ${Math.floor(cy / chunkHeight)})\n` +
+    `${state.world.semanticPalette[state.cells.material[i]]}\n` +
+    `elevation ${state.cells.elevation[i]}‰` +
+    `${state.cells.river[i] ? "\nriver" : ""}${state.cells.path[i] ? "\ntrail" : ""}`;
+});
+
+document.getElementById("layers").addEventListener("change", draw);
+window.addEventListener("resize", draw);
+document.addEventListener("visibilitychange", draw);
+document.getElementById("file").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (file) loadWorld(JSON.parse(await file.text()));
+});
+stage.addEventListener("dragover", (event) => event.preventDefault());
+stage.addEventListener("drop", async (event) => {
+  event.preventDefault();
+  const file = event.dataTransfer.files[0];
+  if (file) loadWorld(JSON.parse(await file.text()));
+});
+const params = new URLSearchParams(location.search);
+if (params.get("url")) {
+  fetch(params.get("url")).then((response) => response.json()).then(loadWorld)
+    .catch((error) => { document.getElementById("drop").textContent = `failed to load: ${error}`; });
+}
+</script>
+</body>
+</html>

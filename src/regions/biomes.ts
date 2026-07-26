@@ -8,7 +8,7 @@
 
 import type { BiomeRules } from "../recipe/compile.js";
 
-/** Land biomes; the first five entries of WORLD_PALETTE. */
+/** Land biomes assignable by climate classification. */
 export const BIOME_KEYS = [
   "terrain.dry_grass",
   "terrain.grass",
@@ -19,7 +19,12 @@ export const BIOME_KEYS = [
 
 /** Complete semantic palette, alphabetical; material indexes point here. */
 export const WORLD_PALETTE = [
-  ...BIOME_KEYS,
+  "terrain.dry_grass",
+  "terrain.grass",
+  "terrain.mud",
+  "terrain.packed_road",
+  "terrain.rock",
+  "terrain.snow",
   "terrain.swamp",
   "water.deep",
   "water.shallow",
@@ -119,12 +124,14 @@ export function smoothConfetti(
   height: number,
   minRegionCells: number,
   passes: number,
+  protectedValues: ReadonlySet<number> = new Set(),
 ): void {
   for (let pass = 0; pass < passes; pass += 1) {
     const { labels, components } = labelComponents(grid, width, height);
     const smallLabels: number[] = [];
     for (let label = 0; label < components.length; label += 1) {
-      if ((components[label] as Component).cellCount < minRegionCells) {
+      const component = components[label] as Component;
+      if (component.cellCount < minRegionCells && !protectedValues.has(component.biome)) {
         smallLabels.push(label);
       }
     }

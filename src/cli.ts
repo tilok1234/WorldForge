@@ -108,9 +108,9 @@ function runSmoke(): number {
   const result = generateWorldDetailed(normalized, config);
   const artifact = result.artifact;
   const report = validateArtifact(artifact, { minRegionCells: config.biomes.minRegionCells });
-  if (report.status !== "pass" || result.composed.hydro.topologyErrors.length > 0) {
+  if (report.status !== "pass" || result.composed.hydro.topologyErrors.length > 0 || result.composed.routesResult.errors.length > 0) {
     process.stderr.write(
-      `smoke: FAIL\n${[...report.errors, ...result.composed.hydro.topologyErrors].join("\n")}\n`,
+      `smoke: FAIL\n${[...report.errors, ...result.composed.hydro.topologyErrors, ...result.composed.routesResult.errors].join("\n")}\n`,
     );
     return 1;
   }
@@ -197,9 +197,9 @@ function runGenerate(argv: readonly string[]): number {
   const generated = generateWorldDetailed(normalized, config);
   const artifact = generated.artifact;
   const report = validateArtifact(artifact, { minRegionCells: config.biomes.minRegionCells });
-  if (report.status !== "pass" || generated.composed.hydro.topologyErrors.length > 0) {
+  if (report.status !== "pass" || generated.composed.hydro.topologyErrors.length > 0 || generated.composed.routesResult.errors.length > 0) {
     process.stderr.write(
-      `validation FAILED; nothing written\n${[...report.errors, ...generated.composed.hydro.topologyErrors].join("\n")}\n`,
+      `validation FAILED; nothing written\n${[...report.errors, ...generated.composed.hydro.topologyErrors, ...generated.composed.routesResult.errors].join("\n")}\n`,
     );
     return 1;
   }
@@ -233,7 +233,7 @@ function runRenderMacro(argv: readonly string[]): number {
   const config = compileRecipe(normalized);
   const result = generateWorldDetailed(normalized, config);
   const report = validateArtifact(result.artifact, { minRegionCells: config.biomes.minRegionCells });
-  const topologyErrors = result.composed.hydro.topologyErrors;
+  const topologyErrors = [...result.composed.hydro.topologyErrors, ...result.composed.routesResult.errors];
   if (report.status !== "pass" || topologyErrors.length > 0) {
     process.stderr.write(
       `validation FAILED; nothing written\n${[...report.errors, ...topologyErrors].join("\n")}\n`,
@@ -245,6 +245,7 @@ function runRenderMacro(argv: readonly string[]): number {
   const files: Array<[string, Buffer | string]> = [
     ["macro-biomes.png", renders.biomes],
     ["macro-hydrology.png", renders.hydrology],
+    ["macro-routes.png", renders.routes],
     ["macro-elevation.png", renders.elevation],
     ["macro-moisture.png", renders.moisture],
     ["macro-temperature.png", renders.temperature],

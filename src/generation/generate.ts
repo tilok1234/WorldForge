@@ -14,8 +14,8 @@ import {
 import { composeWorld, type ComposedWorld } from "./composeWorld.js";
 import { WORLD_PALETTE } from "../regions/biomes.js";
 
-/** Format 2 (Milestone W3): adds elevation + river chunk layers and hydrology. */
-export const ARTIFACT_FORMAT_VERSION = 2;
+/** Format 3 (Milestone W4): adds the path layer, destinations, and routes. */
+export const ARTIFACT_FORMAT_VERSION = 3;
 
 export interface WorldArtifact {
   readonly formatVersion: number;
@@ -55,6 +55,11 @@ export interface WorldArtifact {
     readonly riverSourceCount: number;
     readonly wetlandCellCount: number;
   };
+  readonly destinations: ReadonlyArray<{
+    readonly id: number;
+    readonly kind: string;
+    readonly cell: readonly [number, number];
+  }>;
   readonly regions: ReadonlyArray<{
     readonly id: number;
     readonly biome: string;
@@ -62,7 +67,17 @@ export interface WorldArtifact {
   }>;
   readonly settlements: readonly unknown[];
   readonly landmarks: readonly unknown[];
-  readonly routes: readonly unknown[];
+  readonly routes: ReadonlyArray<{
+    readonly id: number;
+    readonly routeClass: string;
+    readonly from: readonly [number, number];
+    readonly to: readonly [number, number];
+    readonly length: number;
+    readonly crossings: ReadonlyArray<{
+      readonly cell: readonly [number, number];
+      readonly kind: string;
+    }>;
+  }>;
   readonly chunks: ReadonlyArray<{
     readonly coord: readonly [number, number];
     readonly layers: {
@@ -71,6 +86,8 @@ export interface WorldArtifact {
       readonly elevation: ReadonlyArray<readonly number[]>;
       /** 1 where a river runs on land, else 0. */
       readonly river: ReadonlyArray<readonly number[]>;
+      /** 1 where the dirt-path band (trail class) runs, else 0. */
+      readonly path: ReadonlyArray<readonly number[]>;
     };
   }>;
 }
@@ -95,29 +112,33 @@ export function generateWorldDetailed(
   const chunksDown = height / chunkHeight;
   const chunks: Array<{
     coord: readonly [number, number];
-    layers: { material: number[][]; elevation: number[][]; river: number[][] };
+    layers: { material: number[][]; elevation: number[][]; river: number[][]; path: number[][] };
   }> = [];
   for (let cy = 0; cy < chunksDown; cy += 1) {
     for (let cx = 0; cx < chunksAcross; cx += 1) {
       const material: number[][] = [];
       const elevation: number[][] = [];
       const river: number[][] = [];
+      const path: number[][] = [];
       for (let ly = 0; ly < chunkHeight; ly += 1) {
         const materialRow = new Array<number>(chunkWidth);
         const elevationRow = new Array<number>(chunkWidth);
         const riverRow = new Array<number>(chunkWidth);
+        const pathRow = new Array<number>(chunkWidth);
         const worldY = cy * chunkHeight + ly;
         for (let lx = 0; lx < chunkWidth; lx += 1) {
           const worldIndex = worldY * width + cx * chunkWidth + lx;
           materialRow[lx] = composed.grid[worldIndex] as number;
           elevationRow[lx] = composed.fields.elevation[worldIndex] as number;
           riverRow[lx] = composed.hydro.isMajorRiver[worldIndex] as number;
+          pathRow[lx] = composed.routesResult.pathLayer[worldIndex] as number;
         }
         material.push(materialRow);
         elevation.push(elevationRow);
         river.push(riverRow);
+        path.push(pathRow);
       }
-      chunks.push({ coord: [cx, cy], layers: { material, elevation, river } });
+      chunks.push({ coord: [cx, cy], layers: { material, elevation, river, path } });
     }
   }
 
@@ -152,6 +173,11 @@ export function generateWorldDetailed(
       riverSourceCount: composed.hydro.riverTraces.length,
       wetlandCellCount: composed.wetlandCellCount,
     },
+    destinations: composed.routesResult.destinations.map((destination) => ({
+      id: destination.id,
+      kind: destination.kind,
+      cell: [destination.cell % width, Math.trunc(destination.cell / width)] as const,
+    })),
     regions: composed.regions.map((region) => ({
       id: region.id,
       biome: region.biome,
@@ -159,7 +185,17 @@ export function generateWorldDetailed(
     })),
     settlements: [],
     landmarks: [],
-    routes: [],
+    routes: composed.routesResult.routes.map((route) => ({
+      id: route.id,
+      routeClass: route.routeClass,
+      from: [route.fromCell % width, Math.trunc(route.fromCell / width)] as const,
+      to: [route.toCell % width, Math.trunc(route.toCell / width)] as const,
+      length: route.length,
+      crossings: route.crossings.map((crossing) => ({
+        cell: [crossing.cell % width, Math.trunc(crossing.cell / width)] as const,
+        kind: crossing.kind,
+      })),
+    })),
     chunks,
   };
 

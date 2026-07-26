@@ -19,6 +19,7 @@ import {
   type PaletteKey,
   type RegionSummary,
 } from "../regions/biomes.js";
+import { buildRoutes, verifyRouteConnectivity, type RoutesResult } from "../routes/routes.js";
 
 const SWAMP = PALETTE_INDEX["terrain.swamp"];
 const DEEP = PALETTE_INDEX["water.deep"];
@@ -39,6 +40,7 @@ export interface ComposedWorld {
   readonly moistureAdjusted: readonly number[];
   readonly hydro: HydrologyResult;
   readonly wetlandCellCount: number;
+  readonly routesResult: RoutesResult;
 }
 
 export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
@@ -95,8 +97,20 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     }
   }
 
-  // Absorb any one-cell regions the overlays introduced.
-  smoothConfetti(grid, width, height, 2, 2);
+  // Routes stamp packed-road corridors into the material grid after all
+  // terrain passes, so decoration-era passes can never sever them unnoticed:
+  // connectivity is re-verified on the final grid.
+  let routesResult = buildRoutes(grid, fields, hydro, config);
+
+  // Absorb one-cell regions introduced by overlays and road carving. Road
+  // cells are protected: traversal-critical corridors are never rewritten,
+  // and connectivity is re-verified afterwards on the final grid.
+  smoothConfetti(grid, width, height, 2, 2, new Set([PALETTE_INDEX["terrain.packed_road"]]));
+  const postCleanupErrors: string[] = [];
+  verifyRouteConnectivity(grid, routesResult.pathLayer, routesResult.routes, routesResult.destinations, width, height, postCleanupErrors);
+  if (postCleanupErrors.length > 0) {
+    routesResult = { ...routesResult, errors: [...routesResult.errors, ...postCleanupErrors] };
+  }
 
   const labeling = labelComponents(grid, width, height);
   const regions: RegionSummary[] = labeling.components.map((component, id) => ({
@@ -118,6 +132,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     moistureAdjusted,
     hydro,
     wetlandCellCount,
+    routesResult,
   };
 }
 

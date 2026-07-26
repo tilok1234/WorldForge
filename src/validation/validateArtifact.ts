@@ -98,6 +98,7 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
         },
         { name: "elevation", rows: chunk.layers.elevation, min: 0, max: 999 },
         { name: "river", rows: chunk.layers.river, min: 0, max: 1 },
+        { name: "path", rows: chunk.layers.path, min: 0, max: 1 },
       ];
       for (const layer of layerChecks) {
         if (layer.rows.length !== chunkHeight) {
