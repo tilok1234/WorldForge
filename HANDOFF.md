@@ -169,6 +169,18 @@ user's "settlements way too small" verdict: radius 18 / 28 lots (small),
 approachMaxLength 8 forces street-lining — the fabric constraint.
 Structure cells 119->246 canonical.
 
+## W8 COMPLETE (af35d0e)
+
+Viewer semantic mode runs on the public loader (dynamic import of
+/dist/src/consumers/typescript/loader.js when served; rejects render with
+issues; hover reads handle accessors; WALKABILITY OVERLAY toggle from
+world.walkableAt). All W8 exit criteria hold — see the commit message for
+the sweep. README + ROADMAP statuses updated. Remaining plan: W9 (AI
+authoring workflow: brief→draft recipe, structured recipe diffs,
+validator-feedback loop, candidate comparison, approval states) + the
+end-of-plan taste-polish round + formal visual baseline approval + the
+user's windowed Godot playthrough.
+
 ## Sand beaches SHIPPED (246a76b, behavior 14, macro.biomes 2)
 
 corner16 live in production. Contract machinery: §2.7 margin (no sand in
