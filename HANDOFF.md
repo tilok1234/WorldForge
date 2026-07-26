@@ -169,6 +169,20 @@ user's "settlements way too small" verdict: radius 18 / 28 lots (small),
 approachMaxLength 8 forces street-lining — the fabric constraint.
 Structure cells 119->246 canonical.
 
+## POIs phase A SHIPPED (f8ff836, behavior 15, decoration.pois 1)
+
+The too-empty verdict answered: hunter camps, standing-stone rings,
+battlefields, iron-fenced graveyards, wayside shrines, fishing spots —
+channel-driven, spaced, per-type-capped (variety over abundance), stamps
+overwrite ambient decoration but never traversal-critical cells. Artifact
+format 8 adds pois records; 12 new prop species + 3 battlefield decals +
+iron fence flow end to end. Rule-table budget (tiny 6 / small 16).
+**Phase B queued**: structure POIs (mine shaft, cave mouth, stone circle,
+crypt, ruined temple, giant skeleton) require the loader pass-cell model —
+semantic structure layer stores TYPE, not cellIndex; the loader must
+derive cellIndex from structure/POI records to mirror package pass arrays,
+else parity breaks. Floods identical at 34,426.
+
 ## W9 COMPLETE (ef4eee8) — the starter roadmap is fully implemented
 
 Authoring tooling: validate-brief / explain-recipe / diff-recipes /
