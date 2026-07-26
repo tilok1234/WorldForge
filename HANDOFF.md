@@ -163,6 +163,11 @@ Remaining alive-worlds idea: sand beaches (material-level; §2.7 corner16
 would activate for the first time — keep the sand margin at world borders,
 the tmj emitter throws on dual −1 occupancy). All layers flow through the
 §2-proven pipeline automatically (viewer, render, seams, Godot).
+**Town scale-up (108ea03, behavior 12, settlements.plans 4)** after the
+user's "settlements way too small" verdict: radius 18 / 28 lots (small),
+7x7 plaza, four 2-wide street arms with stream gaps becoming street fords,
+approachMaxLength 8 forces street-lining — the fabric constraint.
+Structure cells 119->246 canonical.
 
 ## Review loop (user-requested interface, ebd59c5)
 
