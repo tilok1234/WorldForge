@@ -149,9 +149,15 @@ closed cores and open meadows (gate = patch−350; measured 4..160 trees per
 roadside milestones/signposts. Adapter v3 lesson: streams sever streets
 (streets never paint over water), so any river cell on or between corridor
 material gets a STREET FORD — canonical world: 2 route + 12 street fords.
-Stage 2 = W5.1 settlement variety + plazas; stage 3 = coast/water dressing
-(piers, sand, lakeside detail). All layers flow through the §2-proven
-pipeline automatically (viewer, render, seams, Godot).
+**Stage 2 (W5.1) SHIPPED (d57eebf)**: behavior 10, settlements.plans 2 —
+civic specials + channel-rolled village fill, purpose-driven outposts,
+plaza fountain with dynamic perimeter entrance. Model fix: streetFordCells
+now computed once in composeWorld, honored by the entrance validator, and
+rendered by the adapter (towns straddling streams validated blind before).
+STRUCTURE_TYPES is append-only — layer values must never shift.
+Stage 3 = coast/water dressing (piers, sand, boats, crop plots). All
+layers flow through the §2-proven pipeline automatically (viewer, render,
+seams, Godot).
 
 ## Review loop (user-requested interface, ebd59c5)
 
