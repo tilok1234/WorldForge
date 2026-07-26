@@ -1,0 +1,20 @@
+# Generated WorldForge output
+outputs/
+tmp/
+.cache/
+
+# Downloaded read-only upstream references
+external/
+
+# Local environment and editor state
+.env
+.env.*
+.godot/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs and transient reports
+*.log
+*.tmp
