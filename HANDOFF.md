@@ -169,6 +169,22 @@ user's "settlements way too small" verdict: radius 18 / 28 lots (small),
 approachMaxLength 8 forces street-lining — the fabric constraint.
 Structure cells 119->246 canonical.
 
+## W8 increment 1 SHIPPED (e6979d9)
+
+Public TS loader (src/consumers/typescript/loader.ts, ZERO imports —
+parity-test-enforced), traverse.mjs harness, artifact format 7 (river
+0/1/2 full network), decoration v3/behavior 13 (cosmetic decals off
+streams + blocked terrain), Godot ladder follows guide PROSE on
+walk-granting decals. **UPSTREAM QUESTION for TileForge**: the guide
+prose limits walk-granting decals to stepping stones/frost/ford over
+water/river, but the packaged reference is_walkable grants for ANY
+walkable-true decal over ANY blocked terrain (cosmetic rubble on rock =
+passage) — which is authoritative? Parity evidence: cell-exact loader ==
+in-engine grid on all 65,536 canonical cells (dump_walkable.gd tool);
+both consumers flood exactly 34,490 cells. Remaining W8: viewer on the
+public loader, sand-beach coverage pass, parity-report artifact
+(document), W8 exit-criteria sweep.
+
 ## W8 underway (user go 2026-07-26)
 
 The user blessed the current look as a PROVISIONAL baseline ("ye this is
