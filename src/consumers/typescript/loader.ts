@@ -167,6 +167,8 @@ const BLOCKING_PROPS = new Set<string>([
   "prop.firewood",
   "prop.burned_tree", "prop.cart", "prop.chest", "prop.archery_target",
   "prop.chopping_block", "prop.hay_bales", "prop.trough", "prop.wreck",
+  "prop.giant_shroom", "prop.corrupted_tree", "prop.beehive", "prop.cactus",
+  "prop.flower_bed",
 ]);
 
 /** Corridor materials whose street grid streams must not sever. */

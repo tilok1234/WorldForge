@@ -57,8 +57,13 @@ export const GENERATOR_VERSION = "0.1.0";
  *     map quarter (routes.graph 7) and settlements.plans v7 crowns its
  *     best candidate the second city (cityCount), so the back country
  *     gets a main city, satellites, and real roads.
+ * 25: character zones (decoration.props 6, the empty-spots verdict) —
+ *     open stretches become distinct places: flower meadows, blighted
+ *     groves, mushroom glens, burned woods, boulder fields, cactus
+ *     flats; five new species (giant shroom, corrupted tree, beehive,
+ *     cactus, flower bed).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 24;
+export const GENERATOR_BEHAVIOR_VERSION = 25;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 13;
@@ -72,7 +77,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "routes.graph": 7,
   "settlements.plans": 7,
   "landmarks.stamps": 4,
-  "decoration.props": 5,
+  "decoration.props": 6,
   "decoration.pois": 8,
   "adapter.tileforge": 3,
 };

@@ -86,6 +86,11 @@ export const DECOR_TYPES = [
   "prop.trough",
   "prop.wreck",
   "prop.broken_boards",
+  "prop.giant_shroom",
+  "prop.corrupted_tree",
+  "prop.beehive",
+  "prop.cactus",
+  "prop.flower_bed",
 ] as const;
 
 /** Semantic ground-decal keys, stage 1. Layer stores index + 1 (0 = none). */
@@ -123,12 +128,14 @@ const BLOCKING = new Set<string>([
   // package (ground litter); the rest block.
   "prop.burned_tree", "prop.cart", "prop.chest", "prop.archery_target",
   "prop.chopping_block", "prop.hay_bales", "prop.trough", "prop.wreck",
+  "prop.giant_shroom", "prop.corrupted_tree", "prop.beehive", "prop.cactus",
+  "prop.flower_bed",
 ]);
 
 /** Two-part canopy species (§2.10): skip when a structure sits above. */
 const TWO_PART = new Set<string>([
   "prop.oak", "prop.birch", "prop.pine", "prop.willow", "prop.dead_tree",
-  "prop.fruit_tree", "prop.pillar",
+  "prop.fruit_tree", "prop.pillar", "prop.giant_shroom",
 ]);
 
 interface SpeciesWeight {
@@ -607,6 +614,140 @@ export function decorateWorld(
           break;
         }
       }
+    }
+  }
+
+  // Character zones (decoration.props v6, the empty-spots verdict): the
+  // big open stretches become distinct places — a flower meadow, a
+  // blighted grove, a mushroom glen, a burned wood, a boulder field, a
+  // cactus flat. Each is an irregular blob that OVERRIDES ambient
+  // decoration, so it reads as a place at overview scale, not texture.
+  {
+    interface ZoneKind {
+      readonly name: string;
+      readonly biomes: ReadonlySet<string>;
+      readonly species: readonly SpeciesWeight[];
+      readonly decal?: { readonly key: (typeof DECAL_TYPES)[number]; readonly permille: number };
+      readonly density: number;
+    }
+    const ZONE_KINDS: readonly ZoneKind[] = [
+      {
+        name: "flower_meadow",
+        biomes: new Set(["terrain.grass"]),
+        species: [
+          { key: "prop.flowers", weight: 42 },
+          { key: "prop.flower_bed", weight: 22 },
+          { key: "prop.fruit_tree", weight: 12 },
+          { key: "prop.beehive", weight: 6 },
+          { key: "prop.bush", weight: 18 },
+        ],
+        density: 430,
+      },
+      {
+        name: "blighted_grove",
+        biomes: new Set(["terrain.grass", "terrain.mud"]),
+        species: [
+          { key: "prop.corrupted_tree", weight: 40 },
+          { key: "prop.dead_tree", weight: 22 },
+          { key: "prop.mushrooms", weight: 20 },
+          { key: "prop.roots", weight: 18 },
+        ],
+        decal: { key: "decal.webs", permille: 90 },
+        density: 480,
+      },
+      {
+        name: "shroom_glen",
+        biomes: new Set(["terrain.grass", "terrain.mud"]),
+        species: [
+          { key: "prop.giant_shroom", weight: 24 },
+          { key: "prop.mushrooms", weight: 46 },
+          { key: "prop.ferns", weight: 30 },
+        ],
+        density: 460,
+      },
+      {
+        name: "burned_wood",
+        biomes: new Set(["terrain.grass", "terrain.snow"]),
+        species: [
+          { key: "prop.burned_tree", weight: 40 },
+          { key: "prop.dead_tree", weight: 22 },
+          { key: "prop.ash_pile", weight: 24 },
+          { key: "prop.stump", weight: 14 },
+        ],
+        decal: { key: "decal.scorch", permille: 120 },
+        density: 440,
+      },
+      {
+        name: "boulder_field",
+        biomes: new Set(["terrain.grass", "terrain.dry_grass", "terrain.snow"]),
+        species: [
+          { key: "prop.boulder", weight: 46 },
+          { key: "prop.rock_outcrop", weight: 32 },
+          { key: "prop.stump", weight: 8 },
+          { key: "prop.bush", weight: 14 },
+        ],
+        decal: { key: "decal.rubble", permille: 100 },
+        density: 420,
+      },
+      {
+        name: "cactus_flat",
+        biomes: new Set(["terrain.dry_grass"]),
+        species: [
+          { key: "prop.cactus", weight: 52 },
+          { key: "prop.desert_shrub", weight: 32 },
+          { key: "prop.boulder", weight: 16 },
+        ],
+        density: 430,
+      },
+    ];
+    const zones = channel(seed, "decor.zones");
+    const zoneTarget = Math.max(2, Math.trunc(width / 36));
+    const centers: Array<readonly [number, number]> = [];
+    const attempts = zoneTarget * 30;
+    for (let attempt = 0; attempt < attempts && centers.length < zoneTarget; attempt += 1) {
+      const cx = zones.intAt(attempt, 0, 10, width - 20, 0) + 10;
+      const cy = zones.intAt(attempt, 1, 10, height - 20, 0) + 10;
+      const center = cy * width + cx;
+      if (protectedCells[center] === 1) continue;
+      const centerBiome = paletteKey(grid[center] as number);
+      const eligible = ZONE_KINDS.filter((kind) => kind.biomes.has(centerBiome));
+      if (eligible.length === 0) continue;
+      let spaced = true;
+      for (const [ox, oy] of centers) {
+        if (Math.max(Math.abs(ox - cx), Math.abs(oy - cy)) < 26) {
+          spaced = false;
+          break;
+        }
+      }
+      if (!spaced) continue;
+      const kind = eligible[zones.intAt(attempt, 2, 0, eligible.length, 0)] as ZoneKind;
+      const radius = 7 + zones.intAt(attempt, 3, 0, 5, 0);
+      const weights = kind.species.map((s) => s.weight);
+      for (let dy = -radius; dy <= radius; dy += 1) {
+        for (let dx = -radius; dx <= radius; dx += 1) {
+          const x = cx + dx;
+          const y = cy + dy;
+          if (x < 0 || y < 0 || x >= width || y >= height) continue;
+          const index = y * width + x;
+          if (protectedCells[index] === 1) continue;
+          if (!kind.biomes.has(paletteKey(grid[index] as number))) continue;
+          // Irregular edge: distance falloff against a per-cell roll.
+          const distance = Math.max(Math.abs(dx), Math.abs(dy));
+          if (zones.permilleAt(x, y, 4) < Math.trunc((distance * 850) / (radius + 1))) continue;
+          // The zone replaces ambient decoration outright.
+          propLayer[index] = 0;
+          decalLayer[index] = 0;
+          if (zones.permilleAt(x, y, 5) < kind.density) {
+            const pick = zones.weightedPickAt(x, y, weights, 6);
+            const key = (kind.species[pick] as SpeciesWeight).key;
+            if (place(index, key, x, y)) propCount += 1;
+          } else if (kind.decal !== undefined && zones.permilleAt(x, y, 7) < kind.decal.permille) {
+            decalLayer[index] = decalIndex.get(kind.decal.key) as number;
+            decalCount += 1;
+          }
+        }
+      }
+      centers.push([cx, cy]);
     }
   }
 

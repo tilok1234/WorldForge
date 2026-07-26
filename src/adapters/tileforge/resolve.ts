@@ -138,6 +138,11 @@ const PROP_NAME: { readonly [key: string]: string } = {
   "prop.trough": "trough",
   "prop.wreck": "wreck",
   "prop.broken_boards": "brokenboards",
+  "prop.giant_shroom": "giantshroom",
+  "prop.corrupted_tree": "corruptedtree",
+  "prop.beehive": "beehive",
+  "prop.cactus": "cactus",
+  "prop.flower_bed": "flowerbed",
 };
 
 /** WorldForge crop keys -> package crop names. */
