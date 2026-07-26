@@ -1,0 +1,14 @@
+; WorldForge Godot consumer (Milestone W7).
+; The pinned TileForge package is copied in as res://tileforge/ by
+; node dist/tools/godot-consumer.js — it is not committed here.
+
+config_version=5
+
+[application]
+
+config/name="WorldForge Godot Consumer"
+config/features=PackedStringArray("4.2")
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0

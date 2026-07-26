@@ -1,0 +1,4 @@
+# The pinned package copy (recreated by node dist/tools/godot-consumer.js)
+# and Godot's import cache. Only WorldForge-authored scripts are committed.
+.godot/
+tileforge/

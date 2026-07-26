@@ -70,10 +70,23 @@ rendered from stored gids (painter's algorithm, shipped layer order, binary
 alpha, frame 0, sand +16 offset) is pixel-identical to `map-reference.png`,
 0/3538944 differing; step 2 — the §2-derived masks match the stored ones
 (the truth test above). Zero-dep RGBA8 PNG decoder at
-`src/render/pngDecode.ts` (node:zlib inflate). The remaining
-entry-gate-1 language "through the packaged Godot importer" = run
-`tileforge_importer.gd` headless in `consumers/godot/` and re-check
-importer-built custom data; the pixel proof is already banked.
+`src/render/pngDecode.ts` (node:zlib inflate).
+**Entry gate 1 importer leg DONE — both W7 entry gates are now discharged.**
+`consumers/godot/` + `node dist/tools/godot-consumer.js`: copies the pinned
+package in (gitignored), runs `godot --headless --import`, executes the
+PACKAGED `tileforge_importer.gd` headless, then verifies the built TileSet
+in-engine — 22,029 frame-0 tiles across all 81 families, 0 errors
+(semantic_id, per-tile walkable overrides, hazard/depth/swim/wade,
+collision, animation counts, all blob47 peering bits vs manifest).
+Godot 4.6 gotchas learned: the `-e -s` EditorScript entry point is GONE
+(-s demands SceneTree/MainLoop even with -e) and EditorScript cannot
+instantiate outside the editor, so `import_tileforge.gd` executes the
+packaged importer's own source with ONLY `extends EditorScript` swapped to
+RefCounted (its _run() touches no editor API). A GDScript error aborting
+_init() leaves headless Godot idling forever — the driver enforces
+per-step timeouts. Next: the W7 vertical slice itself (streamed 8x8 demo,
+traversal, minimap, deltas, headless integration check) — visual review
+gates apply.
 Known contract question: GAME-GUIDE §2.6 includes packed road in the
 wet-bank list, FORMATS.md + the worldgen example omit it, the workbench map
 never exercises it — we follow FORMATS; bridge approaches are where a wrong
