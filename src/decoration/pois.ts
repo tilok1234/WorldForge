@@ -11,6 +11,11 @@
  * ambient. Placement is channel-driven with bounded attempts, spaced away
  * from settlements and each other, and never touches corridors, crossings,
  * structures, entrances, farms, or piers.
+ *
+ * decoration.pois v4 (the far reaches): the mountain mass and the deep
+ * snow get their own kinds — prospector camps and ruined watches on rock
+ * pockets, crystal outcrops inside the mass, trapper camps and forgotten
+ * battlefields in the snowfields — plus wider mine/cave windows.
  */
 
 import { channel } from "../core/channels.js";
@@ -41,6 +46,10 @@ export const POI_TYPES = [
   "poi.ruin",
   "poi.giant_skeleton",
   "poi.bandit_camp",
+  "poi.prospector_camp",
+  "poi.crystal_outcrop",
+  "poi.ruined_watch",
+  "poi.trapper_camp",
 ] as const;
 export type PoiType = (typeof POI_TYPES)[number];
 
@@ -201,18 +210,45 @@ export function planPois(
     "poi.battlefield": budget,
     "poi.graveyard": budget,
     "poi.wayside_shrine": budget,
-    "poi.mine": 4,
-    "poi.cave": 4,
+    "poi.mine": 6,
+    "poi.cave": 7,
     "poi.stone_circle": 1,
     "poi.crypt": 2,
-    "poi.ruin": 4,
+    "poi.ruin": 5,
     "poi.giant_skeleton": 1,
     "poi.bandit_camp": 3,
+    "poi.prospector_camp": 3,
+    "poi.crystal_outcrop": 3,
+    "poi.ruined_watch": 2,
+    "poi.trapper_camp": 3,
   };
-  const capped = (type: PoiType): boolean =>
-    (typeCounts.get(type) ?? 0) >= TYPE_CAPS[type];
+  // Far-reach quota (decoration.pois v4): rock- and snow-bound kinds get a
+  // reserved slice of the budget. Rock edges are ~2% of cells, so without a
+  // reserve the common grass kinds soak every slot before the candidate
+  // stream ever samples the mountains. Far kinds may spill into the general
+  // pool on rock-rich worlds; general kinds never eat the reserve.
+  const FAR_KINDS = new Set<PoiType>([
+    "poi.mine",
+    "poi.cave",
+    "poi.prospector_camp",
+    "poi.crystal_outcrop",
+    "poi.ruined_watch",
+    "poi.trapper_camp",
+  ]);
+  const farQuota = Math.max(2, Math.trunc(budget / 4));
+  const generalBudget = budget - farQuota;
+  let farCount = 0;
+  const capped = (type: PoiType): boolean => {
+    if ((typeCounts.get(type) ?? 0) >= TYPE_CAPS[type]) return true;
+    const generalUsed = pois.length - farCount;
+    if (FAR_KINDS.has(type)) {
+      return farCount >= farQuota && generalUsed >= generalBudget;
+    }
+    return generalUsed >= generalBudget;
+  };
   const record = (type: PoiType, x: number, y: number, structure?: PoiStructure): void => {
     typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1);
+    if (FAR_KINDS.has(type)) farCount += 1;
     pois.push(structure === undefined ? { id: pois.length, type, x, y } : { id: pois.length, type, x, y, structure });
   };
 
@@ -253,6 +289,33 @@ export function planPois(
   // Deterministic bounded candidate scan; each accepted candidate becomes
   // whichever POI its surroundings support best.
   const attempts = budget * 28;
+
+  // Cave mouths seed first (the far reaches' anchors): rock-edge cells are
+  // ~2% of the world, so the general stream rarely samples one before the
+  // budget fills. A dedicated bounded scan on its own channel lane places
+  // them before anything else can spend the far quota.
+  const caveTarget = Math.min(TYPE_CAPS["poi.cave"], Math.max(2, Math.trunc(budget / 12)));
+  for (let attempt = 0; attempt < attempts && (typeCounts.get("poi.cave") ?? 0) < caveTarget; attempt += 1) {
+    const x = roll.intAt(attempt, 4, 4, width - 8, 0) + 4;
+    const y = roll.intAt(attempt, 5, 4, height - 8, 0) + 4;
+    const center = cellAt(x, y);
+    if (center === -1 || !claimable(center) || grid[center] !== rockValue) continue;
+    if (!farEnough(x, y)) continue;
+    let facesOpen = false;
+    for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
+      const index = cellAt(x + dx, y + dy);
+      if (index !== -1 && grid[index] !== rockValue && hydro.waterKind[index] === WATER_NONE) {
+        facesOpen = true;
+        break;
+      }
+    }
+    if (!facesOpen) continue;
+    const stamp = stampStructure("structure.cave_mouth", x, y);
+    if (stamp !== null) {
+      record("poi.cave", x, y, stamp);
+    }
+  }
+
   for (let attempt = 0; attempt < attempts && pois.length < budget; attempt += 1) {
     const x = roll.intAt(attempt, 0, 4, width - 8, 0) + 4;
     const y = roll.intAt(attempt, 1, 4, height - 8, 0) + 4;
@@ -338,8 +401,8 @@ export function planPois(
     if (
       (material === grass || material === dryGrass || material === gravel) &&
       !capped("poi.mine") &&
-      rockNear(x, y, 3) &&
-      variant < 500
+      rockNear(x, y, 4) &&
+      variant < 650
     ) {
       const stamp = stampStructure("structure.mine_shaft", x, y);
       if (stamp !== null) {
@@ -355,7 +418,7 @@ export function planPois(
     if (
       material === rockValue &&
       !capped("poi.cave") &&
-      variant < 500
+      variant < 700
     ) {
       let facesOpen = false;
       for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
@@ -372,6 +435,84 @@ export function planPois(
           continue;
         }
       }
+    }
+
+    // --- The far reaches (behavior 19): the mountains and the deep snow ---
+
+    // Prospector camp: a digger's claim on a pocket against the rock,
+    // tools left out between shifts. The variant window splits the
+    // near-rock cells with the mine block above (mine takes < 650).
+    if (
+      (material === grass || material === dryGrass || material === gravel) &&
+      !capped("poi.prospector_camp") &&
+      variant >= 650 &&
+      rockNear(x, y, 2) &&
+      settlementGap > 14 &&
+      clearRegion(x - 1, y - 1, 4, 3)
+    ) {
+      putProp(x, y, "prop.campfire");
+      putProp(x - 1, y, "prop.bedroll");
+      putProp(x + 1, y - 1, "prop.crates");
+      putProp(x + 1, y + 1, "prop.wheelbarrow");
+      putProp(x + 2, y, "prop.tool_rack");
+      putProp(x - 1, y + 1, "prop.sacks");
+      record("poi.prospector_camp", x, y);
+      continue;
+    }
+
+    // Crystal outcrop: a glittering vein deep in the rock mass — the
+    // mountains' interior gets deliberate finds, not just texture.
+    if (material === rockValue && !capped("poi.crystal_outcrop") && variant < 350) {
+      let interior = true;
+      for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
+        const index = cellAt(x + dx, y + dy);
+        if (index === -1 || grid[index] !== rockValue) {
+          interior = false;
+          break;
+        }
+      }
+      if (interior) {
+        putProp(x, y, "prop.crystals");
+        putProp(x + 1, y + 1, "prop.crystals");
+        putProp(x - 1, y + 1, "prop.boulder");
+        putProp(x + 1, y - 1, "prop.crystals");
+        record("poi.crystal_outcrop", x, y);
+        continue;
+      }
+    }
+
+    // Ruined watch: toppled pillars and a worn statue on a mountain pocket
+    // — whoever kept watch over the passes is long gone.
+    if (
+      (material === grass || material === snow) &&
+      !capped("poi.ruined_watch") &&
+      rockNear(x, y, 3) &&
+      settlementGap > 18 &&
+      clearRegion(x - 1, y - 1, 4, 3)
+    ) {
+      putProp(x - 1, y - 1, "prop.pillar");
+      putProp(x + 2, y - 1, "prop.pillar");
+      putProp(x, y, "prop.statue");
+      putProp(x + 1, y + 1, "prop.stone_blocks");
+      putDecal(x - 1, y + 1, "decal.rubble");
+      record("poi.ruined_watch", x, y);
+      continue;
+    }
+
+    // Trapper camp: a fur hunter wintering in the deep snowfields.
+    if (
+      material === snow &&
+      !capped("poi.trapper_camp") &&
+      (treesNear(x, y, 4) >= 5 || settlementGap > 20) &&
+      clearRegion(x - 1, y - 1, 3, 3)
+    ) {
+      putProp(x, y, "prop.campfire");
+      putProp(x - 1, y, "prop.bedroll");
+      putProp(x + 1, y - 1, "prop.game_rack");
+      putProp(x + 1, y + 1, "prop.firewood");
+      putProp(x - 1, y + 1, "prop.log_pile");
+      record("poi.trapper_camp", x, y);
+      continue;
     }
 
     // Stone circle: the grand sacred site, one per world at most.
@@ -405,9 +546,10 @@ export function planPois(
       }
     }
 
-    // Ruin: a collapsed farmstead deep in the wild.
+    // Ruin: a collapsed farmstead deep in the wild (snow included — the
+    // far reaches keep their dead homesteads too).
     if (
-      (material === grass || material === dryGrass) &&
+      (material === grass || material === dryGrass || material === snow) &&
       !capped("poi.ruin") &&
       !nearRoad(x, y, 4) &&
       variant < 200
@@ -460,9 +602,10 @@ export function planPois(
     }
 
     // Battlefield: open ground close to a road — old history on the route.
+    // Far from everything on snow it becomes a forgotten battlefield.
     if (
-      (material === grass || material === dryGrass) &&
-      nearRoad(x, y, 5) &&
+      (material === grass || material === dryGrass || material === snow) &&
+      (nearRoad(x, y, 5) || (material === snow && settlementGap > 25)) &&
       variant < 500 &&
       !capped("poi.battlefield") &&
       clearRegion(x - 2, y - 2, 5, 5)

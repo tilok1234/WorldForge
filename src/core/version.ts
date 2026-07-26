@@ -30,8 +30,12 @@ export const GENERATOR_VERSION = "0.1.0";
  * 18: settlements.plans v5 — the settlement hierarchy: rank 0 becomes the
  *     capital city (ring road, longer arms, 64-lot civic core), ranks
  *     1..townCount towns, and outposts grow into nine-lot villages.
+ * 19: the far reaches (decoration.pois 4, decoration.props 4) — the
+ *     mountains and deep snow get deliberate content: prospector camps,
+ *     crystal outcrops, ruined watches, trapper camps, forgotten
+ *     battlefields; poi budget 48/14; nine new prop species.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 18;
+export const GENERATOR_BEHAVIOR_VERSION = 19;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 9;
@@ -45,8 +49,8 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "routes.graph": 3,
   "settlements.plans": 5,
   "landmarks.stamps": 1,
-  "decoration.props": 3,
-  "decoration.pois": 3,
+  "decoration.props": 4,
+  "decoration.pois": 4,
   "adapter.tileforge": 3,
 };
 

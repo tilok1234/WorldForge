@@ -158,6 +158,9 @@ const BLOCKING_PROPS = new Set<string>([
   "prop.bone_pile", "prop.altar", "prop.brazier", "prop.gravestones",
   "prop.lone_grave", "prop.mine_cart", "prop.ore_vein", "prop.watchfire",
   "prop.skull_pole", "prop.loot_pile", "prop.spikes", "prop.banner",
+  "prop.crystals", "prop.statue", "prop.pillar", "prop.stone_blocks",
+  "prop.crates", "prop.wheelbarrow", "prop.tool_rack", "prop.sacks",
+  "prop.firewood",
 ]);
 
 /** Corridor materials whose street grid streams must not sever. */

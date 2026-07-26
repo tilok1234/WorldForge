@@ -105,6 +105,15 @@ const PROP_NAME: { readonly [key: string]: string } = {
   "prop.loot_pile": "lootpile",
   "prop.spikes": "spikes",
   "prop.banner": "banner",
+  "prop.crystals": "crystals",
+  "prop.statue": "statue",
+  "prop.pillar": "pillar",
+  "prop.stone_blocks": "stoneblocks",
+  "prop.crates": "crates",
+  "prop.wheelbarrow": "wheelbarrow",
+  "prop.tool_rack": "toolrack",
+  "prop.sacks": "sacks",
+  "prop.firewood": "firewood",
 };
 
 /** WorldForge crop keys -> package crop names. */

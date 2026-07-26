@@ -67,6 +67,15 @@ export const DECOR_TYPES = [
   "prop.loot_pile",
   "prop.spikes",
   "prop.banner",
+  "prop.crystals",
+  "prop.statue",
+  "prop.pillar",
+  "prop.stone_blocks",
+  "prop.crates",
+  "prop.wheelbarrow",
+  "prop.tool_rack",
+  "prop.sacks",
+  "prop.firewood",
 ] as const;
 
 /** Semantic ground-decal keys, stage 1. Layer stores index + 1 (0 = none). */
@@ -91,12 +100,15 @@ const BLOCKING = new Set<string>([
   "prop.bone_pile", "prop.altar", "prop.brazier", "prop.gravestones",
   "prop.lone_grave", "prop.mine_cart", "prop.ore_vein", "prop.watchfire",
   "prop.skull_pole", "prop.loot_pile", "prop.spikes", "prop.banner",
+  "prop.crystals", "prop.statue", "prop.pillar", "prop.stone_blocks",
+  "prop.crates", "prop.wheelbarrow", "prop.tool_rack", "prop.sacks",
+  "prop.firewood",
 ]);
 
 /** Two-part canopy species (§2.10): skip when a structure sits above. */
 const TWO_PART = new Set<string>([
   "prop.oak", "prop.birch", "prop.pine", "prop.willow", "prop.dead_tree",
-  "prop.fruit_tree",
+  "prop.fruit_tree", "prop.pillar",
 ]);
 
 interface SpeciesWeight {
