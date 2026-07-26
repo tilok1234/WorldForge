@@ -77,11 +77,12 @@ policy.
 
 ## Project status
 
-**W0A in progress: pinned TypeScript toolchain, W0 `WorldRecipe` contract,
-recipe compiler, path guard, and walking-skeleton pipeline. W0B (import of the
-first approved TileForge package) is unblocked: the first pin candidate is the
-TileForge `a5baf52` export set (2026-07-26) — band-free road doctrine, the
-packed-road family, and the manifest `sourceCommit` identity field.**
+**Milestone W0 complete: pinned TypeScript toolchain, W0 `WorldRecipe`
+contract, recipe compiler, path guard, walking-skeleton pipeline, and the
+approved TileForge forest package (the `a5baf52` export set, band-free road
+doctrine) pinned at `fixtures/tileforge-packages/forest-a5baf52-seed103991/`
+with its dependency lock (`tileforge.lock.json`). Next: Milestone W1, the
+deterministic kernel.**
 
 The intended first release is a small finite seeded world that:
 

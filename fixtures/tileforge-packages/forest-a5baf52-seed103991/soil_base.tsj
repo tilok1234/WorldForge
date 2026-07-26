@@ -1,0 +1,270 @@
+{
+  "columns": 12,
+  "image": "soil_base.png",
+  "imagewidth": 432,
+  "imageheight": 36,
+  "margin": 2,
+  "spacing": 4,
+  "name": "soil_base",
+  "tilecount": 12,
+  "tiledversion": "1.11.2",
+  "tileheight": 32,
+  "tilewidth": 32,
+  "type": "tileset",
+  "version": "1.10",
+  "wangsets": [],
+  "tiles": [
+    {
+      "id": 0,
+      "probability": 0.08333333333333333,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.soil.variant_00"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "probability": 0.08333333333333333,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.soil.variant_01"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "probability": 0.08333333333333333,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.soil.variant_02"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "probability": 0.08333333333333333,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.soil.variant_03"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "probability": 0.08333333333333333,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.soil.variant_04"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "probability": 0.08333333333333333,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.soil.variant_05"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "probability": 0.08333333333333333,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.soil.variant_06"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "probability": 0.08333333333333333,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.soil.variant_07"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "probability": 0.08333333333333333,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.soil.variant_08"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "probability": 0.08333333333333333,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.soil.variant_09"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "probability": 0.08333333333333333,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.soil.variant_10"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "probability": 0.08333333333333333,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.soil.variant_11"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    }
+  ]
+}

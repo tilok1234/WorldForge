@@ -2,3 +2,7 @@
 *.zip binary
 *.png binary
 *.aseprite binary
+
+# Pinned TileForge package fixtures must keep their exact imported bytes;
+# the dependency lock hashes them (tileforge.lock.json contentSha256).
+fixtures/tileforge-packages/** -text

@@ -24,6 +24,10 @@ import {
 import { generateWorld } from "./generation/generate.js";
 import { validateArtifact } from "./validation/validateArtifact.js";
 import { writeWorldOutputs } from "./artifact/write.js";
+import {
+  importTileForgePackage,
+  verifyTileForgePackage,
+} from "./package/importPackage.js";
 import type { NormalizedWorldRecipe, WorldRecipe } from "./recipe/schema.js";
 
 const WORLDFORGE_ROOT = fileURLToPath(new URL("../..", import.meta.url));
@@ -35,6 +39,10 @@ const USAGE = `worldforge <command>
   resolve <file>               print the canonical ResolvedWorldConfig
   hash <file>                  print recipe, config, and generation hashes
   generate <file> --out <dir>  generate and write a world (guarded output)
+  import-package <zip> [--id <packageId>] [--label <text>]
+                               import a TileForge release package (explicit,
+                               one-time; upgrades are a deliberate event)
+  verify-package               verify the pinned package against the lock
 `;
 
 main(process.argv.slice(2));
@@ -56,6 +64,12 @@ function main(argv: readonly string[]): void {
       break;
     case "generate":
       exitWith(runGenerate(argv.slice(1)));
+      break;
+    case "import-package":
+      exitWith(runImportPackage(argv.slice(1)));
+      break;
+    case "verify-package":
+      exitWith(runVerifyPackage());
       break;
     case undefined:
     case "help":
@@ -183,6 +197,65 @@ function runGenerate(argv: readonly string[]): number {
     ].join("\n") + "\n",
   );
   return 0;
+}
+
+function runImportPackage(argv: readonly string[]): number {
+  const positional: string[] = [];
+  let packageId: string | undefined;
+  let sourceLabel: string | undefined;
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === "--id") {
+      packageId = argv[i + 1];
+      i += 1;
+    } else if (arg === "--label") {
+      sourceLabel = argv[i + 1];
+      i += 1;
+    } else if (arg !== undefined) {
+      positional.push(arg);
+    }
+  }
+  const zipPath = positional[0];
+  if (zipPath === undefined) {
+    process.stderr.write("usage: worldforge import-package <zip> [--id <packageId>] [--label <text>]\n");
+    return 2;
+  }
+  try {
+    const result = importTileForgePackage({
+      zipPath,
+      worldforgeRoot: WORLDFORGE_ROOT,
+      ...(packageId === undefined ? {} : { packageId }),
+      ...(sourceLabel === undefined ? {} : { sourceLabel }),
+    });
+    process.stdout.write(
+      [
+        `imported ${result.packageId}`,
+        `  ${result.fileCount} files, ${result.totalBytes} bytes`,
+        `  package dir: ${result.packageDir}`,
+        `  lock: ${result.lockPath}`,
+        `  contentSha256: ${result.lock.contentSha256}`,
+        ...result.warnings.map((warning) => `  warning: ${warning}`),
+      ].join("\n") + "\n",
+    );
+    return 0;
+  } catch (error) {
+    process.stderr.write(`import failed: ${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+}
+
+function runVerifyPackage(): number {
+  const result = verifyTileForgePackage(WORLDFORGE_ROOT);
+  if (result.ok) {
+    process.stdout.write("package fixture matches the dependency lock\n");
+    return 0;
+  }
+  process.stderr.write(
+    "package verification FAILED:\n" +
+      result.problems.map((problem) => `  ${problem}`).join("\n") +
+      "\n",
+  );
+  return 1;
 }
 
 /**
