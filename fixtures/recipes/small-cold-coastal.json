@@ -8,8 +8,8 @@
   "landmarks": [{ "type": "ancient_fortress", "relation": "across_river_from_town" }],
   "budgets": {
     "regionCount": 4,
-    "settlementCount": 5,
-    "primaryRouteCount": 2,
+    "settlementCount": 10,
+    "primaryRouteCount": 3,
     "landmarkCount": 1
   }
 }

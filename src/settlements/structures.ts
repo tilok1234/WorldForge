@@ -26,6 +26,7 @@ export const STRUCTURE_TYPES = [
   "structure.crypt",
   "structure.ruin",
   "structure.giant_skeleton",
+  "structure.camp_wall",
 ] as const;
 
 export type StructureType = (typeof STRUCTURE_TYPES)[number];

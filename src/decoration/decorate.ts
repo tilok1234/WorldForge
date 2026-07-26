@@ -62,6 +62,11 @@ export const DECOR_TYPES = [
   "prop.lone_grave",
   "prop.mine_cart",
   "prop.ore_vein",
+  "prop.watchfire",
+  "prop.skull_pole",
+  "prop.loot_pile",
+  "prop.spikes",
+  "prop.banner",
 ] as const;
 
 /** Semantic ground-decal keys, stage 1. Layer stores index + 1 (0 = none). */
@@ -84,7 +89,8 @@ const BLOCKING = new Set<string>([
   "prop.buoy", "prop.campfire", "prop.game_rack", "prop.log_pile",
   "prop.standing_stone", "prop.runestone", "prop.broken_wagon",
   "prop.bone_pile", "prop.altar", "prop.brazier", "prop.gravestones",
-  "prop.lone_grave", "prop.mine_cart", "prop.ore_vein",
+  "prop.lone_grave", "prop.mine_cart", "prop.ore_vein", "prop.watchfire",
+  "prop.skull_pole", "prop.loot_pile", "prop.spikes", "prop.banner",
 ]);
 
 /** Two-part canopy species (§2.10): skip when a structure sits above. */

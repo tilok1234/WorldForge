@@ -7,6 +7,7 @@
 
 import { clampInt } from "../core/fixedPoint.js";
 import { floorDiv } from "../core/coords.js";
+import { channel } from "../core/channels.js";
 import type { ResolvedWorldConfig } from "../recipe/compile.js";
 import { buildMacroFields, type MacroFields } from "../fields/macroFields.js";
 import { buildHydrology, WATER_DEEP, WATER_NONE, WATER_SHALLOW, type HydrologyResult } from "../hydrology/hydrology.js";
@@ -182,6 +183,55 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
           }
         }
       }
+    }
+  }
+
+  // Rocky knolls (macro.biomes 3, the 90%-unused verdict): small scattered
+  // rock outcrops texture the open midlands and anchor wilderness dungeons.
+  // They stamp BEFORE routes so corridors respect them, and keep off water,
+  // rivers, beaches, and the existing rock mass.
+  {
+    const ROCK = PALETTE_INDEX["terrain.rock"];
+    const SAND_VALUE = PALETTE_INDEX["terrain.sand"];
+    const knolls = channel(config.seed, "macro.knolls");
+    const centers: Array<readonly [number, number]> = [];
+    const rockNearby = (cx: number, cy: number, radius: number): boolean => {
+      for (let dy = -radius; dy <= radius; dy += 1) {
+        for (let dx = -radius; dx <= radius; dx += 1) {
+          const x = cx + dx;
+          const y = cy + dy;
+          if (x < 0 || y < 0 || x >= width || y >= height) continue;
+          if (grid[y * width + x] === ROCK) return true;
+        }
+      }
+      return false;
+    };
+    const target = config.biomes.knollCount;
+    for (let attempt = 0; attempt < target * 22 && centers.length < target; attempt += 1) {
+      const cx = knolls.intAt(attempt, 0, 8, width - 16, 0) + 8;
+      const cy = knolls.intAt(attempt, 1, 8, height - 16, 0) + 8;
+      const center = cy * width + cx;
+      if (hydro.waterKind[center] !== WATER_NONE || hydro.isRiver[center] === 1) continue;
+      if (grid[center] === SAND_VALUE || grid[center] === ROCK) continue;
+      if (rockNearby(cx, cy, 7)) continue;
+      if (centers.some(([ox, oy]) => Math.max(Math.abs(ox - cx), Math.abs(oy - cy)) < 14)) continue;
+      const radius = 2 + knolls.intAt(attempt, 2, 0, 3, 0);
+      for (let dy = -radius; dy <= radius; dy += 1) {
+        for (let dx = -radius; dx <= radius; dx += 1) {
+          const x = cx + dx;
+          const y = cy + dy;
+          if (x < 1 || y < 1 || x >= width - 1 || y >= height - 1) continue;
+          const index = y * width + x;
+          if (hydro.waterKind[index] !== WATER_NONE || hydro.isRiver[index] === 1) continue;
+          if (grid[index] === SAND_VALUE) continue;
+          const distance = Math.max(Math.abs(dx), Math.abs(dy));
+          // Rough-edged blob: certainty at the core, jitter at the rim.
+          if (knolls.permilleAt(x, y, 3) < 940 - distance * (720 / radius)) {
+            grid[index] = ROCK;
+          }
+        }
+      }
+      centers.push([cx, cy]);
     }
   }
 

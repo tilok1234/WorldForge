@@ -40,6 +40,7 @@ export const POI_TYPES = [
   "poi.crypt",
   "poi.ruin",
   "poi.giant_skeleton",
+  "poi.bandit_camp",
 ] as const;
 export type PoiType = (typeof POI_TYPES)[number];
 
@@ -200,12 +201,13 @@ export function planPois(
     "poi.battlefield": budget,
     "poi.graveyard": budget,
     "poi.wayside_shrine": budget,
-    "poi.mine": 2,
-    "poi.cave": 2,
+    "poi.mine": 4,
+    "poi.cave": 4,
     "poi.stone_circle": 1,
-    "poi.crypt": 1,
-    "poi.ruin": 2,
+    "poi.crypt": 2,
+    "poi.ruin": 4,
     "poi.giant_skeleton": 1,
+    "poi.bandit_camp": 3,
   };
   const capped = (type: PoiType): boolean =>
     (typeCounts.get(type) ?? 0) >= TYPE_CAPS[type];
@@ -264,6 +266,54 @@ export function planPois(
       continue;
     }
     const variant = roll.permilleAt(x, y, 2);
+
+    // Bandit camp: a palisaded raider den preying on the roads — near enough
+    // to strike, far enough to hide. Ring with a south gate, camp clutter
+    // inside, warnings staked outside.
+    if (
+      (material === grass || material === dryGrass) &&
+      !capped("poi.bandit_camp") &&
+      settlementGap > 16 &&
+      nearRoad(x, y, 14) &&
+      !nearRoad(x, y, 4) &&
+      clearRegion(x - 4, y - 3, 9, 8)
+    ) {
+      const campWall = STRUCTURE_LAYER_VALUE["structure.camp_wall"];
+      for (let sx = -3; sx <= 3; sx += 1) {
+        for (const sy of [-2, 3]) {
+          if (sy === 3 && (sx === 0 || sx === 1)) continue; // gate gap
+          const cell = cellAt(x + sx, y + sy);
+          if (cell !== -1) {
+            structureLayer[cell] = campWall;
+            decoration.propLayer[cell] = 0;
+            decoration.decalLayer[cell] = 0;
+          }
+        }
+      }
+      for (let sy = -1; sy <= 2; sy += 1) {
+        for (const sx of [-3, 3]) {
+          const cell = cellAt(x + sx, y + sy);
+          if (cell !== -1) {
+            structureLayer[cell] = campWall;
+            decoration.propLayer[cell] = 0;
+            decoration.decalLayer[cell] = 0;
+          }
+        }
+      }
+      putProp(x, y, "prop.campfire");
+      putProp(x - 1, y - 1, "prop.bedroll");
+      putProp(x + 1, y - 1, "prop.bedroll");
+      putProp(x - 2, y + 1, "prop.loot_pile");
+      putProp(x + 2, y + 1, "prop.game_rack");
+      putProp(x + 2, y - 1, "prop.banner");
+      putProp(x - 2, y - 1, "prop.watchfire");
+      putProp(x - 1, y + 4, "prop.skull_pole");
+      putProp(x + 2, y + 4, "prop.skull_pole");
+      putProp(x - 3, y + 4, "prop.spikes");
+      putProp(x + 4, y + 4, "prop.spikes");
+      record("poi.bandit_camp", x, y);
+      continue;
+    }
 
     // --- Structure discoveries (phase B) come first: rare, capped tight ---
 

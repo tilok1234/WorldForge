@@ -24,8 +24,11 @@ export const GENERATOR_VERSION = "0.1.0";
  *     stone rings, battlefields, graveyards, shrines, fishing spots.
  * 16: POIs phase B (decoration.pois 2) — structure discoveries: mines,
  *     cave mouths, the stone circle, crypts, ruins, the giant skeleton.
+ * 17: the density pass (the 90%-unused verdict) — rocky knolls
+ *     (macro.biomes 3), palisaded bandit camps, poi budget 36/12
+ *     (decoration.pois 3).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 16;
+export const GENERATOR_BEHAVIOR_VERSION = 17;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 9;
@@ -34,13 +37,13 @@ export const RECIPE_COMPILER_VERSION = 9;
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "recipe.presets": 2,
   "macro.fields": 4,
-  "macro.biomes": 2,
+  "macro.biomes": 3,
   "hydrology.water": 2,
   "routes.graph": 2,
   "settlements.plans": 4,
   "landmarks.stamps": 1,
   "decoration.props": 3,
-  "decoration.pois": 2,
+  "decoration.pois": 3,
   "adapter.tileforge": 3,
 };
 

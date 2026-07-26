@@ -124,6 +124,8 @@ export interface BiomeRules {
   readonly minRegionCells: number;
   /** Bounded smoothing iterations (docs/GENERATION_RULES.md, performance). */
   readonly smoothingPasses: number;
+  /** Scattered rocky knolls (macro.biomes 3): midland texture, dungeon anchors. */
+  readonly knollCount: number;
   readonly thresholds: {
     readonly rockElevationMin: number;
     readonly snowTemperatureMax: number;
@@ -295,6 +297,7 @@ const BIOME_RULES: { readonly [key in SizePreset]: BiomeRules } = {
   tiny: {
     minRegionCells: 12,
     smoothingPasses: 8,
+    knollCount: 8,
     thresholds: {
       rockElevationMin: 650,
       snowTemperatureMax: 320,
@@ -307,6 +310,7 @@ const BIOME_RULES: { readonly [key in SizePreset]: BiomeRules } = {
   small: {
     minRegionCells: 80,
     smoothingPasses: 8,
+    knollCount: 18,
     thresholds: {
       rockElevationMin: 650,
       snowTemperatureMax: 320,
@@ -364,7 +368,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
     budgets: normalized.budgets,
     decoration: {
       densityPermille: normalized.decoration.densityPermille,
-      poiCount: normalized.world.sizePreset === "tiny" ? 8 : 20,
+      poiCount: normalized.world.sizePreset === "tiny" ? 12 : 36,
     },
     passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "decoration.props", "adapter.tileforge"],
     dependencies: { tileforge: pinnedTileForgeDependency() },

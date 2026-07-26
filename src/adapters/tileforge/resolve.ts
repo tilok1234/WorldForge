@@ -100,6 +100,11 @@ const PROP_NAME: { readonly [key: string]: string } = {
   "prop.lone_grave": "lonegrave",
   "prop.mine_cart": "minecart",
   "prop.ore_vein": "orevein",
+  "prop.watchfire": "watchfire",
+  "prop.skull_pole": "skullpole",
+  "prop.loot_pile": "lootpile",
+  "prop.spikes": "spikes",
+  "prop.banner": "banner",
 };
 
 /** WorldForge crop keys -> package crop names. */
@@ -326,15 +331,21 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
     "fortress gate emitted as a wall-layer opening (package gate structure is 3x2)",
   ];
 
-  // Fortress walls -> wall layer type 1 (stone city wall); gate stays open.
-  const wallType = manifest.wallTypeByKey.get("wall") ?? 1;
+  // Wall-painting structures: fortress walls are stone city wall (type 1),
+  // bandit-camp palisades are the palisade family (type 2); gates stay open.
+  const stoneWallType = manifest.wallTypeByKey.get("wall") ?? 1;
+  const palisadeType = manifest.wallTypeByKey.get("palisade") ?? 2;
   const gateValue = 1; // structure.fortress_gate in STRUCTURE_TYPES order
   const wallValue = 2; // structure.fortress_wall
+  const campWallValue = RESOLVED_STRUCTURE_TYPES.indexOf("structure.camp_wall") + 1;
   let wallCells = 0;
   for (let index = 0; index < cellCount; index += 1) {
     const structure = composed.structureLayer[index] as number;
     if (structure === wallValue) {
-      wall[index] = wallType;
+      wall[index] = stoneWallType;
+      wallCells += 1;
+    } else if (structure === campWallValue) {
+      wall[index] = palisadeType;
       wallCells += 1;
     }
   }
