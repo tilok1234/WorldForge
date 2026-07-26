@@ -267,7 +267,7 @@ function pickDestinations(
     }
     // Landmarks prefer dramatic ground: high or snowy, still reachable.
     const drama = own >= 550 ? 40 : 0;
-    landmarkScored.push({ score: 40 + drama + (flat ? 10 : 0) + roll - edgePenalty, index });
+    landmarkScored.push({ score: 40 + drama + (flat ? 10 : 0) + roll - edgePenalty * 3, index });
   }
 
   const bySpacing = (
@@ -547,7 +547,8 @@ function stampFootprintClear(
   const anchorY = (cell - anchorX) / width;
   const originX = anchorX - stamp.anchorX;
   const originY = anchorY - stamp.anchorY;
-  if (originX < 1 || originY < 1 || originX + stamp.width >= width - 1 || originY + stamp.height >= height - 1) {
+  // W6 ride-along: a real interior margin keeps stamps off the world rim.
+  if (originX < 4 || originY < 4 || originX + stamp.width >= width - 4 || originY + stamp.height >= height - 4) {
     return false;
   }
   const anchorElevation = fields.elevation[cell] as number;

@@ -14,6 +14,7 @@ import { validateRecipe } from "../recipe/validate.js";
 import { composeWorld } from "../generation/composeWorld.js";
 import { WORLD_PALETTE } from "../regions/biomes.js";
 import { renderWorldGridPng } from "../render/macroRender.js";
+import { resolveToTileForge } from "../adapters/tileforge/resolve.js";
 
 const ROOT = fileURLToPath(new URL("../../..", import.meta.url));
 
@@ -88,6 +89,11 @@ export function buildMacroSamples(): unknown {
       };
     }),
   };
+}
+
+export function buildResolveDiagnostics(): unknown {
+  const { composed } = worldFor("small-cold-coastal");
+  return resolveToTileForge(composed).diagnostics;
 }
 
 export function buildTinyBiomePng(): Buffer {

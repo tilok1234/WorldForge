@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { canonicalSha256 } from "../core/identity.js";
 import {
   GENERATOR_BEHAVIOR_VERSION,
@@ -123,8 +126,14 @@ export interface BiomeRules {
   };
 }
 
+export interface TileForgeDependency {
+  readonly packageId: string;
+  readonly packageSha256: string;
+  readonly manifestSha256: string;
+}
+
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 5;
+  readonly resolvedConfigFormat: 6;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -154,8 +163,8 @@ export interface ResolvedWorldConfig {
   readonly budgets: NormalizedWorldRecipe["budgets"];
   /** Named generation passes enabled at this behavior version. */
   readonly passes: readonly string[];
-  /** No TileForge-consuming pass exists yet; the adapter (W6) pins it. */
-  readonly dependencies: { readonly tileforge: null };
+  /** Pinned package identity from tileforge.lock.json (null if absent). */
+  readonly dependencies: { readonly tileforge: TileForgeDependency | null };
 }
 
 /**
@@ -295,7 +304,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 5,
+    resolvedConfigFormat: 6,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -334,9 +343,37 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
     }),
     biomes: BIOME_RULES[normalized.world.sizePreset],
     budgets: normalized.budgets,
-    passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps"],
-    dependencies: { tileforge: null },
+    passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "adapter.tileforge"],
+    dependencies: { tileforge: pinnedTileForgeDependency() },
   };
+}
+
+const REPO_ROOT = fileURLToPath(new URL("../../..", import.meta.url));
+let cachedDependency: TileForgeDependency | null | undefined;
+
+/**
+ * The dependency lock is authoritative for package identity (docs/AGENTS.md).
+ * Read once; a missing lock resolves to null (adapter stages then refuse).
+ */
+function pinnedTileForgeDependency(): TileForgeDependency | null {
+  if (cachedDependency === undefined) {
+    const lockPath = join(REPO_ROOT, "tileforge.lock.json");
+    if (!existsSync(lockPath)) {
+      cachedDependency = null;
+    } else {
+      const lock = JSON.parse(readFileSync(lockPath, "utf8")) as {
+        packageId: string;
+        packageSha256: string;
+        manifestSha256: string;
+      };
+      cachedDependency = {
+        packageId: lock.packageId,
+        packageSha256: lock.packageSha256,
+        manifestSha256: lock.manifestSha256,
+      };
+    }
+  }
+  return cachedDependency;
 }
 
 export function resolvedConfigIdentity(config: ResolvedWorldConfig): string {

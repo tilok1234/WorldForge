@@ -1,0 +1,262 @@
+/**
+ * TileForge resolution (Milestone W6). Emits the package's editable source
+ * format — the map-data.json raw grid layers — from a composed world. Masks,
+ * variants, underlays, and atlas coordinates are all derived by the package's
+ * own renderer from these grids (FORMATS.md), so this adapter never touches
+ * atlas math. Unknown semantic keys are reported, never silently defaulted.
+ */
+
+import type { ComposedWorld } from "../../generation/composeWorld.js";
+import { WORLD_PALETTE, type PaletteKey } from "../../regions/biomes.js";
+import { STRUCTURE_TYPES } from "../../settlements/structures.js";
+import { WATER_NONE } from "../../hydrology/hydrology.js";
+import { loadPinnedManifest, type TileForgeManifest } from "./manifest.js";
+
+/** WorldForge semantic keys -> package family keys (validated at resolve). */
+const MATERIAL_FAMILY: { readonly [key in PaletteKey]: string } = {
+  "terrain.cobble": "cobble",
+  "terrain.dry_grass": "drygrass",
+  "terrain.grass": "grass",
+  "terrain.gravel": "gravel",
+  "terrain.mud": "mud",
+  "terrain.packed_road": "packedroad",
+  "terrain.rock": "rock",
+  "terrain.snow": "snow",
+  "terrain.swamp": "muck",
+  "water.deep": "deep",
+  "water.shallow": "shallow",
+};
+
+/** WorldForge structure types -> package structure names. */
+const STRUCTURE_NAME: { readonly [key: string]: string } = {
+  "structure.house": "house",
+  "structure.town_hall": "townhall",
+  "structure.watchtower": "tower",
+  "structure.well": "well",
+};
+
+/** Matches the package map-data.json schema exactly: layers at top level. */
+export interface TileForgeMapData {
+  readonly mapW: number;
+  readonly mapH: number;
+  readonly mat: readonly number[];
+  readonly road: readonly number[];
+  readonly fence: readonly number[];
+  readonly wall: readonly number[];
+  readonly river: readonly number[];
+  readonly moss: readonly number[];
+  readonly tall: readonly number[];
+  readonly pier: readonly number[];
+  readonly decal: readonly number[];
+  readonly prop: readonly number[];
+  readonly crop: readonly number[];
+  readonly meta: readonly number[];
+  readonly elev: readonly number[];
+  readonly ramp: readonly number[];
+}
+
+export interface ResolveDiagnostics {
+  readonly packageId: string;
+  readonly adapterNotes: readonly string[];
+  readonly unresolvedKeys: readonly string[];
+  readonly materialCells: Readonly<Record<string, number>>;
+  readonly metaCells: number;
+  readonly wallCells: number;
+  readonly fordDecals: number;
+  readonly bridgeStructures: number;
+  readonly dirtPathCells: number;
+}
+
+export interface ResolvedWorld {
+  readonly mapData: TileForgeMapData;
+  readonly diagnostics: ResolveDiagnostics;
+}
+
+export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
+  const { lock, manifest } = loadPinnedManifest();
+  const { width, height, grid } = composed;
+  const cellCount = width * height;
+
+  const unresolved = new Set<string>();
+  const materialIds = new Array<number>(WORLD_PALETTE.length).fill(-1);
+  for (let index = 0; index < WORLD_PALETTE.length; index += 1) {
+    const familyKey = MATERIAL_FAMILY[WORLD_PALETTE[index] as PaletteKey];
+    const id = manifest.materialIdByKey.get(familyKey);
+    if (id === undefined) {
+      unresolved.add(`${WORLD_PALETTE[index]} -> ${familyKey}`);
+    } else {
+      materialIds[index] = id;
+    }
+  }
+
+  const zeros = (): number[] => new Array<number>(cellCount).fill(0);
+  const mat = new Array<number>(cellCount);
+  const road = zeros();
+  const wall = zeros();
+  const river = zeros();
+  const decal = zeros();
+  const meta = zeros();
+
+  const materialCells: Record<string, number> = {};
+  for (let index = 0; index < cellCount; index += 1) {
+    const paletteIndex = grid[index] as number;
+    mat[index] = materialIds[paletteIndex] as number;
+    const key = WORLD_PALETTE[paletteIndex] as string;
+    materialCells[key] = (materialCells[key] ?? 0) + 1;
+    if (composed.routesResult.pathLayer[index] === 1) {
+      road[index] = manifest.roadTypeByKey.get("dirtpath") ?? 0;
+    }
+    if (composed.hydro.isMajorRiver[index] === 1) {
+      river[index] = 1;
+    }
+  }
+
+  const notes: string[] = [
+    "elev emitted flat (level 0): WorldForge cliff/ramp integration is a later milestone",
+    "fortress gate emitted as a wall-layer opening (package gate structure is 3x2)",
+  ];
+
+  // Fortress walls -> wall layer type 1 (stone city wall); gate stays open.
+  const wallType = manifest.wallTypeByKey.get("wall") ?? 1;
+  const gateValue = 1; // structure.fortress_gate in STRUCTURE_TYPES order
+  const wallValue = 2; // structure.fortress_wall
+  let wallCells = 0;
+  for (let index = 0; index < cellCount; index += 1) {
+    const structure = composed.structureLayer[index] as number;
+    if (structure === wallValue) {
+      wall[index] = wallType;
+      wallCells += 1;
+    }
+  }
+
+  // Planner structures -> meta codes (type*256 + row-major cellIndex).
+  let metaCells = 0;
+  for (const plan of composed.settlementPlans) {
+    for (const structure of plan.structures) {
+      const name = STRUCTURE_NAME[structure.type];
+      const entry = name === undefined ? undefined : manifest.structureByName.get(name);
+      if (entry === undefined) {
+        unresolved.add(`${structure.type} -> ${name ?? "?"}`);
+        continue;
+      }
+      if (entry.def.w !== structure.width || entry.def.h !== structure.height) {
+        unresolved.add(
+          `${structure.type}: footprint ${structure.width}x${structure.height} != package ${entry.def.w}x${entry.def.h}`,
+        );
+        continue;
+      }
+      for (let sy = 0; sy < structure.height; sy += 1) {
+        for (let sx = 0; sx < structure.width; sx += 1) {
+          const cell = (structure.y + sy) * width + structure.x + sx;
+          meta[cell] = entry.id * 256 + sy * structure.width + sx;
+          metaCells += 1;
+        }
+      }
+    }
+  }
+
+  // Crossings: fords are decal 15 on water/river; bridges are metatiles
+  // oriented across the river run (stone for highways, wood otherwise).
+  const fordId = manifest.decalIdByKey.get("ford");
+  let fordDecals = 0;
+  let bridgeStructures = 0;
+  for (const route of composed.routesResult.routes) {
+    for (const crossing of route.crossings) {
+      if (crossing.kind === "ford") {
+        if (fordId === undefined) {
+          unresolved.add("crossing.ford -> decal ford");
+        } else if (decal[crossing.cell] === 0) {
+          decal[crossing.cell] = fordId;
+          fordDecals += 1;
+        }
+        continue;
+      }
+      const bridge = placeBridge(crossing.cell, route.routeClass === "highway", composed, manifest, meta, width, height);
+      if (bridge === null) {
+        unresolved.add("crossing.bridge -> wbridge/sbridge");
+      } else {
+        bridgeStructures += 1;
+      }
+    }
+  }
+
+  let dirtPathCells = 0;
+  for (const value of road) {
+    if (value !== 0) dirtPathCells += 1;
+  }
+
+  const mapData: TileForgeMapData = {
+    mapW: width,
+    mapH: height,
+    mat,
+    road,
+    fence: zeros(),
+    wall,
+    river,
+    moss: zeros(),
+    tall: zeros(),
+    pier: zeros(),
+    decal,
+    prop: zeros(),
+    crop: zeros(),
+    meta,
+    elev: zeros(),
+    ramp: zeros(),
+  };
+
+  return {
+    mapData,
+    diagnostics: {
+      packageId: lock.packageId,
+      adapterNotes: notes,
+      unresolvedKeys: [...unresolved].sort(),
+      materialCells,
+      metaCells,
+      wallCells,
+      fordDecals,
+      bridgeStructures,
+      dirtPathCells,
+    },
+  };
+}
+
+/** A bridge spans the river cell perpendicular to the river's local run. */
+function placeBridge(
+  cell: number,
+  stone: boolean,
+  composed: ComposedWorld,
+  manifest: TileForgeManifest,
+  meta: number[],
+  width: number,
+  height: number,
+): number | null {
+  const x = cell % width;
+  const y = (cell - x) / width;
+  const riverAt = (nx: number, ny: number): boolean =>
+    nx >= 0 && ny >= 0 && nx < width && ny < height &&
+    (composed.hydro.isRiver[ny * width + nx] === 1 || composed.hydro.waterKind[ny * width + nx] !== WATER_NONE);
+  const riverVertical = riverAt(x, y - 1) || riverAt(x, y + 1);
+  // A vertical river needs a horizontal (3x1) bridge and vice versa.
+  const name = riverVertical ? (stone ? "sbridge" : "wbridge") : (stone ? "sbridgev" : "wbridgev");
+  const entry = manifest.structureByName.get(name);
+  if (entry === undefined) {
+    return null;
+  }
+  const originX = riverVertical ? x - 1 : x;
+  const originY = riverVertical ? y : y - 1;
+  if (originX < 0 || originY < 0 || originX + entry.def.w > width || originY + entry.def.h > height) {
+    return null;
+  }
+  for (let sy = 0; sy < entry.def.h; sy += 1) {
+    for (let sx = 0; sx < entry.def.w; sx += 1) {
+      const target = (originY + sy) * width + originX + sx;
+      if (meta[target] === 0) {
+        meta[target] = entry.id * 256 + sy * entry.def.w + sx;
+      }
+    }
+  }
+  return entry.id;
+}
+
+export { STRUCTURE_NAME, MATERIAL_FAMILY };
+export const RESOLVED_STRUCTURE_TYPES = STRUCTURE_TYPES;

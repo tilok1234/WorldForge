@@ -10,10 +10,10 @@ export const GENERATOR_NAME = "worldforge";
 export const GENERATOR_VERSION = "0.1.0";
 
 /** Behavior version of the generation passes. W2 macro: 2. W3 hydrology: 3. */
-export const GENERATOR_BEHAVIOR_VERSION = 7;
+export const GENERATOR_BEHAVIOR_VERSION = 8;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 7;
+export const RECIPE_COMPILER_VERSION = 8;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -24,4 +24,8 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "routes.graph": 2,
   "settlements.plans": 1,
   "landmarks.stamps": 1,
+  "adapter.tileforge": 1,
 };
+
+/** Version of the TileForge resolution adapter itself. */
+export const TILEFORGE_ADAPTER_VERSION = 1;

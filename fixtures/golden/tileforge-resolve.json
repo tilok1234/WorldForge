@@ -1,0 +1,26 @@
+{
+  "adapterNotes": [
+    "elev emitted flat (level 0): WorldForge cliff/ramp integration is a later milestone",
+    "fortress gate emitted as a wall-layer opening (package gate structure is 3x2)"
+  ],
+  "bridgeStructures": 0,
+  "dirtPathCells": 106,
+  "fordDecals": 2,
+  "materialCells": {
+    "terrain.cobble": 347,
+    "terrain.dry_grass": 501,
+    "terrain.grass": 23830,
+    "terrain.gravel": 75,
+    "terrain.mud": 1102,
+    "terrain.packed_road": 1374,
+    "terrain.rock": 19111,
+    "terrain.snow": 10352,
+    "terrain.swamp": 869,
+    "water.deep": 1348,
+    "water.shallow": 6627
+  },
+  "metaCells": 169,
+  "packageId": "forest-a5baf52-seed103991",
+  "unresolvedKeys": [],
+  "wallCells": 31
+}

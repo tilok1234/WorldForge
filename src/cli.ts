@@ -31,6 +31,7 @@ import {
   importTileForgePackage,
   verifyTileForgePackage,
 } from "./package/importPackage.js";
+import { resolveToTileForge } from "./adapters/tileforge/resolve.js";
 import type { NormalizedWorldRecipe, WorldRecipe } from "./recipe/schema.js";
 
 const WORLDFORGE_ROOT = fileURLToPath(new URL("../..", import.meta.url));
@@ -51,6 +52,9 @@ const USAGE = `worldforge <command>
                                import a TileForge release package (explicit,
                                one-time; upgrades are a deliberate event)
   verify-package               verify the pinned package against the lock
+  resolve-tileforge <file> --out <dir>
+                               resolve a world into the pinned package's
+                               map-data.json format plus diagnostics
 `;
 
 main(process.argv.slice(2));
@@ -84,6 +88,9 @@ function main(argv: readonly string[]): void {
       break;
     case "verify-package":
       exitWith(runVerifyPackage());
+      break;
+    case "resolve-tileforge":
+      exitWith(runResolveTileForge(argv.slice(1)));
       break;
     case undefined:
     case "help":
@@ -383,6 +390,46 @@ function runImportPackage(argv: readonly string[]): number {
     process.stderr.write(`import failed: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
+}
+
+function runResolveTileForge(argv: readonly string[]): number {
+  const parsed = parseFileAndOut(argv, "resolve-tileforge");
+  if (typeof parsed === "number") {
+    return parsed;
+  }
+  const loaded = loadRecipe(parsed.file);
+  if (typeof loaded === "number") {
+    return loaded;
+  }
+  const normalized = normalizeRecipe(loaded);
+  const config = compileRecipe(normalized);
+  const result = generateWorldDetailed(normalized, config);
+  const gateErrors = [...result.composed.hydro.topologyErrors, ...result.composed.routesResult.errors];
+  if (gateErrors.length > 0) {
+    process.stderr.write(`generation FAILED; nothing resolved\n${gateErrors.join("\n")}\n`);
+    return 1;
+  }
+  const resolved = resolveToTileForge(result.composed);
+  if (resolved.diagnostics.unresolvedKeys.length > 0) {
+    process.stderr.write(
+      "resolution FAILED; unresolved semantic keys:\n" +
+        resolved.diagnostics.unresolvedKeys.map((key) => `  ${key}`).join("\n") +
+        "\n",
+    );
+    return 1;
+  }
+  mkdirSync(parsed.outDir, { recursive: true });
+  writeFileSync(join(parsed.outDir, "tileforge-map-data.json"), canonicalJson(resolved.mapData));
+  writeFileSync(join(parsed.outDir, "tileforge-diagnostics.json"), canonicalJson(resolved.diagnostics));
+  process.stdout.write(
+    [
+      `resolved ${resolved.mapData.mapW}x${resolved.mapData.mapH} world against ${resolved.diagnostics.packageId}`,
+      `  meta cells ${resolved.diagnostics.metaCells}, wall cells ${resolved.diagnostics.wallCells}, fords ${resolved.diagnostics.fordDecals}, bridges ${resolved.diagnostics.bridgeStructures}`,
+      `wrote ${join(parsed.outDir, "tileforge-map-data.json")}`,
+      `wrote ${join(parsed.outDir, "tileforge-diagnostics.json")}`,
+    ].join("\n") + "\n",
+  );
+  return 0;
 }
 
 function runVerifyPackage(): number {

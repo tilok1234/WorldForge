@@ -23337,7 +23337,11 @@
     "yIncreases": "southward"
   },
   "dependencies": {
-    "tileforge": null
+    "tileforge": {
+      "manifestSha256": "5e6bd19a71d4a2949815896bf58f0dd3a2a3ed12882caa456d60224c6c70e83e",
+      "packageId": "forest-a5baf52-seed103991",
+      "packageSha256": "3e58c902c5baca63e33d1201d459844299616d5b1f87e514e330163524580d68"
+    }
   },
   "destinations": [],
   "dimensions": {
@@ -23348,12 +23352,12 @@
   },
   "formatVersion": 4,
   "generator": {
-    "generationIdentitySha256": "4f10728263c6ef0420566d953e1d9f185ac8be8415e8490203bbe7803b2b186e",
-    "generatorBehaviorVersion": 7,
+    "generationIdentitySha256": "6f71eb8e2e05bff79b21db162c92cbe2939a2a69c2e8d942bc61d17d5f2bdb77",
+    "generatorBehaviorVersion": 8,
     "name": "worldforge",
-    "recipeCompilerVersion": 7,
+    "recipeCompilerVersion": 8,
     "recipeSha256": "16656cafaa78e6e0784aa50f1c26986ac3c923104f8fb112140692ddb0f2553d",
-    "resolvedConfigSha256": "c656ee57d5d3d18afc00da65405cf8cfc276159b02f6d54863911645397711a7",
+    "resolvedConfigSha256": "5db1c8e5c9a5b985d585bba12af690d73ce0df556ac514db434b46f71083e1c3",
     "seed": 1,
     "version": "0.1.0"
   },

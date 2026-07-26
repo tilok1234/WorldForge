@@ -12,6 +12,7 @@ import { join } from "node:path";
 import { canonicalJson } from "../src/core/canonicalJson.js";
 import { buildKernelVectors } from "../src/testing/kernelVectors.js";
 import { buildMacroSamples, buildTinyBiomePng } from "../src/testing/macroSamples.js";
+import { buildResolveDiagnostics } from "../src/testing/macroSamples.js";
 import { validateRecipe } from "../src/recipe/validate.js";
 import { normalizeRecipe, recipeIdentity } from "../src/recipe/normalize.js";
 import {
@@ -80,3 +81,6 @@ process.stdout.write(`updated ${join(GOLDEN_DIR, "macro-samples.json")}\n`);
 
 writeFileSync(join(GOLDEN_DIR, "tiny-biomes.png"), buildTinyBiomePng());
 process.stdout.write(`updated ${join(GOLDEN_DIR, "tiny-biomes.png")}\n`);
+
+writeFileSync(join(GOLDEN_DIR, "tileforge-resolve.json"), canonicalJson(buildResolveDiagnostics()));
+process.stdout.write(`updated ${join(GOLDEN_DIR, "tileforge-resolve.json")}\n`);

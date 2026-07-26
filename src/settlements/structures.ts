@@ -17,8 +17,8 @@ export const STRUCTURE_LAYER_VALUE: { readonly [key in StructureType]: number } 
 
 /** Atomic footprints (width, height) for planner-placed structures. */
 export const STRUCTURE_FOOTPRINTS: { readonly [key in StructureType]?: readonly [number, number] } = {
-  "structure.town_hall": [4, 4],
+  "structure.town_hall": [3, 3], // package townhall footprint
   "structure.house": [3, 3],
-  "structure.watchtower": [2, 2],
+  "structure.watchtower": [2, 3], // package tower footprint
   "structure.well": [1, 1],
 };

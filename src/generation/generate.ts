@@ -44,7 +44,13 @@ export interface WorldArtifact {
     readonly chunkWidth: number;
     readonly chunkHeight: number;
   };
-  readonly dependencies: { readonly tileforge: null };
+  readonly dependencies: {
+    readonly tileforge: {
+      readonly packageId: string;
+      readonly packageSha256: string;
+      readonly manifestSha256: string;
+    } | null;
+  };
   /** Material layer values index into this palette of semantic keys. */
   readonly semanticPalette: readonly string[];
   /** Structure layer values are 1-based indexes into this list. */
@@ -189,7 +195,7 @@ export function generateWorldDetailed(
       chunkOrder: "row-major",
     },
     dimensions: { width, height, chunkWidth, chunkHeight },
-    dependencies: { tileforge: null },
+    dependencies: config.dependencies,
     semanticPalette: [...WORLD_PALETTE],
     structureTypes: [...STRUCTURE_TYPES],
     hydrology: {

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://worldforge.local/schemas/resolved-world-config-5.schema.json",
-  "title": "ResolvedWorldConfig (format 5)",
-  "description": "Deterministically derived generator parameters produced by the versioned recipe compiler (src/recipe/compile.ts). Format 5 adds settlement rules and landmark specs (Milestone W5) atop the W4 route rules. Derived data: hashed for verification, never independently authored or edited.",
+  "$id": "https://worldforge.local/schemas/resolved-world-config-6.schema.json",
+  "title": "ResolvedWorldConfig (format 6)",
+  "description": "Deterministically derived generator parameters produced by the versioned recipe compiler (src/recipe/compile.ts). Format 6 pins the TileForge dependency identity from the lock (Milestone W6) atop the W5 settlement rules. Derived data: hashed for verification, never independently authored or edited.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -24,7 +24,7 @@
     "dependencies"
   ],
   "properties": {
-    "resolvedConfigFormat": { "const": 5 },
+    "resolvedConfigFormat": { "const": 6 },
     "recipeCompilerVersion": { "type": "integer", "minimum": 1 },
     "generatorBehaviorVersion": { "type": "integer", "minimum": 1 },
     "rulePackVersions": {
@@ -189,7 +189,23 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["tileforge"],
-      "properties": { "tileforge": { "type": "null" } }
+      "properties": {
+        "tileforge": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["packageId", "packageSha256", "manifestSha256"],
+              "properties": {
+                "packageId": { "type": "string" },
+                "packageSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                "manifestSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+              }
+            }
+          ]
+        }
+      }
     }
   },
   "$defs": {
