@@ -84,9 +84,28 @@ instantiate outside the editor, so `import_tileforge.gd` executes the
 packaged importer's own source with ONLY `extends EditorScript` swapped to
 RefCounted (its _run() touches no editor API). A GDScript error aborting
 _init() leaves headless Godot idling forever — the driver enforces
-per-step timeouts. Next: the W7 vertical slice itself (streamed 8x8 demo,
-traversal, minimap, deltas, headless integration check) — visual review
-gates apply.
+per-step timeouts.
+
+**Slice progress (9a8e6fe):** `emitTmj.ts` authors a §2.13 map.tmj for any
+resolved world (tilesets block verbatim from the package; §2.4 selector v2
+variants + tone field on channels tileforge.variant/tileforge.tone;
+structures share the anchor variant; overhangs reuse the ground variant).
+`resolve-tileforge` now also writes resolved-map.tmj + resolved-render.png
+through the §4-proven compositor — every resolve yields a native-scale
+visual candidate. **Adapter v2** (TILEFORGE_ADAPTER_VERSION 2, rule pack
+adapter.tileforge 2, goldens = identity-only churn): the emitted river
+layer carries the FULL two-tier network; before, fords sat on unrendered
+crossing-tier cells (canonical world had a ford ON GRASS — package
+substrate violation). Artifact river layer stays majors-only.
+**Native-scale self-review verdicts:** fortress stamp + blend ring good,
+corridor→cobble junctions good, stair-stepped streams + fords good after
+the fix. **The STANDING W5.1 FLAG FIRED**: the town reads as one house
+metatile repeated (no plaza/fountain, no footprint variety). Candidates
+sent to the user (outputs/w7-slice/: overview-8x, town-core-crop,
+fortress-crop, ford-crop + full resolved-render.png); W5.1 verdict and
+visual approval PENDING. Remaining slice work: Godot streamed-chunk scene
+consuming resolved-map.tmj, traversal on the §3 walkability ladder,
+minimap (mappings.minimap), explicit deltas, headless integration check.
 Known contract question: GAME-GUIDE §2.6 includes packed road in the
 wet-bank list, FORMATS.md + the worldgen example omit it, the workbench map
 never exercises it — we follow FORMATS; bridge approaches are where a wrong
