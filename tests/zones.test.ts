@@ -138,3 +138,59 @@ describe("zone composition (behavior 43)", () => {
     assert.match(JSON.stringify(validation.issues), /blended.*hard/);
   });
 });
+
+describe("anchor-shaped zones (behavior 45)", () => {
+  const ANCHORED = {
+    layout: "anchors",
+    seams: "hard",
+    entries: [
+      { anchor: [10, 10], weight: 1000, temperaturePermille: -400 },
+      { anchor: [54, 54], weight: 1000, temperaturePermille: 300 },
+    ],
+  };
+
+  it("territory belongs to the nearest anchor", () => {
+    const { config } = compiled({ ...BASE, zones: ANCHORED });
+    const fields = buildMacroFields(config);
+    const width = 64;
+    const nearCold = fields.temperature[12 * width + 12] as number;
+    const nearHot = fields.temperature[52 * width + 52] as number;
+    assert.ok(nearCold < nearHot, `cold near cold anchor (${nearCold} < ${nearHot})`);
+  });
+
+  it("weight enlarges a zone's territory", () => {
+    const light = compiled({ ...BASE, zones: ANCHORED }).config;
+    const heavy = compiled({
+      ...BASE,
+      zones: {
+        ...ANCHORED,
+        entries: [
+          { anchor: [10, 10], weight: 3000, temperaturePermille: -400 },
+          { anchor: [54, 54], weight: 1000, temperaturePermille: 300 },
+        ],
+      },
+    }).config;
+    const count = (config: typeof light): number => {
+      const fields = buildMacroFields(config);
+      let cold = 0;
+      for (const value of fields.temperature) if (value < 300) cold += 1;
+      return cold;
+    };
+    assert.ok(count(heavy) > count(light), "heavier anchor claims more cold land");
+  });
+
+  it("requires an anchor per entry and rejects grid fields", () => {
+    const missing = validateRecipe({
+      ...BASE,
+      zones: { layout: "anchors", seams: "hard", entries: [{ temperaturePermille: 1 }, { anchor: [4, 4] }] },
+    });
+    assert.ok(!missing.ok);
+    assert.match(JSON.stringify(missing.issues), /requires an anchor cell/);
+    const gridded = validateRecipe({
+      ...BASE,
+      zones: { layout: "anchors", grid: [2, 1], seams: "hard", entries: [{ anchor: [4, 4] }, { anchor: [50, 50] }] },
+    });
+    assert.ok(!gridded.ok);
+    assert.match(JSON.stringify(gridded.issues), /not used by the anchors layout/);
+  });
+});

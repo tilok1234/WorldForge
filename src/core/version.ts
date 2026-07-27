@@ -215,16 +215,24 @@ export const GENERATOR_VERSION = "0.1.0";
  *     two-octave fbm up to seamJitterCells (10), then a 2-cell settle
  *     blur de-aliases the frontier. Blended mode unchanged. Zone-free
  *     recipes generate identical layers.
+ * 45: anchor-shaped zones (macro.fields 9; user direction "make shapes
+ *     that make sense for the zones instead of filling a square") —
+ *     zones gain layout "anchors": each entry carries an anchor cell
+ *     and a territory weight, and cells belong to the weighted nearest
+ *     anchor (integer d²w'² comparison, first-entry tiebreak), so zone
+ *     shapes follow authored geography. Grid layout stays the default;
+ *     seam modes apply unchanged on top. Zone-free and grid recipes
+ *     generate identical layers.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 44;
+export const GENERATOR_BEHAVIOR_VERSION = 45;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 26;
+export const RECIPE_COMPILER_VERSION = 27;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "recipe.presets": 6,
-  "macro.fields": 8,
+  "macro.fields": 9,
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 14,

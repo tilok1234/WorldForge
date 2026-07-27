@@ -63,11 +63,17 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
       recipe.zones === undefined
         ? null
         : {
-            grid: [recipe.zones.grid[0], recipe.zones.grid[1]],
+            layout: recipe.zones.layout ?? "grid",
+            grid:
+              recipe.zones.grid === undefined
+                ? null
+                : [recipe.zones.grid[0], recipe.zones.grid[1]],
             seams: recipe.zones.seams,
             entries: recipe.zones.entries.map((entry) => ({
               temperaturePermille: entry.temperaturePermille ?? 0,
               moisturePermille: entry.moisturePermille ?? 0,
+              anchor: entry.anchor === undefined ? null : [entry.anchor[0], entry.anchor[1]],
+              weight: entry.weight ?? 1000,
             })),
           },
     decoration: {

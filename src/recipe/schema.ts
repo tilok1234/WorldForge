@@ -139,23 +139,43 @@ export interface NormalizedSettlementRequest {
  * and moisture only, which is what keeps the composed world seamless.
  */
 export interface ZoneGridRequest {
-  /** [columns, rows]; world dimensions must divide evenly by each. */
-  readonly grid: readonly [number, number];
+  /**
+   * Zone layout (behavior 45). "grid" (default): entries tile a uniform
+   * [columns, rows] grid in reading order. "anchors": each entry carries an
+   * anchor cell and a weight, and territory grows around the anchors
+   * (weighted nearest-anchor), so zone shapes follow authored geography
+   * instead of squares.
+   */
+  readonly layout?: "grid" | "anchors";
+  /** [columns, rows]; required for grid layout; world must divide evenly. */
+  readonly grid?: readonly [number, number];
   /** Seam mode: blended (soft climate gradient) or hard (sharp borders). */
   readonly seams: "blended" | "hard";
-  /** One entry per zone, reading order; length must equal columns*rows. */
+  /** One entry per zone (grid: reading order; anchors: any order). */
   readonly entries: readonly ZoneEntryRequest[];
 }
 
 export interface ZoneEntryRequest {
   readonly temperaturePermille?: number;
   readonly moisturePermille?: number;
+  /** Anchor cell [x, y]; required for anchors layout, forbidden for grid. */
+  readonly anchor?: readonly [number, number];
+  /** Territory weight (anchors layout): bigger claims more land. 100-10000, default 1000. */
+  readonly weight?: number;
+}
+
+export interface NormalizedZoneEntry {
+  readonly temperaturePermille: number;
+  readonly moisturePermille: number;
+  readonly anchor: readonly [number, number] | null;
+  readonly weight: number;
 }
 
 export interface NormalizedZoneGrid {
-  readonly grid: readonly [number, number];
+  readonly layout: "grid" | "anchors";
+  readonly grid: readonly [number, number] | null;
   readonly seams: "blended" | "hard";
-  readonly entries: readonly { readonly temperaturePermille: number; readonly moisturePermille: number }[];
+  readonly entries: readonly NormalizedZoneEntry[];
 }
 
 /** An inline authored stamp: stampFormat 1, type "recipe.<name>". */

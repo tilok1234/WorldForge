@@ -236,7 +236,6 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "grid",
         "seams",
         "entries"
       ],
@@ -251,7 +250,7 @@
             "minimum": 1,
             "maximum": 8
           },
-          "description": "[columns, rows]; world dimensions must divide evenly by each"
+          "description": "[columns, rows]; required for grid layout, forbidden for anchors; world dimensions must divide evenly by each"
         },
         "seams": {
           "enum": [
@@ -276,10 +275,33 @@
                 "type": "integer",
                 "minimum": -1000,
                 "maximum": 1000
+              },
+              "anchor": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "description": "anchor cell [x, y]; required for anchors layout"
+              },
+              "weight": {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 10000,
+                "description": "territory weight (anchors layout); bigger claims more land; default 1000"
               }
             }
           },
           "description": "one entry per zone in reading order (NW to SE); length must equal columns*rows"
+        },
+        "layout": {
+          "enum": [
+            "grid",
+            "anchors"
+          ],
+          "description": "grid (default): uniform tiling; anchors: weighted territories around authored anchor cells (behavior 45)"
         }
       }
     },

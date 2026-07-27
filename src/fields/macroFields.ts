@@ -90,8 +90,8 @@ function zoneOffsetMap(
   if (zones === null) return null;
   const offsets = pick(zones);
   if (offsets.every((value) => value === 0)) return null;
-  const zoneWidth = Math.trunc(width / zones.gridColumns);
-  const zoneHeight = Math.trunc(height / zones.gridRows);
+  const zoneWidth = zones.layout === "grid" ? Math.trunc(width / zones.gridColumns) : 0;
+  const zoneHeight = zones.layout === "grid" ? Math.trunc(height / zones.gridRows) : 0;
   const jitter = zones.seams === "hard" ? channel(config.seed, "zones.seam") : null;
   const wanderOctaves = [
     { cellSizeLog2: 5, weightPermille: 700 },
@@ -111,15 +111,45 @@ function zoneOffsetMap(
         sampleX = Math.min(width - 1, Math.max(0, sampleX));
         sampleY = Math.min(height - 1, Math.max(0, sampleY));
       }
-      const row = Math.min(zones.gridRows - 1, Math.trunc(sampleY / zoneHeight));
-      const column = Math.min(zones.gridColumns - 1, Math.trunc(sampleX / zoneWidth));
-      map[y * width + x] = offsets[row * zones.gridColumns + column] as number;
+      map[y * width + x] = offsets[zoneAt(zones, sampleX, sampleY, zoneWidth, zoneHeight)] as number;
     }
   }
   if (zones.seams === "hard") {
     return boxBlur(boxBlur(map, width, height, 2, true), width, height, 2, false);
   }
   return boxBlur(boxBlur(map, width, height, zones.seamBandCells, true), width, height, zones.seamBandCells, false);
+}
+
+/**
+ * Which zone owns a cell. Grid layout: uniform tiling. Anchors layout
+ * (behavior 45): weighted nearest anchor — territory belongs to the anchor
+ * minimizing distance/weight, compared in integers as d²·w'² < d'²·w², so
+ * heavier zones claim proportionally more land and shapes follow the
+ * authored anchor geography instead of squares.
+ */
+function zoneAt(zones: ZoneRules, x: number, y: number, zoneWidth: number, zoneHeight: number): number {
+  if (zones.layout === "grid") {
+    const row = Math.min(zones.gridRows - 1, Math.trunc(y / zoneHeight));
+    const column = Math.min(zones.gridColumns - 1, Math.trunc(x / zoneWidth));
+    return row * zones.gridColumns + column;
+  }
+  let best = 0;
+  let bestDist2 = Number.MAX_SAFE_INTEGER;
+  let bestWeight = 1;
+  for (let zone = 0; zone < zones.anchors.length; zone += 1) {
+    const anchor = zones.anchors[zone] as readonly [number, number];
+    const dx = x - anchor[0];
+    const dy = y - anchor[1];
+    const dist2 = dx * dx + dy * dy;
+    const weight = zones.weights[zone] as number;
+    // dist2 / weight² < bestDist2 / bestWeight² without division:
+    if (dist2 * bestWeight * bestWeight < bestDist2 * weight * weight) {
+      best = zone;
+      bestDist2 = dist2;
+      bestWeight = weight;
+    }
+  }
+  return best;
 }
 
 /** Edge-clamped integer box blur along one axis (deterministic). */

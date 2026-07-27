@@ -201,8 +201,14 @@ export interface AuthoringRules {
  * dithering then softens at the biome level.
  */
 export interface ZoneRules {
+  /** "grid": uniform tiling. "anchors" (behavior 45): weighted territories. */
+  readonly layout: "grid" | "anchors";
   readonly gridColumns: number;
   readonly gridRows: number;
+  /** Anchor cell per zone (anchors layout; empty for grid). */
+  readonly anchors: ReadonlyArray<readonly [number, number]>;
+  /** Territory weight per zone (anchors layout; empty for grid). */
+  readonly weights: readonly number[];
   readonly seams: "blended" | "hard";
   readonly seamBandCells: number;
   /**
@@ -251,7 +257,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 20;
+  readonly resolvedConfigFormat: 21;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -734,7 +740,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 20,
+    resolvedConfigFormat: 21,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -781,8 +787,17 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
       normalized.zones === null
         ? null
         : {
-            gridColumns: normalized.zones.grid[0],
-            gridRows: normalized.zones.grid[1],
+            layout: normalized.zones.layout,
+            gridColumns: normalized.zones.grid === null ? 0 : normalized.zones.grid[0],
+            gridRows: normalized.zones.grid === null ? 0 : normalized.zones.grid[1],
+            anchors:
+              normalized.zones.layout === "anchors"
+                ? normalized.zones.entries.map((entry) => entry.anchor as readonly [number, number])
+                : [],
+            weights:
+              normalized.zones.layout === "anchors"
+                ? normalized.zones.entries.map((entry) => entry.weight)
+                : [],
             seams: normalized.zones.seams,
             seamBandCells: 12,
             seamJitterCells: 10,

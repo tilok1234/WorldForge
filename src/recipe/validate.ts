@@ -310,14 +310,22 @@ export function validateRecipe(input: unknown): RecipeValidation {
       issues.push({ path: "$.zones", message: "zones must be an object" });
     } else {
       for (const key of Object.keys(zones)) {
-        if (key !== "grid" && key !== "seams" && key !== "entries") {
+        if (key !== "layout" && key !== "grid" && key !== "seams" && key !== "entries") {
           issues.push({ path: `$.zones.${key}`, message: `unknown field "${key}"` });
         }
+      }
+      const layout = zones["layout"] ?? "grid";
+      if (layout !== "grid" && layout !== "anchors") {
+        issues.push({ path: "$.zones.layout", message: 'layout must be "grid" or "anchors"' });
       }
       const grid = zones["grid"];
       let columns = 0;
       let rows = 0;
-      if (!Array.isArray(grid) || grid.length !== 2 || !Number.isInteger(grid[0]) || !Number.isInteger(grid[1])) {
+      if (layout === "anchors") {
+        if (grid !== undefined) {
+          issues.push({ path: "$.zones.grid", message: "grid is not used by the anchors layout" });
+        }
+      } else if (!Array.isArray(grid) || grid.length !== 2 || !Number.isInteger(grid[0]) || !Number.isInteger(grid[1])) {
         issues.push({ path: "$.zones.grid", message: "grid must be [columns, rows] integers" });
       } else {
         columns = grid[0] as number;
@@ -340,24 +348,43 @@ export function validateRecipe(input: unknown): RecipeValidation {
       if (!Array.isArray(entries)) {
         issues.push({ path: "$.zones.entries", message: "entries must be an array" });
       } else {
-        if (columns > 0 && rows > 0 && entries.length !== columns * rows) {
+        if (layout === "grid" && columns > 0 && rows > 0 && entries.length !== columns * rows) {
           issues.push({
             path: "$.zones.entries",
             message: `expected ${columns * rows} entries (one per zone, reading order), got ${entries.length}`,
           });
         }
+        if (layout === "anchors" && (entries.length < 2 || entries.length > 64)) {
+          issues.push({ path: "$.zones.entries", message: "anchors layout needs 2-64 entries" });
+        }
+        const worldSize = sizeOf(input);
         entries.forEach((entry, position) => {
           if (!isPlainObject(entry)) {
             issues.push({ path: `$.zones.entries[${position}]`, message: "must be an object" });
             return;
           }
           for (const key of Object.keys(entry)) {
-            if (key !== "temperaturePermille" && key !== "moisturePermille") {
+            if (key !== "temperaturePermille" && key !== "moisturePermille" && key !== "anchor" && key !== "weight") {
               issues.push({ path: `$.zones.entries[${position}].${key}`, message: `unknown field "${key}"` });
             }
           }
           checkInteger(issues, entry, "temperaturePermille", `$.zones.entries[${position}].temperaturePermille`, PERMILLE_MIN, PERMILLE_MAX, false);
           checkInteger(issues, entry, "moisturePermille", `$.zones.entries[${position}].moisturePermille`, PERMILLE_MIN, PERMILLE_MAX, false);
+          if (layout === "anchors") {
+            if (entry["anchor"] === undefined) {
+              issues.push({ path: `$.zones.entries[${position}].anchor`, message: "anchors layout requires an anchor cell per entry" });
+            } else {
+              checkCell(issues, entry["anchor"], `$.zones.entries[${position}].anchor`, worldSize);
+            }
+            checkInteger(issues, entry, "weight", `$.zones.entries[${position}].weight`, 100, 10000, false);
+          } else {
+            if (entry["anchor"] !== undefined) {
+              issues.push({ path: `$.zones.entries[${position}].anchor`, message: "anchor is only used by the anchors layout" });
+            }
+            if (entry["weight"] !== undefined) {
+              issues.push({ path: `$.zones.entries[${position}].weight`, message: "weight is only used by the anchors layout" });
+            }
+          }
         });
       }
     }
