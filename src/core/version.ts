@@ -69,8 +69,12 @@ export const GENERATOR_VERSION = "0.1.0";
  *     placed as landmarks on the terraces with graded climbing trails
  *     (landmarks.stamps 5, decoration.pois 9); recipe vocabulary gains
  *     mountain_hamlet.
+ * 28: the living mountains (decoration.pois 10) — hermit huts, beast
+ *     dens, pass memorials beside the old trails, steam vents where the
+ *     mountain breathes; steam vents are the one decal allowed on rock
+ *     (spec substrate; hazard, never walk-granting).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 27;
+export const GENERATOR_BEHAVIOR_VERSION = 28;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 14;
@@ -85,7 +89,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "settlements.plans": 7,
   "landmarks.stamps": 5,
   "decoration.props": 7,
-  "decoration.pois": 9,
+  "decoration.pois": 10,
   "adapter.tileforge": 6,
 };
 

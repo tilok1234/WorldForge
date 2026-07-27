@@ -42,6 +42,7 @@ export const STRUCTURE_TYPES = [
   "structure.crystal_spire",
   "structure.lighthouse",
   "structure.hunter_lodge",
+  "structure.hermit_hut",
 ] as const;
 
 export type StructureType = (typeof STRUCTURE_TYPES)[number];
@@ -88,4 +89,5 @@ export const STRUCTURE_FOOTPRINTS: { readonly [key in StructureType]?: readonly 
   "structure.crystal_spire": [2, 3],
   "structure.lighthouse": [2, 3],
   "structure.hunter_lodge": [3, 2],
+  "structure.hermit_hut": [2, 2],
 };

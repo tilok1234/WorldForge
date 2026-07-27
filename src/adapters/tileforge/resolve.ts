@@ -71,6 +71,7 @@ const STRUCTURE_NAME: { readonly [key: string]: string } = {
   "structure.crystal_spire": "crystalspire",
   "structure.lighthouse": "lighthouse",
   "structure.hunter_lodge": "hunterlodge",
+  "structure.hermit_hut": "hermithut",
 };
 
 /** WorldForge semantic prop keys -> package prop species names. */
@@ -175,6 +176,7 @@ const DECAL_NAME: { readonly [key: string]: string } = {
   "decal.webs": "webs",
   "decal.rune_circle": "runecircle",
   "decal.crystal_field": "crystalfield",
+  "decal.steam_vent": "steamvent",
 };
 
 /** Matches the package map-data.json schema exactly: layers at top level. */

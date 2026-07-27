@@ -109,6 +109,7 @@ export const DECAL_TYPES = [
   "decal.webs",
   "decal.rune_circle",
   "decal.crystal_field",
+  "decal.steam_vent",
 ] as const;
 
 /** Species that block movement (mirrors the package's prop walkability). */

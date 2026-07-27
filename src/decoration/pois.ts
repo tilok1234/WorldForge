@@ -56,6 +56,10 @@ export const POI_TYPES = [
   "poi.frozen_wreck",
   "poi.mountain_shrine",
   "poi.city_ruin",
+  "poi.hermit_hut",
+  "poi.beast_den",
+  "poi.pass_memorial",
+  "poi.steam_vents",
 ] as const;
 export type PoiType = (typeof POI_TYPES)[number];
 
@@ -181,6 +185,15 @@ export function planPois(
     }
     return false;
   };
+  const nearTrail = (x: number, y: number, radius: number): boolean => {
+    for (let dy = -radius; dy <= radius; dy += 1) {
+      for (let dx = -radius; dx <= radius; dx += 1) {
+        const index = cellAt(x + dx, y + dy);
+        if (index !== -1 && routesResult.pathLayer[index] === 1) return true;
+      }
+    }
+    return false;
+  };
   const treesNear = (x: number, y: number, radius: number): number => {
     const treeValues = new Set(
       ["prop.oak", "prop.birch", "prop.pine", "prop.willow"].map((key) => prop(key)),
@@ -240,6 +253,10 @@ export function planPois(
     "poi.frozen_wreck": 2,
     "poi.mountain_shrine": 2,
     "poi.city_ruin": budget,
+    "poi.hermit_hut": 1,
+    "poi.beast_den": 2,
+    "poi.pass_memorial": 2,
+    "poi.steam_vents": 2,
   };
   // Far-reach quota (decoration.pois v4): rock- and snow-bound kinds get a
   // reserved slice of the budget. Rock edges are ~2% of cells, so without a
@@ -255,8 +272,12 @@ export function planPois(
     "poi.trapper_camp",
     "poi.frozen_wreck",
     "poi.mountain_shrine",
+    "poi.hermit_hut",
+    "poi.beast_den",
+    "poi.pass_memorial",
+    "poi.steam_vents",
   ]);
-  const farQuota = Math.max(2, Math.trunc(budget / 4));
+  const farQuota = Math.max(2, Math.trunc((budget * 3) / 10));
   const generalBudget = budget - farQuota;
   let farCount = 0;
   let cityCount = 0;
@@ -508,6 +529,26 @@ export function planPois(
     }
   }
 
+  // Pass memorials seed on their own lane (the history the user reads on
+  // the way up): trailside graves near the rock, placed before the general
+  // stream can spend their sites.
+  for (let attempt = 0; attempt < attempts && (typeCounts.get("poi.pass_memorial") ?? 0) < TYPE_CAPS["poi.pass_memorial"]; attempt += 1) {
+    const x = roll.intAt(attempt, 6, 4, width - 8, 0) + 4;
+    const y = roll.intAt(attempt, 7, 4, height - 8, 0) + 4;
+    const center = cellAt(x, y);
+    if (center === -1 || !claimable(center)) continue;
+    if (!farEnough(x, y)) continue;
+    const material = grid[center] as number;
+    if (material !== grass && material !== gravel && material !== snow && material !== dryGrass) continue;
+    if (!rockNear(x, y, 5) || !nearTrail(x, y, 5)) continue;
+    if (!clearRegion(x - 1, y - 1, 3, 2)) continue;
+    putProp(x, y, "prop.gravestones");
+    putProp(x + 1, y + 1, "prop.lone_grave");
+    putProp(x - 1, y, "prop.milestone");
+    putDecal(x, y + 1, "decal.bones");
+    record("poi.pass_memorial", x, y);
+  }
+
   for (let attempt = 0; attempt < attempts && pois.length < budget + cityCount; attempt += 1) {
     const x = roll.intAt(attempt, 0, 4, width - 8, 0) + 4;
     const y = roll.intAt(attempt, 1, 4, height - 8, 0) + 4;
@@ -615,6 +656,28 @@ export function planPois(
         putDecal(x + 5, y, "decal.cracks");
         putDecal(x - 3, y + 1, "decal.bones");
         record("poi.giant_skeleton", x, y, stamp);
+        continue;
+      }
+    }
+
+    // Hermit's hut: one who left the world — the garden says they are
+    // still here. Rare and first-pick on the near-rock pockets.
+    if (
+      (material === grass || material === gravel) &&
+      !capped("poi.hermit_hut") &&
+      variant < 120 &&
+      rockNear(x, y, 3) &&
+      settlementGap > 20 &&
+      clearRegion(x - 1, y - 1, 4, 3)
+    ) {
+      const stamp = stampStructure("structure.hermit_hut", x, y);
+      if (stamp !== null) {
+        putProp(x - 1, y + 1, "prop.campfire");
+        putProp(x + 2, y, "prop.firewood");
+        putProp(x + 2, y + 2, "prop.chopping_block");
+        putProp(x - 1, y - 1, "prop.flowers");
+        putProp(x + 1, y + 2, "prop.flower_bed");
+        record("poi.hermit_hut", x, y, stamp);
         continue;
       }
     }
@@ -761,6 +824,66 @@ export function planPois(
       putDecal(x, y - 1, "decal.webs");
       record("poi.ruined_watch", x, y);
       continue;
+    }
+
+    // Beast den: the lair in the rock face — the bones outside are fresh.
+    if (material === rockValue && !capped("poi.beast_den") && variant >= 550 && variant < 850) {
+      let openX = -1;
+      let openY = -1;
+      for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
+        const index = cellAt(x + dx, y + dy);
+        if (index !== -1 && grid[index] !== rockValue && hydro.waterKind[index] === WATER_NONE) {
+          openX = x + dx;
+          openY = y + dy;
+          break;
+        }
+      }
+      if (openX !== -1) {
+        const stamp = stampStructure("structure.den", x, y);
+        if (stamp !== null) {
+          putProp(openX + (openX === x ? 1 : 0), openY + (openY === y ? 1 : 0), "prop.bone_pile");
+          putDecal(openX, openY + (openY > y ? 1 : openY < y ? -1 : 0), "decal.bones");
+          record("poi.beast_den", x, y, stamp);
+          continue;
+        }
+      }
+    }
+
+    // Pass memorial: those the crossing took, buried beside the old trail.
+    if (
+      (material === grass || material === gravel || material === snow) &&
+      !capped("poi.pass_memorial") &&
+      rockNear(x, y, 3) &&
+      nearTrail(x, y, 3) &&
+      clearRegion(x - 1, y - 1, 3, 3)
+    ) {
+      putProp(x, y, "prop.gravestones");
+      putProp(x + 1, y + 1, "prop.lone_grave");
+      putProp(x - 1, y, "prop.milestone");
+      putDecal(x, y + 1, "decal.bones");
+      record("poi.pass_memorial", x, y);
+      continue;
+    }
+
+    // Steam vents: the mountain breathes — scalding breath from the deep.
+    if (material === rockValue && !capped("poi.steam_vents") && variant >= 850) {
+      let interior = true;
+      for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
+        const index = cellAt(x + dx, y + dy);
+        if (index === -1 || grid[index] !== rockValue) {
+          interior = false;
+          break;
+        }
+      }
+      if (interior) {
+        putDecal(x, y, "decal.steam_vent");
+        putDecal(x + 2, y + 1, "decal.steam_vent");
+        putDecal(x - 1, y + 2, "decal.steam_vent");
+        putDecal(x + 1, y - 2, "decal.steam_vent");
+        putProp(x - 2, y, "prop.boulder");
+        record("poi.steam_vents", x, y);
+        continue;
+      }
     }
 
     // Trapper camp: a fur hunter wintering in the deep snowfields.

@@ -55835,7 +55835,8 @@
     "decal.cracks",
     "decal.webs",
     "decal.rune_circle",
-    "decal.crystal_field"
+    "decal.crystal_field",
+    "decal.steam_vent"
   ],
   "dependencies": {
     "tileforge": {
@@ -55866,12 +55867,12 @@
   ],
   "formatVersion": 8,
   "generator": {
-    "generationIdentitySha256": "7b1064857eccb73700be80c24f97a49890a6bb62475b677eff55445a74fd2789",
-    "generatorBehaviorVersion": 27,
+    "generationIdentitySha256": "bb5d9d5c11cf36416703c18f17c8fc4119c8006fe8f8c4ce7d777c48655368f0",
+    "generatorBehaviorVersion": 28,
     "name": "worldforge",
     "recipeCompilerVersion": 14,
     "recipeSha256": "b18720c7f09ed2b9bba855ce538cdb4f0c1e5b7fb3bf4de0de61a89ac242d994",
-    "resolvedConfigSha256": "774b645fec19525d4b4a00694b8b008ec39ba9430f865bd08917cc34336801d3",
+    "resolvedConfigSha256": "fcc29f7ce759669e8ca4301972ac2cc6ced5597358e5dd023f86fcfcc0cee4cf",
     "seed": 1,
     "version": "0.1.0"
   },
@@ -56686,6 +56687,7 @@
     "structure.world_tree",
     "structure.crystal_spire",
     "structure.lighthouse",
-    "structure.hunter_lodge"
+    "structure.hunter_lodge",
+    "structure.hermit_hut"
   ]
 }
