@@ -230,11 +230,11 @@ Implementation notes (2026-07-27):
 - Landmark pins select before free competition; a failed pin is a named
   generation error, never a relocation.
 - The Godot half of the verify chain (godot-consumer + verify_world.gd) for
-  the behavior-36 commit is **pending on a desktop session** — this change
-  landed from a container without Godot. TS-side proof: canonical
-  small-cold-coastal flood 33890 (unchanged), 169 tests green. Run
-  `node dist/tools/godot-consumer.js --world <dir>` on the canonical world
-  before the next visual-facing change.
+  the behavior-36 commit: **VERIFIED 2026-07-27, post-merge to main** —
+  Godot 4.6.2 stable (official build) installed into the container;
+  verify_world.gd 0 errors on canonical small-cold-coastal, all 18
+  destinations reachable, walkability ladder green, Godot flood 33890 ==
+  TS traverse flood 33890. 170 tests green on the merge commit.
 
 Phases 2 and 3 are ordinary WorldForge milestones (tests, golden fixtures,
 verify chain, version bumps). Phase 4 must be separately scoped by the user
