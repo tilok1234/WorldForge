@@ -30,7 +30,8 @@ Godot 0 errors, both consumers flood 33,887.
 ### The recipe library (VARIETY ARC — user: "more archetypes i think")
 
 All in fixtures/recipes/, all generate clean (0 route errors, 0
-unreachable), galleries in outputs/gallery/<name>/:
+unreachable), galleries in outputs/gallery/<name>/. ALL SEVEN visually
+approved (user 2026-07-27: "they look great" on the final four):
 
 - frontier-sparse — temperate sparse, 4 settlements, lodge in the corner.
 - warm-vale — wet warm temperate balanced; world tree, lighthouse, ruined city.
@@ -46,15 +47,15 @@ Seed-hunt method (works, reuse): loop candidate seeds → composeWorld →
 count target material %, pick winner (script pattern in session log;
 composeWorld ~1-2s per small world).
 
-**IN FLIGHT / NEXT on the variety arc** (user approved "more
-archetypes"): the four new gallery worlds were committed + verified but
-the user has NOT yet given visual verdicts on sunburnt/marsh/drowned/
-old-war overviews (sent as gallery-*.png via SendUserFile right at the
-switch). First task: get verdicts, iterate seeds/biases if wanted. Then
-candidate expansions, user-ranked: (a) more archetypes from current
-vocab (tiny pocket worlds; extreme snow world), (b) medium/large size
-presets (every rules table is SizePreset-keyed — mechanical), (c) new
-climates (climate rules + biome thresholds).
+**NEXT on the variety arc**: verdicts are IN (all four approved
+2026-07-27, no iteration wanted). Recommendation given to user, awaiting
+pick: (1) warm-up — extreme-snow + tiny pocket-world archetypes, pure
+recipes, zero engine risk (`tiny` 64x64 already exists in schema +
+SIZE_RULES; only an old fixture uses it); then (2) milestone — `medium`
+size preset (fill the seven SizePreset-keyed tables in compile.ts +
+schema enum + tests; stress-tests POI budget/far-reach/route scaling);
+`large` only after medium verdicts. (3) new climates stays last (most
+cross-cutting).
 
 ## Density doctrine (IMPORTANT — two standing user verdicts)
 
@@ -121,7 +122,7 @@ without a fresh verdict. If "feels empty" returns: gameplay-zoom review
 
 ## User-gated, still open
 
-- Visual verdicts on the four newest archetypes (first task).
+- Pick of next variety-arc step (recommendation above).
 - Windowed Godot playthrough: `godot --path consumers/godot`.
 - FORMAL baseline: `node dist/src/cli.js approve-recipe
   fixtures/recipes/small-cold-coastal.json --baseline`.
