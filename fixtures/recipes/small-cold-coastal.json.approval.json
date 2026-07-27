@@ -1,0 +1,9 @@
+{
+  "approvalFormat": 1,
+  "recipeSha256": "cc2d460b7b111efe4ffa82b931f82437013528edd3145ee5678f49d282eb672b",
+  "state": "accepted",
+  "visualBaseline": {
+    "approved": true,
+    "generationIdentitySha256": "f8afe4f3adffbc13eee9f04422aa55e89cf3869b36419915fa64cebc70ba2390"
+  }
+}

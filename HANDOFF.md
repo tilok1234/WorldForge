@@ -23,9 +23,10 @@ worlds approved** — dust-sea and white-waste liked outright,
 drowned-fen "cool for now" (kept as-is; a moisture-bias exploration at
 −80/−120 was shown and declined — recipe untouched). Parked idea, NOT
 on the plan: fine-grained fen variety (mud mottling / wider swamp
-margins) would need engine vocabulary; user deferred. Remaining
-user-gated items: windowed Godot playthrough, formal baseline,
-taste-polish round (parked since the start).
+margins) would need engine vocabulary; user deferred. FORMAL BASELINE
+RECORDED 2026-07-27 ("run it"): approval file committed, flood-33890
+canonical locked. Remaining user-gated items: windowed Godot
+playthrough, taste-polish round (parked since the start).
 
 ### The canonical world (fixtures/recipes/small-cold-coastal.json, seed 103991)
 
@@ -39,8 +40,11 @@ rock only, walkable cells stay level 0) with two-tile waterfall
 cascades + rapids; character zones; thicket ambience. Verify chain last
 green: Godot 0 errors, both consumers flood **33,890** (was 33,887
 before the behavior-34 ford guard — 3 props that stood in crossings are
-no longer placed; flagged to and accepted by the flow of work, formal
-baseline still pending).
+no longer placed; flagged and accepted; FORMAL BASELINE APPROVED
+2026-07-27 — fixtures/recipes/small-cold-coastal.json.approval.json,
+generation identity f8afe4f3…). Behavior-36 Godot verify re-ran green
+post-merge in this container (Godot 4.6.2 downloaded; flood parity
+33890/33890).
 
 ### The recipe library (fixtures/recipes/, galleries in outputs/gallery/<name>/)
 
@@ -182,10 +186,11 @@ floors grow with map size; props/POIs per cell FALL as maps grow.
 ## User-gated, still open
 
 - Windowed Godot playthrough: `godot --path consumers/godot`.
-- FORMAL baseline: `node dist/src/cli.js approve-recipe
-  fixtures/recipes/small-cold-coastal.json --baseline` (note: record it
-  AFTER the user accepts the behavior-34 canonical delta, flood 33890).
 - End-of-plan taste-polish round.
+- Phase 4 of docs/GAME_INTEGRATION_PLAN.md (game-repo importer addon):
+  post-Gate-1, needs the user to separately scope the game repo.
+- Settlement pins (deferred behavior; needs its own rank/sector solver
+  design — see plan §5 implementation notes).
 
 ## Commands
 
