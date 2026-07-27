@@ -37,5 +37,8 @@
     "settlementCount": 8,
     "primaryRouteCount": 3,
     "landmarkCount": 6
+  },
+  "decoration": {
+    "densityPermille": 550
   }
 }
