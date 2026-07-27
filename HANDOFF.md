@@ -1,4 +1,4 @@
-# WorldForge — session handoff (2026-07-27, account switch #3)
+# WorldForge — session handoff (2026-07-27, account switch #4)
 
 For a fresh AI session with no prior context. Read `AGENTS.md` and the
 `README.md` reading list first; this file carries session state the docs
@@ -9,13 +9,19 @@ file. HANDOFF.md is the tiebreaker.
 
 ## Where the project stands
 
-W0–W9 complete, ALIVE-WORLDS ARC complete (behaviors 15–30), VARIETY ARC
-functionally COMPLETE (behaviors 31–35: archetype library, medium +
-large size presets, climate library). Versions: behavior 35, recipe
-compiler 19, artifact format 8, resolved-config 13 (12: quadrantMin;
-13: quadrantMin generalized to sectorGrid+sectorMin), TileForge adapter
-6. 155 tests. Standing commit+push authorization held this whole arc —
-re-confirm with the user per policy.
+W0–W9 complete. ALIVE-WORLDS ARC complete (behaviors 15–30). VARIETY
+ARC functionally COMPLETE (behaviors 31–35): 9-archetype library →
+medium size preset (32, retuned 33) → large size preset (34) → climate
+library (35). Versions: behavior 35, recipe compiler 19, artifact
+format 8, resolved-config 13, TileForge adapter 6. 155 tests, all
+green, everything pushed through `96fd860`. Standing commit+push
+authorization held this whole arc — re-confirm with the user per
+policy.
+
+**The ONLY open variety-arc item: verdicts on the three climate worlds
+(dust-sea, drowned-fen, white-waste — overviews sent 2026-07-27).**
+After that: windowed Godot playthrough, formal baseline, taste-polish
+round (all user-gated, parked since the start).
 
 ### The canonical world (fixtures/recipes/small-cold-coastal.json, seed 103991)
 
@@ -23,131 +29,97 @@ Two cities (capital 240,125 + second city 94,128 via the remote-quarter
 reservation) + 3 towns + 5 villages; EIGHT trail-served landmarks
 (fortress, ruined city w/ keep + dungeon/temple/portal/crypt delves,
 world tree, crystal spire, lighthouse, Winterlodge, two mountain
-hamlets); 103 story POIs / 24 kinds; roads + shortcut trails + graded
+hamlets); ~103 story POIs / 24 kinds; roads + shortcut trails + graded
 mountain trails + POI spurs; mountain relief (adapter-side elev inside
-rock only, walkable cells stay level 0) with two-tile waterfall cascades
-+ rapids; character zones; thicket ambience. Verify chain last green:
-Godot 0 errors, both consumers flood 33,887.
+rock only, walkable cells stay level 0) with two-tile waterfall
+cascades + rapids; character zones; thicket ambience. Verify chain last
+green: Godot 0 errors, both consumers flood **33,890** (was 33,887
+before the behavior-34 ford guard — 3 props that stood in crossings are
+no longer placed; flagged to and accepted by the flow of work, formal
+baseline still pending).
 
-### The recipe library (VARIETY ARC — user: "more archetypes i think")
+### The recipe library (fixtures/recipes/, galleries in outputs/gallery/<name>/)
 
-All in fixtures/recipes/, all generate clean (0 route errors, 0
-unreachable), galleries in outputs/gallery/<name>/. First seven visually
-approved (user 2026-07-27: "they look great" on the final four); the two
-warm-up worlds below them are PENDING verdicts:
+Fifteen worlds; viewer dropdown lists them all. Approval status:
 
-- frontier-sparse — temperate sparse, 4 settlements, lodge in the corner.
-- warm-vale — wet warm temperate balanced; world tree, lighthouse, ruined city.
-- highland-fastness — northElevation 520 cold; fortress + 2 hamlets +
-  spire on a massive north wall.
-- sunburnt-reach — seed-hunted 77% dry steppe (moisture −240, temp
-  +260); oasis lakes, ruined city, spire, lodge. GORGEOUS, distinct.
-- weeping-marsh — 48% mud/swamp lowlands (moisture +300, northElev −120).
-- drowned-shore — 39% water (northElev −150); twin lighthouses + lodge.
-- the-old-war — dense war-north: TWO fortresses + ruined city + hamlet.
-- the-long-winter — seed-hunted 74.5% snow (cold_coastal, temp −420,
-  northElev +240): fully frozen (0% grass), dark lakes, mossy NE rock
-  massif, fortress/spire/lighthouse/Winterlodge/hamlet. APPROVED
-  2026-07-27 ("the winter world looks good").
-- hearth-hollow — FIRST tiny (64x64) gallery world, ITERATED once per
-  user ("more abandoned houses... and small settlement"): now seed
-  1286006, densityPreset dense, settlementCount 2 (city + town, edge-gap
-  14). Ruined farmstead + abandoned caravan + bandit camp + mine + 3
-  trapper camps + 2 caves; world tree + Winterlodge; snowy north fringe,
-  lush south. PENDING verdict on the revision.
+APPROVED (small archetypes, 2026-07-27): frontier-sparse, warm-vale,
+highland-fastness, sunburnt-reach (77% steppe via biases),
+weeping-marsh, drowned-shore, the-old-war, the-long-winter (74.5% snow,
+seed 87514), hearth-hollow (tiny 64², seed 1286006, dense, city+town).
 
-Seed-hunt method (works, reuse): loop candidate seeds → composeWorld →
-count target material %, pick winner (script pattern in session log;
-composeWorld ~1-2s per small world).
+APPROVED (medium 512², "lets do next"): warm-vale-medium (balanced, 15
+settlements), the-old-war-medium (dense, 16), frontier-sparse-medium
+(sparse, 11). APPROVED (large 1024², "ye seems cool"): warm-vale-large
+(balanced, 24 settlements, flood 646918), the-old-war-large (dense, 28
+settlements, 10 landmarks, flood 650230).
 
-**NEXT on the variety arc**: ALL NINE archetypes approved 2026-07-27
-("these seem great" covered the hearth-hollow revision). MEDIUM SIZE
-PRESET SHIPPED (behavior 32) then RETUNED on the first medium verdict
-"very empty... a lot more settlements and roads connecting the whole
-map" (behavior 33): townCount 5, shortcuts 10/span 140, spacing 40,
-recipe budgets pushed (settlements 11/15/16, routes 5/6/7, landmarks
-3/6/8), and NEW quadrant floors — RouteRules.quadrantMin (0 tiny/small,
-2 medium; resolved-config format 12) reserves a per-quadrant minimum
-because pure score competition left whole 512-map quadrants empty
-(frontier's west had ZERO settlements before; per-quadrant spread now
-4/2/2/3, 4/5/4/2, 6/6/2/2). POI/prop density doctrine untouched. All
-three verified (floods equal, 0 errors), canonical still 33887.
-Medium APPROVED 2026-07-27 ("lets do next" on the second-round
-overviews). LARGE PRESET (behavior 34): 1024×1024 in 32×32 chunks,
-third city, seven towns, POI base 300, budget caps raised (settlements
-32, routes 12, landmarks 12), sector floors generalize the quadrants
-(sectorGrid 4 × sectorMin 1 on large; medium's 2×2×2 byte-identical —
-regen floods matched exactly). Full render SKIPPED past 16384px (a
-32768px rgba buffer is exactly 2^32 bytes — unbuildable): the CLI
-band-composes straight into resolved-preview.png (8192², 1/4, one-cell
-band margin absorbs the sand 16px offset); serve-viewer's native check
-accepts render OR preview. Two large worlds BUILT + VERIFIED (0 errors,
-floods equal): warm-vale-large (balanced, 24 settlements, flood 646918)
-+ the-old-war-large (dense, 28 settlements, 10 landmarks, flood
-650230); every 4×4 sector settled in both. Large APPROVED 2026-07-27
-("ye seems cool with that mountain and lake etc in the middle").
-CLIMATE LIBRARY SHIPPED (behavior 35, recipe.presets 6,
-hydrology.water 5, compiler 19): world.climatePreset gains arid_steppe
-(temp +220/moist −200, sea 280, wetland 640), wet_lowland (+70/+260,
-sea 350, wetland 480), frozen_north (−380/+60, sea 370) — the palettes
-sunburnt-reach/weeping-marsh/the-long-winter proved via biases, now
-vocabulary. Seed-hunted archetypes (hunt script pattern:
-scratchpad/climate-hunt.mjs style, ~1.5s per small compose): dust-sea
-(15551, 76.8% dry steppe), drowned-fen (24680, 74.9% wet), white-waste
-(12007, 77.6% snow); all verified (0 errors, floods equal), overviews
-sent 2026-07-27, verdicts PENDING. The first 1024 map instantly caught a LATENT BUG: a
-blocking tree scattered onto a street-ford cell severed the street
-(ladder error). Fix (decoration.props 9): blocking props barred from
-streetFordCells + route crossings via composeWorld's ford list (single
-source of truth — no rule triplication); rowboat/buoy direct writes
-guarded too. Approved worlds shift by single cells (canonical: −3 of
-12460 props, flood 33887→33890, both consumers agree, 0 errors) — NOT
-byte-identical, flagged honestly. Also: validate.ts landmark cap now
-follows BUDGET_RANGES instead of a stale literal 8. Note:
-warm-vale-medium's coastal lighthouse sits on a lake shore (no sea at
-seed 424242) — acceptable fallback, flagged. After large: new climates.
+PENDING VERDICT (climate worlds, behavior 35): dust-sea (arid_steppe,
+seed 15551, 76.8% dry steppe), drowned-fen (wet_lowland, seed 24680,
+74.9% wet), white-waste (frozen_north, seed 12007, 77.6% snow). Floods
+55404 / 48858 / 53656, all 0 errors.
 
-## Density doctrine (IMPORTANT — two standing user verdicts)
+### Recipe vocabulary after the arc
+
+- sizePreset: tiny 64² | small 256² | medium 512² | large 1024² (chunk
+  32 except tiny 16). Budget caps: settlements 32, routes 12,
+  landmarks 12 (validate.ts follows BUDGET_RANGES — no stale literals).
+- climatePreset: temperate | cold_coastal | arid_steppe (+220/−200, sea
+  280, wetland 640) | wet_lowland (+70/+260, 350, 480) | frozen_north
+  (−380/+60, 370, 560). Biases stay additive on top.
+- densityPreset: sparse | balanced | dense (scales POIs, ambient,
+  shortcut trails ONLY — settlements/landmarks are recipe budgets).
+
+## Density doctrine (IMPORTANT — standing user verdicts)
 
 "We shouldn't overdo it" + "not all maps should be this populated" →
-`world.densityPreset` sparse|balanced|dense (density.presets v1, default
-balanced, canonical pins dense). NEVER raise the dense-tier numbers
-without a fresh verdict. If "feels empty" returns: gameplay-zoom review
-(Godot), material variety, or naming/labels — not more props.
+NEVER raise the dense-tier ambient/POI numbers without a fresh verdict.
+BUT: the medium verdict ("very empty... more settlements and roads
+connecting the whole map") established that STRUCTURAL density on big
+maps is a separate axis — settlement counts, road webs, and sector
+floors grow with map size; props/POIs per cell FALL as maps grow.
 
 ## Working agreements
 
 - Loop: implement → `npm test` + `node dist/tools/update-golden.js` →
-  CI → crops (decode/encode PNG scripts in scratchpad against
-  outputs/w7-slice/resolved-render.png, 32px/cell) → SendUserFile →
-  user refreshes viewer → verdict → iterate.
-- Viewer: `http://127.0.0.1:8787/tools/viewer.html?dir=outputs/w7-slice`
-  (server may belong to another session — do NOT restart; regenerate
-  into the same dir; `?dir=outputs/gallery/<name>` browses archetypes).
-  Header world picker (2026-07-27): serve-viewer's read-only
-  `/api/worlds` lists outputs/ dirs; the dropdown hides artifacts whose
-  formatVersion the public loader rejects, so pre-corridor-roads relics
-  (demo-a, demo-b, w4-demo) stay invisible. Renders past 8192px on a
-  side (medium 512-cell worlds render at 16384px) exceed what browsers
-  will decode: the CLI emits a box-averaged `resolved-preview.png`
-  alongside, and the viewer picks it by map size up front.
-- Verify chain on EVERY generation change:
-  `node dist/tools/godot-consumer.js --world outputs/w7-slice` (0 errors)
-  + `node consumers/typescript/traverse.mjs outputs/w7-slice/world.json`
-  — floods must be EQUAL.
-- Versioning: behavior bump + touched rule packs; adapter-only →
-  TILEFORGE_ADAPTER_VERSION + adapter.tileforge; RouteRules/
-  SettlementRules/decoration shape → resolvedConfigFormat + compiler +
-  literal in tests/compile.test.ts (currently 11).
+  verify chain → overviews/crops → SendUserFile → user refreshes viewer
+  → verdict → iterate.
+- Viewer: `http://127.0.0.1:8787` (launch.json "viewer"; server may
+  belong to another session — do NOT restart; regenerate into the same
+  dir and refresh). Header world picker: serve-viewer's read-only
+  `/api/worlds` lists outputs/ dirs; old-format relics (demo-a/b,
+  w4-demo) auto-hidden; native check accepts resolved-render.png OR
+  resolved-preview.png.
+- Renders: ≤8192px worlds get the full render; >8192px also get a
+  box-averaged resolved-preview.png (browser decode cap); >16384px
+  (large) SKIP the full render entirely — a 32768px rgba buffer is
+  exactly 2^32 bytes — and band-compose the preview (one-cell band
+  margin absorbs the sand 16px offset). Native-scale crops for large
+  come from re-rendering a slice, not the full PNG.
+- Overviews for verdicts: scratchpad downscale-png.mjs pattern (box
+  average, factor to ~1024px), Read to eyeball, then SendUserFile.
+- Verify chain on EVERY generation change, canonical + touched worlds:
+  `node dist/tools/godot-consumer.js --world <dir>` (0 errors) +
+  `node consumers/typescript/traverse.mjs <dir>/world.json` — floods
+  must be EQUAL between consumers.
+- Versioning: behavior bump + touched rule packs (bump SEQUENTIALLY and
+  check the changelog comment matches the table — this session
+  mis-skipped twice); adapter-only → TILEFORGE_ADAPTER_VERSION +
+  adapter.tileforge; RouteRules/SettlementRules/decoration SHAPE →
+  resolvedConfigFormat + compiler + literal in tests/compile.test.ts
+  (currently 13).
 - APPEND-ONLY: WORLD_PALETTE, STRUCTURE_TYPES, DECOR_TYPES, DECAL_TYPES,
   POI_TYPES. Parity: decorate BLOCKING == loader BLOCKING_PROPS; loader
   STRUCTURE_PASS_CELLS mirrors package manifest pass arrays; package
   walkable flags are truth. Decals never on rock/swamp EXCEPT
   decal.steam_vent (spec substrate).
+- Seed-hunt method (proven repeatedly): loop candidate seeds →
+  compose (import dist modules from a scratchpad .mjs via file:// URLs)
+  → count target material %, pick winner. ~1.5s per small world; the
+  climate hunt scored 16 seeds × 3 climates in ~90s.
 - TileForge upstream (`C:\Users\headc\Documents\Semantic tile generator
   design`) is read-only; guard denylist in gitignored worldforge.local.json.
 
-## Gotchas earned this arc (do not relearn)
+## Gotchas earned across the arcs (do not relearn)
 
 - Landmark stamps carry ONLY walls/materials/road-marks; multi-cell
   furniture (keep, delves, tree, spire...) goes through the POI pass as
@@ -164,9 +136,23 @@ without a fresh verdict. If "feels empty" returns: gameplay-zoom review
   exposed the far-edge + 1-cell cases; emitTmj throws on violation).
 - Ford rule bridges runs of ≤2 stream cells; the loader DUPLICATES the
   rule (zero-imports contract) — change both or parity fails.
+- BLOCKING PROPS never on ford/crossing cells (behavior 34,
+  decoration.props 9): composeWorld's streetFordCells is the single
+  source of truth, passed into decorateWorld; rowboat/buoy direct
+  writes have their own guard. The first 1024 map caught this — a
+  scattered tree severed a street at a ford. Refusing a placement does
+  NOT relocate it (per-cell rolls), so fixes like this shift approved
+  worlds by single cells — measure and flag, never assume identical.
+- Settlement selection phases (routes.graph v11): capital → remote
+  quarter (crowns second city) → SECTOR FLOORS (sectorGrid×sectorGrid,
+  each ≥ sectorMin; 1×1/0 disables on tiny+small, 2×2×2 medium, 4×4×1
+  large) → open competition. Score competition alone clusters into
+  bands — frontier-sparse-medium's west half had ZERO settlements
+  before floors. Sectors fill in reading order; medium's 2×2 grid is
+  byte-identical to the old quadrant floors (regen floods matched).
 - POI budget = budget + cityCount (landmark furniture exempt); far-reach
-  quota 30%; rare kinds need their own channel lane (caves, pass
-  memorials) or variant windows — the general stream starves latecomers.
+  quota 30%; rare kinds need their own channel lane or variant windows —
+  the general stream starves latecomers.
 - elev derivation lives in the ADAPTER (rock quartiles capped by
   distance-from-open-land, relaxed to ≤1 steps; artifact untouched).
   Waterfalls = lip + plunge cells where a stream drops a level.
@@ -176,28 +162,35 @@ without a fresh verdict. If "feels empty" returns: gameplay-zoom review
   adopt a walkable neighbor material (one-cell-region confetti guard).
 - Lone-cobble cleanup must treat street-ford neighbors as corridor
   continuation or it deletes ford landings (parity mismatch).
-- TINY FUSION (corrected 2026-07-27): with THREE settlements on 64x64
-  the outpost always fuses the band (every count-3 seed negative
-  edge-gap). CITY+TOWN ALONE SEPARATE FINE on ~40% of seeds (measured
+- TINY FUSION: with THREE settlements on 64x64 the outpost always fuses
+  the band. CITY+TOWN ALONE SEPARATE FINE on ~40% of seeds (measured
   16/37 with gap up to 24) — hunt seeds on gap, don't cap at 1.
 - verify_world.gd walkability ladder: rungs apply only to cell types
-  the world CONTAINS (wall-less worlds exist now — hearth-hollow);
-  absent types print a named skip instead of failing.
+  the world CONTAINS (wall-less worlds exist — hearth-hollow); absent
+  types print a named skip instead of failing.
+- warm-vale-medium's "coastal" lighthouse sits on a lake shore (seed
+  424242 has no sea) — accepted fallback, on record.
+- Chrome refuses giant image decodes and its decode service can wedge
+  after repeated ~GB attempts — a browser restart clears it; the
+  preview system exists so this never matters in normal use.
 
 ## User-gated, still open
 
-- Pick of next variety-arc step (recommendation above).
+- Verdicts on dust-sea / drowned-fen / white-waste (then the variety
+  arc is DONE).
 - Windowed Godot playthrough: `godot --path consumers/godot`.
 - FORMAL baseline: `node dist/src/cli.js approve-recipe
-  fixtures/recipes/small-cold-coastal.json --baseline`.
+  fixtures/recipes/small-cold-coastal.json --baseline` (note: record it
+  AFTER the user accepts the behavior-34 canonical delta, flood 33890).
 - End-of-plan taste-polish round.
 
 ## Commands
 
 ```
-npm test                          # build + 152 tests (~3s)
+npm test                          # build + 155 tests (~3s)
 node dist/tools/update-golden.js
 node dist/src/cli.js resolve-tileforge fixtures/recipes/<name>.json --out outputs/gallery/<name>
+node --max-old-space-size=8192 dist/src/cli.js resolve-tileforge fixtures/recipes/<large>.json --out outputs/gallery/<large>
 node dist/tools/godot-consumer.js --world outputs/w7-slice
 node consumers/typescript/traverse.mjs outputs/<dir>/world.json
 node dist/tools/serve-viewer.js   # viewer :8787 (if not already up)
