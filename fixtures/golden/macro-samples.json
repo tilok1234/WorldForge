@@ -4,14 +4,14 @@
     {
       "biomeCellTotals": {
         "terrain.cobble": 252,
-        "terrain.dry_grass": 0,
-        "terrain.grass": 2587,
-        "terrain.gravel": 0,
-        "terrain.mud": 27,
+        "terrain.dry_grass": 53,
+        "terrain.grass": 2535,
+        "terrain.gravel": 12,
+        "terrain.mud": 26,
         "terrain.packed_road": 0,
         "terrain.rock": 153,
         "terrain.sand": 0,
-        "terrain.snow": 591,
+        "terrain.snow": 579,
         "terrain.swamp": 16,
         "water.deep": 7,
         "water.shallow": 463
@@ -26,8 +26,8 @@
         "wetlandCellCount": 21
       },
       "name": "tiny-temperate",
-      "regionCount": 42,
-      "residualSmallRegions": 27,
+      "regionCount": 64,
+      "residualSmallRegions": 49,
       "routes": {
         "crossingCount": 0,
         "destinationCount": 1,
@@ -74,7 +74,7 @@
           "y": 63
         },
         {
-          "biome": "terrain.grass",
+          "biome": "terrain.dry_grass",
           "elevation": 641,
           "moisture": 412,
           "river": 0,
@@ -95,14 +95,14 @@
     {
       "biomeCellTotals": {
         "terrain.cobble": 3382,
-        "terrain.dry_grass": 488,
-        "terrain.grass": 21907,
-        "terrain.gravel": 1225,
-        "terrain.mud": 961,
+        "terrain.dry_grass": 994,
+        "terrain.grass": 21402,
+        "terrain.gravel": 1424,
+        "terrain.mud": 958,
         "terrain.packed_road": 822,
         "terrain.rock": 18273,
         "terrain.sand": 69,
-        "terrain.snow": 9680,
+        "terrain.snow": 9483,
         "terrain.swamp": 747,
         "water.deep": 1348,
         "water.shallow": 6634
@@ -117,8 +117,8 @@
         "wetlandCellCount": 932
       },
       "name": "small-cold-coastal",
-      "regionCount": 360,
-      "residualSmallRegions": 298,
+      "regionCount": 596,
+      "residualSmallRegions": 534,
       "routes": {
         "crossingCount": 9,
         "destinationCount": 18,

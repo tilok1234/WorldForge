@@ -192,6 +192,18 @@ export interface AuthoringRules {
   readonly cellOverrides: NormalizedWorldRecipe["cellOverrides"];
 }
 
+/**
+ * Terrain texture (behavior 39, terrain.texture v1): cosmetic-material
+ * mottling and edge dithering inside the walkable ground set. Permille
+ * rates; ditherNeighborMin is the 8-neighbour count that marks a boundary.
+ */
+export interface TextureRules {
+  readonly mottleSeedPermille: number;
+  readonly mottleGrowPermille: number;
+  readonly ditherPermille: number;
+  readonly ditherNeighborMin: number;
+}
+
 export interface BiomeRules {
   /** Regions smaller than this merge into a neighbor during smoothing. */
   readonly minRegionCells: number;
@@ -216,7 +228,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 16;
+  readonly resolvedConfigFormat: 17;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -247,6 +259,8 @@ export interface ResolvedWorldConfig {
   /** Authored placement (behavior 36): stamps + cell overrides. */
   readonly authoring: AuthoringRules;
   readonly biomes: BiomeRules;
+  /** Terrain texture rates (behavior 39, terrain.texture rule pack). */
+  readonly texture: TextureRules;
   readonly budgets: NormalizedWorldRecipe["budgets"];
   /**
    * Decoration: ambient density (0 disables) and the wilderness POI budget
@@ -695,7 +709,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 16,
+    resolvedConfigFormat: 17,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -745,13 +759,22 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
       cellOverrides: normalized.cellOverrides,
     },
     biomes: BIOME_RULES[normalized.world.sizePreset],
+    // terrain.texture v1: one flat rate set for every size and climate —
+    // texture is per-cell character, not a density axis (the density
+    // doctrine's per-cell falloff belongs to props/POIs, not ground).
+    texture: {
+      mottleSeedPermille: 12,
+      mottleGrowPermille: 350,
+      ditherPermille: 300,
+      ditherNeighborMin: 3,
+    },
     budgets: normalized.budgets,
     decoration: {
       densityPermille: normalized.decoration.densityPermille,
       poiCount: Math.max(4, Math.trunc(POI_BASE[normalized.world.sizePreset] * DENSITY_SCALE[normalized.world.densityPreset].pois / 1000)),
       ambientPermille: DENSITY_SCALE[normalized.world.densityPreset].ambient,
     },
-    passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "decoration.props", "adapter.tileforge"],
+    passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "terrain.texture", "decoration.props", "adapter.tileforge"],
     dependencies: { tileforge: pinnedTileForgeDependency() },
   };
 }

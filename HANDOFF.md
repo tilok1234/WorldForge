@@ -16,10 +16,22 @@ placement behavior 36) and extended by SETTLEMENT PINS (behavior 37,
 2026-07-27 mobile session, rank design designer-ratified: pin order =
 rank, first pin is the capital) + EXPLICIT RANKS (behavior 38, same
 session, user-picked next: optional rank field, pin a village while
-the capital stays free). Versions: behavior 38, recipe compiler 22,
-artifact format 8, resolved-config 16, routes.graph 14, TileForge
-adapter 6. 186 tests, all green. Standing commit+push authorization
-held this whole arc — re-confirm with the user per policy.
+the capital stays free). TERRAIN TEXTURE ARC OPEN (behavior 39,
+terrain.texture 1, user-picked direction "terrain texture"): interior
+mottling (mud→grass tussocks, grass→parched patches, dry_grass→
+gravel hardpan, snow→gravel scree; organic 1-5 cell patches) + edge
+dithering between ground materials; after all structural passes,
+before decoration; walkability-neutral swaps only (swamp widening
+EXCLUDED v1 — swamp BLOCKS movement per loader contract); confetti
+sweep enforces no one-cell regions. FIRST layer-visible change since
+the variety arc: canonical flood 33890→34058 (prop rerolls, both
+consumers equal, Godot 0 errors). **VERDICT OPEN: before/after
+overviews of drowned-fen + white-waste sent 2026-07-27; visual
+baseline re-record BLOCKED on that verdict.** Versions: behavior 39,
+recipe compiler 23, artifact format 8, resolved-config 17,
+terrain.texture 1. 191 tests, all green. Standing commit+push
+authorization held this whole arc — re-confirm with the user per
+policy.
 
 **VARIETY ARC CLOSED 2026-07-27 (mobile session): all three climate
 worlds approved** — dust-sea and white-waste liked outright,

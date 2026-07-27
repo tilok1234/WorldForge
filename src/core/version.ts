@@ -166,11 +166,25 @@ export const GENERATOR_VERSION = "0.1.0";
  *     behavior-37 recipes and pin-free recipes generate identical
  *     layers (identities shift with the version bumps; floods are the
  *     invariant).
+ * 39: terrain texture (terrain.texture 1) — large single-material ground
+ *     regions gain fine-grained variety: seeded interior mottling (mud
+ *     grows grass tussocks, grass parched patches, dry grass sandy
+ *     scours, snow windswept scree — organic 1-5 cell patches) and edge
+ *     dithering where two ground materials meet. Runs after every
+ *     structural pass and before decoration, so settlements, roads, and
+ *     landmarks never move while props and POIs follow the textured
+ *     ground. Walkability-neutral by construction (swaps stay inside
+ *     the walkable ground set; corridors, structures, crops, fences,
+ *     piers, fords, river cells, and the §2.7 sand margin are guarded).
+ *     First LAYER-visible behavior change since the variety arc:
+ *     approved worlds re-textured, verdict round required; ambient
+ *     decoration re-rolls where materials changed, so floods shift
+ *     slightly (consumer flood EQUALITY remains the invariant).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 38;
+export const GENERATOR_BEHAVIOR_VERSION = 39;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 22;
+export const RECIPE_COMPILER_VERSION = 23;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -181,6 +195,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "routes.graph": 14,
   "settlements.plans": 10,
   "landmarks.stamps": 6,
+  "terrain.texture": 1,
   "decoration.props": 9,
   "decoration.pois": 12,
   "density.presets": 1,

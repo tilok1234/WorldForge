@@ -13,6 +13,7 @@ import { buildMacroFields, type MacroFields } from "../fields/macroFields.js";
 import { buildHydrology, WATER_DEEP, WATER_NONE, WATER_SHALLOW, type HydrologyResult } from "../hydrology/hydrology.js";
 import { decorateWorld, type DecorationResult } from "../decoration/decorate.js";
 import { planFarmsAndPiers, type FarmResult } from "../settlements/farms.js";
+import { applyTerrainTexture, type TextureStats } from "./texture.js";
 import { planPois, type PlacedPoi } from "../decoration/pois.js";
 import {
   classifyCell,
@@ -52,6 +53,8 @@ export interface ComposedWorld {
   readonly landmarkPlans: readonly LandmarkPlan[];
   readonly decoration: DecorationResult;
   readonly farms: FarmResult;
+  /** Terrain texture pass counters (behavior 39). */
+  readonly textureStats: TextureStats;
   readonly pois: readonly PlacedPoi[];
   /**
    * Street-level crossings: river cells that carry corridor material or run
@@ -398,6 +401,20 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   // planned after every traversal-critical pass, before decoration.
   const farms = planFarmsAndPiers(grid, structureLayer, hydro, routesResult.pathLayer, settlementPlans, config);
 
+  // Terrain texture (behavior 39): cosmetic-material mottle + edge dither.
+  // After everything structural (nothing can move) and before decoration
+  // (props and POIs follow the textured ground). Walkability-neutral by
+  // construction: swaps stay inside the walkable ground-material set.
+  const textureStats = applyTerrainTexture(
+    grid,
+    structureLayer,
+    routesResult.pathLayer,
+    farms,
+    hydro,
+    new Set(streetFordCells),
+    config,
+  );
+
   // Decoration runs last: it never writes corridor, crossing, structure,
   // entrance, crop, fence, or pier cells.
   const entranceCells: number[] = [];
@@ -566,6 +583,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     landmarkPlans,
     decoration,
     farms,
+    textureStats,
     pois,
     streetFordCells,
   };

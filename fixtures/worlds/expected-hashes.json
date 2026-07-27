@@ -1,12 +1,12 @@
 {
   "small-cold-coastal": {
-    "generationIdentitySha256": "0343e21af19e5554f2d8aa3e38193d864c16fe7346d17d1dcc4e7cc706a0551c",
+    "generationIdentitySha256": "c48c3305ade87fee94a499fe0bfaf7bff97919b58dd4a28934c1f1ecb27e08ff",
     "recipeSha256": "b65fe69cd2b20ad15469123f5e680a9c4447f11fb01390aa20dedf09665f1ad3",
-    "resolvedConfigSha256": "d45e33ece3001fd90fd798a3dc858cb324e77180c7ba3ef9a7c047e7e834ab8a"
+    "resolvedConfigSha256": "acabbd17ed115987b67d493de3f3e81696f15686cf4d0f49c96d7ca0dab6c32e"
   },
   "tiny-temperate": {
-    "generationIdentitySha256": "950f7af6680d33a3c439b4cdfb9dd3d1c725429a53fcb70021ea0e45a2df0d4d",
+    "generationIdentitySha256": "89a5a4f2245e5e72144489058f37dcfde5f48c083e54353a74ca6d7a684bfcd3",
     "recipeSha256": "081e42d2bf5094f52ee45a0b6cb3a412ab834f22f1abe1ee553710eb956b1b06",
-    "resolvedConfigSha256": "2ac6b549c97fb23eb6b8526cffd9d0b58ba5b18c57a1de9a7de08e0981ec3a49"
+    "resolvedConfigSha256": "4a0dab5f3c4e7a5d1f2e493b2994cd3dccd7229eda03abf7a16d1a27ee7149d9"
   }
 }
