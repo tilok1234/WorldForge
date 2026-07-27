@@ -139,12 +139,20 @@ func _check_walkability_rules() -> void:
 			checked_ford = true
 			if not world.is_walkable(cell):
 				fail("ford cell %s blocks" % cell)
-	if not (checked_wall and checked_water and checked_ford):
-		fail("walkability probes missing a case (wall %s, water %s, ford %s)" % [
-			checked_wall, checked_water, checked_ford,
-		])
-	else:
+	# A rung only applies when the world contains that cell type at all —
+	# a wall-less or ford-less world skips the rung honestly instead of
+	# failing (hearth-hollow was the first wall-less artifact).
+	var skipped: Array[String] = []
+	if not checked_wall:
+		skipped.append("wall")
+	if not checked_water:
+		skipped.append("deep-water")
+	if not checked_ford:
+		skipped.append("ford")
+	if skipped.is_empty():
 		print("walkability ladder: wall blocks, deep water blocks, ford walks")
+	else:
+		print("walkability ladder: present cases hold; world has no %s cells" % ", ".join(skipped))
 
 
 func _check_deltas() -> void:

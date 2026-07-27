@@ -1,0 +1,25 @@
+{
+  "recipeFormat": 1,
+  "seed": 178380,
+  "world": {
+    "sizePreset": "tiny",
+    "climatePreset": "temperate",
+    "densityPreset": "balanced"
+  },
+  "landmarks": [
+    {
+      "type": "world_tree",
+      "relation": "far_from_town"
+    },
+    {
+      "type": "hunters_lodge",
+      "relation": "remote_corner"
+    }
+  ],
+  "budgets": {
+    "regionCount": 3,
+    "settlementCount": 1,
+    "primaryRouteCount": 1,
+    "landmarkCount": 2
+  }
+}

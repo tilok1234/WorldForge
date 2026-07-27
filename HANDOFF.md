@@ -30,8 +30,9 @@ Godot 0 errors, both consumers flood 33,887.
 ### The recipe library (VARIETY ARC — user: "more archetypes i think")
 
 All in fixtures/recipes/, all generate clean (0 route errors, 0
-unreachable), galleries in outputs/gallery/<name>/. ALL SEVEN visually
-approved (user 2026-07-27: "they look great" on the final four):
+unreachable), galleries in outputs/gallery/<name>/. First seven visually
+approved (user 2026-07-27: "they look great" on the final four); the two
+warm-up worlds below them are PENDING verdicts:
 
 - frontier-sparse — temperate sparse, 4 settlements, lodge in the corner.
 - warm-vale — wet warm temperate balanced; world tree, lighthouse, ruined city.
@@ -42,20 +43,26 @@ approved (user 2026-07-27: "they look great" on the final four):
 - weeping-marsh — 48% mud/swamp lowlands (moisture +300, northElev −120).
 - drowned-shore — 39% water (northElev −150); twin lighthouses + lodge.
 - the-old-war — dense war-north: TWO fortresses + ruined city + hamlet.
+- the-long-winter — seed-hunted 74.5% snow (cold_coastal, temp −420,
+  northElev +240): fully frozen (0% grass), dark lakes, mossy NE rock
+  massif, fortress/spire/lighthouse/Winterlodge/hamlet. PENDING verdict.
+- hearth-hollow — FIRST tiny (64x64) gallery world: ONE village + world
+  tree on a gravel knoll + Winterlodge in its snow pocket, wild south.
+  settlementCount 1 is deliberate — see tiny-fusion gotcha. PENDING.
 
 Seed-hunt method (works, reuse): loop candidate seeds → composeWorld →
 count target material %, pick winner (script pattern in session log;
 composeWorld ~1-2s per small world).
 
-**NEXT on the variety arc**: verdicts are IN (all four approved
-2026-07-27, no iteration wanted). Recommendation given to user, awaiting
-pick: (1) warm-up — extreme-snow + tiny pocket-world archetypes, pure
-recipes, zero engine risk (`tiny` 64x64 already exists in schema +
-SIZE_RULES; only an old fixture uses it); then (2) milestone — `medium`
-size preset (fill the seven SizePreset-keyed tables in compile.ts +
-schema enum + tests; stress-tests POI budget/far-reach/route scaling);
-`large` only after medium verdicts. (3) new climates stays last (most
-cross-cutting).
+**NEXT on the variety arc** (user approved the sequenced rec with
+"sure"): warm-up DONE — the-long-winter + hearth-hollow built, verified
+(both floods equal, 0 errors, 152 tests), overviews sent 2026-07-27,
+verdicts PENDING. On verdicts: iterate seeds/budgets if wanted, then
+start the `medium` size preset milestone (fill the seven
+SizePreset-keyed tables in compile.ts + schema enum + compile.test.ts
+literal; behavior + resolvedConfigFormat bumps; regenerate 2-3
+archetypes at medium; stress-tests POI budget/far-reach/route scaling).
+`large` gated on medium verdicts; new climates last.
 
 ## Density doctrine (IMPORTANT — two standing user verdicts)
 
@@ -119,6 +126,12 @@ without a fresh verdict. If "feels empty" returns: gameplay-zoom review
   adopt a walkable neighbor material (one-cell-region confetti guard).
 - Lone-cobble cleanup must treat street-ford neighbors as corridor
   continuation or it deletes ford landings (parity mismatch).
+- TINY FUSION: on 64x64, any two settlements ALWAYS overlap (radii
+  14+12 can't separate; measured every seed negative edge-gap) — tiny
+  archetypes wanting open wilderness use settlementCount 1.
+- verify_world.gd walkability ladder: rungs apply only to cell types
+  the world CONTAINS (wall-less worlds exist now — hearth-hollow);
+  absent types print a named skip instead of failing.
 
 ## User-gated, still open
 
