@@ -1,10 +1,10 @@
 {
   "recipeFormat": 1,
-  "seed": 178380,
+  "seed": 1286006,
   "world": {
     "sizePreset": "tiny",
     "climatePreset": "temperate",
-    "densityPreset": "balanced"
+    "densityPreset": "dense"
   },
   "landmarks": [
     {
@@ -18,7 +18,7 @@
   ],
   "budgets": {
     "regionCount": 3,
-    "settlementCount": 1,
+    "settlementCount": 2,
     "primaryRouteCount": 1,
     "landmarkCount": 2
   }

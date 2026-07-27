@@ -47,10 +47,12 @@ warm-up worlds below them are PENDING verdicts:
   northElev +240): fully frozen (0% grass), dark lakes, mossy NE rock
   massif, fortress/spire/lighthouse/Winterlodge/hamlet. APPROVED
   2026-07-27 ("the winter world looks good").
-- hearth-hollow — FIRST tiny (64x64) gallery world: ONE village + world
-  tree on a gravel knoll + Winterlodge in its snow pocket, wild south.
-  settlementCount 1 is deliberate — see tiny-fusion gotcha. PENDING
-  verdict (viewer pointed at it 2026-07-27).
+- hearth-hollow — FIRST tiny (64x64) gallery world, ITERATED once per
+  user ("more abandoned houses... and small settlement"): now seed
+  1286006, densityPreset dense, settlementCount 2 (city + town, edge-gap
+  14). Ruined farmstead + abandoned caravan + bandit camp + mine + 3
+  trapper camps + 2 caves; world tree + Winterlodge; snowy north fringe,
+  lush south. PENDING verdict on the revision.
 
 Seed-hunt method (works, reuse): loop candidate seeds → composeWorld →
 count target material %, pick winner (script pattern in session log;
@@ -128,9 +130,10 @@ without a fresh verdict. If "feels empty" returns: gameplay-zoom review
   adopt a walkable neighbor material (one-cell-region confetti guard).
 - Lone-cobble cleanup must treat street-ford neighbors as corridor
   continuation or it deletes ford landings (parity mismatch).
-- TINY FUSION: on 64x64, any two settlements ALWAYS overlap (radii
-  14+12 can't separate; measured every seed negative edge-gap) — tiny
-  archetypes wanting open wilderness use settlementCount 1.
+- TINY FUSION (corrected 2026-07-27): with THREE settlements on 64x64
+  the outpost always fuses the band (every count-3 seed negative
+  edge-gap). CITY+TOWN ALONE SEPARATE FINE on ~40% of seeds (measured
+  16/37 with gap up to 24) — hunt seeds on gap, don't cap at 1.
 - verify_world.gd walkability ladder: rungs apply only to cell types
   the world CONTAINS (wall-less worlds exist now — hearth-hollow);
   absent types print a named skip instead of failing.
