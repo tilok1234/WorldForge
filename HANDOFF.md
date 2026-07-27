@@ -1,119 +1,140 @@
-# WorldForge — session handoff (2026-07-27)
+# WorldForge — session handoff (2026-07-27, account switch #3)
 
 For a fresh AI session with no prior context. Read `AGENTS.md` and the
 `README.md` reading list first; this file carries session state the docs
 don't. File-based assistant memory at
-`~/.claude/projects/C--Users-headc-Documents-WorldForge/memory/`
-cross-validates this file; HANDOFF.md is the tiebreaker.
+`~/.claude/projects/C--Users-headc-Documents-WorldForge/memory/` is
+machine-local and survives account switches; it cross-validates this
+file. HANDOFF.md is the tiebreaker.
 
 ## Where the project stands
 
-W0–W9 complete (see git history) plus the ALIVE-WORLDS ARC, behaviors
-15–29, all user-verdict-driven. Versions: behavior 29, recipe compiler
-14, artifact format 8, resolved-config 10, TileForge adapter 6. 152
-tests; CI green through `1055d02`. Canonical recipe
-`fixtures/recipes/small-cold-coastal.json` (seed 103991), 256×256.
+W0–W9 complete, ALIVE-WORLDS ARC complete (behaviors 15–30), VARIETY ARC
+underway (behavior 31). Versions: behavior 31, recipe compiler 15,
+artifact format 8, resolved-config 11, TileForge adapter 6. 152 tests;
+CI green through `a9cd3b8` (all pushed). Standing commit+push
+authorization held this whole arc — re-confirm with the user per policy.
 
-The canonical world now holds:
+### The canonical world (fixtures/recipes/small-cold-coastal.json, seed 103991)
 
-- **Two cities** (capital 240,125 harbor; second city 94,128 crossing —
-  the remote-quarter reservation, routes.graph v7 + settlements.plans
-  v7 cityCount), 3 towns, 5 villages; settlement hierarchy from
-  behavior 18 (city/town/outpost tiers, ring roads, street arms).
-- **Eight landmarks**, every one trail-served and walk-reachable:
-  ancient fortress, ruined city (keep + FOUR delves: dungeon, temple,
-  portal, crypt), world tree (canopy pass cell), crystal spire,
-  lighthouse (coastal relation), Winterlodge (remote_corner relation,
-  Manhattan corner pick), two mountain hamlets (high bowls).
-- **103 POIs across 24 kinds** — story vignettes (behavior 20: every
-  discoverable tells a story), far-reach quota (30%) so rock/snow kinds
-  can't starve, dedicated pre-pass lanes for caves and pass memorials.
-- **Roads**: MST streets/highways + shortcut trails + landmark trails
-  (graded over rock: rock→gravel, lone cells adopt neighbor material) +
-  POI spur paths. Trails are corridors: settlement structures must not
-  stamp on pathLayer (footprintFits), gateways join the trail at carve
-  time.
-- **Mountain relief** (adapter v4-6): quantized elev levels inside rock
-  only — walkable cells all stay level 0 so cliffs never cross
-  traversal; §2.8 renders terraces; two-tile waterfall cascades + rapids
-  on highland streams (adapter-derived).
-- **Character zones** (decoration.props v6-8): flower meadows, blighted
-  groves, shroom glens, burned woods, boulder fields, cactus flats —
-  blobs that OVERRIDE ambient; rock has its own scatter table
-  (impassable ⇒ blocking free).
+Two cities (capital 240,125 + second city 94,128 via the remote-quarter
+reservation) + 3 towns + 5 villages; EIGHT trail-served landmarks
+(fortress, ruined city w/ keep + dungeon/temple/portal/crypt delves,
+world tree, crystal spire, lighthouse, Winterlodge, two mountain
+hamlets); 103 story POIs / 24 kinds; roads + shortcut trails + graded
+mountain trails + POI spurs; mountain relief (adapter-side elev inside
+rock only, walkable cells stay level 0) with two-tile waterfall cascades
++ rapids; character zones; thicket ambience. Verify chain last green:
+Godot 0 errors, both consumers flood 33,887.
 
-## Where the density stands (IMPORTANT)
+### The recipe library (VARIETY ARC — user: "more archetypes i think")
 
-User verdicts after behavior 29: **"we shouldn't overdo it"** and **"not
-all maps should be this populated"** — the density plateau is reached
-AND population is now an authoring choice (behavior 30):
-`world.densityPreset` = sparse | balanced | dense (density.presets v1)
-scales the POI budget, ambient decoration, and shortcut trails. Default
-balanced; the canonical recipe pins dense (byte-stable through the
-change). Do NOT dial the dense numbers further without a fresh verdict;
-sparse/balanced exist for calmer maps. Next levers if "empty" returns:
-gameplay-zoom review (Godot), material variety, or naming/labels — not
-more props.
+All in fixtures/recipes/, all generate clean (0 route errors, 0
+unreachable), galleries in outputs/gallery/<name>/:
 
-## Working agreements (stable)
+- frontier-sparse — temperate sparse, 4 settlements, lodge in the corner.
+- warm-vale — wet warm temperate balanced; world tree, lighthouse, ruined city.
+- highland-fastness — northElevation 520 cold; fortress + 2 hamlets +
+  spire on a massive north wall.
+- sunburnt-reach — seed-hunted 77% dry steppe (moisture −240, temp
+  +260); oasis lakes, ruined city, spire, lodge. GORGEOUS, distinct.
+- weeping-marsh — 48% mud/swamp lowlands (moisture +300, northElev −120).
+- drowned-shore — 39% water (northElev −150); twin lighthouses + lodge.
+- the-old-war — dense war-north: TWO fortresses + ruined city + hamlet.
 
-- Loop: implement → tests + goldens (`node dist/tools/update-golden.js`)
-  → CI green → visual candidates (crops via scratchpad decodePng/encodePng
-  on outputs/w7-slice/resolved-render.png) → SendUserFile + user refresh
-  → verdict → iterate.
-- Viewer: user watches `http://127.0.0.1:8787/tools/viewer.html?dir=outputs/w7-slice`
-  (server usually already running; possibly owned by another session —
-  do NOT restart, just regenerate into the same dir).
-- Verify chain every generation change:
+Seed-hunt method (works, reuse): loop candidate seeds → composeWorld →
+count target material %, pick winner (script pattern in session log;
+composeWorld ~1-2s per small world).
+
+**IN FLIGHT / NEXT on the variety arc** (user approved "more
+archetypes"): the four new gallery worlds were committed + verified but
+the user has NOT yet given visual verdicts on sunburnt/marsh/drowned/
+old-war overviews (sent as gallery-*.png via SendUserFile right at the
+switch). First task: get verdicts, iterate seeds/biases if wanted. Then
+candidate expansions, user-ranked: (a) more archetypes from current
+vocab (tiny pocket worlds; extreme snow world), (b) medium/large size
+presets (every rules table is SizePreset-keyed — mechanical), (c) new
+climates (climate rules + biome thresholds).
+
+## Density doctrine (IMPORTANT — two standing user verdicts)
+
+"We shouldn't overdo it" + "not all maps should be this populated" →
+`world.densityPreset` sparse|balanced|dense (density.presets v1, default
+balanced, canonical pins dense). NEVER raise the dense-tier numbers
+without a fresh verdict. If "feels empty" returns: gameplay-zoom review
+(Godot), material variety, or naming/labels — not more props.
+
+## Working agreements
+
+- Loop: implement → `npm test` + `node dist/tools/update-golden.js` →
+  CI → crops (decode/encode PNG scripts in scratchpad against
+  outputs/w7-slice/resolved-render.png, 32px/cell) → SendUserFile →
+  user refreshes viewer → verdict → iterate.
+- Viewer: `http://127.0.0.1:8787/tools/viewer.html?dir=outputs/w7-slice`
+  (server may belong to another session — do NOT restart; regenerate
+  into the same dir; `?dir=outputs/gallery/<name>` browses archetypes).
+- Verify chain on EVERY generation change:
   `node dist/tools/godot-consumer.js --world outputs/w7-slice` (0 errors)
-  and `node consumers/typescript/traverse.mjs outputs/w7-slice/world.json`
-  — floods must be EQUAL (last: 33,887).
-- Versioning discipline: behavior bump + touched rule packs; adapter-only
-  → TILEFORGE_ADAPTER_VERSION + adapter.tileforge; RouteRules/
-  SettlementRules shape → resolvedConfigFormat + compiler + test literal
-  in tests/compile.test.ts.
+  + `node consumers/typescript/traverse.mjs outputs/w7-slice/world.json`
+  — floods must be EQUAL.
+- Versioning: behavior bump + touched rule packs; adapter-only →
+  TILEFORGE_ADAPTER_VERSION + adapter.tileforge; RouteRules/
+  SettlementRules/decoration shape → resolvedConfigFormat + compiler +
+  literal in tests/compile.test.ts (currently 11).
 - APPEND-ONLY: WORLD_PALETTE, STRUCTURE_TYPES, DECOR_TYPES, DECAL_TYPES,
-  POI_TYPES. Parity: BLOCKING (decorate) == BLOCKING_PROPS (loader);
-  structure pass cells in loader STRUCTURE_PASS_CELLS mirror the
-  package manifest (`pass` arrays); package walkable flags are truth.
-- Decals never on rock/swamp EXCEPT decal.steam_vent (spec substrate).
-- Commit+push authorized (standing, re-confirmed through this arc);
-  visual approvals stay user-gated.
+  POI_TYPES. Parity: decorate BLOCKING == loader BLOCKING_PROPS; loader
+  STRUCTURE_PASS_CELLS mirrors package manifest pass arrays; package
+  walkable flags are truth. Decals never on rock/swamp EXCEPT
+  decal.steam_vent (spec substrate).
+- TileForge upstream (`C:\Users\headc\Documents\Semantic tile generator
+  design`) is read-only; guard denylist in gitignored worldforge.local.json.
 
-## Gotchas added this arc
+## Gotchas earned this arc (do not relearn)
 
-- Landmark furniture (multi-cell structures inside landmark stamps) goes
-  through the POI pass as poi.city_ruin records (cityStamp helper) — the
-  loader/adapter consume POI structure records; stamps carry only walls,
-  materials, road marks. Landmark rects are districts in the artifact
-  validator (poi structures may sit inside).
-- Landmark trails are built by routes BEFORE stamps: entrance validation
-  runs pre-POIs, so gate cells must be corridor at landmark time (the
-  gateway pathLayer paint in placeLandmarks).
-- Ford rule bridges runs of ≤2 stream cells (matches street-arm skip);
-  loader duplicates the rule (zero-imports contract).
-- The POI budget math: budget + cityCount (landmark furniture is
-  budget-exempt); far quota = 30%; rare kinds may need their own channel
-  lane (caves, pass memorials) or variant windows — the general stream
-  starves latecomers.
-- elev derivation lives in the ADAPTER (visual): rock quartiles capped by
-  distance-from-open-land, relaxed to ≤1 steps. Artifact untouched.
+- Landmark stamps carry ONLY walls/materials/road-marks; multi-cell
+  furniture (keep, delves, tree, spire...) goes through the POI pass as
+  poi.city_ruin records (cityStamp helper in pois.ts) — adapter/loader
+  consume POI structure records. Landmark rects are "districts" in
+  validateArtifact (poi structures may sit inside).
+- Landmark trails are built by ROUTES before stamps; entrance validation
+  runs BEFORE the POI pass → gate cells must be corridor at landmark
+  time (placeLandmarks paints pathLayer through the gateway).
+- Roads soft-avoid future landmark stamp footprints (dijkstra avoid set,
+  +600 cost) — without it a road crosses the site and the stamp honestly
+  refuses (warm-vale exposed it).
+- §2.7 sand margin: TWO cells off ALL FOUR edges (highland-fastness
+  exposed the far-edge + 1-cell cases; emitTmj throws on violation).
+- Ford rule bridges runs of ≤2 stream cells; the loader DUPLICATES the
+  rule (zero-imports contract) — change both or parity fails.
+- POI budget = budget + cityCount (landmark furniture exempt); far-reach
+  quota 30%; rare kinds need their own channel lane (caves, pass
+  memorials) or variant windows — the general stream starves latecomers.
+- elev derivation lives in the ADAPTER (rock quartiles capped by
+  distance-from-open-land, relaxed to ≤1 steps; artifact untouched).
+  Waterfalls = lip + plunge cells where a stream drops a level.
+- Settlement structures must not stamp on pathLayer (trails are
+  corridors) — footprintFits checks it.
+- gradeRockCell: trail cells over rock become gravel; LONE interruptions
+  adopt a walkable neighbor material (one-cell-region confetti guard).
+- Lone-cobble cleanup must treat street-ford neighbors as corridor
+  continuation or it deletes ford landings (parity mismatch).
 
 ## User-gated, still open
 
+- Visual verdicts on the four newest archetypes (first task).
 - Windowed Godot playthrough: `godot --path consumers/godot`.
-- FORMAL visual baseline: `node dist/src/cli.js approve-recipe
+- FORMAL baseline: `node dist/src/cli.js approve-recipe
   fixtures/recipes/small-cold-coastal.json --baseline`.
 - End-of-plan taste-polish round.
 
 ## Commands
 
 ```
-npm test                          # build + 152 tests
+npm test                          # build + 152 tests (~3s)
 node dist/tools/update-golden.js
-node dist/src/cli.js resolve-tileforge fixtures/recipes/small-cold-coastal.json --out outputs/w7-slice
+node dist/src/cli.js resolve-tileforge fixtures/recipes/<name>.json --out outputs/gallery/<name>
 node dist/tools/godot-consumer.js --world outputs/w7-slice
-node consumers/typescript/traverse.mjs outputs/w7-slice/world.json
-node dist/tools/serve-viewer.js   # viewer on :8787 (if not already up)
-godot --path consumers/godot      # play the slice
+node consumers/typescript/traverse.mjs outputs/<dir>/world.json
+node dist/tools/serve-viewer.js   # viewer :8787 (if not already up)
+godot --path consumers/godot
 ```
