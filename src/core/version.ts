@@ -126,11 +126,26 @@ export const GENERATOR_VERSION = "0.1.0";
  *     vocabulary (sunburnt-reach, weeping-marsh, the-long-winter lineage).
  *     Sea level and the wetland gate carry each climate's water character;
  *     author biases stay additive on top.
+ * 36: authored placement (routes.graph 12, landmarks.stamps 6,
+ *     authoring.overrides 1; docs/GAME_INTEGRATION_PLAN.md §4, ratified) —
+ *     the handcrafted-rule contract becomes recipe vocabulary: landmark
+ *     entries gain `at` (exact pinned anchor; fails with a named error,
+ *     never silently relocates) and `near` (cell + radius constrained
+ *     search), mutually exclusive with relation; pinned slots select
+ *     before free competition so nothing steals an authored site;
+ *     `authoredStamps` declares one-off per-recipe stampFormat-1 stamps
+ *     (types "recipe.<name>", validated by the fixture parser);
+ *     `cellOverrides` applies sparse designer spot decisions (material /
+ *     clearProp / clearDecal) after every procedural pass and before
+ *     validation — water materials refused (hydrology owns water),
+ *     warn-only soft cap 64. Recipes without the new fields generate
+ *     identical layers (identities shift with the version bumps; floods
+ *     are the invariant).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 35;
+export const GENERATOR_BEHAVIOR_VERSION = 36;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 19;
+export const RECIPE_COMPILER_VERSION = 20;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -138,12 +153,13 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 6,
   "macro.biomes": 7,
   "hydrology.water": 5,
-  "routes.graph": 11,
+  "routes.graph": 12,
   "settlements.plans": 10,
-  "landmarks.stamps": 5,
+  "landmarks.stamps": 6,
   "decoration.props": 9,
   "decoration.pois": 12,
   "density.presets": 1,
+  "authoring.overrides": 1,
   "adapter.tileforge": 6,
 };
 

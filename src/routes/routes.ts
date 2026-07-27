@@ -173,8 +173,8 @@ export function buildRoutes(
     // not cross them, or the stamp honestly refuses to place later.
     const landmarkAvoid = new Set<number>();
     for (let slot = 0; slot < landmarks.length; slot += 1) {
-      const spec = config.landmarkSpecs[slot] ?? { type: "ancient_fortress", relation: null };
-      const stampSpec = loadStamp(spec.type);
+      const spec = config.landmarkSpecs[slot] ?? { type: "ancient_fortress", relation: null, at: null, near: null };
+      const stampSpec = loadStamp(spec.type, config.authoring.stamps);
       const anchorCell = (landmarks[slot] as Destination).cell;
       const originX = (anchorCell % width) - stampSpec.anchorX;
       const originY = Math.trunc(anchorCell / width) - stampSpec.anchorY;
@@ -500,25 +500,15 @@ function pickDestinations(
   }
   bySpacing(scored, config.budgets.settlementCount, taken, "settlement_candidate", config.routes.minDestinationSpacing);
 
-  // Landmark slots honor their relational specs (W5 solver). Unsatisfiable
-  // constraints fail with a named error instead of being silently relaxed.
+  // Landmark slots honor their relational specs (W5 solver) and authored
+  // pins (behavior 36). Unsatisfiable constraints fail with a named error
+  // instead of being silently relaxed. Pinned slots select FIRST (at, then
+  // near, then relation/free in slot order) so competition can never steal
+  // an authored site; chosen cells then join `taken` in slot order, keeping
+  // the anchors aligned with landmarkSpecs downstream.
   const town = taken.find((destination) => destination.kind === "settlement_candidate");
   landmarkScored.sort((a, b) => b.score - a.score || a.index - b.index);
-  for (let slot = 0; slot < config.budgets.landmarkCount; slot += 1) {
-    const spec = config.landmarkSpecs[slot] ?? { type: "ancient_fortress", relation: null };
-    // Tier-aware clearance (routes.graph v3): a settlement's street fabric
-    // (plaza + arms) must not reach the stamp footprint, or the landmark
-    // stamp is rejected downstream. The stamp's farthest footprint cell
-    // from its anchor plus one breathing cell is the landmark side of the
-    // margin (the gravel blend is cosmetic and never rejects).
-    const stampSpec = loadStamp(spec.type);
-    const stampMargin =
-      Math.max(
-        stampSpec.anchorX,
-        stampSpec.width - 1 - stampSpec.anchorX,
-        stampSpec.anchorY,
-        stampSpec.height - 1 - stampSpec.anchorY,
-      ) + 1;
+  {
     // A settlement's true extent is its structure radius (streets AND the
     // outermost lots) — the stamp must clear all of it. Lot origins sit on
     // the ring, so footprints spill up to two more cells outward.
@@ -528,11 +518,17 @@ function pickDestinations(
       if (rank < rules.cityCount + rules.townCount) return Math.max(rules.townRadius + 2, rules.townPlazaRadius + rules.streetArmLength);
       return rules.outpostRadius + 2;
     };
-    let placedSlot = false;
-    for (const candidate of landmarkScored) {
-      const cx = candidate.index % fields.width;
-      const cy = (candidate.index - cx) / fields.width;
-      let clear = true;
+    const chosenCells: Array<number | null> = new Array(config.budgets.landmarkCount).fill(null);
+    const specOf = (slot: number) =>
+      config.landmarkSpecs[slot] ?? { type: "ancient_fortress", relation: null, at: null, near: null };
+    // Tier-aware clearance (routes.graph v3): a settlement's street fabric
+    // (plaza + arms) must not reach the stamp footprint, or the landmark
+    // stamp is rejected downstream. The stamp's farthest footprint cell
+    // from its anchor plus one breathing cell is the landmark side of the
+    // margin (the gravel blend is cosmetic and never rejects).
+    const clearOf = (candidateIndex: number, stampMargin: number): boolean => {
+      const cx = candidateIndex % fields.width;
+      const cy = (candidateIndex - cx) / fields.width;
       for (const existing of taken) {
         const ex = existing.cell % fields.width;
         const ey = (existing.cell - ex) / fields.width;
@@ -541,45 +537,104 @@ function pickDestinations(
             ? Math.max(config.routes.minDestinationSpacing, streetReach(existing.id) + stampMargin)
             : config.routes.minDestinationSpacing;
         if (Math.max(Math.abs(cx - ex), Math.abs(cy - ey)) < required) {
-          clear = false;
-          break;
+          return false;
         }
       }
-      if (!clear) {
-        continue;
-      }
-      if (spec.relation !== null) {
-        if (town === undefined) {
-          break;
+      for (const chosen of chosenCells) {
+        if (chosen === null) continue;
+        const ex = chosen % fields.width;
+        const ey = (chosen - ex) / fields.width;
+        if (Math.max(Math.abs(cx - ex), Math.abs(cy - ey)) < config.routes.minDestinationSpacing) {
+          return false;
         }
-        if (
-          !relationHolds(
-            spec.relation,
-            candidate.index,
-            town.cell,
-            hydro,
-            fields,
-            fields.width,
-            config.settlements.cityPlazaRadius + config.settlements.cityStreetArmLength,
-          )
-        ) {
+      }
+      return true;
+    };
+    const trySelect = (slot: number): void => {
+      const spec = specOf(slot);
+      const stampSpec = loadStamp(spec.type, config.authoring.stamps);
+      const stampMargin =
+        Math.max(
+          stampSpec.anchorX,
+          stampSpec.width - 1 - stampSpec.anchorX,
+          stampSpec.anchorY,
+          stampSpec.height - 1 - stampSpec.anchorY,
+        ) + 1;
+      if (spec.at !== null) {
+        // Authored pin: the anchor is exactly this cell, or a named failure —
+        // never a silent relocation (docs/GAME_INTEGRATION_PLAN.md §4.1).
+        const pinned = (spec.at[1] as number) * fields.width + (spec.at[0] as number);
+        if (!clearOf(pinned, stampMargin)) {
+          errors.push(
+            `landmark slot ${slot} (${spec.type}) pinned at (${spec.at[0]}, ${spec.at[1]}): too close to another destination`,
+          );
+          return;
+        }
+        if (!stampFootprintClear(spec.type, pinned, fields, hydro, config.authoring.stamps)) {
+          errors.push(
+            `landmark slot ${slot} (${spec.type}) pinned at (${spec.at[0]}, ${spec.at[1]}): footprint constraints fail (water, slope, or world edge)`,
+          );
+          return;
+        }
+        chosenCells[slot] = pinned;
+        return;
+      }
+      for (const candidate of landmarkScored) {
+        if (spec.near !== null) {
+          const cell = (spec.near.cell[1] as number) * fields.width + (spec.near.cell[0] as number);
+          if (chebyshev(candidate.index, cell, fields.width) > spec.near.radius) {
+            continue;
+          }
+        }
+        if (!clearOf(candidate.index, stampMargin)) {
           continue;
         }
+        if (spec.relation !== null) {
+          if (town === undefined) {
+            break;
+          }
+          if (
+            !relationHolds(
+              spec.relation,
+              candidate.index,
+              town.cell,
+              hydro,
+              fields,
+              fields.width,
+              config.settlements.cityPlazaRadius + config.settlements.cityStreetArmLength,
+            )
+          ) {
+            continue;
+          }
+        }
+        // Candidates must satisfy footprint constraints (docs/GENERATION_RULES).
+        if (!stampFootprintClear(spec.type, candidate.index, fields, hydro, config.authoring.stamps)) {
+          continue;
+        }
+        chosenCells[slot] = candidate.index;
+        return;
       }
-      // Candidates must satisfy footprint constraints (docs/GENERATION_RULES).
-      if (!stampFootprintClear(spec.type, candidate.index, fields, hydro)) {
-        continue;
+      if (spec.near !== null) {
+        errors.push(
+          `landmark slot ${slot} (${spec.type}) found no valid site within ${spec.near.radius} of (${spec.near.cell[0]}, ${spec.near.cell[1]})`,
+        );
+      } else {
+        errors.push(
+          spec.relation === null
+            ? `landmark slot ${slot} (${spec.type}) found no valid site`
+            : `landmark slot ${slot} (${spec.type}) constraint \"${spec.relation}\" is unsatisfiable in this world`,
+        );
       }
-      taken.push({ id: taken.length, kind: "landmark_candidate", cell: candidate.index });
-      placedSlot = true;
-      break;
-    }
-    if (!placedSlot) {
-      errors.push(
-        spec.relation === null
-          ? `landmark slot ${slot} (${spec.type}) found no valid site`
-          : `landmark slot ${slot} (${spec.type}) constraint \"${spec.relation}\" is unsatisfiable in this world`,
-      );
+    };
+    const slots = Array.from({ length: config.budgets.landmarkCount }, (_, slot) => slot);
+    for (const slot of slots.filter((s) => specOf(s).at !== null)) trySelect(slot);
+    for (const slot of slots.filter((s) => specOf(s).at === null && specOf(s).near !== null)) trySelect(slot);
+    for (const slot of slots.filter((s) => specOf(s).at === null && specOf(s).near === null)) trySelect(slot);
+    for (const slot of slots) {
+      const cell = chosenCells[slot];
+      if (cell !== null && cell !== undefined) {
+        taken.push({ id: taken.length, kind: "landmark_candidate", cell });
+      }
     }
   }
 
@@ -781,8 +836,9 @@ function stampFootprintClear(
   cell: number,
   fields: MacroFields,
   hydro: HydrologyResult,
+  authoredStamps?: Readonly<Record<string, unknown>>,
 ): boolean {
-  const stamp = loadStamp(type);
+  const stamp = loadStamp(type, authoredStamps);
   const { width, height } = fields;
   const anchorX = cell % width;
   const anchorY = (cell - anchorX) / width;

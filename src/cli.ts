@@ -117,7 +117,7 @@ function bandedPreview(
   return { width: outW, height: outH, rgb: out };
 }
 import { encodePng } from "./render/png.js";
-import type { NormalizedWorldRecipe, WorldRecipe } from "./recipe/schema.js";
+import { CELL_OVERRIDE_SOFT_CAP, type NormalizedWorldRecipe, type WorldRecipe } from "./recipe/schema.js";
 
 const WORLDFORGE_ROOT = fileURLToPath(new URL("../..", import.meta.url));
 
@@ -1004,6 +1004,14 @@ function loadRecipe(file: string | undefined): WorldRecipe | number {
         "\n",
     );
     return 1;
+  }
+  // Warn-only by ratified decision (docs/GAME_INTEGRATION_PLAN.md §6.4):
+  // the override lane is for spot decisions, not bulk editing.
+  const overrideCount = validation.recipe.cellOverrides?.length ?? 0;
+  if (overrideCount > CELL_OVERRIDE_SOFT_CAP) {
+    process.stderr.write(
+      `warning: ${overrideCount} cell overrides exceed the soft cap of ${CELL_OVERRIDE_SOFT_CAP}\n`,
+    );
   }
   return validation.recipe;
 }

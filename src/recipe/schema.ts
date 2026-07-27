@@ -60,17 +60,76 @@ export const DECORATION_FIELD_NAMES = Object.keys(DECORATION_RANGES).sort() as r
 export const LANDMARK_TYPES = ["ancient_fortress", "ruined_city", "world_tree", "crystal_spire", "lighthouse", "hunters_lodge", "mountain_hamlet"] as const;
 export type LandmarkType = (typeof LANDMARK_TYPES)[number];
 
+/** Per-recipe stamp types are namespaced "recipe.<name>". */
+export const RECIPE_STAMP_PREFIX = "recipe.";
+export const STAMP_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
+
 export const RELATION_KINDS = ["across_river_from_town", "near_town", "far_from_town", "high_ground", "coastal", "remote_corner"] as const;
 export type RelationKind = (typeof RELATION_KINDS)[number];
 
+/**
+ * World side length per size preset, duplicated from the recipe compiler's
+ * preset table so pin coordinates validate early with a named path. A compile
+ * test asserts the two tables agree (tests/compile.test.ts).
+ */
+export const SIZE_PRESET_CELLS: { readonly [key in SizePreset]: number } = {
+  tiny: 64,
+  small: 256,
+  medium: 512,
+  large: 1024,
+};
+
+export const NEAR_RADIUS_MIN = 1;
+export const NEAR_RADIUS_MAX = 64;
+
+/** Soft cap on cell overrides — warn-only by ratified decision (plan §6.4). */
+export const CELL_OVERRIDE_SOFT_CAP = 64;
+
+export interface CellRef {
+  readonly 0: number;
+  readonly 1: number;
+  readonly length: 2;
+}
+
 export interface LandmarkRequest {
-  readonly type: LandmarkType;
+  /** A fixture type or "recipe.<name>" naming a declared authored stamp. */
+  readonly type: LandmarkType | string;
   readonly relation?: RelationKind;
+  /** Pinned anchor cell [x, y]; excludes relation and near. */
+  readonly at?: readonly [number, number];
+  /** Constrained anchor search; excludes relation and at. */
+  readonly near?: { readonly cell: readonly [number, number]; readonly radius: number };
 }
 
 export interface NormalizedLandmarkRequest {
-  readonly type: LandmarkType;
+  readonly type: LandmarkType | string;
   readonly relation: RelationKind | null;
+  readonly at: readonly [number, number] | null;
+  readonly near: { readonly cell: readonly [number, number]; readonly radius: number } | null;
+}
+
+/** An inline authored stamp: stampFormat 1, type "recipe.<name>". */
+export interface AuthoredStampEntry {
+  readonly name: string;
+  readonly stamp: unknown;
+}
+
+/**
+ * A designer's spot decision on one cell. material never names water (water
+ * meaning belongs to hydrology); clears remove the decorated prop/decal.
+ */
+export interface CellOverride {
+  readonly cell: readonly [number, number];
+  readonly material?: string;
+  readonly clearProp?: boolean;
+  readonly clearDecal?: boolean;
+}
+
+export interface NormalizedCellOverride {
+  readonly cell: readonly [number, number];
+  readonly material: string | null;
+  readonly clearProp: boolean;
+  readonly clearDecal: boolean;
 }
 
 /** W0 defines no toggles; the object may be present but must be empty. */
@@ -92,6 +151,10 @@ export interface WorldRecipe {
   readonly landmarks?: readonly LandmarkRequest[];
   /** Decoration stage 1: ambient vegetation/ground-cover density. */
   readonly decoration?: { readonly [key in DecorationField]?: number };
+  /** Authored placement (behavior 36): per-recipe stamps for one-off sites. */
+  readonly authoredStamps?: readonly AuthoredStampEntry[];
+  /** Authored placement (behavior 36): sparse spot decisions on cells. */
+  readonly cellOverrides?: readonly CellOverride[];
 }
 
 /** Recipe after deterministic normalization: every default made explicit. */
@@ -108,6 +171,8 @@ export interface NormalizedWorldRecipe {
   readonly toggles: { readonly [key: string]: boolean };
   readonly landmarks: readonly NormalizedLandmarkRequest[];
   readonly decoration: { readonly [key in DecorationField]: number };
+  readonly authoredStamps: readonly AuthoredStampEntry[];
+  readonly cellOverrides: readonly NormalizedCellOverride[];
 }
 
 /**

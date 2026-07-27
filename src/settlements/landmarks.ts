@@ -56,13 +56,16 @@ export interface LandmarkPlan {
 
 const stampCache = new Map<string, Stamp>();
 
-export function loadStamp(type: string): Stamp {
-  const cached = stampCache.get(type);
-  if (cached !== undefined) {
-    return cached;
-  }
-  const path = join(ROOT, "fixtures", "stamps", `${type.replaceAll("_", "-")}.json`);
-  const raw = JSON.parse(readFileSync(path, "utf8")) as {
+/** The recipe.<name> namespace: authored per-recipe stamps (behavior 36). */
+const RECIPE_STAMP_PREFIX = "recipe.";
+
+/**
+ * Parse and structurally validate one stampFormat-1 definition. Shared by the
+ * fixture loader below and the recipe validator (per-recipe authored stamps
+ * go through exactly the same checks as the committed library).
+ */
+export function parseStampDefinition(input: unknown, type: string): Stamp {
+  const raw = input as {
     stampFormat: number;
     type: string;
     footprint: { width: number; height: number };
@@ -73,6 +76,9 @@ export function loadStamp(type: string): Stamp {
     legend: Record<string, { structure?: string; material?: string; road?: string }>;
     cells: string[];
   };
+  if (raw === null || typeof raw !== "object") {
+    throw new Error(`stamp ${type}: definition must be an object`);
+  }
   if (raw.stampFormat !== 1 || raw.type !== type) {
     throw new Error(`stamp ${type}: unsupported format or mismatched type`);
   }
@@ -114,7 +120,7 @@ export function loadStamp(type: string): Stamp {
       }
     }
   }
-  const stamp: Stamp = {
+  return {
     type,
     width,
     height,
@@ -128,6 +134,31 @@ export function loadStamp(type: string): Stamp {
     structure,
     ruinedRoad,
   };
+}
+
+/**
+ * Resolve a stamp by type: "recipe.<name>" reads the authored per-recipe
+ * definitions (never cached — they differ per world), everything else the
+ * committed fixture library (cached — fixtures are process-stable).
+ */
+export function loadStamp(
+  type: string,
+  authoredStamps?: Readonly<Record<string, unknown>>,
+): Stamp {
+  if (type.startsWith(RECIPE_STAMP_PREFIX)) {
+    const name = type.slice(RECIPE_STAMP_PREFIX.length);
+    const raw = authoredStamps?.[name];
+    if (raw === undefined) {
+      throw new Error(`stamp ${type}: no authored stamp named "${name}" in this recipe`);
+    }
+    return parseStampDefinition(raw, type);
+  }
+  const cached = stampCache.get(type);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const path = join(ROOT, "fixtures", "stamps", `${type.replaceAll("_", "-")}.json`);
+  const stamp = parseStampDefinition(JSON.parse(readFileSync(path, "utf8")), type);
   stampCache.set(type, stamp);
   return stamp;
 }
@@ -148,8 +179,8 @@ export function placeLandmarks(
   const anchors = routes.destinations.filter((d) => d.kind === "landmark_candidate");
 
   for (let slot = 0; slot < anchors.length; slot += 1) {
-    const spec = config.landmarkSpecs[slot] ?? { type: "ancient_fortress", relation: null };
-    const stamp = loadStamp(spec.type);
+    const spec = config.landmarkSpecs[slot] ?? { type: "ancient_fortress", relation: null, at: null, near: null };
+    const stamp = loadStamp(spec.type, config.authoring.stamps);
     const anchorCell = (anchors[slot] as { cell: number }).cell;
     const anchorX = anchorCell % width;
     const anchorY = (anchorCell - anchorX) / width;
