@@ -180,11 +180,17 @@ export const GENERATOR_VERSION = "0.1.0";
  *     approved worlds re-textured, verdict round required; ambient
  *     decoration re-rolls where materials changed, so floods shift
  *     slightly (consumer flood EQUALITY remains the invariant).
+ * 40: organic small maps, step 1 (decoration.pois 13; user verdict "it
+ *     feels like 4 spots on map") — POI spacing scales with the world:
+ *     the flat 14-cell minimum mathematically starved tiny 64² maps to
+ *     ~6 placed POIs of an 18-POI budget. Tiny now spaces at 7; every
+ *     other size keeps 14, so small+ worlds generate identical layers
+ *     (identities shift with the version bumps).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 39;
+export const GENERATOR_BEHAVIOR_VERSION = 40;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 23;
+export const RECIPE_COMPILER_VERSION = 24;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -197,7 +203,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "landmarks.stamps": 6,
   "terrain.texture": 1,
   "decoration.props": 9,
-  "decoration.pois": 12,
+  "decoration.pois": 13,
   "density.presets": 1,
   "authoring.overrides": 1,
   "adapter.tileforge": 6,

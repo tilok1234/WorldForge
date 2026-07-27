@@ -35,7 +35,7 @@ describe("points of interest, phase A", () => {
           const a = composed.pois[i]!;
           const b = composed.pois[j]!;
           assert.ok(
-            Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) >= 14,
+            Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) >= config.decoration.poiSpacing,
             `seed ${seed}: pois ${a.id}/${b.id} too close`,
           );
         }

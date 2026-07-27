@@ -34,10 +34,18 @@ empty" at 256² → user pivot: "start making the smaller maps first" →
 THREE TINY CLIMATE HOLLOWS committed (fen-hollow 20033, frost-hollow
 20113, dust-hollow 20093; hearth-hollow template, city+town gap ≥53,
 both landmarks placed, dense tier; floods 3001/2818/3312, 0 errors;
-overviews sent, VERDICT OPEN). Standing approach if ratified:
-nail feel at 64² first, scale up via the structural axis. Richened
-fen/waste recipes committed too but their 256² verdict is NOT
-approved — revert or iterate on user word. Versions: behavior 39,
+overviews sent; hollows verdict "very good works great on phone" but
+"feels like 4 spots on map" → ORGANIC SMALL MAPS opened, one world at
+a time per user. BEHAVIOR 40 (decoration.pois 13): POI spacing
+size-scaled (tiny 7, others 14 — the flat 14 starved tiny to ~6 of 18
+budgeted POIs; small+ layers identical). fen-hollow v2: rank-2 pinned
+outpost mid-north via behavior-38 near-pin (the tiny-fusion gotcha
+dodge), 3rd landmark (fortress across_river), densityPermille 550;
+6→12 POIs, floods clean; VERDICT OPEN on v2, frost/dust hollows queue
+next on approval. Mobile viewer artifact live (three hollows, pan/
+zoom): https://claude.ai/code/artifact/7850ac94-e0e9-466a-8ffc-4bee23adeff3
+(rebuild: scratchpad build-viewer.mjs). Richened 256² fen/waste
+recipes committed but NOT approved — revert or iterate on user word. Versions: behavior 39,
 recipe compiler 23, artifact format 8, resolved-config 17,
 terrain.texture 1. 191 tests, all green. Standing commit+push
 authorization held this whole arc — re-confirm with the user per

@@ -81,7 +81,10 @@ export interface PlacedPoi {
   readonly structure?: PoiStructure;
 }
 
-const MIN_POI_SPACING = 14;
+// decoration.pois v13 (behavior 40): POI spacing scales with the world —
+// the old flat 14 mathematically starved tiny 64² maps down to ~6 POIs,
+// which read as dead space between the set-pieces. The value now comes
+// from config.decoration.poiSpacing (tiny 7, everything else 14).
 const MIN_SETTLEMENT_DISTANCE = 10;
 
 export function planPois(
@@ -165,7 +168,7 @@ export function planPois(
 
   const farEnough = (x: number, y: number): boolean => {
     for (const placed of pois) {
-      if (Math.max(Math.abs(placed.x - x), Math.abs(placed.y - y)) < MIN_POI_SPACING) return false;
+      if (Math.max(Math.abs(placed.x - x), Math.abs(placed.y - y)) < config.decoration.poiSpacing) return false;
     }
     return true;
   };

@@ -14,12 +14,31 @@
     {
       "type": "hunters_lodge",
       "relation": "remote_corner"
+    },
+    {
+      "type": "ancient_fortress",
+      "relation": "across_river_from_town"
     }
   ],
   "budgets": {
     "regionCount": 3,
-    "settlementCount": 2,
+    "settlementCount": 3,
     "primaryRouteCount": 1,
-    "landmarkCount": 2
+    "landmarkCount": 3
+  },
+  "settlements": [
+    {
+      "near": {
+        "cell": [
+          32,
+          26
+        ],
+        "radius": 10
+      },
+      "rank": 2
+    }
+  ],
+  "decoration": {
+    "densityPermille": 550
   }
 }

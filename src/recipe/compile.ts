@@ -228,7 +228,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 17;
+  readonly resolvedConfigFormat: 18;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -266,7 +266,7 @@ export interface ResolvedWorldConfig {
    * Decoration: ambient density (0 disables) and the wilderness POI budget
    * (decoration.pois rule pack; size-scaled, not yet recipe vocabulary).
    */
-  readonly decoration: { readonly densityPermille: number; readonly poiCount: number; readonly ambientPermille: number };
+  readonly decoration: { readonly densityPermille: number; readonly poiCount: number; readonly ambientPermille: number; readonly poiSpacing: number };
   /** Named generation passes enabled at this behavior version. */
   readonly passes: readonly string[];
   /** Pinned package identity from tileforge.lock.json (null if absent). */
@@ -709,7 +709,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 17,
+    resolvedConfigFormat: 18,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -773,6 +773,9 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
       densityPermille: normalized.decoration.densityPermille,
       poiCount: Math.max(4, Math.trunc(POI_BASE[normalized.world.sizePreset] * DENSITY_SCALE[normalized.world.densityPreset].pois / 1000)),
       ambientPermille: DENSITY_SCALE[normalized.world.densityPreset].ambient,
+      // decoration.pois v13: spacing scales with the world so tiny maps
+      // are not starved to a handful of far-flung set-pieces.
+      poiSpacing: normalized.world.sizePreset === "tiny" ? 7 : 14,
     },
     passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "terrain.texture", "decoration.props", "adapter.tileforge"],
     dependencies: { tileforge: pinnedTileForgeDependency() },
