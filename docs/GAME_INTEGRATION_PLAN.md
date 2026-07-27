@@ -1,10 +1,12 @@
 # WorldForge Game Integration Plan
 
-Status: **Draft for designer review** (2026-07-27). Direction approved by the
-designer ("planning pass" go-ahead); every contract detail below is proposed,
-not settled. Nothing here changes the artifact format, the pinned package, or
-any settled contract — those changes stay behind the decision points in §6,
-which are user-authority per `AGENTS.md`.
+Status: **Ratified by the designer 2026-07-27** ("ye go with your
+recommendations on all 4") — the §6 decision points are decided as
+recommended; the contract shapes in §3–§4 are the approved implementation
+targets [P] (details may still evolve during implementation under normal
+review). Nothing in this document *executes* a pinned-package change or
+artifact-format change — the dusk re-pin (§6.1) remains a designer-scoped
+TileForge-side export task at Phase 2 start, per `AGENTS.md`.
 
 Companion document on the game side:
 `Wildshot_adventures_pmanning/docs/15-WORLDFORGE_INTEGRATION_PLAN.md`.
@@ -219,22 +221,26 @@ verify chain, version bumps). Phase 4 must be separately scoped by the user
 per `AGENTS.md` ("do not write to a game repository unless the user
 separately scopes that repository and task").
 
-## 6. Decision points (designer authority, undecided)
+## 6. Decision points — DECIDED 2026-07-27 (designer approved all
+recommendations)
 
-1. **Theme pin.** The game's lab runs the *dusk* theme; WorldForge pins the
-   *forest* package. Options: (a) slice drafts ship in forest; (b) upgrade
-   the pin to a dusk package export (pinned-package change = user
-   authority); (c) add a second pinned package fixture for game exports
-   (partially lifts a roadmap deferral). Recommendation: **(b)** at Phase 2
-   start, since the game's world consumption will be dusk-first and the
-   lock already keys on manifest `sourceCommit`.
-2. **Resolution ownership.** Pack ships WorldForge-resolved layers (§3.1,
-   recommended — blob47/mask logic stays in one place) vs. the game
-   resolving semantics itself (rejected by default: duplicates adapter
-   logic the game repo explicitly deferred "to WorldForge integration").
-3. **Walkability encoding** (§3.3 JSON+base64 vs. a binary sidecar).
-   JSON+base64 recommended for packFormat 1; binary is a later append.
-4. **Cell-override cap** (§4.3): warn-only vs. hard cap.
+1. **Theme pin → (b), re-pin to dusk at Phase 2 start [P].** The game's
+   world consumption is dusk-first. Execution requires a dusk package
+   export from TileForge (designer-scoped upstream task, exactly like the
+   `sourceCommit` precedent); the lock keys on manifest `sourceCommit`.
+   Until that package exists, Phase 2 development proceeds against the
+   forest fixture and the pin swap is a lock update + fixture commit.
+2. **Resolution ownership → WorldForge [P].** Packs ship
+   WorldForge-resolved layers (§3.1); blob47/mask logic lives in the
+   adapter, once. The game never re-derives resolution from semantics.
+3. **Walkability encoding → JSON+base64 for packFormat 1 [P].** A binary
+   sidecar is a permitted later append, never a replacement within
+   packFormat 1.
+4. **Cell-override cap → warn-only [P]** (§4.3): a named validation
+   warning above the soft cap, no hard refusal.
+
+(The game-side importer timing — post-Gate-1 — is recorded in the
+companion doc, where that schedule lives.)
 
 ## 7. What this plan does not touch
 
