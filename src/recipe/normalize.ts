@@ -20,6 +20,9 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
     world: {
       sizePreset: recipe.world.sizePreset,
       climatePreset: recipe.world.climatePreset,
+      // Not every map should be this populated: density is an authoring
+      // choice. Balanced is the default; the canonical world pins dense.
+      densityPreset: recipe.world.densityPreset ?? "balanced",
     },
     biases: {
       northElevationPermille: recipe.biases?.northElevationPermille ?? 0,

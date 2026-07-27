@@ -77,15 +77,19 @@ export const GENERATOR_VERSION = "0.1.0";
  *     own scatter table (impassable, so blocking costs nothing), every
  *     biome dials up again, overlays widen, zones multiply, and rocky
  *     knolls rise 18 -> 30.
+ * 30: density is an authoring choice (density.presets 1, recipe.presets
+ *     3) — world.densityPreset sparse|balanced|dense scales the POI
+ *     budget, ambient decoration, and shortcut trails; default balanced,
+ *     the canonical world pins dense.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 29;
+export const GENERATOR_BEHAVIOR_VERSION = 30;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 14;
+export const RECIPE_COMPILER_VERSION = 15;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
-  "recipe.presets": 2,
+  "recipe.presets": 3,
   "macro.fields": 4,
   "macro.biomes": 4,
   "hydrology.water": 2,
@@ -94,6 +98,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "landmarks.stamps": 5,
   "decoration.props": 8,
   "decoration.pois": 10,
+  "density.presets": 1,
   "adapter.tileforge": 6,
 };
 

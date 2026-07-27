@@ -1,4 +1,5 @@
 import {
+  DENSITY_PRESET_NAMES,
   BIAS_FIELD_NAMES,
   DECORATION_FIELD_NAMES,
   DECORATION_RANGES,
@@ -28,7 +29,7 @@ export type RecipeValidation =
   | { readonly ok: false; readonly issues: readonly RecipeIssue[] };
 
 const ROOT_FIELDS = ["recipeFormat", "seed", "world", "biases", "budgets", "toggles", "landmarks", "decoration"];
-const WORLD_FIELDS = ["sizePreset", "climatePreset"];
+const WORLD_FIELDS = ["sizePreset", "climatePreset", "densityPreset"];
 
 export function validateRecipe(input: unknown): RecipeValidation {
   const issues: RecipeIssue[] = [];
@@ -69,6 +70,9 @@ export function validateRecipe(input: unknown): RecipeValidation {
     }
     checkEnum(issues, world, "sizePreset", "$.world.sizePreset", SIZE_PRESET_NAMES);
     checkEnum(issues, world, "climatePreset", "$.world.climatePreset", CLIMATE_PRESET_NAMES);
+    if (world["densityPreset"] !== undefined) {
+      checkEnum(issues, world, "densityPreset", "$.world.densityPreset", DENSITY_PRESET_NAMES);
+    }
   }
 
   const biases = input["biases"];

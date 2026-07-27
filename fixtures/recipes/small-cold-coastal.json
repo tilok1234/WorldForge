@@ -1,7 +1,7 @@
 {
   "recipeFormat": 1,
   "seed": 103991,
-  "world": { "sizePreset": "small", "climatePreset": "cold_coastal" },
+  "world": { "sizePreset": "small", "climatePreset": "cold_coastal", "densityPreset": "dense" },
   "biases": {
     "northElevationPermille": 350
   },

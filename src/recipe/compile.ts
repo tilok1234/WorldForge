@@ -9,7 +9,7 @@ import {
   RECIPE_COMPILER_VERSION,
   RULE_PACK_VERSIONS,
 } from "../core/version.js";
-import type { ClimatePreset, NormalizedWorldRecipe, SizePreset } from "./schema.js";
+import type { ClimatePreset, DensityPreset, NormalizedWorldRecipe, SizePreset } from "./schema.js";
 
 /**
  * RecipeCompiler v1 (docs/ARCHITECTURE_AND_CONTRACTS.md, "Recipe and resolved
@@ -159,7 +159,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 10;
+  readonly resolvedConfigFormat: 11;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -191,7 +191,7 @@ export interface ResolvedWorldConfig {
    * Decoration: ambient density (0 disables) and the wilderness POI budget
    * (decoration.pois rule pack; size-scaled, not yet recipe vocabulary).
    */
-  readonly decoration: { readonly densityPermille: number; readonly poiCount: number };
+  readonly decoration: { readonly densityPermille: number; readonly poiCount: number; readonly ambientPermille: number };
   /** Named generation passes enabled at this behavior version. */
   readonly passes: readonly string[];
   /** Pinned package identity from tileforge.lock.json (null if absent). */
@@ -303,6 +303,19 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
 };
 
 /**
+ * density.presets rule pack v1: how populated a world is. Scales the POI
+ * budget, ambient decoration, and shortcut-trail count — settlements and
+ * landmarks stay recipe budgets the author already controls.
+ */
+const DENSITY_SCALE: {
+  readonly [key in DensityPreset]: { readonly pois: number; readonly ambient: number; readonly shortcuts: number };
+} = {
+  sparse: { pois: 420, ambient: 450, shortcuts: 350 },
+  balanced: { pois: 720, ambient: 700, shortcuts: 700 },
+  dense: { pois: 1000, ambient: 1000, shortcuts: 1000 },
+};
+
+/**
  * settlements.plans rule pack v5: three-tier settlement geometry per size
  * preset. Rank 0 is the capital city, ranks 1..townCount towns, the rest
  * outposts — grown lots all around so the hierarchy reads at a glance.
@@ -362,7 +375,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 10,
+    resolvedConfigFormat: 11,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -393,7 +406,10 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
       temperatureLapse: TEMPERATURE_LAPSE,
     },
     water: WATER_RULES[normalized.world.climatePreset][normalized.world.sizePreset],
-    routes: ROUTE_RULES[normalized.world.sizePreset],
+    routes: {
+      ...ROUTE_RULES[normalized.world.sizePreset],
+      shortcutTrailMax: Math.trunc(ROUTE_RULES[normalized.world.sizePreset].shortcutTrailMax * DENSITY_SCALE[normalized.world.densityPreset].shortcuts / 1000),
+    },
     settlements: SETTLEMENT_RULES[normalized.world.sizePreset],
     landmarkSpecs: Array.from({ length: normalized.budgets.landmarkCount }, (_, slot) => {
       const spec = normalized.landmarks[slot];
@@ -403,7 +419,8 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
     budgets: normalized.budgets,
     decoration: {
       densityPermille: normalized.decoration.densityPermille,
-      poiCount: normalized.world.sizePreset === "tiny" ? 18 : 78,
+      poiCount: Math.max(4, Math.trunc((normalized.world.sizePreset === "tiny" ? 18 : 78) * DENSITY_SCALE[normalized.world.densityPreset].pois / 1000)),
+      ambientPermille: DENSITY_SCALE[normalized.world.densityPreset].ambient,
     },
     passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "decoration.props", "adapter.tileforge"],
     dependencies: { tileforge: pinnedTileForgeDependency() },

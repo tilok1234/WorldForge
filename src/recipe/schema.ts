@@ -13,6 +13,11 @@ export const SIZE_PRESET_NAMES = ["tiny", "small"] as const;
 export type SizePreset = (typeof SIZE_PRESET_NAMES)[number];
 
 export const CLIMATE_PRESET_NAMES = ["temperate", "cold_coastal"] as const;
+export type ClimatePresetX = never;
+
+/** How populated a world is: structures, roads, props, discoveries. */
+export const DENSITY_PRESET_NAMES = ["sparse", "balanced", "dense"] as const;
+export type DensityPreset = (typeof DENSITY_PRESET_NAMES)[number];
 export type ClimatePreset = (typeof CLIMATE_PRESET_NAMES)[number];
 
 export const SEED_MIN = 0;
@@ -70,6 +75,7 @@ export interface WorldRecipe {
   readonly world: {
     readonly sizePreset: SizePreset;
     readonly climatePreset: ClimatePreset;
+    readonly densityPreset?: DensityPreset;
   };
   readonly biases?: { readonly [key in BiasField]?: number };
   readonly budgets?: { readonly [key in BudgetField]?: number };
@@ -87,6 +93,7 @@ export interface NormalizedWorldRecipe {
   readonly world: {
     readonly sizePreset: SizePreset;
     readonly climatePreset: ClimatePreset;
+    readonly densityPreset: DensityPreset;
   };
   readonly biases: { readonly [key in BiasField]: number };
   readonly budgets: { readonly [key in BudgetField]: number };

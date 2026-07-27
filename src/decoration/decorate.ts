@@ -367,6 +367,11 @@ export function decorateWorld(
     return true;
   };
 
+  // Density preset (density.presets v1): ambientPermille scales scatter,
+  // forest bases, and zone count — not every map is this populated.
+  const ambient = config.decoration.ambientPermille;
+  const scaled = (value: number): number => Math.min(960, Math.trunc((value * ambient) / 1000));
+
   let propCount = 0;
   let overlayCount = 0;
   let decalCount = 0;
@@ -385,7 +390,7 @@ export function decorateWorld(
       if (forest !== undefined) {
         const patch = latticePermille(forestField, x, y, 12, 0);
         const gate = Math.max(0, patch - 350);
-        const base = FOREST_BASE_PERMILLE[biome] ?? 0;
+        const base = scaled(FOREST_BASE_PERMILLE[biome] ?? 0);
         const chance = Math.floor((base * gate * density) / (650 * 400));
         if (forestRoll.permilleAt(x, y) < chance) {
           const pick = forestRoll.weightedPickAt(x, y, forest.map((s) => s.weight), 1);
@@ -399,7 +404,7 @@ export function decorateWorld(
       // Flat light scatter (non-blocking flavor).
       const scatter = SCATTER_SPECIES[biome];
       if (scatter !== undefined && propLayer[index] === 0) {
-        const chance = Math.floor(((SCATTER_PERMILLE[biome] ?? 0) * density) / 400);
+        const chance = Math.floor((scaled(SCATTER_PERMILLE[biome] ?? 0) * density) / 400);
         if (scatterRoll.permilleAt(x, y) < chance) {
           const pick = scatterRoll.weightedPickAt(x, y, scatter.map((s) => s.weight), 1);
           if (place(index, (scatter[pick] as SpeciesWeight).key, x, y)) {
@@ -713,7 +718,7 @@ export function decorateWorld(
       },
     ];
     const zones = channel(seed, "decor.zones");
-    const zoneTarget = Math.max(4, Math.trunc(width / 16));
+    const zoneTarget = Math.max(2, Math.trunc((Math.trunc(width / 16) * ambient) / 1000));
     const centers: Array<readonly [number, number]> = [];
     const attempts = zoneTarget * 30;
     for (let attempt = 0; attempt < attempts && centers.length < zoneTarget; attempt += 1) {
