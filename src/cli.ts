@@ -51,6 +51,9 @@ import {
 } from "./adapters/tileforge/verifyResolution.js";
 import { emitResolvedTmj } from "./adapters/tileforge/emitTmj.js";
 import type { TmjDocument } from "./adapters/tileforge/tmj.js";
+import { buildGamePack } from "./gamepack/export.js";
+import type { ResolvedWorld } from "./adapters/tileforge/resolve.js";
+import type { GenerationResult } from "./generation/generate.js";
 
 /**
  * Box-averaged preview of a tmj document too large to composite whole:
@@ -152,6 +155,12 @@ const USAGE = `worldforge <command>
   approve-recipe <file> [--baseline] [--note <text>] [--date <iso>]
                                record the user's approval state beside the
                                recipe (<file>.approval.json)
+  export-game-pack <file> --out <dir>
+                               pack a validated world into the frozen game
+                               consumer layout (docs/GAME_INTEGRATION_PLAN.md
+                               §3): artifact + resolved layers + walkability
+                               bitgrid + minimap + hashed manifest; refuses
+                               on any validation failure
 `;
 
 main(process.argv.slice(2));
@@ -206,6 +215,9 @@ function main(argv: readonly string[]): void {
       break;
     case "approve-recipe":
       exitWith(runApproveRecipe(argv.slice(1)));
+      break;
+    case "export-game-pack":
+      exitWith(runExportGamePack(argv.slice(1)));
       break;
     case undefined:
     case "help":
@@ -599,9 +611,31 @@ function runResolveTileForge(argv: readonly string[]): number {
       previewLine = `wrote ${join(parsed.outDir, "resolved-preview.png")} (${previewW}x${previewH}, 1/${previewFactor})`;
     }
   }
-  // Slice manifest for game consumers and the viewer: destination and route
-  // endpoints in cell coordinates plus the small id->name tables hover
-  // inspection needs (CLI-composed; not adapter output).
+  const sliceManifest = buildSliceManifest(result, resolved);
+  writeFileSync(join(parsed.outDir, "tileforge-slice.json"), canonicalJson(sliceManifest));
+  process.stdout.write(
+    [
+      `resolved ${resolved.mapData.mapW}x${resolved.mapData.mapH} world against ${resolved.diagnostics.packageId}`,
+      `  meta cells ${resolved.diagnostics.metaCells}, wall cells ${resolved.diagnostics.wallCells}, fords ${resolved.diagnostics.fordDecals}, bridges ${resolved.diagnostics.bridgeStructures}`,
+      `  tmj tiles ${emitted.tileCount} across ${Object.keys(emitted.layerCounts).length} layers`,
+      `wrote ${join(parsed.outDir, "tileforge-map-data.json")}`,
+      `wrote ${join(parsed.outDir, "tileforge-diagnostics.json")}`,
+      `wrote ${join(parsed.outDir, "resolved-map.tmj")}`,
+      renderLine,
+      ...(previewLine === null ? [] : [previewLine]),
+      `wrote ${join(parsed.outDir, "tileforge-slice.json")}`,
+    ].join("\n") + "\n",
+  );
+  return 0;
+}
+
+/**
+ * Slice manifest for game consumers and the viewer: destination and route
+ * endpoints in cell coordinates plus the small id->name tables hover
+ * inspection needs (CLI-composed; not adapter output). Shared verbatim by
+ * resolve-tileforge and export-game-pack so both lanes ship one shape.
+ */
+function buildSliceManifest(result: GenerationResult, resolved: ResolvedWorld): unknown {
   const w = resolved.mapData.mapW;
   const { manifest: pinned } = loadPinnedManifest();
   const denseTable = (table: readonly string[]): Record<string, string> => {
@@ -612,7 +646,7 @@ function runResolveTileForge(argv: readonly string[]): number {
     }
     return out;
   };
-  const sliceManifest = {
+  return {
     mapW: resolved.mapData.mapW,
     mapH: resolved.mapData.mapH,
     // Consumer-cache identity (W8): resolved outputs name their base world.
@@ -642,18 +676,83 @@ function runResolveTileForge(argv: readonly string[]): number {
       [...pinned.structureById].map(([id, def]) => [String(id), def.name]),
     ),
   };
-  writeFileSync(join(parsed.outDir, "tileforge-slice.json"), canonicalJson(sliceManifest));
+}
+
+/**
+ * export-game-pack (docs/GAME_INTEGRATION_PLAN.md §3.4): generate, validate,
+ * resolve, then pack. Every refusal happens before the first byte is
+ * written; the pack lands complete or not at all.
+ */
+function runExportGamePack(argv: readonly string[]): number {
+  const parsed = parseFileAndOut(argv, "export-game-pack");
+  if (typeof parsed === "number") {
+    return parsed;
+  }
+  const loaded = loadRecipe(parsed.file);
+  if (typeof loaded === "number") {
+    return loaded;
+  }
+  const normalized = normalizeRecipe(loaded);
+  const config = compileRecipe(normalized);
+  const result = generateWorldDetailed(normalized, config);
+  const gateErrors = [...result.composed.hydro.topologyErrors, ...result.composed.routesResult.errors];
+  if (gateErrors.length > 0) {
+    process.stderr.write(`generation FAILED; nothing packed\n${gateErrors.join("\n")}\n`);
+    return 1;
+  }
+  const report = validateArtifact(result.artifact, { minRegionCells: config.biomes.minRegionCells });
+  if (report.status !== "pass") {
+    process.stderr.write(`validation FAILED; nothing packed\n${report.errors.join("\n")}\n`);
+    return 1;
+  }
+  const resolved = resolveToTileForge(result.composed);
+  if (resolved.diagnostics.unresolvedKeys.length > 0) {
+    process.stderr.write(
+      "resolution FAILED; unresolved semantic keys:\n" +
+        resolved.diagnostics.unresolvedKeys.map((key) => `  ${key}`).join("\n") +
+        "\n",
+    );
+    return 1;
+  }
+  const emitted = emitResolvedTmj(resolved.mapData, config.seed);
+  const { lock } = loadPinnedManifest();
+  // The typed manifest omits the minimap table; read it from the pinned
+  // package fixture directly (read-only, hash-verified via the lock above).
+  const rawManifest = JSON.parse(
+    readFileSync(
+      join(WORLDFORGE_ROOT, ...lock.packagePath.split("/"), "tileforge-manifest.json"),
+      "utf8",
+    ),
+  ) as { mappings: { minimap: Record<string, string> } };
+
+  const worldName = (parsed.file.split(/[\\/]/).pop() as string).replace(/\.json$/, "");
+  let pack;
+  try {
+    pack = buildGamePack({
+      worldName,
+      artifact: result.artifact,
+      normalizedRecipe: normalized,
+      report,
+      mapData: resolved.mapData,
+      tmjDocument: emitted.doc,
+      sliceManifest: buildSliceManifest(result, resolved),
+      minimapColors: rawManifest.mappings.minimap,
+      theme: lock.theme,
+    });
+  } catch (error) {
+    process.stderr.write(`pack refused: ${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+  mkdirSync(join(parsed.outDir, "resolved"), { recursive: true });
+  for (const file of pack.files) {
+    writeFileSync(join(parsed.outDir, file.path), file.bytes);
+  }
   process.stdout.write(
     [
-      `resolved ${resolved.mapData.mapW}x${resolved.mapData.mapH} world against ${resolved.diagnostics.packageId}`,
-      `  meta cells ${resolved.diagnostics.metaCells}, wall cells ${resolved.diagnostics.wallCells}, fords ${resolved.diagnostics.fordDecals}, bridges ${resolved.diagnostics.bridgeStructures}`,
-      `  tmj tiles ${emitted.tileCount} across ${Object.keys(emitted.layerCounts).length} layers`,
-      `wrote ${join(parsed.outDir, "tileforge-map-data.json")}`,
-      `wrote ${join(parsed.outDir, "tileforge-diagnostics.json")}`,
-      `wrote ${join(parsed.outDir, "resolved-map.tmj")}`,
-      renderLine,
-      ...(previewLine === null ? [] : [previewLine]),
-      `wrote ${join(parsed.outDir, "tileforge-slice.json")}`,
+      `packed ${worldName}: ${result.artifact.dimensions.width}x${result.artifact.dimensions.height} world, ${pack.files.length} files`,
+      `  baseArtifactSha256: ${pack.manifest["baseArtifactSha256"]}`,
+      `  walkable flood ${pack.walkability.floodCount} from spawn [${pack.walkability.spawnCell.join(", ")}]`,
+      ...pack.files.map((file) => `wrote ${join(parsed.outDir, file.path)}`),
     ].join("\n") + "\n",
   );
   return 0;
