@@ -45,9 +45,10 @@ dodge), 3rd landmark (fortress across_river), densityPermille 550;
 next on approval. Mobile viewer artifact live (three hollows, pan/
 zoom): https://claude.ai/code/artifact/7850ac94-e0e9-466a-8ffc-4bee23adeff3
 (rebuild: scratchpad build-viewer.mjs). Richened 256² fen/waste
-recipes committed but NOT approved — revert or iterate on user word. Versions: behavior 39,
-recipe compiler 23, artifact format 8, resolved-config 17,
-terrain.texture 1. 191 tests, all green. Standing commit+push
+recipes committed but NOT approved — revert or iterate on user word.
+Versions: behavior 41, recipe compiler 24, artifact format 8,
+resolved-config 18, terrain.texture 1, decoration.props 10,
+decoration.pois 14. 191 tests, all green. Standing commit+push
 authorization held this whole arc — re-confirm with the user per
 policy.
 
