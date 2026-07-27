@@ -23,6 +23,7 @@ const SIZE_RULES: { readonly [key in SizePreset]: WorldDimensions } = {
   tiny: { width: 64, height: 64, chunkWidth: 16, chunkHeight: 16 },
   small: { width: 256, height: 256, chunkWidth: 32, chunkHeight: 32 },
   medium: { width: 512, height: 512, chunkWidth: 32, chunkHeight: 32 },
+  large: { width: 1024, height: 1024, chunkWidth: 32, chunkHeight: 32 },
 };
 
 const CLIMATE_RULES: { readonly [key in ClimatePreset]: ClimateBase } = {
@@ -102,12 +103,17 @@ export interface RouteRules {
   /** Settlements reserved for the capital-remote map quarter (v7). */
   readonly remoteQuarterMin: number;
   /**
-   * Minimum settlements per map quadrant (v10). Score competition alone
-   * clusters selections into the best-scoring bands — visible on 512 maps
-   * where whole quadrants stayed empty. 0 disables (tiny/small keep their
-   * approved selections byte-identical).
+   * Settlement dispersion floors (v11, generalizing the v10 quadrants):
+   * the map divides into sectorGrid x sectorGrid sectors and each keeps at
+   * least sectorMin settlements (terrain permitting). Score competition
+   * alone clusters selections into the best-scoring bands — visible on 512
+   * maps where whole quadrants stayed empty, worse at 1024 where a single
+   * quadrant is a whole medium map. sectorMin 0 disables (tiny/small keep
+   * their approved selections byte-identical); medium 2x2 grid of 2 is
+   * byte-identical to the v10 quadrant floors it replaces.
    */
-  readonly quadrantMin: number;
+  readonly sectorGrid: number;
+  readonly sectorMin: number;
 }
 
 export interface SettlementRules {
@@ -167,7 +173,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 12;
+  readonly resolvedConfigFormat: 13;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -234,6 +240,13 @@ const OCTAVE_RULES: { readonly [key in SizePreset]: MacroFieldSpec["octaves"] } 
     { cellSizeLog2: 5, weightPermille: 80 },
     { cellSizeLog2: 4, weightPermille: 60 },
   ],
+  large: [
+    { cellSizeLog2: 9, weightPermille: 430 },
+    { cellSizeLog2: 8, weightPermille: 290 },
+    { cellSizeLog2: 7, weightPermille: 140 },
+    { cellSizeLog2: 6, weightPermille: 80 },
+    { cellSizeLog2: 5, weightPermille: 60 },
+  ],
 };
 
 /** hydrology.water rule pack v1: water levels and thresholds per preset. */
@@ -267,6 +280,14 @@ const WATER_RULES: {
       wetlandMoistureMin: 560,
       coastalInfluenceRadius: 24,
     },
+    large: {
+      seaLevelPermille: 310,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 2000,
+      majorRiverAccumulationThreshold: 5000,
+      wetlandMoistureMin: 560,
+      coastalInfluenceRadius: 32,
+    },
   },
   cold_coastal: {
     tiny: {
@@ -293,6 +314,14 @@ const WATER_RULES: {
       wetlandMoistureMin: 560,
       coastalInfluenceRadius: 24,
     },
+    large: {
+      seaLevelPermille: 370,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 2000,
+      majorRiverAccumulationThreshold: 5000,
+      wetlandMoistureMin: 560,
+      coastalInfluenceRadius: 32,
+    },
   },
 };
 
@@ -316,7 +345,8 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     shortcutTrailMax: 2,
     shortcutTrailSpan: 40,
     remoteQuarterMin: 0,
-    quadrantMin: 0,
+    sectorGrid: 1,
+    sectorMin: 0,
   },
   small: {
     stepCost: 10,
@@ -333,7 +363,8 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     shortcutTrailMax: 4,
     shortcutTrailSpan: 80,
     remoteQuarterMin: 3,
-    quadrantMin: 0,
+    sectorGrid: 1,
+    sectorMin: 0,
   },
   medium: {
     // Spacing grows sublinearly with the 2x edge, but the NETWORK scales
@@ -354,7 +385,29 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     shortcutTrailMax: 10,
     shortcutTrailSpan: 140,
     remoteQuarterMin: 4,
-    quadrantMin: 2,
+    sectorGrid: 2,
+    sectorMin: 2,
+  },
+  large: {
+    // 1024 cells: the network is what makes the size readable. Sixteen
+    // 256-cell sectors each keep a settlement so no region of the map is
+    // beyond the road web; shortcuts scale with the extra pair density.
+    stepCost: 10,
+    slopeCostPerPermille: 1,
+    networkRiverCrossCost: 70,
+    majorRiverCrossCost: 120,
+    shallowWaterCrossCost: 160,
+    minDestinationSpacing: 56,
+    streetWidth: 2,
+    highwayWidth: 3,
+    detourWarnRatioPermille: 1800,
+    edgePenaltyRadius: 24,
+    edgePenaltyCost: 40,
+    shortcutTrailMax: 18,
+    shortcutTrailSpan: 200,
+    remoteQuarterMin: 5,
+    sectorGrid: 4,
+    sectorMin: 1,
   },
 };
 
@@ -405,6 +458,15 @@ const SETTLEMENT_RULES: { readonly [key in SizePreset]: SettlementRules } = {
     townRadius: 22, outpostRadius: 11, townLots: 40, outpostLots: 10,
     approachMaxLength: 8, townPlazaRadius: 3, outpostPlazaRadius: 1, streetArmLength: 16,
   },
+  large: {
+    // A third city (rank 2, from open competition) anchors the extra
+    // country; individual footprints grow only slightly (density doctrine).
+    cityCount: 3,
+    cityRadius: 32, cityLots: 96, cityPlazaRadius: 5, cityStreetArmLength: 26,
+    cityRingRadius: 14, townCount: 7,
+    townRadius: 22, outpostRadius: 11, townLots: 40, outpostLots: 10,
+    approachMaxLength: 8, townPlazaRadius: 3, outpostPlazaRadius: 1, streetArmLength: 16,
+  },
 };
 
 /**
@@ -416,6 +478,7 @@ const POI_BASE: { readonly [key in SizePreset]: number } = {
   tiny: 18,
   small: 78,
   medium: 150,
+  large: 300,
 };
 
 /** macro.biomes rule pack v1: thresholds and region limits per size preset. */
@@ -459,6 +522,19 @@ const BIOME_RULES: { readonly [key in SizePreset]: BiomeRules } = {
       dryTemperatureMin: 460,
     },
   },
+  large: {
+    minRegionCells: 700,
+    smoothingPasses: 8,
+    knollCount: 120,
+    thresholds: {
+      rockElevationMin: 650,
+      snowTemperatureMax: 320,
+      mudMoistureMin: 600,
+      mudElevationMax: 500,
+      dryMoistureMax: 375,
+      dryTemperatureMin: 460,
+    },
+  },
 };
 
 export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldConfig {
@@ -466,7 +542,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 12,
+    resolvedConfigFormat: 13,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,

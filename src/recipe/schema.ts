@@ -9,7 +9,7 @@
 
 export const RECIPE_FORMAT = 1;
 
-export const SIZE_PRESET_NAMES = ["tiny", "small", "medium"] as const;
+export const SIZE_PRESET_NAMES = ["tiny", "small", "medium", "large"] as const;
 export type SizePreset = (typeof SIZE_PRESET_NAMES)[number];
 
 export const CLIMATE_PRESET_NAMES = ["temperate", "cold_coastal"] as const;
@@ -35,9 +35,11 @@ export type BiasField = (typeof BIAS_FIELD_NAMES)[number];
 
 export const BUDGET_RANGES = {
   regionCount: { min: 1, max: 16, default: 4 },
-  settlementCount: { min: 0, max: 16, default: 0 },
-  primaryRouteCount: { min: 0, max: 8, default: 0 },
-  landmarkCount: { min: 0, max: 8, default: 0 },
+  // Caps sized for the large (1024-cell) preset: a 1M-cell world needs
+  // more than 16 settlements to read settled (raised with recipe.presets 5).
+  settlementCount: { min: 0, max: 32, default: 0 },
+  primaryRouteCount: { min: 0, max: 12, default: 0 },
+  landmarkCount: { min: 0, max: 12, default: 0 },
 } as const;
 export type BudgetField = keyof typeof BUDGET_RANGES;
 export const BUDGET_FIELD_NAMES = Object.keys(BUDGET_RANGES).sort() as readonly BudgetField[];

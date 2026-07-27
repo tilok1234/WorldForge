@@ -289,6 +289,7 @@ export function decorateWorld(
   entranceCells: readonly number[],
   config: ResolvedWorldConfig,
   farms: FarmResult,
+  streetFordCells: readonly number[],
 ): DecorationResult {
   const { width, height } = config.world;
   const cellCount = width * height;
@@ -336,6 +337,20 @@ export function decorateWorld(
       protectedCells[crossing.cell] = 1;
     }
   }
+  // Street-ford cells (composeWorld's single source of truth) stay open to
+  // cosmetic props (reeds beside the crossing read fine) but must never
+  // take a BLOCKING prop: the §3 ladder walks fords, and a blocking prop
+  // there severs the street. The first blocked ford appeared on the first
+  // 1024-cell map — smaller worlds had simply never rolled one.
+  const fordCells = new Uint8Array(cellCount);
+  for (const cell of streetFordCells) {
+    fordCells[cell] = 1;
+  }
+  for (const route of routesResult.routes) {
+    for (const crossing of route.crossings) {
+      fordCells[crossing.cell] = 1;
+    }
+  }
   for (const cell of entranceCells) {
     protectedCells[cell] = 1;
     const x = cell % width;
@@ -361,7 +376,7 @@ export function decorateWorld(
 
   const place = (index: number, key: (typeof DECOR_TYPES)[number], x: number, y: number): boolean => {
     if (propLayer[index] !== 0) return false;
-    if (BLOCKING.has(key) && nearStructure(index)) return false;
+    if (BLOCKING.has(key) && (nearStructure(index) || fordCells[index] === 1)) return false;
     if (TWO_PART.has(key) && y > 0 && structureLayer[index - width] !== 0) return false;
     propLayer[index] = typeIndex.get(key) as number;
     return true;
@@ -587,14 +602,14 @@ export function decorateWorld(
       if (seaward !== null) {
         const [dx, dy] = seaward;
         const moor = (y + dy) * width + x + dx;
-        if (moor >= 0 && moor < cellCount && propLayer[moor] === 0 && farms.pierLayer[moor] === 0) {
+        if (moor >= 0 && moor < cellCount && propLayer[moor] === 0 && farms.pierLayer[moor] === 0 && fordCells[moor] === 0) {
           propLayer[moor] = typeIndex.get("prop.rowboat") as number;
           propCount += 1;
         }
         const buoyX = x + dx * 3;
         const buoyY = y + dy * 3;
         const buoy = cellIn(buoyX, buoyY, width, height);
-        if (buoy !== -1 && hydro.waterKind[buoy] !== WATER_NONE && propLayer[buoy] === 0 && farms.pierLayer[buoy] === 0) {
+        if (buoy !== -1 && hydro.waterKind[buoy] !== WATER_NONE && propLayer[buoy] === 0 && farms.pierLayer[buoy] === 0 && fordCells[buoy] === 0) {
           propLayer[buoy] = typeIndex.get("prop.buoy") as number;
           propCount += 1;
         }

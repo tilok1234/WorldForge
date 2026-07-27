@@ -10,12 +10,11 @@ file. HANDOFF.md is the tiebreaker.
 ## Where the project stands
 
 W0–W9 complete, ALIVE-WORLDS ARC complete (behaviors 15–30), VARIETY ARC
-underway (behaviors 31–33). Versions: behavior 33, recipe compiler 17,
-artifact format 8, resolved-config 12 (bumped by behavior 33's
-RouteRules.quadrantMin field — behavior 32 alone added no fields and
-correctly kept 11), TileForge adapter 6. 153 tests. Standing
-commit+push authorization held this whole arc — re-confirm with the
-user per policy.
+underway (behaviors 31–34). Versions: behavior 34, recipe compiler 18,
+artifact format 8, resolved-config 13 (12: quadrantMin; 13: quadrantMin
+generalized to sectorGrid+sectorMin), TileForge adapter 6. 154 tests.
+Standing commit+push authorization held this whole arc — re-confirm
+with the user per policy.
 
 ### The canonical world (fixtures/recipes/small-cold-coastal.json, seed 103991)
 
@@ -72,11 +71,30 @@ because pure score competition left whole 512-map quadrants empty
 (frontier's west had ZERO settlements before; per-quadrant spread now
 4/2/2/3, 4/5/4/2, 6/6/2/2). POI/prop density doctrine untouched. All
 three verified (floods equal, 0 errors), canonical still 33887.
-Overviews sent 2026-07-27 (second round); verdicts PENDING. Note:
+Medium APPROVED 2026-07-27 ("lets do next" on the second-round
+overviews). LARGE PRESET (behavior 34): 1024×1024 in 32×32 chunks,
+third city, seven towns, POI base 300, budget caps raised (settlements
+32, routes 12, landmarks 12), sector floors generalize the quadrants
+(sectorGrid 4 × sectorMin 1 on large; medium's 2×2×2 byte-identical —
+regen floods matched exactly). Full render SKIPPED past 16384px (a
+32768px rgba buffer is exactly 2^32 bytes — unbuildable): the CLI
+band-composes straight into resolved-preview.png (8192², 1/4, one-cell
+band margin absorbs the sand 16px offset); serve-viewer's native check
+accepts render OR preview. Two large worlds BUILT + VERIFIED (0 errors,
+floods equal): warm-vale-large (balanced, 24 settlements, flood 646918)
++ the-old-war-large (dense, 28 settlements, 10 landmarks, flood
+650230); every 4×4 sector settled in both. Overviews sent 2026-07-27;
+verdicts PENDING. The first 1024 map instantly caught a LATENT BUG: a
+blocking tree scattered onto a street-ford cell severed the street
+(ladder error). Fix (decoration.props 9): blocking props barred from
+streetFordCells + route crossings via composeWorld's ford list (single
+source of truth — no rule triplication); rowboat/buoy direct writes
+guarded too. Approved worlds shift by single cells (canonical: −3 of
+12460 props, flood 33887→33890, both consumers agree, 0 errors) — NOT
+byte-identical, flagged honestly. Also: validate.ts landmark cap now
+follows BUDGET_RANGES instead of a stale literal 8. Note:
 warm-vale-medium's coastal lighthouse sits on a lake shore (no sea at
-seed 424242) — acceptable fallback, flagged. On verdicts: `large`
-preset next (quadrant floors should scale — consider quadrantMin 3-4 or
-finer grid at 1024); new climates last.
+seed 424242) — acceptable fallback, flagged. After large: new climates.
 
 ## Density doctrine (IMPORTANT — two standing user verdicts)
 

@@ -1,0 +1,25 @@
+{
+  "recipeFormat": 1,
+  "seed": 424242,
+  "world": { "sizePreset": "large", "climatePreset": "temperate", "densityPreset": "balanced" },
+  "biases": {
+    "moisturePermille": 60,
+    "temperaturePermille": 40
+  },
+  "landmarks": [
+    { "type": "world_tree", "relation": "far_from_town" },
+    { "type": "lighthouse", "relation": "coastal" },
+    { "type": "ruined_city", "relation": "high_ground" },
+    { "type": "crystal_spire", "relation": "high_ground" },
+    { "type": "hunters_lodge", "relation": "remote_corner" },
+    { "type": "mountain_hamlet", "relation": "high_ground" },
+    { "type": "mountain_hamlet", "relation": "high_ground" },
+    { "type": "ancient_fortress", "relation": "across_river_from_town" }
+  ],
+  "budgets": {
+    "regionCount": 4,
+    "settlementCount": 24,
+    "primaryRouteCount": 8,
+    "landmarkCount": 8
+  }
+}

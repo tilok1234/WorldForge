@@ -460,32 +460,37 @@ function pickDestinations(
       config.routes.minDestinationSpacing,
     );
   }
-  //   2b. quadrant floors (routes.graph v10): pure score competition lets
-  //       selections cluster into the best-scoring bands — the first 512
-  //       map left whole quadrants settlement-free. Each map quadrant gets
-  //       at least quadrantMin settlements (terrain permitting) before the
-  //       open competition, capped by the recipe's settlement budget.
-  if (config.routes.quadrantMin > 0) {
-    const halfW = Math.trunc(fields.width / 2);
-    const halfH = Math.trunc(fields.height / 2);
+  //   2b. sector floors (routes.graph v11, generalizing the v10 quadrants):
+  //       pure score competition lets selections cluster into the
+  //       best-scoring bands — the first 512 map left whole quadrants
+  //       settlement-free. The map divides into sectorGrid x sectorGrid
+  //       sectors, each keeping at least sectorMin settlements (terrain
+  //       permitting) before the open competition, capped by the recipe's
+  //       settlement budget. Sectors fill in reading order (NW -> SE), the
+  //       same order the v10 quadrants used, so medium selections are
+  //       byte-identical under a 2x2 grid of 2.
+  if (config.routes.sectorMin > 0 && config.routes.sectorGrid > 1) {
+    const grid = config.routes.sectorGrid;
+    const sectorW = Math.trunc(fields.width / grid);
+    const sectorH = Math.trunc(fields.height / grid);
     const settlementsTaken = (): number =>
       taken.filter((d) => d.kind === "settlement_candidate").length;
-    for (let quadrant = 0; quadrant < 4; quadrant += 1) {
-      const qx0 = quadrant % 2 === 0 ? 0 : halfW;
-      const qy0 = quadrant < 2 ? 0 : halfH;
-      const inQuadrant = (index: number): boolean => {
+    for (let sector = 0; sector < grid * grid; sector += 1) {
+      const sx0 = (sector % grid) * sectorW;
+      const sy0 = Math.trunc(sector / grid) * sectorH;
+      const inSector = (index: number): boolean => {
         const x = index % fields.width;
         const y = Math.trunc(index / fields.width);
-        return x >= qx0 && x < qx0 + halfW && y >= qy0 && y < qy0 + halfH;
+        return x >= sx0 && x < sx0 + sectorW && y >= sy0 && y < sy0 + sectorH;
       };
       const have = taken.filter(
-        (d) => d.kind === "settlement_candidate" && inQuadrant(d.cell),
+        (d) => d.kind === "settlement_candidate" && inSector(d.cell),
       ).length;
       const room = config.budgets.settlementCount - settlementsTaken();
-      const want = Math.min(config.routes.quadrantMin - have, room);
+      const want = Math.min(config.routes.sectorMin - have, room);
       if (want <= 0) continue;
       bySpacing(
-        scored.filter((candidate) => inQuadrant(candidate.index)),
+        scored.filter((candidate) => inSector(candidate.index)),
         settlementsTaken() + want,
         taken,
         "settlement_candidate",

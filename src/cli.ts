@@ -50,6 +50,69 @@ import {
   verifyReferenceRender,
 } from "./adapters/tileforge/verifyResolution.js";
 import { emitResolvedTmj } from "./adapters/tileforge/emitTmj.js";
+import type { TmjDocument } from "./adapters/tileforge/tmj.js";
+
+/**
+ * Box-averaged preview of a tmj document too large to composite whole:
+ * renders horizontal bands (one-cell margin absorbs the sand layer's 16px
+ * offset bleed) and folds each into the preview as it goes, so peak memory
+ * stays one band instead of the full bitmap.
+ */
+function bandedPreview(
+  doc: TmjDocument,
+  tileSize: number,
+  factor: number,
+): { readonly width: number; readonly height: number; readonly rgb: Uint8Array } {
+  const bandCells = 64;
+  if ((bandCells * tileSize) % factor !== 0) {
+    throw new Error(`preview factor ${factor} must divide the band height ${bandCells * tileSize}`);
+  }
+  const outW = Math.floor((doc.width * tileSize) / factor);
+  const outH = Math.floor((doc.height * tileSize) / factor);
+  const out = new Uint8Array(outW * outH * 3);
+  const sums = new Float64Array(outW * 3);
+  const n = factor * factor;
+  for (let bandStart = 0; bandStart < doc.height; bandStart += bandCells) {
+    const bandEnd = Math.min(doc.height, bandStart + bandCells);
+    const renderStart = Math.max(0, bandStart - 1);
+    const renderEnd = Math.min(doc.height, bandEnd + 1);
+    const sub: TmjDocument = {
+      ...doc,
+      height: renderEnd - renderStart,
+      layers: doc.layers.map((layer) =>
+        layer.type === "tilelayer" && layer.data !== undefined
+          ? {
+              ...layer,
+              height: renderEnd - renderStart,
+              data: layer.data.slice(renderStart * doc.width, renderEnd * doc.width),
+            }
+          : layer,
+      ),
+    };
+    const band = renderTmjDocument(sub);
+    const cropTopPx = (bandStart - renderStart) * tileSize;
+    for (let py = bandStart * tileSize; py < Math.min(bandEnd * tileSize, outH * factor); py += 1) {
+      const rowBase = (cropTopPx + (py - bandStart * tileSize)) * band.width * 4;
+      for (let px = 0; px < outW * factor; px += 1) {
+        const o = Math.trunc(px / factor) * 3;
+        const at = rowBase + px * 4;
+        sums[o] = (sums[o] as number) + (band.rgba[at] as number);
+        sums[o + 1] = (sums[o + 1] as number) + (band.rgba[at + 1] as number);
+        sums[o + 2] = (sums[o + 2] as number) + (band.rgba[at + 2] as number);
+      }
+      if ((py + 1) % factor === 0) {
+        const base = Math.trunc(py / factor) * outW * 3;
+        for (let x = 0; x < outW; x += 1) {
+          out[base + x * 3] = Math.round((sums[x * 3] as number) / n);
+          out[base + x * 3 + 1] = Math.round((sums[x * 3 + 1] as number) / n);
+          out[base + x * 3 + 2] = Math.round((sums[x * 3 + 2] as number) / n);
+        }
+        sums.fill(0);
+      }
+    }
+  }
+  return { width: outW, height: outH, rgb: out };
+}
 import { encodePng } from "./render/png.js";
 import type { NormalizedWorldRecipe, WorldRecipe } from "./recipe/schema.js";
 
@@ -480,44 +543,61 @@ function runResolveTileForge(argv: readonly string[]): number {
   // native-scale render through the §4-proven compositor for visual review.
   const emitted = emitResolvedTmj(resolved.mapData, config.seed);
   writeFileSync(join(parsed.outDir, "resolved-map.tmj"), canonicalJson(emitted.doc));
-  const render = renderTmjDocument(emitted.doc);
-  const rgb = new Uint8Array(render.width * render.height * 3);
-  for (let p = 0; p < render.width * render.height; p += 1) {
-    rgb[p * 3] = render.rgba[p * 4] as number;
-    rgb[p * 3 + 1] = render.rgba[p * 4 + 1] as number;
-    rgb[p * 3 + 2] = render.rgba[p * 4 + 2] as number;
-  }
-  writeFileSync(join(parsed.outDir, "resolved-render.png"), encodePng(render.width, render.height, rgb));
   // Renders past 8192px on a side exceed what browsers will decode (a 512-cell
   // world is 16384px — Chrome refuses the ~1 GB bitmap), so the viewer gets a
-  // box-averaged preview alongside the full-detail evidence render.
+  // box-averaged resolved-preview.png. Past 16384px the FULL render itself is
+  // unbuildable (a 1024-cell world would need a 2^32-byte rgba buffer), so
+  // those worlds band-compose straight into the preview and skip the full
+  // render; native-scale review crops come from re-rendering a slice.
   const previewCap = 8192;
-  const previewFactor = Math.ceil(Math.max(render.width, render.height) / previewCap);
+  const fullRenderCap = 16384;
+  const tileSize = loadPinnedManifest().manifest.tileSize;
+  const fullSide = Math.max(emitted.doc.width, emitted.doc.height) * tileSize;
+  let renderLine: string;
   let previewLine: string | null = null;
-  if (previewFactor > 1) {
-    const previewW = Math.floor(render.width / previewFactor);
-    const previewH = Math.floor(render.height / previewFactor);
-    const preview = new Uint8Array(previewW * previewH * 3);
-    const n = previewFactor * previewFactor;
-    for (let py = 0; py < previewH; py += 1) {
-      for (let px = 0; px < previewW; px += 1) {
-        let r = 0, g = 0, b = 0;
-        for (let dy = 0; dy < previewFactor; dy += 1) {
-          const rowBase = ((py * previewFactor + dy) * render.width + px * previewFactor) * 3;
-          for (let dx = 0; dx < previewFactor; dx += 1) {
-            r += rgb[rowBase + dx * 3] as number;
-            g += rgb[rowBase + dx * 3 + 1] as number;
-            b += rgb[rowBase + dx * 3 + 2] as number;
-          }
-        }
-        const out = (py * previewW + px) * 3;
-        preview[out] = Math.round(r / n);
-        preview[out + 1] = Math.round(g / n);
-        preview[out + 2] = Math.round(b / n);
-      }
+  if (fullSide > fullRenderCap) {
+    const factor = Math.ceil(fullSide / previewCap);
+    const preview = bandedPreview(emitted.doc, tileSize, factor);
+    writeFileSync(join(parsed.outDir, "resolved-preview.png"), encodePng(preview.width, preview.height, preview.rgb));
+    renderLine =
+      `resolved-render.png skipped: ${emitted.doc.width * tileSize}px exceeds the buildable/decodable cap`;
+    previewLine = `wrote ${join(parsed.outDir, "resolved-preview.png")} (${preview.width}x${preview.height}, 1/${factor}, banded)`;
+  } else {
+    const render = renderTmjDocument(emitted.doc);
+    const rgb = new Uint8Array(render.width * render.height * 3);
+    for (let p = 0; p < render.width * render.height; p += 1) {
+      rgb[p * 3] = render.rgba[p * 4] as number;
+      rgb[p * 3 + 1] = render.rgba[p * 4 + 1] as number;
+      rgb[p * 3 + 2] = render.rgba[p * 4 + 2] as number;
     }
-    writeFileSync(join(parsed.outDir, "resolved-preview.png"), encodePng(previewW, previewH, preview));
-    previewLine = `wrote ${join(parsed.outDir, "resolved-preview.png")} (${previewW}x${previewH}, 1/${previewFactor})`;
+    writeFileSync(join(parsed.outDir, "resolved-render.png"), encodePng(render.width, render.height, rgb));
+    renderLine = `wrote ${join(parsed.outDir, "resolved-render.png")} (${render.width}x${render.height})`;
+    const previewFactor = Math.ceil(Math.max(render.width, render.height) / previewCap);
+    if (previewFactor > 1) {
+      const previewW = Math.floor(render.width / previewFactor);
+      const previewH = Math.floor(render.height / previewFactor);
+      const preview = new Uint8Array(previewW * previewH * 3);
+      const n = previewFactor * previewFactor;
+      for (let py = 0; py < previewH; py += 1) {
+        for (let px = 0; px < previewW; px += 1) {
+          let r = 0, g = 0, b = 0;
+          for (let dy = 0; dy < previewFactor; dy += 1) {
+            const rowBase = ((py * previewFactor + dy) * render.width + px * previewFactor) * 3;
+            for (let dx = 0; dx < previewFactor; dx += 1) {
+              r += rgb[rowBase + dx * 3] as number;
+              g += rgb[rowBase + dx * 3 + 1] as number;
+              b += rgb[rowBase + dx * 3 + 2] as number;
+            }
+          }
+          const out = (py * previewW + px) * 3;
+          preview[out] = Math.round(r / n);
+          preview[out + 1] = Math.round(g / n);
+          preview[out + 2] = Math.round(b / n);
+        }
+      }
+      writeFileSync(join(parsed.outDir, "resolved-preview.png"), encodePng(previewW, previewH, preview));
+      previewLine = `wrote ${join(parsed.outDir, "resolved-preview.png")} (${previewW}x${previewH}, 1/${previewFactor})`;
+    }
   }
   // Slice manifest for game consumers and the viewer: destination and route
   // endpoints in cell coordinates plus the small id->name tables hover
@@ -571,7 +651,7 @@ function runResolveTileForge(argv: readonly string[]): number {
       `wrote ${join(parsed.outDir, "tileforge-map-data.json")}`,
       `wrote ${join(parsed.outDir, "tileforge-diagnostics.json")}`,
       `wrote ${join(parsed.outDir, "resolved-map.tmj")}`,
-      `wrote ${join(parsed.outDir, "resolved-render.png")} (${render.width}x${render.height})`,
+      renderLine,
       ...(previewLine === null ? [] : [previewLine]),
       `wrote ${join(parsed.outDir, "tileforge-slice.json")}`,
     ].join("\n") + "\n",

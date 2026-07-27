@@ -145,8 +145,11 @@ export function validateRecipe(input: unknown): RecipeValidation {
     if (!Array.isArray(landmarks)) {
       issues.push({ path: "$.landmarks", message: "landmarks must be an array" });
     } else {
-      if (landmarks.length > 8) {
-        issues.push({ path: "$.landmarks", message: "at most 8 landmark requests are supported" });
+      if (landmarks.length > BUDGET_RANGES.landmarkCount.max) {
+        issues.push({
+          path: "$.landmarks",
+          message: `at most ${BUDGET_RANGES.landmarkCount.max} landmark requests are supported`,
+        });
       }
       const budgetsValue = input["budgets"];
       const landmarkBudget =

@@ -10,7 +10,7 @@ import { normalizeRecipe } from "../src/recipe/normalize.js";
 import { validateRecipe } from "../src/recipe/validate.js";
 import type { NormalizedWorldRecipe } from "../src/recipe/schema.js";
 
-function normalized(seed: number, sizePreset: "tiny" | "small" | "medium", climatePreset: "temperate" | "cold_coastal"): NormalizedWorldRecipe {
+function normalized(seed: number, sizePreset: "tiny" | "small" | "medium" | "large", climatePreset: "temperate" | "cold_coastal"): NormalizedWorldRecipe {
   const validation = validateRecipe({
     recipeFormat: 1,
     seed,
@@ -28,6 +28,24 @@ describe("recipe compiler", () => {
     assert.deepEqual(small.world, { width: 256, height: 256, chunkWidth: 32, chunkHeight: 32 });
     const medium = compileRecipe(normalized(1, "medium", "temperate"));
     assert.deepEqual(medium.world, { width: 512, height: 512, chunkWidth: 32, chunkHeight: 32 });
+    const large = compileRecipe(normalized(1, "large", "temperate"));
+    assert.deepEqual(large.world, { width: 1024, height: 1024, chunkWidth: 32, chunkHeight: 32 });
+  });
+
+  it("gives large a sector-gridded, three-city network", () => {
+    const config = compileRecipe(normalized(1, "large", "cold_coastal"));
+    assert.equal(config.macroFields.elevation.octaves[0]?.cellSizeLog2, 9);
+    assert.equal(config.water.majorRiverAccumulationThreshold, 5000);
+    assert.equal(config.routes.sectorGrid, 4);
+    assert.equal(config.routes.sectorMin, 1);
+    assert.equal(config.settlements.cityCount, 3);
+    assert.equal(config.settlements.townCount, 7);
+    assert.equal(config.biomes.minRegionCells, 700);
+    // Per-cell POI density keeps falling as maps grow (density doctrine).
+    const medium = compileRecipe(normalized(1, "medium", "cold_coastal"));
+    assert.ok(
+      config.decoration.poiCount / (1024 * 1024) < medium.decoration.poiCount / (512 * 512),
+    );
   });
 
   it("scales medium sublinearly: roomier country, not denser cities", () => {
@@ -38,7 +56,8 @@ describe("recipe compiler", () => {
     assert.equal(config.water.majorRiverAccumulationThreshold, 2000);
     assert.equal(config.routes.minDestinationSpacing, 40);
     assert.equal(config.routes.remoteQuarterMin, 4);
-    assert.equal(config.routes.quadrantMin, 2);
+    assert.equal(config.routes.sectorGrid, 2);
+    assert.equal(config.routes.sectorMin, 2);
     assert.equal(config.settlements.cityCount, 2);
     assert.equal(config.settlements.townCount, 5);
     assert.equal(config.biomes.minRegionCells, 240);
@@ -62,7 +81,7 @@ describe("recipe compiler", () => {
     assert.equal(config.dependencies.tileforge?.packageId, "forest-a5baf52-seed103991");
     assert.match(config.dependencies.tileforge?.packageSha256 ?? "", /^3e58c902/);
     assert.deepEqual(config.passes, ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "decoration.props", "adapter.tileforge"]);
-    assert.equal(config.resolvedConfigFormat, 12);
+    assert.equal(config.resolvedConfigFormat, 13);
     assert.equal(config.water.seaLevelPermille, 310);
     assert.equal(config.macroFields.temperatureLapse.startElevationPermille, 640);
     assert.equal(config.routes.streetWidth, 2);

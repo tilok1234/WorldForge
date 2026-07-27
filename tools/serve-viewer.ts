@@ -17,13 +17,15 @@ import { join, normalize, resolve, sep } from "node:path";
 
 const ROOT = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 
-/** Files a directory must contain to open in the viewer's native mode. */
-const NATIVE_FILES = [
+/** Files a directory must contain to open in the viewer's native mode.
+ *  The image may be the full render OR the banded preview (large worlds
+ *  skip the full render — it exceeds buildable/decodable bitmap sizes). */
+const NATIVE_JSON_FILES = [
   "tileforge-map-data.json",
   "tileforge-slice.json",
   "tileforge-diagnostics.json",
-  "resolved-render.png",
 ] as const;
+const NATIVE_IMAGE_FILES = ["resolved-render.png", "resolved-preview.png"] as const;
 
 interface WorldListing {
   readonly dir: string;
@@ -64,7 +66,9 @@ function listWorlds(): WorldListing[] {
       const dirAbsolute = join(absolute, entry.name);
       const worldJson = join(dirAbsolute, "world.json");
       const semantic = existsSync(worldJson);
-      const native = NATIVE_FILES.every((name) => existsSync(join(dirAbsolute, name)));
+      const native =
+        NATIVE_JSON_FILES.every((name) => existsSync(join(dirAbsolute, name))) &&
+        NATIVE_IMAGE_FILES.some((name) => existsSync(join(dirAbsolute, name)));
       if (native || semantic) {
         worlds.push({
           dir: dirRelative,

@@ -103,23 +103,40 @@ export const GENERATOR_VERSION = "0.1.0";
  *     tiny/small keeps approved selections byte-identical. The three
  *     medium recipes push settlement/route/landmark budgets so the web
  *     spans the map. Prop/POI density doctrine untouched.
+ * 34: the large size preset (recipe.presets 5, macro.fields 6,
+ *     macro.biomes 7, hydrology.water 4, routes.graph 11,
+ *     settlements.plans 10, decoration.pois 12) — world.sizePreset gains
+ *     large: 1024x1024 in 32x32 chunks, third city, seven towns, POI base
+ *     300, budget caps raised (settlements 32, routes 12, landmarks 12).
+ *     Sector floors generalize the v10 quadrants (RouteRules.sectorGrid +
+ *     sectorMin replace quadrantMin; resolved-config format 13): large
+ *     keeps a settlement in every 256-cell sector of a 4x4 grid; medium's
+ *     2x2 grid of 2 is byte-identical to the quadrant floors it replaces.
+ *     Renders past the browser-size cap band-compose straight into the
+ *     preview (a 32768px full render would break Node's buffer limits).
+ *     Also decoration.props 9: blocking props keep off street-ford and
+ *     crossing cells (the §3 ladder walks fords; the first 1024 map
+ *     rolled a tree onto one and severed a street — smaller worlds had
+ *     never hit the odds). Approved worlds shift by single cells, not
+ *     looks: the canonical world drops 3 of 12460 props (they stood in
+ *     crossings) and gains 3 walkable cells (flood 33887 -> 33890).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 33;
+export const GENERATOR_BEHAVIOR_VERSION = 34;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 17;
+export const RECIPE_COMPILER_VERSION = 18;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
-  "recipe.presets": 4,
-  "macro.fields": 5,
-  "macro.biomes": 6,
-  "hydrology.water": 3,
-  "routes.graph": 10,
-  "settlements.plans": 9,
+  "recipe.presets": 5,
+  "macro.fields": 6,
+  "macro.biomes": 7,
+  "hydrology.water": 4,
+  "routes.graph": 11,
+  "settlements.plans": 10,
   "landmarks.stamps": 5,
-  "decoration.props": 8,
-  "decoration.pois": 11,
+  "decoration.props": 9,
+  "decoration.pois": 12,
   "density.presets": 1,
   "adapter.tileforge": 6,
 };
