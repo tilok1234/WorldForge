@@ -4,6 +4,9 @@ import {
   DECORATION_FIELD_NAMES,
   DECORATION_RANGES,
   LANDMARK_TYPES,
+  NEAR_RADIUS_MAX,
+  NEAR_RADIUS_MIN,
+  RECIPE_STAMP_PREFIX,
   RELATION_KINDS,
   BUDGET_FIELD_NAMES,
   BUDGET_RANGES,
@@ -14,10 +17,15 @@ import {
   RECIPE_FORMAT,
   SEED_MAX,
   SEED_MIN,
+  SIZE_PRESET_CELLS,
   SIZE_PRESET_NAMES,
+  STAMP_NAME_PATTERN,
   TOGGLE_NAMES,
+  type SizePreset,
   type WorldRecipe,
 } from "./schema.js";
+import { parseStampDefinition } from "../settlements/landmarks.js";
+import { WORLD_PALETTE } from "../regions/biomes.js";
 
 export interface RecipeIssue {
   readonly path: string;
@@ -28,7 +36,7 @@ export type RecipeValidation =
   | { readonly ok: true; readonly recipe: WorldRecipe }
   | { readonly ok: false; readonly issues: readonly RecipeIssue[] };
 
-const ROOT_FIELDS = ["recipeFormat", "seed", "world", "biases", "budgets", "toggles", "landmarks", "decoration"];
+const ROOT_FIELDS = ["recipeFormat", "seed", "world", "biases", "budgets", "toggles", "landmarks", "decoration", "authoredStamps", "cellOverrides"];
 const WORLD_FIELDS = ["sizePreset", "climatePreset", "densityPreset"];
 
 export function validateRecipe(input: unknown): RecipeValidation {
@@ -162,19 +170,157 @@ export function validateRecipe(input: unknown): RecipeValidation {
           message: `${landmarks.length} landmark requests exceed budgets.landmarkCount (${landmarkBudget})`,
         });
       }
+      const declaredStampNames = collectStampNames(input["authoredStamps"]);
+      const worldSize = sizeOf(input);
       landmarks.forEach((entry, position) => {
         if (!isPlainObject(entry)) {
           issues.push({ path: `$.landmarks[${position}]`, message: "must be an object" });
           return;
         }
         for (const key of Object.keys(entry)) {
-          if (key !== "type" && key !== "relation") {
+          if (key !== "type" && key !== "relation" && key !== "at" && key !== "near") {
             issues.push({ path: `$.landmarks[${position}].${key}`, message: `unknown field "${key}"` });
           }
         }
-        checkEnum(issues, entry, "type", `$.landmarks[${position}].type`, LANDMARK_TYPES);
+        const type = entry["type"];
+        if (typeof type === "string" && type.startsWith(RECIPE_STAMP_PREFIX)) {
+          const name = type.slice(RECIPE_STAMP_PREFIX.length);
+          if (!declaredStampNames.has(name)) {
+            issues.push({
+              path: `$.landmarks[${position}].type`,
+              message: `"${type}" names no declared authored stamp (see $.authoredStamps)`,
+            });
+          }
+        } else {
+          checkEnum(issues, entry, "type", `$.landmarks[${position}].type`, LANDMARK_TYPES);
+        }
+        // A landmark is placed by exactly one mechanism: pin, constrained
+        // search, relation, or free competition — never a mix.
+        const mechanisms = ["at", "near", "relation"].filter((key) => entry[key] !== undefined);
+        if (mechanisms.length > 1) {
+          issues.push({
+            path: `$.landmarks[${position}]`,
+            message: `at, near, and relation are mutually exclusive (got ${mechanisms.join(" + ")})`,
+          });
+        }
         if (entry["relation"] !== undefined) {
           checkEnum(issues, entry, "relation", `$.landmarks[${position}].relation`, RELATION_KINDS);
+        }
+        if (entry["at"] !== undefined) {
+          checkCell(issues, entry["at"], `$.landmarks[${position}].at`, worldSize);
+        }
+        const near = entry["near"];
+        if (near !== undefined) {
+          if (!isPlainObject(near)) {
+            issues.push({ path: `$.landmarks[${position}].near`, message: "must be an object" });
+          } else {
+            for (const key of Object.keys(near)) {
+              if (key !== "cell" && key !== "radius") {
+                issues.push({ path: `$.landmarks[${position}].near.${key}`, message: `unknown field "${key}"` });
+              }
+            }
+            checkCell(issues, near["cell"], `$.landmarks[${position}].near.cell`, worldSize);
+            checkInteger(issues, near, "radius", `$.landmarks[${position}].near.radius`, NEAR_RADIUS_MIN, NEAR_RADIUS_MAX, true);
+          }
+        }
+      });
+    }
+  }
+
+  const authoredStamps = input["authoredStamps"];
+  if (authoredStamps !== undefined) {
+    if (!Array.isArray(authoredStamps)) {
+      issues.push({ path: "$.authoredStamps", message: "authoredStamps must be an array" });
+    } else {
+      const seen = new Set<string>();
+      authoredStamps.forEach((entry, position) => {
+        if (!isPlainObject(entry)) {
+          issues.push({ path: `$.authoredStamps[${position}]`, message: "must be an object" });
+          return;
+        }
+        for (const key of Object.keys(entry)) {
+          if (key !== "name" && key !== "stamp") {
+            issues.push({ path: `$.authoredStamps[${position}].${key}`, message: `unknown field "${key}"` });
+          }
+        }
+        const name = entry["name"];
+        if (typeof name !== "string" || !STAMP_NAME_PATTERN.test(name)) {
+          issues.push({
+            path: `$.authoredStamps[${position}].name`,
+            message: "name must be lowercase-kebab ([a-z][a-z0-9-]*)",
+          });
+          return;
+        }
+        if (seen.has(name)) {
+          issues.push({ path: `$.authoredStamps[${position}].name`, message: `duplicate stamp name "${name}"` });
+          return;
+        }
+        seen.add(name);
+        // The inline definition goes through exactly the fixture parser: same
+        // legend, material, and structure checks as the committed library.
+        try {
+          parseStampDefinition(entry["stamp"], `${RECIPE_STAMP_PREFIX}${name}`);
+        } catch (error) {
+          issues.push({
+            path: `$.authoredStamps[${position}].stamp`,
+            message: error instanceof Error ? error.message : String(error),
+          });
+        }
+      });
+    }
+  }
+
+  const cellOverrides = input["cellOverrides"];
+  if (cellOverrides !== undefined) {
+    if (!Array.isArray(cellOverrides)) {
+      issues.push({ path: "$.cellOverrides", message: "cellOverrides must be an array" });
+    } else {
+      const worldSize = sizeOf(input);
+      const seenCells = new Set<string>();
+      cellOverrides.forEach((entry, position) => {
+        if (!isPlainObject(entry)) {
+          issues.push({ path: `$.cellOverrides[${position}]`, message: "must be an object" });
+          return;
+        }
+        for (const key of Object.keys(entry)) {
+          if (key !== "cell" && key !== "material" && key !== "clearProp" && key !== "clearDecal") {
+            issues.push({ path: `$.cellOverrides[${position}].${key}`, message: `unknown field "${key}"` });
+          }
+        }
+        checkCell(issues, entry["cell"], `$.cellOverrides[${position}].cell`, worldSize);
+        if (Array.isArray(entry["cell"]) && entry["cell"].length === 2) {
+          const key = `${entry["cell"][0]},${entry["cell"][1]}`;
+          if (seenCells.has(key)) {
+            issues.push({ path: `$.cellOverrides[${position}].cell`, message: `duplicate override for cell ${key}` });
+          }
+          seenCells.add(key);
+        }
+        const material = entry["material"];
+        if (material !== undefined) {
+          if (typeof material !== "string" || !(WORLD_PALETTE as readonly string[]).includes(material)) {
+            issues.push({
+              path: `$.cellOverrides[${position}].material`,
+              message: "must be a semantic palette key",
+            });
+          } else if (material.startsWith("water.")) {
+            // Water meaning belongs to hydrology; a material override cannot
+            // invent or remove water without desyncing the river/water layers.
+            issues.push({
+              path: `$.cellOverrides[${position}].material`,
+              message: "water materials cannot be overridden onto cells (hydrology owns water)",
+            });
+          }
+        }
+        for (const flag of ["clearProp", "clearDecal"] as const) {
+          if (entry[flag] !== undefined && entry[flag] !== true) {
+            issues.push({ path: `$.cellOverrides[${position}].${flag}`, message: "must be true when present" });
+          }
+        }
+        if (material === undefined && entry["clearProp"] === undefined && entry["clearDecal"] === undefined) {
+          issues.push({
+            path: `$.cellOverrides[${position}]`,
+            message: "override must set material, clearProp, or clearDecal",
+          });
         }
       });
     }
@@ -184,6 +330,51 @@ export function validateRecipe(input: unknown): RecipeValidation {
     return failure(issues);
   }
   return { ok: true, recipe: input as unknown as WorldRecipe };
+}
+
+/** World side length for pin/override bounds, when the size preset parses. */
+function sizeOf(input: Record<string, unknown>): number | null {
+  const world = input["world"];
+  if (!isPlainObject(world)) {
+    return null;
+  }
+  const preset = world["sizePreset"];
+  if (typeof preset !== "string" || !(SIZE_PRESET_NAMES as readonly string[]).includes(preset)) {
+    return null;
+  }
+  return SIZE_PRESET_CELLS[preset as SizePreset];
+}
+
+function collectStampNames(authoredStamps: unknown): Set<string> {
+  const names = new Set<string>();
+  if (Array.isArray(authoredStamps)) {
+    for (const entry of authoredStamps) {
+      if (isPlainObject(entry) && typeof entry["name"] === "string") {
+        names.add(entry["name"]);
+      }
+    }
+  }
+  return names;
+}
+
+/** A cell is [x, y] of in-bounds integers (bounds skipped if size unknown). */
+function checkCell(
+  issues: RecipeIssue[],
+  value: unknown,
+  path: string,
+  worldSize: number | null,
+): void {
+  if (!Array.isArray(value) || value.length !== 2 || value.some((v) => typeof v !== "number" || !Number.isSafeInteger(v))) {
+    issues.push({ path, message: "must be a [x, y] pair of integers" });
+    return;
+  }
+  const [x, y] = value as [number, number];
+  if (x < 0 || y < 0 || (worldSize !== null && (x >= worldSize || y >= worldSize))) {
+    issues.push({
+      path,
+      message: worldSize === null ? "coordinates must be non-negative" : `coordinates must be within the ${worldSize}x${worldSize} world`,
+    });
+  }
 }
 
 function failure(issues: readonly RecipeIssue[]): RecipeValidation {

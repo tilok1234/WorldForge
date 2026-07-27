@@ -40,11 +40,29 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
     landmarks: (recipe.landmarks ?? []).map((request) => ({
       type: request.type,
       relation: request.relation ?? null,
+      at: request.at === undefined ? null : [request.at[0], request.at[1]],
+      near:
+        request.near === undefined
+          ? null
+          : { cell: [request.near.cell[0], request.near.cell[1]], radius: request.near.radius },
     })),
     decoration: {
       densityPermille:
         recipe.decoration?.densityPermille ?? DECORATION_RANGES.densityPermille.default,
     },
+    // Authored stamps sort by name and overrides by cell (row-major) so the
+    // normalized identity never depends on authoring order.
+    authoredStamps: [...(recipe.authoredStamps ?? [])]
+      .sort((a, b) => (a.name < b.name ? -1 : 1))
+      .map((entry) => ({ name: entry.name, stamp: entry.stamp })),
+    cellOverrides: [...(recipe.cellOverrides ?? [])]
+      .sort((a, b) => a.cell[1] - b.cell[1] || a.cell[0] - b.cell[0])
+      .map((override) => ({
+        cell: [override.cell[0], override.cell[1]],
+        material: override.material ?? null,
+        clearProp: override.clearProp ?? false,
+        clearDecal: override.clearDecal ?? false,
+      })),
   };
 }
 

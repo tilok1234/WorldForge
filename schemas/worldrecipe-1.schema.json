@@ -2,39 +2,97 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://worldforge.local/schemas/worldrecipe-1.schema.json",
   "title": "WorldRecipe (format 1, W0 vocabulary)",
-  "description": "Author-facing root generation document. Mirrors src/recipe/validate.ts, which is the enforced validator. Staged vocabulary through W5: seed, named presets, integer permille biases, budgets, toggles (none defined), and landmark requests with relational constraints (backed by the W5 solver). Remaining named-entity fields stay rejected until their milestones.",
+  "description": "Author-facing root generation document. Mirrors src/recipe/validate.ts, which is the enforced validator. Vocabulary through behavior 36: seed, named presets (size/climate/density), integer permille biases, budgets, toggles (none defined), decoration density, landmark requests with relational constraints or authored pins (at / near), per-recipe authored stamps, and sparse cell overrides. Remaining named-entity fields stay rejected until their milestones.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["recipeFormat", "seed", "world"],
+  "required": [
+    "recipeFormat",
+    "seed",
+    "world"
+  ],
   "properties": {
-    "recipeFormat": { "const": 1 },
-    "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+    "recipeFormat": {
+      "const": 1
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
     "world": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sizePreset", "climatePreset"],
+      "required": [
+        "sizePreset",
+        "climatePreset"
+      ],
       "properties": {
-        "sizePreset": { "enum": ["tiny", "small"] },
-        "climatePreset": { "enum": ["temperate", "cold_coastal"] }
+        "sizePreset": {
+          "enum": [
+            "tiny",
+            "small"
+          ]
+        },
+        "climatePreset": {
+          "enum": [
+            "temperate",
+            "cold_coastal"
+          ]
+        },
+        "densityPreset": {
+          "enum": [
+            "sparse",
+            "balanced",
+            "dense"
+          ]
+        }
       }
     },
     "biases": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "northElevationPermille": { "type": "integer", "minimum": -1000, "maximum": 1000 },
-        "temperaturePermille": { "type": "integer", "minimum": -1000, "maximum": 1000 },
-        "moisturePermille": { "type": "integer", "minimum": -1000, "maximum": 1000 }
+        "northElevationPermille": {
+          "type": "integer",
+          "minimum": -1000,
+          "maximum": 1000
+        },
+        "temperaturePermille": {
+          "type": "integer",
+          "minimum": -1000,
+          "maximum": 1000
+        },
+        "moisturePermille": {
+          "type": "integer",
+          "minimum": -1000,
+          "maximum": 1000
+        }
       }
     },
     "budgets": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "regionCount": { "type": "integer", "minimum": 1, "maximum": 16 },
-        "settlementCount": { "type": "integer", "minimum": 0, "maximum": 16 },
-        "primaryRouteCount": { "type": "integer", "minimum": 0, "maximum": 8 },
-        "landmarkCount": { "type": "integer", "minimum": 0, "maximum": 8 }
+        "regionCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "settlementCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16
+        },
+        "primaryRouteCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8
+        },
+        "landmarkCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8
+        }
       }
     },
     "toggles": {
@@ -44,14 +102,145 @@
     },
     "landmarks": {
       "type": "array",
-      "maxItems": 8,
+      "maxItems": 12,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["type"],
+        "required": [
+          "type"
+        ],
         "properties": {
-          "type": { "enum": ["ancient_fortress"] },
-          "relation": { "enum": ["across_river_from_town", "near_town", "far_from_town"] }
+          "type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ancient_fortress",
+                  "ruined_city",
+                  "world_tree",
+                  "crystal_spire",
+                  "lighthouse",
+                  "hunters_lodge",
+                  "mountain_hamlet"
+                ]
+              },
+              {
+                "type": "string",
+                "pattern": "^recipe\\.[a-z][a-z0-9-]*$",
+                "description": "a declared authoredStamps entry, namespaced recipe.<name>"
+              }
+            ]
+          },
+          "relation": {
+            "enum": [
+              "across_river_from_town",
+              "near_town",
+              "far_from_town",
+              "high_ground",
+              "coastal",
+              "remote_corner"
+            ]
+          },
+          "at": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "pinned anchor cell; mutually exclusive with relation and near; fails generation with a named error rather than relocating"
+          },
+          "near": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "cell",
+              "radius"
+            ],
+            "properties": {
+              "cell": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "description": "[x, y] cell; must lie inside the size preset's world"
+              },
+              "radius": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 64
+              }
+            },
+            "description": "constrained anchor search; mutually exclusive with relation and at"
+          }
+        }
+      }
+    },
+    "decoration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "densityPermille": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        }
+      }
+    },
+    "authoredStamps": {
+      "type": "array",
+      "description": "One-off per-recipe stamps (behavior 36). Each stamp is a full stampFormat-1 definition whose type must be recipe.<name>; it passes exactly the fixture library's parser checks.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "stamp"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "stamp": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "cellOverrides": {
+      "type": "array",
+      "description": "Sparse designer spot decisions (behavior 36), applied after every procedural pass and before validation. At least one of material/clearProp/clearDecal per entry; water materials refused (hydrology owns water); duplicate cells refused; soft cap 64 (warn-only).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "cell"
+        ],
+        "properties": {
+          "cell": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "[x, y] cell; must lie inside the size preset's world"
+          },
+          "material": {
+            "type": "string",
+            "description": "semantic palette key; never water.*"
+          },
+          "clearProp": {
+            "const": true
+          },
+          "clearDecal": {
+            "const": true
+          }
         }
       }
     }

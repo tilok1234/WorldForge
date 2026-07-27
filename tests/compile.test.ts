@@ -8,7 +8,7 @@ import {
 } from "../src/recipe/compile.js";
 import { normalizeRecipe } from "../src/recipe/normalize.js";
 import { validateRecipe } from "../src/recipe/validate.js";
-import type { NormalizedWorldRecipe } from "../src/recipe/schema.js";
+import { SIZE_PRESET_CELLS, SIZE_PRESET_NAMES, type NormalizedWorldRecipe } from "../src/recipe/schema.js";
 
 function normalized(
   seed: number,
@@ -85,13 +85,21 @@ describe("recipe compiler", () => {
     assert.equal(config.dependencies.tileforge?.packageId, "forest-a5baf52-seed103991");
     assert.match(config.dependencies.tileforge?.packageSha256 ?? "", /^3e58c902/);
     assert.deepEqual(config.passes, ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "decoration.props", "adapter.tileforge"]);
-    assert.equal(config.resolvedConfigFormat, 13);
+    assert.equal(config.resolvedConfigFormat, 14);
     assert.equal(config.water.seaLevelPermille, 310);
     assert.equal(config.macroFields.temperatureLapse.startElevationPermille, 640);
     assert.equal(config.routes.streetWidth, 2);
     assert.equal(config.routes.highwayWidth, 3);
     assert.equal(config.macroFields.temperature.offsetPermille, 0);
     assert.equal(config.biomes.minRegionCells, 12);
+  });
+
+  it("keeps the validator's pin-bounds table in sync with compiled dimensions", () => {
+    for (const preset of SIZE_PRESET_NAMES) {
+      const config = compileRecipe(normalized(1, preset, "temperate"));
+      assert.equal(config.world.width, SIZE_PRESET_CELLS[preset], preset);
+      assert.equal(config.world.height, SIZE_PRESET_CELLS[preset], preset);
+    }
   });
 
   it("feeds climate presets and biases into the field specs", () => {

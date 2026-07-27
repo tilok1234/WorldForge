@@ -165,6 +165,18 @@ export interface SettlementRules {
 export interface LandmarkSpec {
   readonly type: string;
   readonly relation: string | null;
+  /** Authored pin (behavior 36): exact anchor cell, or null. */
+  readonly at: readonly [number, number] | null;
+  /** Authored constrained search (behavior 36), or null. */
+  readonly near: { readonly cell: readonly [number, number]; readonly radius: number } | null;
+}
+
+/** Authored placement inputs carried into generation (behavior 36). */
+export interface AuthoringRules {
+  /** Per-recipe stamp definitions by name (types are "recipe.<name>"). */
+  readonly stamps: { readonly [name: string]: unknown };
+  /** Spot decisions applied after decoration, before validation. */
+  readonly cellOverrides: NormalizedWorldRecipe["cellOverrides"];
 }
 
 export interface BiomeRules {
@@ -191,7 +203,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 13;
+  readonly resolvedConfigFormat: 14;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -217,6 +229,8 @@ export interface ResolvedWorldConfig {
   readonly settlements: SettlementRules;
   /** One spec per landmark budget slot; unspecified slots default. */
   readonly landmarkSpecs: readonly LandmarkSpec[];
+  /** Authored placement (behavior 36): stamps + cell overrides. */
+  readonly authoring: AuthoringRules;
   readonly biomes: BiomeRules;
   readonly budgets: NormalizedWorldRecipe["budgets"];
   /**
@@ -666,7 +680,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 13,
+    resolvedConfigFormat: 14,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -704,8 +718,16 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
     settlements: SETTLEMENT_RULES[normalized.world.sizePreset],
     landmarkSpecs: Array.from({ length: normalized.budgets.landmarkCount }, (_, slot) => {
       const spec = normalized.landmarks[slot];
-      return spec === undefined ? { type: "ancient_fortress", relation: null } : spec;
+      return spec === undefined
+        ? { type: "ancient_fortress", relation: null, at: null, near: null }
+        : { type: spec.type, relation: spec.relation, at: spec.at, near: spec.near };
     }),
+    authoring: {
+      stamps: Object.fromEntries(
+        normalized.authoredStamps.map((entry) => [entry.name, entry.stamp]),
+      ),
+      cellOverrides: normalized.cellOverrides,
+    },
     biomes: BIOME_RULES[normalized.world.sizePreset],
     budgets: normalized.budgets,
     decoration: {

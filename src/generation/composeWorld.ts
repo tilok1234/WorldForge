@@ -522,6 +522,24 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     }
   }
 
+  // Authored cell overrides (behavior 36): the designer's spot decisions,
+  // applied last so they win over every procedural pass, before validation
+  // and resolution so every validator still judges the final world. Water
+  // materials are rejected at recipe validation (hydrology owns water), so
+  // nothing here can desync the river/water layers.
+  for (const override of config.authoring.cellOverrides) {
+    const cell = (override.cell[1] as number) * width + (override.cell[0] as number);
+    if (override.material !== null) {
+      grid[cell] = PALETTE_INDEX[override.material as PaletteKey];
+    }
+    if (override.clearProp) {
+      decoration.propLayer[cell] = 0;
+    }
+    if (override.clearDecal) {
+      decoration.decalLayer[cell] = 0;
+    }
+  }
+
   const labeling = labelComponents(grid, width, height);
   const regions: RegionSummary[] = labeling.components.map((component, id) => ({
     id,
