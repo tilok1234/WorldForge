@@ -25,9 +25,8 @@ before decoration; walkability-neutral swaps only (swamp widening
 EXCLUDED v1 — swamp BLOCKS movement per loader contract); confetti
 sweep enforces no one-cell regions. FIRST layer-visible change since
 the variety arc: canonical flood 33890→34058 (prop rerolls, both
-consumers equal, Godot 0 errors). **VERDICT OPEN: before/after
-overviews of drowned-fen + white-waste sent 2026-07-27; visual
-baseline re-record BLOCKED on that verdict.** Texture geography
+consumers equal, Godot 0 errors). Texture before/afters were superseded by the organic-arc approvals;
+baseline unblocked and re-recorded (see below). Texture geography
 verdict: "geography seems good... a little empty" → richened fen/waste
 recipes (9/8 settlements, 6 landmarks, dense) — STILL "a little
 empty" at 256² → user pivot: "start making the smaller maps first" →
@@ -41,11 +40,9 @@ size-scaled (tiny 7, others 14 — the flat 14 starved tiny to ~6 of 18
 budgeted POIs; small+ layers identical). fen-hollow v2: rank-2 pinned
 outpost mid-north via behavior-38 near-pin (the tiny-fusion gotcha
 dodge), 3rd landmark (fortress across_river), densityPermille 550;
-6→12 POIs, floods clean; organic pass CONTINUES: behavior 41 wilderness variety (species accents + poi.abandoned_homestead/poi.lone_cottage lone buildings, homestead accepts mud). Canonical flood 34058->33845 (ambient rerolls). fen v3 delivered; FROST-HOLLOW v2 done same pattern (behavior 42, decoration.pois 15: homestead accepts snow; pinned outpost 24,36, fortress high_ground, 8->20 POIs, flood 2752). FROST v2 APPROVED ('ye seems better') with DESIGN NOTE: frost-hollow is intended as one of the game's exploration-heavy maps — bias future tuning toward discoveries over settlement fabric there. DUST-HOLLOW v2 done recipe-only (pinned outpost 39,40 on the SE road, world_tree far_from_town oasis, 10->20 POIs, flood 3163, no behavior bump). FEN v3 + DUST v2 APPROVED ('nice'). ALL THREE HOLLOWS RATIFIED. Organic stack then carried UP to the 256-squared climate worlds: dust-sea richened to match fen/waste (9 settlements, 6 landmarks incl world_tree oasis + mountain_hamlet, dense, 3 routes), all three at densityPermille 550; regen under behavior 42 gives dust-sea 96 POIs/19 kinds, drowned-fen 67/20, white-waste 91/12 (floods 51127/44820/44010, 0 unreachable). VERDICT OPEN on the organic 256s. Mobile viewer artifact live (three hollows, pan/
+6→12 POIs, floods clean; organic pass CONTINUES: behavior 41 wilderness variety (species accents + poi.abandoned_homestead/poi.lone_cottage lone buildings, homestead accepts mud). Canonical flood 34058->33845 (ambient rerolls). fen v3 delivered; FROST-HOLLOW v2 done same pattern (behavior 42, decoration.pois 15: homestead accepts snow; pinned outpost 24,36, fortress high_ground, 8->20 POIs, flood 2752). FROST v2 APPROVED ('ye seems better') with DESIGN NOTE: frost-hollow is intended as one of the game's exploration-heavy maps — bias future tuning toward discoveries over settlement fabric there. DUST-HOLLOW v2 done recipe-only (pinned outpost 39,40 on the SE road, world_tree far_from_town oasis, 10->20 POIs, flood 3163, no behavior bump). FEN v3 + DUST v2 APPROVED ('nice'). ALL THREE HOLLOWS RATIFIED. Organic stack then carried UP to the 256-squared climate worlds: dust-sea richened to match fen/waste (9 settlements, 6 landmarks incl world_tree oasis + mountain_hamlet, dense, 3 routes), all three at densityPermille 550; regen under behavior 42 gives dust-sea 96 POIs/19 kinds, drowned-fen 67/20, white-waste 91/12 (floods 51127/44820/44010, 0 unreachable). ORGANIC 256s APPROVED ('these look good') — the terrain-texture arc verdict chain is CLOSED end-to-end (texture geography + hollows + organic 256s all ratified). Canonical visual baseline re-recorded at the behavior-42 identity (flood 33845). Mobile viewer artifact live (three hollows, pan/
 zoom): https://claude.ai/code/artifact/7850ac94-e0e9-466a-8ffc-4bee23adeff3
-(rebuild: scratchpad build-viewer.mjs). Richened 256² fen/waste
-recipes committed but NOT approved — revert or iterate on user word.
-Versions: behavior 42, recipe compiler 24, artifact format 8,
+(rebuild: scratchpad build-viewer.mjs). Versions: behavior 42, recipe compiler 24, artifact format 8,
 resolved-config 18, terrain.texture 1, decoration.props 10,
 decoration.pois 15. 191 tests, all green. Standing commit+push
 authorization held this whole arc — re-confirm with the user per
