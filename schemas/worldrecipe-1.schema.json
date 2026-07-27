@@ -232,6 +232,57 @@
         }
       }
     },
+    "zones": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grid",
+        "seams",
+        "entries"
+      ],
+      "description": "zone composition (behavior 43): a grid of climate zones, each an additive character offset on the world climate; sea level stays a world choice",
+      "properties": {
+        "grid": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8
+          },
+          "description": "[columns, rows]; world dimensions must divide evenly by each"
+        },
+        "seams": {
+          "enum": [
+            "blended",
+            "hard"
+          ],
+          "description": "blended = climate gradient over the seam band; hard = sharp zone borders"
+        },
+        "entries": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "temperaturePermille": {
+                "type": "integer",
+                "minimum": -1000,
+                "maximum": 1000
+              },
+              "moisturePermille": {
+                "type": "integer",
+                "minimum": -1000,
+                "maximum": 1000
+              }
+            }
+          },
+          "description": "one entry per zone in reading order (NW to SE); length must equal columns*rows"
+        }
+      }
+    },
     "decoration": {
       "type": "object",
       "additionalProperties": false,

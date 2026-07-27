@@ -193,6 +193,23 @@ export interface AuthoringRules {
 }
 
 /**
+ * Zone composition (behavior 43, macro.fields v7): per-zone climate
+ * character as additive field offsets, reading order. Applied inside
+ * buildMacroFields — hard seams step at zone borders; blended seams run a
+ * separable box blur of seamBandCells over the offset map, giving a
+ * deterministic ~2-band climate gradient that behavior 39's texture
+ * dithering then softens at the biome level.
+ */
+export interface ZoneRules {
+  readonly gridColumns: number;
+  readonly gridRows: number;
+  readonly seams: "blended" | "hard";
+  readonly seamBandCells: number;
+  readonly temperatureOffsets: readonly number[];
+  readonly moistureOffsets: readonly number[];
+}
+
+/**
  * Terrain texture (behavior 39, terrain.texture v1): cosmetic-material
  * mottling and edge dithering inside the walkable ground set. Permille
  * rates; ditherNeighborMin is the 8-neighbour count that marks a boundary.
@@ -228,7 +245,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 18;
+  readonly resolvedConfigFormat: 19;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -261,6 +278,8 @@ export interface ResolvedWorldConfig {
   readonly biomes: BiomeRules;
   /** Terrain texture rates (behavior 39, terrain.texture rule pack). */
   readonly texture: TextureRules;
+  /** Zone composition (behavior 43); null when the recipe declares none. */
+  readonly zones: ZoneRules | null;
   readonly budgets: NormalizedWorldRecipe["budgets"];
   /**
    * Decoration: ambient density (0 disables) and the wilderness POI budget
@@ -709,7 +728,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 18,
+    resolvedConfigFormat: 19,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -752,6 +771,17 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
         : { type: spec.type, relation: spec.relation, at: spec.at, near: spec.near };
     }),
     settlementSpecs: normalized.settlements.map((spec) => ({ at: spec.at, near: spec.near, rank: spec.rank })),
+    zones:
+      normalized.zones === null
+        ? null
+        : {
+            gridColumns: normalized.zones.grid[0],
+            gridRows: normalized.zones.grid[1],
+            seams: normalized.zones.seams,
+            seamBandCells: 12,
+            temperatureOffsets: normalized.zones.entries.map((entry) => entry.temperaturePermille),
+            moistureOffsets: normalized.zones.entries.map((entry) => entry.moisturePermille),
+          },
     authoring: {
       stamps: Object.fromEntries(
         normalized.authoredStamps.map((entry) => [entry.name, entry.stamp]),

@@ -59,6 +59,17 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
         rank: request.rank ?? index,
       }))
       .sort((a, b) => a.rank - b.rank),
+    zones:
+      recipe.zones === undefined
+        ? null
+        : {
+            grid: [recipe.zones.grid[0], recipe.zones.grid[1]],
+            seams: recipe.zones.seams,
+            entries: recipe.zones.entries.map((entry) => ({
+              temperaturePermille: entry.temperaturePermille ?? 0,
+              moisturePermille: entry.moisturePermille ?? 0,
+            })),
+          },
     decoration: {
       densityPermille:
         recipe.decoration?.densityPermille ?? DECORATION_RANGES.densityPermille.default,

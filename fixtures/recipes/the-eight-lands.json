@@ -1,0 +1,89 @@
+{
+  "recipeFormat": 1,
+  "seed": 80808,
+  "world": {
+    "sizePreset": "medium",
+    "climatePreset": "temperate",
+    "densityPreset": "dense"
+  },
+  "zones": {
+    "grid": [
+      4,
+      2
+    ],
+    "seams": "blended",
+    "entries": [
+      {
+        "temperaturePermille": -350,
+        "moisturePermille": 40
+      },
+      {
+        "temperaturePermille": -160,
+        "moisturePermille": 20
+      },
+      {
+        "temperaturePermille": 0,
+        "moisturePermille": 0
+      },
+      {
+        "temperaturePermille": 30,
+        "moisturePermille": 240
+      },
+      {
+        "temperaturePermille": 200,
+        "moisturePermille": -230
+      },
+      {
+        "temperaturePermille": 90,
+        "moisturePermille": -40
+      },
+      {
+        "temperaturePermille": 50,
+        "moisturePermille": 260
+      },
+      {
+        "temperaturePermille": 260,
+        "moisturePermille": -170
+      }
+    ]
+  },
+  "landmarks": [
+    {
+      "type": "ancient_fortress",
+      "relation": "high_ground"
+    },
+    {
+      "type": "ruined_city",
+      "relation": "high_ground"
+    },
+    {
+      "type": "world_tree",
+      "relation": "far_from_town"
+    },
+    {
+      "type": "crystal_spire",
+      "relation": "high_ground"
+    },
+    {
+      "type": "lighthouse",
+      "relation": "coastal"
+    },
+    {
+      "type": "hunters_lodge",
+      "relation": "remote_corner"
+    },
+    {
+      "type": "mountain_hamlet",
+      "relation": "high_ground"
+    }
+  ],
+  "budgets": {
+    "regionCount": 8,
+    "settlementCount": 16,
+    "primaryRouteCount": 6,
+    "landmarkCount": 7
+  },
+  "decoration": {
+    "densityPermille": 500
+  }
+}

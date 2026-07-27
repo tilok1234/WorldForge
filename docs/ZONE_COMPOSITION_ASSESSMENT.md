@@ -1,11 +1,13 @@
-# Zone composition assessment (DRAFT — awaiting designer ratification)
+# Zone composition assessment — RATIFIED 2026-07-27
 
 2026-07-27, mobile session. User prompt: "assess what we can do to put
 zones we build together into 1 world — craft like 8-ish detailed zones
 and then put them together."
 
-Status: **assessment only.** Nothing here is on the plan until the
-decision points at the bottom are ratified. Relationship to the game
+Status: **ratified, arc open.** Decisions: approach C; pilot 512²
+with a 4×2 grid of 128² zones; transitions get BOTH modes (blended
+seam bands AND hard borders) as recipe vocabulary for A/B testing —
+designer will pick after seeing both; arc starts immediately. Relationship to the game
 integration plan: this generalizes Phase 5 (single slice-zone drafting)
 into a composed multi-zone world; it does not replace phases 4-5.
 

@@ -36,7 +36,7 @@ export type RecipeValidation =
   | { readonly ok: true; readonly recipe: WorldRecipe }
   | { readonly ok: false; readonly issues: readonly RecipeIssue[] };
 
-const ROOT_FIELDS = ["recipeFormat", "seed", "world", "biases", "budgets", "toggles", "landmarks", "settlements", "decoration", "authoredStamps", "cellOverrides"];
+const ROOT_FIELDS = ["recipeFormat", "seed", "world", "biases", "budgets", "toggles", "landmarks", "settlements", "zones", "decoration", "authoredStamps", "cellOverrides"];
 const WORLD_FIELDS = ["sizePreset", "climatePreset", "densityPreset"];
 
 export function validateRecipe(input: unknown): RecipeValidation {
@@ -301,6 +301,65 @@ export function validateRecipe(input: unknown): RecipeValidation {
           }
         }
       });
+    }
+  }
+
+  const zones = input["zones"];
+  if (zones !== undefined) {
+    if (!isPlainObject(zones)) {
+      issues.push({ path: "$.zones", message: "zones must be an object" });
+    } else {
+      for (const key of Object.keys(zones)) {
+        if (key !== "grid" && key !== "seams" && key !== "entries") {
+          issues.push({ path: `$.zones.${key}`, message: `unknown field "${key}"` });
+        }
+      }
+      const grid = zones["grid"];
+      let columns = 0;
+      let rows = 0;
+      if (!Array.isArray(grid) || grid.length !== 2 || !Number.isInteger(grid[0]) || !Number.isInteger(grid[1])) {
+        issues.push({ path: "$.zones.grid", message: "grid must be [columns, rows] integers" });
+      } else {
+        columns = grid[0] as number;
+        rows = grid[1] as number;
+        if (columns < 1 || columns > 8 || rows < 1 || rows > 8) {
+          issues.push({ path: "$.zones.grid", message: "grid columns and rows must be 1-8" });
+        }
+        const worldSize = sizeOf(input);
+        if (worldSize !== null && (worldSize % Math.max(1, columns) !== 0 || worldSize % Math.max(1, rows) !== 0)) {
+          issues.push({
+            path: "$.zones.grid",
+            message: `world size ${worldSize} must divide evenly by the grid (${columns}x${rows})`,
+          });
+        }
+      }
+      if (zones["seams"] !== "blended" && zones["seams"] !== "hard") {
+        issues.push({ path: "$.zones.seams", message: 'seams must be "blended" or "hard"' });
+      }
+      const entries = zones["entries"];
+      if (!Array.isArray(entries)) {
+        issues.push({ path: "$.zones.entries", message: "entries must be an array" });
+      } else {
+        if (columns > 0 && rows > 0 && entries.length !== columns * rows) {
+          issues.push({
+            path: "$.zones.entries",
+            message: `expected ${columns * rows} entries (one per zone, reading order), got ${entries.length}`,
+          });
+        }
+        entries.forEach((entry, position) => {
+          if (!isPlainObject(entry)) {
+            issues.push({ path: `$.zones.entries[${position}]`, message: "must be an object" });
+            return;
+          }
+          for (const key of Object.keys(entry)) {
+            if (key !== "temperaturePermille" && key !== "moisturePermille") {
+              issues.push({ path: `$.zones.entries[${position}].${key}`, message: `unknown field "${key}"` });
+            }
+          }
+          checkInteger(issues, entry, "temperaturePermille", `$.zones.entries[${position}].temperaturePermille`, PERMILLE_MIN, PERMILLE_MAX, false);
+          checkInteger(issues, entry, "moisturePermille", `$.zones.entries[${position}].moisturePermille`, PERMILLE_MIN, PERMILLE_MAX, false);
+        });
+      }
     }
   }
 

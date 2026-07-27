@@ -131,6 +131,33 @@ export interface NormalizedSettlementRequest {
   readonly rank: number;
 }
 
+/**
+ * Zone composition (behavior 43, assessment ratified 2026-07-27): the world
+ * declares a grid of climate zones. Each entry is an ADDITIVE character
+ * offset on top of the world climate, in reading order (NW -> SE). Sea
+ * level stays a world choice — zones express identity through temperature
+ * and moisture only, which is what keeps the composed world seamless.
+ */
+export interface ZoneGridRequest {
+  /** [columns, rows]; world dimensions must divide evenly by each. */
+  readonly grid: readonly [number, number];
+  /** Seam mode: blended (soft climate gradient) or hard (sharp borders). */
+  readonly seams: "blended" | "hard";
+  /** One entry per zone, reading order; length must equal columns*rows. */
+  readonly entries: readonly ZoneEntryRequest[];
+}
+
+export interface ZoneEntryRequest {
+  readonly temperaturePermille?: number;
+  readonly moisturePermille?: number;
+}
+
+export interface NormalizedZoneGrid {
+  readonly grid: readonly [number, number];
+  readonly seams: "blended" | "hard";
+  readonly entries: readonly { readonly temperaturePermille: number; readonly moisturePermille: number }[];
+}
+
 /** An inline authored stamp: stampFormat 1, type "recipe.<name>". */
 export interface AuthoredStampEntry {
   readonly name: string;
@@ -174,6 +201,8 @@ export interface WorldRecipe {
   readonly landmarks?: readonly LandmarkRequest[];
   /** Authored placement (behavior 37): rank-ordered settlement pins. */
   readonly settlements?: readonly SettlementRequest[];
+  /** Zone composition (behavior 43): per-zone climate character. */
+  readonly zones?: ZoneGridRequest;
   /** Decoration stage 1: ambient vegetation/ground-cover density. */
   readonly decoration?: { readonly [key in DecorationField]?: number };
   /** Authored placement (behavior 36): per-recipe stamps for one-off sites. */
@@ -196,6 +225,7 @@ export interface NormalizedWorldRecipe {
   readonly toggles: { readonly [key: string]: boolean };
   readonly landmarks: readonly NormalizedLandmarkRequest[];
   readonly settlements: readonly NormalizedSettlementRequest[];
+  readonly zones: NormalizedZoneGrid | null;
   readonly decoration: { readonly [key in DecorationField]: number };
   readonly authoredStamps: readonly AuthoredStampEntry[];
   readonly cellOverrides: readonly NormalizedCellOverride[];

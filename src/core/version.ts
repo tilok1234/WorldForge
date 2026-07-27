@@ -200,16 +200,25 @@ export const GENERATOR_VERSION = "0.1.0";
  *     pass) — poi.abandoned_homestead accepts snow ground: the frozen
  *     north's version of the failed farm. Snow worlds gain the kind;
  *     other worlds' layers change only through the version-bump reroll.
+ * 43: zone composition, step 1 (macro.fields 7; assessment ratified
+ *     2026-07-27, approach C) — recipes gain a `zones` grid: per-zone
+ *     climate character as ADDITIVE temperature/moisture offsets in
+ *     reading order, seam mode "blended" (separable seamBand box blur
+ *     over the offset map -> climate gradient) or "hard" (step at the
+ *     border), both shipped for the designer A/B. Elevation and sea
+ *     level stay world-global — one landmass, one ocean — which is
+ *     what keeps the composed world seamless. Zone-free recipes
+ *     generate identical layers (identities shift with the bumps).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 42;
+export const GENERATOR_BEHAVIOR_VERSION = 43;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 24;
+export const RECIPE_COMPILER_VERSION = 25;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "recipe.presets": 6,
-  "macro.fields": 6,
+  "macro.fields": 7,
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 14,
