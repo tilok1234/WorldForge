@@ -27,7 +27,17 @@ sweep enforces no one-cell regions. FIRST layer-visible change since
 the variety arc: canonical flood 33890→34058 (prop rerolls, both
 consumers equal, Godot 0 errors). **VERDICT OPEN: before/after
 overviews of drowned-fen + white-waste sent 2026-07-27; visual
-baseline re-record BLOCKED on that verdict.** Versions: behavior 39,
+baseline re-record BLOCKED on that verdict.** Texture geography
+verdict: "geography seems good... a little empty" → richened fen/waste
+recipes (9/8 settlements, 6 landmarks, dense) — STILL "a little
+empty" at 256² → user pivot: "start making the smaller maps first" →
+THREE TINY CLIMATE HOLLOWS committed (fen-hollow 20033, frost-hollow
+20113, dust-hollow 20093; hearth-hollow template, city+town gap ≥53,
+both landmarks placed, dense tier; floods 3001/2818/3312, 0 errors;
+overviews sent, VERDICT OPEN). Standing approach if ratified:
+nail feel at 64² first, scale up via the structural axis. Richened
+fen/waste recipes committed too but their 256² verdict is NOT
+approved — revert or iterate on user word. Versions: behavior 39,
 recipe compiler 23, artifact format 8, resolved-config 17,
 terrain.texture 1. 191 tests, all green. Standing commit+push
 authorization held this whole arc — re-confirm with the user per

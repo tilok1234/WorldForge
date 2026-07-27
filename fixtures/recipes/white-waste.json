@@ -1,16 +1,41 @@
 {
   "recipeFormat": 1,
   "seed": 12007,
-  "world": { "sizePreset": "small", "climatePreset": "frozen_north", "densityPreset": "balanced" },
+  "world": {
+    "sizePreset": "small",
+    "climatePreset": "frozen_north",
+    "densityPreset": "dense"
+  },
   "landmarks": [
-    { "type": "ancient_fortress", "relation": "high_ground" },
-    { "type": "hunters_lodge", "relation": "remote_corner" },
-    { "type": "crystal_spire", "relation": "high_ground" }
+    {
+      "type": "ancient_fortress",
+      "relation": "high_ground"
+    },
+    {
+      "type": "hunters_lodge",
+      "relation": "remote_corner"
+    },
+    {
+      "type": "crystal_spire",
+      "relation": "high_ground"
+    },
+    {
+      "type": "ruined_city",
+      "relation": "far_from_town"
+    },
+    {
+      "type": "world_tree",
+      "relation": "far_from_town"
+    },
+    {
+      "type": "mountain_hamlet",
+      "relation": "high_ground"
+    }
   ],
   "budgets": {
     "regionCount": 4,
-    "settlementCount": 6,
-    "primaryRouteCount": 2,
-    "landmarkCount": 3
+    "settlementCount": 8,
+    "primaryRouteCount": 3,
+    "landmarkCount": 6
   }
 }
