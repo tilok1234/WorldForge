@@ -141,11 +141,23 @@ export const GENERATOR_VERSION = "0.1.0";
  *     warn-only soft cap 64. Recipes without the new fields generate
  *     identical layers (identities shift with the version bumps; floods
  *     are the invariant).
+ * 37: settlement pins (routes.graph 13; the deferred half of plan §4.1,
+ *     rank interaction designer-ratified 2026-07-27) — recipes gain a
+ *     rank-ordered `settlements` array of at/near constraints: entry
+ *     order IS rank order, so the first entry authors the capital, the
+ *     second the second city, and so on down the tier ladder. Pins
+ *     select before every competitive phase; later phases treat them as
+ *     real (remote quarter measures from a pinned capital and stands
+ *     down when rank 1 is pinned; sector floors count pins toward their
+ *     sector). An unsettleable or crowded pin is a named generation
+ *     error, never a relocation. Recipes without the field generate
+ *     identical layers (identities shift with the version bumps; floods
+ *     are the invariant).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 36;
+export const GENERATOR_BEHAVIOR_VERSION = 37;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 20;
+export const RECIPE_COMPILER_VERSION = 21;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -153,7 +165,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 6,
   "macro.biomes": 7,
   "hydrology.water": 5,
-  "routes.graph": 12,
+  "routes.graph": 13,
   "settlements.plans": 10,
   "landmarks.stamps": 6,
   "decoration.props": 9,

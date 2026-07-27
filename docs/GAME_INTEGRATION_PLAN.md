@@ -218,15 +218,21 @@ shared stamp library.
 
 Implementation notes (2026-07-27):
 
-- **Settlement pins are deferred** to a follow-up behavior. §4.1's "settlements
-  gain the same fields" collides with the phased settlement selection
-  (capital → remote quarter → sector floors → competition, routes.graph
-  v10/v11): a pinned settlement must decide its rank interaction explicitly
-  (does a pin become the capital? does it satisfy a sector floor?). That is
-  its own solver design, not a ride-along — landmark pins, per-recipe stamps,
-  and cell overrides cover the progression-critical placement lane the
-  handcrafted contract needs first (portals, dungeons, quest anchors are
-  landmark/POI-shaped).
+- **Settlement pins: implemented 2026-07-27 (behavior 37, routes.graph 13)**
+  after the rank-interaction design was ratified by the designer (mobile
+  session): recipes gain a rank-ordered `settlements` array of `at`/`near`
+  entries — **entry order IS rank order**, so the first entry authors the
+  capital, the second the second city, and so on down the tier ladder.
+  Pins select before every competitive phase and later phases treat them
+  as real settlements (the capital phase stands down when rank 0 is
+  pinned, the remote quarter measures from a pinned capital and stands
+  down when rank 1 is also pinned, sector floors count pins toward their
+  sector, open competition spaces around them). An unsettleable or
+  crowded pin is a named generation error, never a relocation. Pinning
+  only a low-rank settlement while leaving the capital free is not in
+  this version; an optional rank field is a permitted later append.
+  `tests/settlementPins.test.ts`; end-to-end CLI proof: pinning rank 0 on
+  the free solver's town cell flips the crown (city and town swap).
 - Landmark pins select before free competition; a failed pin is a named
   generation error, never a relocation.
 - The Godot half of the verify chain (godot-consumer + verify_world.gd) for

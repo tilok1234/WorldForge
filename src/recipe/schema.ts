@@ -108,6 +108,25 @@ export interface NormalizedLandmarkRequest {
   readonly near: { readonly cell: readonly [number, number]; readonly radius: number } | null;
 }
 
+/**
+ * A settlement rank constraint (behavior 37). Entry order is rank order: the
+ * first entry constrains the capital, the second the second city, and so on
+ * down the tier ladder. Every entry is placed by exactly one mechanism —
+ * pin (`at`) or constrained search (`near`); unconstrained ranks are simply
+ * absent from the array (it may be shorter than the settlement budget).
+ */
+export interface SettlementRequest {
+  /** Pinned anchor cell [x, y]; excludes near. */
+  readonly at?: readonly [number, number];
+  /** Constrained anchor search; excludes at. */
+  readonly near?: { readonly cell: readonly [number, number]; readonly radius: number };
+}
+
+export interface NormalizedSettlementRequest {
+  readonly at: readonly [number, number] | null;
+  readonly near: { readonly cell: readonly [number, number]; readonly radius: number } | null;
+}
+
 /** An inline authored stamp: stampFormat 1, type "recipe.<name>". */
 export interface AuthoredStampEntry {
   readonly name: string;
@@ -149,6 +168,8 @@ export interface WorldRecipe {
   readonly toggles?: { readonly [key: string]: boolean };
   /** W5 relational vocabulary: one entry per requested landmark. */
   readonly landmarks?: readonly LandmarkRequest[];
+  /** Authored placement (behavior 37): rank-ordered settlement pins. */
+  readonly settlements?: readonly SettlementRequest[];
   /** Decoration stage 1: ambient vegetation/ground-cover density. */
   readonly decoration?: { readonly [key in DecorationField]?: number };
   /** Authored placement (behavior 36): per-recipe stamps for one-off sites. */
@@ -170,6 +191,7 @@ export interface NormalizedWorldRecipe {
   readonly budgets: { readonly [key in BudgetField]: number };
   readonly toggles: { readonly [key: string]: boolean };
   readonly landmarks: readonly NormalizedLandmarkRequest[];
+  readonly settlements: readonly NormalizedSettlementRequest[];
   readonly decoration: { readonly [key in DecorationField]: number };
   readonly authoredStamps: readonly AuthoredStampEntry[];
   readonly cellOverrides: readonly NormalizedCellOverride[];
@@ -184,7 +206,6 @@ export const FUTURE_VOCABULARY = new Set([
   "regions",
   "hydrology",
   "routes",
-  "settlements",
   "structures",
   "constraints",
 ]);

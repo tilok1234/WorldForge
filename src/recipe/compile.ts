@@ -171,6 +171,17 @@ export interface LandmarkSpec {
   readonly near: { readonly cell: readonly [number, number]; readonly radius: number } | null;
 }
 
+/**
+ * A settlement rank constraint (behavior 37). Index in settlementSpecs is the
+ * rank the constraint claims: spec 0 is the capital. Exactly one of at/near
+ * is set (validation enforces it); the array is empty when the recipe
+ * declares no settlement authoring.
+ */
+export interface SettlementSpec {
+  readonly at: readonly [number, number] | null;
+  readonly near: { readonly cell: readonly [number, number]; readonly radius: number } | null;
+}
+
 /** Authored placement inputs carried into generation (behavior 36). */
 export interface AuthoringRules {
   /** Per-recipe stamp definitions by name (types are "recipe.<name>"). */
@@ -203,7 +214,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 14;
+  readonly resolvedConfigFormat: 15;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -229,6 +240,8 @@ export interface ResolvedWorldConfig {
   readonly settlements: SettlementRules;
   /** One spec per landmark budget slot; unspecified slots default. */
   readonly landmarkSpecs: readonly LandmarkSpec[];
+  /** Rank-ordered settlement constraints (behavior 37); empty = all free. */
+  readonly settlementSpecs: readonly SettlementSpec[];
   /** Authored placement (behavior 36): stamps + cell overrides. */
   readonly authoring: AuthoringRules;
   readonly biomes: BiomeRules;
@@ -680,7 +693,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 14,
+    resolvedConfigFormat: 15,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -722,6 +735,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
         ? { type: "ancient_fortress", relation: null, at: null, near: null }
         : { type: spec.type, relation: spec.relation, at: spec.at, near: spec.near };
     }),
+    settlementSpecs: normalized.settlements.map((spec) => ({ at: spec.at, near: spec.near })),
     authoring: {
       stamps: Object.fromEntries(
         normalized.authoredStamps.map((entry) => [entry.name, entry.stamp]),

@@ -179,6 +179,53 @@
         }
       }
     },
+    "settlements": {
+      "type": "array",
+      "maxItems": 32,
+      "description": "rank-ordered settlement constraints (behavior 37): entry 0 constrains the capital, entry 1 the second city, and so on; the array may be shorter than budgets.settlementCount",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "pinned anchor cell; mutually exclusive with near; fails generation with a named error rather than relocating"
+          },
+          "near": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "cell",
+              "radius"
+            ],
+            "properties": {
+              "cell": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "description": "[x, y] cell; must lie inside the size preset's world"
+              },
+              "radius": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 64
+              }
+            },
+            "description": "constrained anchor search; mutually exclusive with at"
+          }
+        }
+      }
+    },
     "decoration": {
       "type": "object",
       "additionalProperties": false,

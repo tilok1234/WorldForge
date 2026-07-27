@@ -10,11 +10,13 @@ file. HANDOFF.md is the tiebreaker.
 ## Where the project stands
 
 W0–W9 complete. ALIVE-WORLDS ARC complete (behaviors 15–30). VARIETY
-ARC functionally COMPLETE (behaviors 31–35): 9-archetype library →
-medium size preset (32, retuned 33) → large size preset (34) → climate
-library (35). Versions: behavior 35, recipe compiler 19, artifact
-format 8, resolved-config 13, TileForge adapter 6. 155 tests, all
-green, everything pushed through `96fd860`. Standing commit+push
+ARC COMPLETE AND VERDICT-CLOSED (behaviors 31–35). GAME INTEGRATION
+PLAN merged to main (ratified; export-game-pack Phase 2 + authored
+placement behavior 36) and extended by SETTLEMENT PINS (behavior 37,
+2026-07-27 mobile session, rank design designer-ratified: pin order =
+rank, first pin is the capital). Versions: behavior 37, recipe
+compiler 21, artifact format 8, resolved-config 15, routes.graph 13,
+TileForge adapter 6. 182 tests, all green. Standing commit+push
 authorization held this whole arc — re-confirm with the user per
 policy.
 
@@ -42,9 +44,10 @@ green: Godot 0 errors, both consumers flood **33,890** (was 33,887
 before the behavior-34 ford guard — 3 props that stood in crossings are
 no longer placed; flagged and accepted; FORMAL BASELINE APPROVED
 2026-07-27 — fixtures/recipes/small-cold-coastal.json.approval.json,
-generation identity f8afe4f3…). Behavior-36 Godot verify re-ran green
-post-merge in this container (Godot 4.6.2 downloaded; flood parity
-33890/33890).
+re-recorded at the behavior-37 identity 26e1ab71… after the version
+bumps; layers byte-identical, floods the invariant). Behavior-36 AND
+behavior-37 Godot verifies ran green in this container (Godot 4.6.2
+downloaded to ~/bin/godot; flood parity 33890/33890 both times).
 
 ### The recipe library (fixtures/recipes/, galleries in outputs/gallery/<name>/)
 
@@ -189,8 +192,9 @@ floors grow with map size; props/POIs per cell FALL as maps grow.
 - End-of-plan taste-polish round.
 - Phase 4 of docs/GAME_INTEGRATION_PLAN.md (game-repo importer addon):
   post-Gate-1, needs the user to separately scope the game repo.
-- Settlement pins (deferred behavior; needs its own rank/sector solver
-  design — see plan §5 implementation notes).
+- Optional later append to settlement pins: an explicit rank field so a
+  low-rank settlement can be pinned while the capital stays free
+  (behavior 37 shipped pin-order-=-rank only, by ratified design).
 
 ## Commands
 

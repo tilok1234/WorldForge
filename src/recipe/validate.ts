@@ -36,7 +36,7 @@ export type RecipeValidation =
   | { readonly ok: true; readonly recipe: WorldRecipe }
   | { readonly ok: false; readonly issues: readonly RecipeIssue[] };
 
-const ROOT_FIELDS = ["recipeFormat", "seed", "world", "biases", "budgets", "toggles", "landmarks", "decoration", "authoredStamps", "cellOverrides"];
+const ROOT_FIELDS = ["recipeFormat", "seed", "world", "biases", "budgets", "toggles", "landmarks", "settlements", "decoration", "authoredStamps", "cellOverrides"];
 const WORLD_FIELDS = ["sizePreset", "climatePreset", "densityPreset"];
 
 export function validateRecipe(input: unknown): RecipeValidation {
@@ -221,6 +221,66 @@ export function validateRecipe(input: unknown): RecipeValidation {
             }
             checkCell(issues, near["cell"], `$.landmarks[${position}].near.cell`, worldSize);
             checkInteger(issues, near, "radius", `$.landmarks[${position}].near.radius`, NEAR_RADIUS_MIN, NEAR_RADIUS_MAX, true);
+          }
+        }
+      });
+    }
+  }
+
+  const settlements = input["settlements"];
+  if (settlements !== undefined) {
+    if (!Array.isArray(settlements)) {
+      issues.push({ path: "$.settlements", message: "settlements must be an array" });
+    } else {
+      const budgetsValue = input["budgets"];
+      const settlementBudget =
+        budgetsValue !== undefined && isPlainObject(budgetsValue) && typeof budgetsValue["settlementCount"] === "number"
+          ? (budgetsValue["settlementCount"] as number)
+          : BUDGET_RANGES.settlementCount.default;
+      if (settlements.length > settlementBudget) {
+        issues.push({
+          path: "$.settlements",
+          message: `${settlements.length} settlement entries exceed budgets.settlementCount (${settlementBudget})`,
+        });
+      }
+      const worldSize = sizeOf(input);
+      settlements.forEach((entry, position) => {
+        if (!isPlainObject(entry)) {
+          issues.push({ path: `$.settlements[${position}]`, message: "must be an object" });
+          return;
+        }
+        for (const key of Object.keys(entry)) {
+          if (key !== "at" && key !== "near") {
+            issues.push({ path: `$.settlements[${position}].${key}`, message: `unknown field "${key}"` });
+          }
+        }
+        // Entry order is rank order, so every entry must constrain its rank
+        // by exactly one mechanism: pin or constrained search.
+        const mechanisms = ["at", "near"].filter((key) => entry[key] !== undefined);
+        if (mechanisms.length !== 1) {
+          issues.push({
+            path: `$.settlements[${position}]`,
+            message:
+              mechanisms.length === 0
+                ? "exactly one of at or near is required (entry order is rank order; omit the entry to leave the rank free)"
+                : "at and near are mutually exclusive",
+          });
+        }
+        if (entry["at"] !== undefined) {
+          checkCell(issues, entry["at"], `$.settlements[${position}].at`, worldSize);
+        }
+        const near = entry["near"];
+        if (near !== undefined) {
+          if (!isPlainObject(near)) {
+            issues.push({ path: `$.settlements[${position}].near`, message: "must be an object" });
+          } else {
+            for (const key of Object.keys(near)) {
+              if (key !== "cell" && key !== "radius") {
+                issues.push({ path: `$.settlements[${position}].near.${key}`, message: `unknown field "${key}"` });
+              }
+            }
+            checkCell(issues, near["cell"], `$.settlements[${position}].near.cell`, worldSize);
+            checkInteger(issues, near, "radius", `$.settlements[${position}].near.radius`, NEAR_RADIUS_MIN, NEAR_RADIUS_MAX, true);
           }
         }
       });

@@ -432,12 +432,76 @@ function pickDestinations(
   };
 
   const taken: Destination[] = [];
-  // Settlement selection in three phases (routes.graph v7):
+  // Settlement selection in three phases (routes.graph v7), preceded by
+  // authored pins (behavior 37, routes.graph v13):
+  //   0. pins — settlementSpecs in rank order (spec 0 IS the capital);
+  //      an unsatisfiable pin is a named generation error, never a
+  //      relocation, matching the landmark pin contract. Pinned
+  //      settlements are real settlements to every later phase: the
+  //      capital phase no-ops when a pin claimed rank 0, the remote
+  //      quarter measures from the pinned capital and stands down when
+  //      rank 1 is also pinned, sector floors count pins toward their
+  //      sector, and open competition spaces around them.
   //   1. the capital — the single best-scored candidate anywhere;
   //   2. the remote quarter — the map quarter whose corner lies farthest
   //      from the capital gets a reserved share, its best candidate
   //      placing at rank 1 (settlements.plans crowns it the second city);
   //   3. the rest of the world competes for the remaining slots.
+  if (config.settlementSpecs.length > 0) {
+    const candidateScore = new Map<number, number>();
+    for (const candidate of scored) {
+      candidateScore.set(candidate.index, candidate.score);
+    }
+    const spacedClear = (index: number): boolean => {
+      const cx = index % fields.width;
+      const cy = (index - cx) / fields.width;
+      for (const existing of taken) {
+        const ex = existing.cell % fields.width;
+        const ey = (existing.cell - ex) / fields.width;
+        if (Math.max(Math.abs(cx - ex), Math.abs(cy - ey)) < config.routes.minDestinationSpacing) {
+          return false;
+        }
+      }
+      return true;
+    };
+    config.settlementSpecs.forEach((spec, rank) => {
+      if (spec.at !== null) {
+        const pinned = (spec.at[1] as number) * fields.width + (spec.at[0] as number);
+        if (!candidateScore.has(pinned)) {
+          errors.push(
+            `settlement rank ${rank} pinned at (${spec.at[0]}, ${spec.at[1]}): cell is not settleable (water, river, rock, swamp, slope, or world rim)`,
+          );
+          return;
+        }
+        if (!spacedClear(pinned)) {
+          errors.push(
+            `settlement rank ${rank} pinned at (${spec.at[0]}, ${spec.at[1]}): too close to another pinned settlement (spacing ${config.routes.minDestinationSpacing})`,
+          );
+          return;
+        }
+        taken.push({ id: taken.length, kind: "settlement_candidate", cell: pinned });
+        return;
+      }
+      if (spec.near !== null) {
+        const center = (spec.near.cell[1] as number) * fields.width + (spec.near.cell[0] as number);
+        let best: { score: number; index: number } | null = null;
+        for (const candidate of scored) {
+          if (chebyshev(candidate.index, center, fields.width) > spec.near.radius) continue;
+          if (!spacedClear(candidate.index)) continue;
+          if (best === null || candidate.score > best.score || (candidate.score === best.score && candidate.index < best.index)) {
+            best = candidate;
+          }
+        }
+        if (best === null) {
+          errors.push(
+            `settlement rank ${rank} found no settleable site within ${spec.near.radius} of (${spec.near.cell[0]}, ${spec.near.cell[1]})`,
+          );
+          return;
+        }
+        taken.push({ id: taken.length, kind: "settlement_candidate", cell: best.index });
+      }
+    });
+  }
   bySpacing(scored, 1, taken, "settlement_candidate", config.routes.minDestinationSpacing);
   if (
     config.routes.remoteQuarterMin > 0 &&

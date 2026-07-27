@@ -46,6 +46,15 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
           ? null
           : { cell: [request.near.cell[0], request.near.cell[1]], radius: request.near.radius },
     })),
+    // Settlement entries stay in author order: entry order IS rank order
+    // (behavior 37), so sorting would change meaning, not just identity.
+    settlements: (recipe.settlements ?? []).map((request) => ({
+      at: request.at === undefined ? null : [request.at[0], request.at[1]],
+      near:
+        request.near === undefined
+          ? null
+          : { cell: [request.near.cell[0], request.near.cell[1]], radius: request.near.radius },
+    })),
     decoration: {
       densityPermille:
         recipe.decoration?.densityPermille ?? DECORATION_RANGES.densityPermille.default,
