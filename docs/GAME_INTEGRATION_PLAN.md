@@ -131,6 +131,20 @@ must not re-derive walkability from tile art. Proposed encoding:
   number both consumer lanes already report — so an importer can verify the
   grid in one flood fill before trusting it.
 
+### 3.3a Contract as built (clarifications recorded 2026-07-28, from the
+Phase-4 importer's independent validation)
+
+- The artifact's own format field is `formatVersion`; the manifest mirrors
+  it as `artifactFormat`. The importer's cross-check
+  `world.formatVersion == manifest.artifactFormat` is correct and blessed.
+- `manifest.files` lists the 8 payload files; `manifest.json` itself is
+  deliberately absent (it cannot contain its own hash).
+- `baseArtifactSha256` equals `files["world.json"]` by construction; the
+  importer's self-consistency check on that equality is blessed.
+- `validation-report.json` shape is `{status, errors, warnings}`; a pack
+  exports only when status is `pass`, and warnings are legal content (a
+  dense world reports hundreds — e.g. decoration-density notices).
+
 ### 3.4 export-game-pack CLI (proposed)
 
 ```text
@@ -213,8 +227,8 @@ shared stamp library.
 | 1 | Ratify this contract (designer review of §3–§4) | this doc | ✅ ratified 2026-07-27 |
 | 2 | `export-game-pack` CLI + tests | WorldForge | ✅ **implemented 2026-07-27** (behavior-neutral; `src/gamepack/`, `tests/gamepack.test.ts`) |
 | 3 | Authored placement extension | WorldForge | ✅ **implemented 2026-07-27** (behavior 36; landmark `at`/`near`, `authoredStamps`, `cellOverrides`; `tests/authoredPlacement.test.ts`) |
-| 4 | `addons/worldforge_importer/` in the game repo | game repo (separately scoped task) | pending; post-Gate-1 |
-| 5 | Slice-zone drafting: generate candidates, curate via §4, export | both | pending; needs 4 + dusk pin |
+| 4 | `addons/worldforge_importer/` in the game repo | game repo (separately scoped task) | validating half **live 2026-07-28** (reference pack validates in 0.57 s; independent flood fill reproduces 33845); rendering/consumption deferred post-Gate-1 |
+| 5 | Slice-zone drafting: generate candidates, curate via §4, export | both | unblocked: dusk pin executed 2026-07-28 |
 
 Implementation notes (2026-07-27):
 
@@ -255,12 +269,19 @@ separately scopes that repository and task").
 ## 6. Decision points — DECIDED 2026-07-27 (designer approved all
 recommendations)
 
-1. **Theme pin → (b), re-pin to dusk at Phase 2 start [P].** The game's
-   world consumption is dusk-first. Execution requires a dusk package
-   export from TileForge (designer-scoped upstream task, exactly like the
-   `sourceCommit` precedent); the lock keys on manifest `sourceCommit`.
-   Until that package exists, Phase 2 development proceeds against the
-   forest fixture and the pin swap is a lock update + fixture commit.
+1. **Theme pin → (b), re-pin to dusk — EXECUTED 2026-07-28.** The
+   designer-supplied `tileforge-dusk-complete.zip` imported as
+   `fixtures/tileforge-packages/dusk-ae1eecb-seed103991/` (a NEWER
+   upstream commit than forest's a5baf52 — its guide retires road bands
+   1/3 as `roadTypesLegacy`, matching WorldForge's corridor doctrine);
+   §2/§4 acceptance passed against the dusk package's own reference;
+   semantic ids identical across themes so all world content is
+   byte-identical (canonical flood 33845 invariant); lock swapped with
+   designer approval ("use dusk for now, we can change later"); the
+   forest fixture stays committed, so re-pinning back is a lock change.
+   OPEN designer ruling: ruined-city dead streets are authored with the
+   legacy ruined-road band (renders fine; the new guide says never
+   author new legacy-band runs — bless as archaeology or re-express).
 2. **Resolution ownership → WorldForge [P].** Packs ship
    WorldForge-resolved layers (§3.1); blob47/mask logic lives in the
    adapter, once. The game never re-derives resolution from semantics.

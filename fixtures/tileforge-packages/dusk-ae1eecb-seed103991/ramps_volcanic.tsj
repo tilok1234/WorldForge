@@ -1,0 +1,850 @@
+{
+  "columns": 12,
+  "image": "ramps_volcanic.png",
+  "imagewidth": 432,
+  "imageheight": 108,
+  "margin": 2,
+  "spacing": 4,
+  "name": "ramps_volcanic",
+  "tilecount": 32,
+  "tiledversion": "1.11.2",
+  "tileheight": 32,
+  "tilewidth": 32,
+  "type": "tileset",
+  "version": "1.10",
+  "wangsets": [],
+  "tiles": [
+    {
+      "id": 0,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_n.variant_00"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 9
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "n"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_n.variant_01"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 9
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "n"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_n.variant_02"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 9
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "n"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_n.variant_03"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 9
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "n"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_e.variant_00"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 10
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "e"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_e.variant_01"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 10
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "e"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_e.variant_02"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 10
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "e"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_e.variant_03"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 10
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "e"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_s.variant_00"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 11
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "s"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_s.variant_01"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 11
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "s"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_s.variant_02"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 11
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "s"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_s.variant_03"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 11
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "s"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_w.variant_00"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 12
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "w"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_w.variant_01"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 12
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "w"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_w.variant_02"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 12
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "w"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_ramp.dir_w.variant_03"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 12
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "w"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_n.variant_00"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 17
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "n"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_n.variant_01"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 17
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "n"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_n.variant_02"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 17
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "n"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_n.variant_03"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 17
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "n"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_e.variant_00"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 18
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "e"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_e.variant_01"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 18
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "e"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_e.variant_02"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 18
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "e"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_e.variant_03"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 18
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "e"
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_s.variant_00"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 19
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "s"
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_s.variant_01"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 19
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "s"
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_s.variant_02"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 19
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "s"
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_s.variant_03"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 19
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "s"
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_w.variant_00"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 20
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "w"
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_w.variant_01"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 20
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "w"
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_w.variant_02"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 20
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "w"
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "probability": 0.25,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "ramp.volc_stairs.dir_w.variant_03"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 20
+        },
+        {
+          "name": "ascend",
+          "type": "string",
+          "value": "w"
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,25 @@
 # WorldForge — handoff (2026-07-28, post-merge at PC)
 
+## 0. DUSK RE-PIN executed 2026-07-28 (newest state)
+
+Pinned package is now `dusk-ae1eecb-seed103991` (game plan §6.1;
+designer: "use dusk for now, we can change later"). Forest fixture
+stays committed — re-pin back = lock + test-literal change. Facts:
+dusk is a NEWER upstream commit (ae1eecb): road bands 1/3 retired as
+`roadTypesLegacy` (matches our corridor doctrine; dirtpath is the one
+live band); semantic ids identical across themes, so ALL world content
+is byte-identical — canonical flood 33845 invariant, §2/§4 acceptance
+green against dusk's own reference, 202 tests green. Canonical
+baseline RE-RECORDED under the dusk identity. Game-side Phase 4
+validating importer is LIVE (validates the reference pack in 0.57 s,
+independently reproduces flood 33845); contract-as-built
+clarifications recorded in GAME_INTEGRATION_PLAN §3.3a. OPEN designer
+ruling: ruined-city dead streets author the legacy ruined-road band
+(renders fine under dusk; guide says never author new legacy runs —
+bless as archaeology or re-express as materials+rubble). Galleries
+regenerate in dusk on demand; overviews for verdicts unchanged in
+workflow.
+
 MERGE COMPLETE 2026-07-28: main fast-forwarded to the mobile branch
 (d840a4e) and pushed; 202 tests green on the PC; update-golden a no-op;
 canonical chain reproduced the container numbers exactly (flood 33845

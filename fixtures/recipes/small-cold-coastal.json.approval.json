@@ -4,6 +4,8 @@
   "state": "accepted",
   "visualBaseline": {
     "approved": true,
-    "generationIdentitySha256": "66adb6ac5ab8e70a5460753438125a7d38f4b17e040cec82faeed69871cbb21b"
+    "date": "2026-07-28",
+    "generationIdentitySha256": "456247d1adede9c6149c65f6969ea5a1d85b4f6afc7614bf59043b59e3407e2a",
+    "note": "dusk re-pin (plan 6.1): content byte-identical, flood 33845 invariant; theme approved 'use dusk for now'"
   }
 }

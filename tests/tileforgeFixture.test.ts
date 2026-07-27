@@ -12,10 +12,10 @@ import {
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 
 /**
- * W0B exit-criteria proof against the real committed forest package:
- * the lock pins the user-approved identity, a clean clone carries the
- * complete package, and the manifest + guides are readable without any
- * TileForge source access.
+ * W0B exit-criteria proof against the real committed pinned package
+ * (dusk since the §6.1 re-pin): the lock pins the user-approved
+ * identity, a clean clone carries the complete package, and the
+ * manifest + guides are readable without any TileForge source access.
  */
 describe("pinned TileForge package fixture", () => {
   const lockPath = join(ROOT, LOCK_FILE_NAME);
@@ -27,17 +27,17 @@ describe("pinned TileForge package fixture", () => {
     assert.equal(lock.provider, "TileForge");
     assert.equal(lock.generator, "tileforge-proto/0.4.0");
     assert.equal(lock.manifestFormat, 1);
-    assert.equal(lock.theme, "forest");
-    assert.equal(lock.sourceCommit, "a5baf52");
+    assert.equal(lock.theme, "dusk");
+    assert.equal(lock.sourceCommit, "ae1eecb");
     assert.equal(lock.projectSeed, 103991);
     assert.equal(lock.tileSize, 32);
     assert.equal(
       lock.packageSha256,
-      "3e58c902c5baca63e33d1201d459844299616d5b1f87e514e330163524580d68",
+      "395c16929e3a678668b82f10f952c55c5315f3938450891db2ac3ae1dd4dc1eb",
     );
     assert.equal(
       lock.manifestSha256,
-      "5e6bd19a71d4a2949815896bf58f0dd3a2a3ed12882caa456d60224c6c70e83e",
+      "bb10a0aafe6b8fb14be1d3a41bce325202d57a6b277306ae5e6ef9c57f3b2b11",
     );
   });
 
@@ -60,11 +60,11 @@ describe("pinned TileForge package fixture", () => {
     ) as Record<string, unknown>;
     assert.equal(manifest["formatVersion"], 1);
     assert.equal(manifest["generator"], "tileforge-proto/0.4.0");
-    assert.equal(manifest["sourceCommit"], "a5baf52");
+    assert.equal(manifest["sourceCommit"], "ae1eecb");
     assert.equal(manifest["projectSeed"], 103991);
     assert.equal(manifest["tileSize"], 32);
     const style = manifest["style"] as Record<string, unknown>;
-    assert.equal(style["theme"], "forest");
+    assert.equal(style["theme"], "dusk");
     assert.ok(typeof manifest["palette"] === "object" && manifest["palette"] !== null);
   });
 });
