@@ -46,15 +46,19 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
           ? null
           : { cell: [request.near.cell[0], request.near.cell[1]], radius: request.near.radius },
     })),
-    // Settlement entries stay in author order: entry order IS rank order
-    // (behavior 37), so sorting would change meaning, not just identity.
-    settlements: (recipe.settlements ?? []).map((request) => ({
-      at: request.at === undefined ? null : [request.at[0], request.at[1]],
-      near:
-        request.near === undefined
-          ? null
-          : { cell: [request.near.cell[0], request.near.cell[1]], radius: request.near.radius },
-    })),
+    // Settlement entries normalize to their EFFECTIVE rank (explicit rank or
+    // the entry's index, behavior 38) and then sort by it, so an explicit
+    // rank equal to the default produces the identical identity.
+    settlements: (recipe.settlements ?? [])
+      .map((request, index) => ({
+        at: request.at === undefined ? null : [request.at[0], request.at[1]] as readonly [number, number],
+        near:
+          request.near === undefined
+            ? null
+            : { cell: [request.near.cell[0], request.near.cell[1]] as readonly [number, number], radius: request.near.radius },
+        rank: request.rank ?? index,
+      }))
+      .sort((a, b) => a.rank - b.rank),
     decoration: {
       densityPermille:
         recipe.decoration?.densityPermille ?? DECORATION_RANGES.densityPermille.default,

@@ -228,11 +228,16 @@ Implementation notes (2026-07-27):
   pinned, the remote quarter measures from a pinned capital and stands
   down when rank 1 is also pinned, sector floors count pins toward their
   sector, open competition spaces around them). An unsettleable or
-  crowded pin is a named generation error, never a relocation. Pinning
-  only a low-rank settlement while leaving the capital free is not in
-  this version; an optional rank field is a permitted later append.
-  `tests/settlementPins.test.ts`; end-to-end CLI proof: pinning rank 0 on
-  the free solver's town cell flips the crown (city and town swap).
+  crowded pin is a named generation error, never a relocation.
+  **Behavior 38 (same day) appended the optional `rank` field**: an entry
+  may claim any budget slot explicitly (effective rank = rank ?? entry
+  index, unique, inside the budget), so a village can be pinned while the
+  capital stays free-competed; competitive phases fill the unclaimed
+  ranks and a final permutation seats every pick (identity permutation
+  for contiguous-prefix pins — behavior-37 recipes unchanged).
+  `tests/settlementPins.test.ts`; end-to-end CLI proofs: pinning rank 0
+  on the free solver's town cell flips the crown, and pinning only
+  rank 1 leaves the capital to competition.
 - Landmark pins select before free competition; a failed pin is a named
   generation error, never a relocation.
 - The Godot half of the verify chain (godot-consumer + verify_world.gd) for

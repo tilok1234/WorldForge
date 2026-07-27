@@ -244,15 +244,32 @@ export function validateRecipe(input: unknown): RecipeValidation {
         });
       }
       const worldSize = sizeOf(input);
+      const claimedRanks = new Map<number, number>();
       settlements.forEach((entry, position) => {
         if (!isPlainObject(entry)) {
           issues.push({ path: `$.settlements[${position}]`, message: "must be an object" });
           return;
         }
         for (const key of Object.keys(entry)) {
-          if (key !== "at" && key !== "near") {
+          if (key !== "at" && key !== "near" && key !== "rank") {
             issues.push({ path: `$.settlements[${position}].${key}`, message: `unknown field "${key}"` });
           }
+        }
+        // Effective rank (behavior 38): explicit claim or the entry's index.
+        // Ranks address budget slots, so every claim must be unique and
+        // inside the settlement budget.
+        if (entry["rank"] !== undefined) {
+          checkInteger(issues, entry, "rank", `$.settlements[${position}].rank`, 0, Math.max(0, settlementBudget - 1), true);
+        }
+        const effectiveRank = typeof entry["rank"] === "number" ? (entry["rank"] as number) : position;
+        const earlier = claimedRanks.get(effectiveRank);
+        if (earlier !== undefined) {
+          issues.push({
+            path: `$.settlements[${position}]`,
+            message: `rank ${effectiveRank} is already claimed by entry ${earlier} (explicit rank or entry index)`,
+          });
+        } else {
+          claimedRanks.set(effectiveRank, position);
         }
         // Entry order is rank order, so every entry must constrain its rank
         // by exactly one mechanism: pin or constrained search.

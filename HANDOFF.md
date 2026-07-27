@@ -14,11 +14,12 @@ ARC COMPLETE AND VERDICT-CLOSED (behaviors 31–35). GAME INTEGRATION
 PLAN merged to main (ratified; export-game-pack Phase 2 + authored
 placement behavior 36) and extended by SETTLEMENT PINS (behavior 37,
 2026-07-27 mobile session, rank design designer-ratified: pin order =
-rank, first pin is the capital). Versions: behavior 37, recipe
-compiler 21, artifact format 8, resolved-config 15, routes.graph 13,
-TileForge adapter 6. 182 tests, all green. Standing commit+push
-authorization held this whole arc — re-confirm with the user per
-policy.
+rank, first pin is the capital) + EXPLICIT RANKS (behavior 38, same
+session, user-picked next: optional rank field, pin a village while
+the capital stays free). Versions: behavior 38, recipe compiler 22,
+artifact format 8, resolved-config 16, routes.graph 14, TileForge
+adapter 6. 186 tests, all green. Standing commit+push authorization
+held this whole arc — re-confirm with the user per policy.
 
 **VARIETY ARC CLOSED 2026-07-27 (mobile session): all three climate
 worlds approved** — dust-sea and white-waste liked outright,
@@ -44,10 +45,10 @@ green: Godot 0 errors, both consumers flood **33,890** (was 33,887
 before the behavior-34 ford guard — 3 props that stood in crossings are
 no longer placed; flagged and accepted; FORMAL BASELINE APPROVED
 2026-07-27 — fixtures/recipes/small-cold-coastal.json.approval.json,
-re-recorded at the behavior-37 identity 26e1ab71… after the version
-bumps; layers byte-identical, floods the invariant). Behavior-36 AND
-behavior-37 Godot verifies ran green in this container (Godot 4.6.2
-downloaded to ~/bin/godot; flood parity 33890/33890 both times).
+re-recorded per behavior version bump (37 then 38); layers
+byte-identical each time, floods the invariant). Godot verifies for
+behaviors 36–38 all ran green in this container (Godot 4.6.2
+downloaded to ~/bin/godot; flood parity 33890/33890 every time).
 
 ### The recipe library (fixtures/recipes/, galleries in outputs/gallery/<name>/)
 
@@ -192,9 +193,6 @@ floors grow with map size; props/POIs per cell FALL as maps grow.
 - End-of-plan taste-polish round.
 - Phase 4 of docs/GAME_INTEGRATION_PLAN.md (game-repo importer addon):
   post-Gate-1, needs the user to separately scope the game repo.
-- Optional later append to settlement pins: an explicit rank field so a
-  low-rank settlement can be pinned while the capital stays free
-  (behavior 37 shipped pin-order-=-rank only, by ratified design).
 
 ## Commands
 

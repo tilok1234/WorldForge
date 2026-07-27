@@ -109,22 +109,26 @@ export interface NormalizedLandmarkRequest {
 }
 
 /**
- * A settlement rank constraint (behavior 37). Entry order is rank order: the
- * first entry constrains the capital, the second the second city, and so on
- * down the tier ladder. Every entry is placed by exactly one mechanism —
- * pin (`at`) or constrained search (`near`); unconstrained ranks are simply
- * absent from the array (it may be shorter than the settlement budget).
+ * A settlement rank constraint (behavior 37). An entry's effective rank is
+ * its explicit `rank` when present (behavior 38), else its array index: the
+ * rank-0 settlement is the capital, then the tier ladder descends. Effective
+ * ranks must be unique; unconstrained ranks are simply unclaimed (the array
+ * may be shorter than the settlement budget). Every entry is placed by
+ * exactly one mechanism — pin (`at`) or constrained search (`near`).
  */
 export interface SettlementRequest {
   /** Pinned anchor cell [x, y]; excludes near. */
   readonly at?: readonly [number, number];
   /** Constrained anchor search; excludes at. */
   readonly near?: { readonly cell: readonly [number, number]; readonly radius: number };
+  /** Explicit rank claim (behavior 38); defaults to the entry's index. */
+  readonly rank?: number;
 }
 
 export interface NormalizedSettlementRequest {
   readonly at: readonly [number, number] | null;
   readonly near: { readonly cell: readonly [number, number]; readonly radius: number } | null;
+  readonly rank: number;
 }
 
 /** An inline authored stamp: stampFormat 1, type "recipe.<name>". */

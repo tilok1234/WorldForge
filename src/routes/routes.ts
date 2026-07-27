@@ -433,20 +433,24 @@ function pickDestinations(
 
   const taken: Destination[] = [];
   // Settlement selection in three phases (routes.graph v7), preceded by
-  // authored pins (behavior 37, routes.graph v13):
-  //   0. pins — settlementSpecs in rank order (spec 0 IS the capital);
-  //      an unsatisfiable pin is a named generation error, never a
+  // authored pins (behavior 37, routes.graph v13; explicit ranks behavior
+  // 38, routes.graph v14):
+  //   0. pins — settlementSpecs in ascending claimed-rank order (rank 0 is
+  //      the capital; a low-rank pin may leave the capital free). An
+  //      unsatisfiable pin is a named generation error, never a
   //      relocation, matching the landmark pin contract. Pinned
   //      settlements are real settlements to every later phase: the
   //      capital phase no-ops when a pin claimed rank 0, the remote
-  //      quarter measures from the pinned capital and stands down when
-  //      rank 1 is also pinned, sector floors count pins toward their
+  //      quarter measures from the rank-0 settlement and stands down when
+  //      rank 1 is pinned, sector floors count pins toward their
   //      sector, and open competition spaces around them.
   //   1. the capital — the single best-scored candidate anywhere;
   //   2. the remote quarter — the map quarter whose corner lies farthest
   //      from the capital gets a reserved share, its best candidate
   //      placing at rank 1 (settlements.plans crowns it the second city);
   //   3. the rest of the world competes for the remaining slots.
+  const pinnedRankCell = new Map<number, number>();
+  const pinnedCellSet = new Set<number>();
   if (config.settlementSpecs.length > 0) {
     const candidateScore = new Map<number, number>();
     for (const candidate of scored) {
@@ -464,23 +468,28 @@ function pickDestinations(
       }
       return true;
     };
-    config.settlementSpecs.forEach((spec, rank) => {
+    // Specs arrive in ascending unique rank order (normalization sorted), so
+    // near searches resolve in rank priority order.
+    for (const spec of config.settlementSpecs) {
+      const rank = spec.rank;
       if (spec.at !== null) {
         const pinned = (spec.at[1] as number) * fields.width + (spec.at[0] as number);
         if (!candidateScore.has(pinned)) {
           errors.push(
             `settlement rank ${rank} pinned at (${spec.at[0]}, ${spec.at[1]}): cell is not settleable (water, river, rock, swamp, slope, or world rim)`,
           );
-          return;
+          continue;
         }
         if (!spacedClear(pinned)) {
           errors.push(
             `settlement rank ${rank} pinned at (${spec.at[0]}, ${spec.at[1]}): too close to another pinned settlement (spacing ${config.routes.minDestinationSpacing})`,
           );
-          return;
+          continue;
         }
         taken.push({ id: taken.length, kind: "settlement_candidate", cell: pinned });
-        return;
+        pinnedRankCell.set(rank, pinned);
+        pinnedCellSet.add(pinned);
+        continue;
       }
       if (spec.near !== null) {
         const center = (spec.near.cell[1] as number) * fields.width + (spec.near.cell[0] as number);
@@ -496,33 +505,44 @@ function pickDestinations(
           errors.push(
             `settlement rank ${rank} found no settleable site within ${spec.near.radius} of (${spec.near.cell[0]}, ${spec.near.cell[1]})`,
           );
-          return;
+          continue;
         }
         taken.push({ id: taken.length, kind: "settlement_candidate", cell: best.index });
+        pinnedRankCell.set(rank, best.index);
+        pinnedCellSet.add(best.index);
       }
-    });
+    }
   }
-  bySpacing(scored, 1, taken, "settlement_candidate", config.routes.minDestinationSpacing);
+  // Competitive phases ADD settlements around the pins; the rank permutation
+  // below assigns competitive picks to the lowest unclaimed ranks in
+  // selection order, so the capital-phase pick lands at rank 0 whenever no
+  // pin claims it, and the remote-quarter pick lands at rank 1.
+  const settlementCount = (): number =>
+    taken.filter((d) => d.kind === "settlement_candidate").length;
+  const addSettlements = (pool: Array<{ score: number; index: number }>, extra: number): void => {
+    if (extra > 0) {
+      bySpacing(pool, settlementCount() + extra, taken, "settlement_candidate", config.routes.minDestinationSpacing);
+    }
+  };
+  const beforeCapital = settlementCount();
+  addSettlements(scored, pinnedRankCell.has(0) ? 0 : 1);
+  const firstCompetitive =
+    settlementCount() > beforeCapital ? (taken[taken.length - 1] as Destination).cell : undefined;
+  const capitalCell = pinnedRankCell.get(0) ?? firstCompetitive;
   if (
     config.routes.remoteQuarterMin > 0 &&
-    taken.length === 1 &&
+    !pinnedRankCell.has(1) &&
+    capitalCell !== undefined &&
     config.budgets.settlementCount > config.routes.remoteQuarterMin
   ) {
-    const capital = (taken[0] as Destination).cell;
-    const [cornerX, cornerY] = remoteCorner(capital, fields.width);
+    const [cornerX, cornerY] = remoteCorner(capitalCell, fields.width);
     const quarterSpan = Math.trunc(fields.width / 2);
     const quarterPool = scored.filter((candidate) => {
       const qx = candidate.index % fields.width;
       const qy = Math.trunc(candidate.index / fields.width);
       return Math.abs(qx - cornerX) <= quarterSpan && Math.abs(qy - cornerY) <= quarterSpan;
     });
-    bySpacing(
-      quarterPool,
-      1 + config.routes.remoteQuarterMin,
-      taken,
-      "settlement_candidate",
-      config.routes.minDestinationSpacing,
-    );
+    addSettlements(quarterPool, config.routes.remoteQuarterMin);
   }
   //   2b. sector floors (routes.graph v11, generalizing the v10 quadrants):
   //       pure score competition lets selections cluster into the
@@ -563,6 +583,29 @@ function pickDestinations(
     }
   }
   bySpacing(scored, config.budgets.settlementCount, taken, "settlement_candidate", config.routes.minDestinationSpacing);
+
+  // Rank permutation (behavior 38): settlement rank IS destination id, so
+  // reorder the settlement picks — each pin holds its claimed rank and
+  // competitive picks fill the unclaimed ranks ascending in selection
+  // order. With pins claiming a contiguous 0..n-1 prefix (every behavior-37
+  // recipe) this is the identity permutation. Only settlements are in
+  // `taken` here; landmarks join afterwards.
+  if (pinnedRankCell.size > 0) {
+    const cells = taken.map((destination) => destination.cell);
+    let maxRank = cells.length - 1;
+    for (const rank of pinnedRankCell.keys()) maxRank = Math.max(maxRank, rank);
+    const slots: Array<number | null> = new Array(maxRank + 1).fill(null);
+    for (const [rank, cell] of pinnedRankCell) slots[rank] = cell;
+    const freeCells = cells.filter((cell) => !pinnedCellSet.has(cell));
+    let next = 0;
+    for (let rank = 0; rank <= maxRank && next < freeCells.length; rank += 1) {
+      if (slots[rank] === null) slots[rank] = freeCells[next++] as number;
+    }
+    taken.length = 0;
+    for (const cell of slots) {
+      if (cell !== null) taken.push({ id: taken.length, kind: "settlement_candidate", cell });
+    }
+  }
 
   // Landmark slots honor their relational specs (W5 solver) and authored
   // pins (behavior 36). Unsatisfiable constraints fail with a named error

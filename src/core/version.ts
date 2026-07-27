@@ -153,11 +153,24 @@ export const GENERATOR_VERSION = "0.1.0";
  *     error, never a relocation. Recipes without the field generate
  *     identical layers (identities shift with the version bumps; floods
  *     are the invariant).
+ * 38: explicit settlement ranks (routes.graph 14; the append flagged at
+ *     behavior 37) — settlement entries gain an optional `rank` claiming
+ *     a specific budget slot, so a village can be pinned while the
+ *     capital stays free-competed. Effective rank = rank ?? entry index;
+ *     ranks are unique and inside the budget (validation). The solver
+ *     resolves pins in ascending rank order, competitive phases top up
+ *     around the claims (the capital phase fills rank 0 when unclaimed,
+ *     the remote quarter fills rank 1 when unclaimed, measuring from the
+ *     rank-0 settlement), and a final permutation seats every pick at
+ *     its rank — the identity permutation for contiguous-prefix pins, so
+ *     behavior-37 recipes and pin-free recipes generate identical
+ *     layers (identities shift with the version bumps; floods are the
+ *     invariant).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 37;
+export const GENERATOR_BEHAVIOR_VERSION = 38;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 21;
+export const RECIPE_COMPILER_VERSION = 22;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -165,7 +178,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 6,
   "macro.biomes": 7,
   "hydrology.water": 5,
-  "routes.graph": 13,
+  "routes.graph": 14,
   "settlements.plans": 10,
   "landmarks.stamps": 6,
   "decoration.props": 9,

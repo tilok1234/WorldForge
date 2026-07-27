@@ -172,14 +172,16 @@ export interface LandmarkSpec {
 }
 
 /**
- * A settlement rank constraint (behavior 37). Index in settlementSpecs is the
- * rank the constraint claims: spec 0 is the capital. Exactly one of at/near
- * is set (validation enforces it); the array is empty when the recipe
- * declares no settlement authoring.
+ * A settlement rank constraint (behavior 37/38). `rank` is the budget slot
+ * the constraint claims (0 is the capital); normalization resolved implicit
+ * ranks and sorted by rank, so specs arrive in ascending unique rank order.
+ * Exactly one of at/near is set (validation enforces it); the array is empty
+ * when the recipe declares no settlement authoring.
  */
 export interface SettlementSpec {
   readonly at: readonly [number, number] | null;
   readonly near: { readonly cell: readonly [number, number]; readonly radius: number } | null;
+  readonly rank: number;
 }
 
 /** Authored placement inputs carried into generation (behavior 36). */
@@ -214,7 +216,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 15;
+  readonly resolvedConfigFormat: 16;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -693,7 +695,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 15,
+    resolvedConfigFormat: 16,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -735,7 +737,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
         ? { type: "ancient_fortress", relation: null, at: null, near: null }
         : { type: spec.type, relation: spec.relation, at: spec.at, near: spec.near };
     }),
-    settlementSpecs: normalized.settlements.map((spec) => ({ at: spec.at, near: spec.near })),
+    settlementSpecs: normalized.settlements.map((spec) => ({ at: spec.at, near: spec.near, rank: spec.rank })),
     authoring: {
       stamps: Object.fromEntries(
         normalized.authoredStamps.map((entry) => [entry.name, entry.stamp]),

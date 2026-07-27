@@ -182,7 +182,7 @@
     "settlements": {
       "type": "array",
       "maxItems": 32,
-      "description": "rank-ordered settlement constraints (behavior 37): entry 0 constrains the capital, entry 1 the second city, and so on; the array may be shorter than budgets.settlementCount",
+      "description": "settlement constraints (behaviors 37-38): each entry claims one budget rank (explicit rank field, else its entry index) and places it by at or near; rank 0 is the capital; unclaimed ranks stay free-competed",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -222,6 +222,12 @@
               }
             },
             "description": "constrained anchor search; mutually exclusive with at"
+          },
+          "rank": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 31,
+            "description": "explicit budget-slot claim (behavior 38); defaults to the entry index; effective ranks must be unique and below budgets.settlementCount"
           }
         }
       }

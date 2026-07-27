@@ -104,6 +104,56 @@ describe("settlement pins: rank order (behavior 37)", () => {
   });
 });
 
+describe("settlement pins: explicit ranks (behavior 38)", () => {
+  const free = generate({ ...BASE });
+  const freeSettlements = free.result.artifact.settlements;
+  assert.ok(freeSettlements.length >= 2, "seed must place at least two free settlements");
+  const capitalCell = (freeSettlements[0] as (typeof freeSettlements)[number]).anchor;
+  const lastRank = freeSettlements.length - 1;
+  const lowCell = (freeSettlements[lastRank] as (typeof freeSettlements)[number]).anchor;
+
+  it("pins a low rank while the capital stays free-competed", () => {
+    // Claim the LAST rank with the cell the free solver ranked last: the
+    // capital must still be the free solver's own choice.
+    const { result } = generate({
+      ...BASE,
+      settlements: [{ at: [lowCell[0], lowCell[1]], rank: lastRank }],
+    });
+    assert.deepEqual(result.composed.routesResult.errors, []);
+    const settlements = result.artifact.settlements;
+    const pinned = settlements[lastRank] as (typeof settlements)[number];
+    assert.deepEqual(pinned.anchor, [lowCell[0], lowCell[1]]);
+    const crowned = settlements[0] as (typeof settlements)[number];
+    assert.deepEqual(crowned.anchor, [capitalCell[0], capitalCell[1]]);
+    assert.equal(crowned.kind, "city");
+  });
+
+  it("an explicit rank equal to the entry index is the same recipe", () => {
+    const implicit = normalizeRecipe(
+      (validateRecipe({ ...BASE, settlements: [{ at: [10, 10] }] }) as { ok: true; recipe: never }).recipe,
+    );
+    const explicit = normalizeRecipe(
+      (validateRecipe({ ...BASE, settlements: [{ at: [10, 10], rank: 0 }] }) as { ok: true; recipe: never }).recipe,
+    );
+    assert.equal(recipeIdentity(implicit), recipeIdentity(explicit));
+  });
+
+  it("rejects duplicate effective ranks", () => {
+    const validation = validateRecipe({
+      ...BASE,
+      settlements: [{ at: [10, 10] }, { at: [40, 40], rank: 0 }],
+    });
+    assert.ok(!validation.ok);
+    assert.match(JSON.stringify(validation.issues), /rank 0 is already claimed by entry 0/);
+  });
+
+  it("rejects a rank outside the settlement budget", () => {
+    const validation = validateRecipe({ ...BASE, settlements: [{ at: [10, 10], rank: 3 }] });
+    assert.ok(!validation.ok);
+    assert.match(JSON.stringify(validation.issues), /settlements\[0\].rank/);
+  });
+});
+
 describe("settlement pins: recipe vocabulary", () => {
   it("normalization includes the settlements section in the identity", () => {
     const bare = normalizeRecipe(
@@ -113,7 +163,7 @@ describe("settlement pins: recipe vocabulary", () => {
       (validateRecipe({ ...BASE, settlements: [{ at: [10, 10] }] }) as { ok: true; recipe: never }).recipe,
     );
     assert.deepEqual(bare.settlements, []);
-    assert.deepEqual(pinned.settlements, [{ at: [10, 10], near: null }]);
+    assert.deepEqual(pinned.settlements, [{ at: [10, 10], near: null, rank: 0 }]);
     assert.notEqual(recipeIdentity(bare), recipeIdentity(pinned));
   });
 
@@ -125,8 +175,8 @@ describe("settlement pins: recipe vocabulary", () => {
     assert.ok(validation.ok);
     const config = compileRecipe(normalizeRecipe(validation.recipe));
     assert.deepEqual(config.settlementSpecs, [
-      { at: [10, 10], near: null },
-      { at: null, near: { cell: [40, 40], radius: 8 } },
+      { at: [10, 10], near: null, rank: 0 },
+      { at: null, near: { cell: [40, 40], radius: 8 }, rank: 1 },
     ]);
   });
 
