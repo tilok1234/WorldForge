@@ -186,8 +186,18 @@ export const GENERATOR_VERSION = "0.1.0";
  *     ~6 placed POIs of an 18-POI budget. Tiny now spaces at 7; every
  *     other size keeps 14, so small+ worlds generate identical layers
  *     (identities shift with the version bumps).
+ * 41: wilderness variety (decoration.props 10, decoration.pois 14; user
+ *     verdict "more variations of props and structures in the woods,
+ *     some buildings here and there") — every ambient species table
+ *     gains rare accents (beehives and giant shrooms under grass
+ *     canopy, cactus and bleached bones in the steppe, scree and logs
+ *     in the snow, fungus in the fen), and two lone-building POI kinds
+ *     join append-only: poi.abandoned_homestead (house_abandoned +
+ *     failed-farm dressing; grass/dry) and poi.lone_cottage (cottage +
+ *     lived-in dressing; grass), cap 2 each, away from settlements.
+ *     LAYER-VISIBLE on every world (ambient rerolls + new POIs).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 40;
+export const GENERATOR_BEHAVIOR_VERSION = 41;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 24;
@@ -202,8 +212,8 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "settlements.plans": 10,
   "landmarks.stamps": 6,
   "terrain.texture": 1,
-  "decoration.props": 9,
-  "decoration.pois": 13,
+  "decoration.props": 10,
+  "decoration.pois": 14,
   "density.presets": 1,
   "authoring.overrides": 1,
   "adapter.tileforge": 6,

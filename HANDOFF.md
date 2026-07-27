@@ -41,7 +41,7 @@ size-scaled (tiny 7, others 14 — the flat 14 starved tiny to ~6 of 18
 budgeted POIs; small+ layers identical). fen-hollow v2: rank-2 pinned
 outpost mid-north via behavior-38 near-pin (the tiny-fusion gotcha
 dodge), 3rd landmark (fortress across_river), densityPermille 550;
-6→12 POIs, floods clean; VERDICT OPEN on v2, frost/dust hollows queue
+6→12 POIs, floods clean; organic pass CONTINUES: behavior 41 wilderness variety (species accents + poi.abandoned_homestead/poi.lone_cottage lone buildings, homestead accepts mud). Canonical flood 34058->33845 (ambient rerolls). VERDICT OPEN on fen v3, frost/dust hollows queue
 next on approval. Mobile viewer artifact live (three hollows, pan/
 zoom): https://claude.ai/code/artifact/7850ac94-e0e9-466a-8ffc-4bee23adeff3
 (rebuild: scratchpad build-viewer.mjs). Richened 256² fen/waste

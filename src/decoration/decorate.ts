@@ -146,25 +146,35 @@ interface SpeciesWeight {
 
 /** Forest-roll species per biome (patch-gated canopy and large features). */
 const FOREST_SPECIES: Readonly<Record<string, readonly SpeciesWeight[]>> = {
+  // decoration.props v10 (behavior 41): every table carries rare accents —
+  // a woods roll should surprise occasionally, not cycle four species.
   "terrain.grass": [
-    { key: "prop.oak", weight: 52 },
-    { key: "prop.birch", weight: 26 },
+    { key: "prop.oak", weight: 48 },
+    { key: "prop.birch", weight: 24 },
     { key: "prop.pine", weight: 8 },
-    { key: "prop.fruit_tree", weight: 2 },
-    { key: "prop.stump", weight: 6 },
-    { key: "prop.fallen_log", weight: 6 },
+    { key: "prop.fruit_tree", weight: 3 },
+    { key: "prop.stump", weight: 5 },
+    { key: "prop.fallen_log", weight: 5 },
+    { key: "prop.boulder", weight: 4 },
+    { key: "prop.beehive", weight: 2 },
+    { key: "prop.giant_shroom", weight: 1 },
   ],
   "terrain.dry_grass": [
-    { key: "prop.dead_tree", weight: 34 },
-    { key: "prop.desert_shrub", weight: 40 },
-    { key: "prop.boulder", weight: 14 },
-    { key: "prop.stump", weight: 12 },
+    { key: "prop.dead_tree", weight: 30 },
+    { key: "prop.desert_shrub", weight: 34 },
+    { key: "prop.boulder", weight: 12 },
+    { key: "prop.stump", weight: 9 },
+    { key: "prop.cactus", weight: 9 },
+    { key: "prop.rock_outcrop", weight: 4 },
+    { key: "prop.bone_pile", weight: 2 },
   ],
   "terrain.snow": [
-    { key: "prop.pine", weight: 72 },
-    { key: "prop.snow_shrub", weight: 18 },
+    { key: "prop.pine", weight: 62 },
+    { key: "prop.snow_shrub", weight: 17 },
     { key: "prop.dead_tree", weight: 5 },
     { key: "prop.boulder", weight: 5 },
+    { key: "prop.fallen_log", weight: 6 },
+    { key: "prop.rock_outcrop", weight: 5 },
   ],
   "terrain.rock": [
     { key: "prop.boulder", weight: 45 },
@@ -173,38 +183,49 @@ const FOREST_SPECIES: Readonly<Record<string, readonly SpeciesWeight[]>> = {
     { key: "prop.dead_tree", weight: 10 },
   ],
   "terrain.mud": [
-    { key: "prop.willow", weight: 35 },
-    { key: "prop.dead_tree", weight: 25 },
-    { key: "prop.roots", weight: 25 },
-    { key: "prop.fallen_log", weight: 15 },
+    { key: "prop.willow", weight: 30 },
+    { key: "prop.dead_tree", weight: 22 },
+    { key: "prop.roots", weight: 22 },
+    { key: "prop.fallen_log", weight: 13 },
+    { key: "prop.mushrooms", weight: 8 },
+    { key: "prop.giant_shroom", weight: 3 },
+    { key: "prop.stump", weight: 2 },
   ],
   "terrain.swamp": [
-    { key: "prop.reeds", weight: 40 },
-    { key: "prop.cattails", weight: 22 },
-    { key: "prop.willow", weight: 22 },
-    { key: "prop.roots", weight: 10 },
-    { key: "prop.mushrooms", weight: 6 },
+    { key: "prop.reeds", weight: 36 },
+    { key: "prop.cattails", weight: 20 },
+    { key: "prop.willow", weight: 20 },
+    { key: "prop.roots", weight: 9 },
+    { key: "prop.mushrooms", weight: 8 },
+    { key: "prop.giant_shroom", weight: 4 },
+    { key: "prop.dead_tree", weight: 3 },
   ],
 };
 
 /** Ungated light scatter per biome (small, non-blocking flavor). */
 const SCATTER_SPECIES: Readonly<Record<string, readonly SpeciesWeight[]>> = {
   "terrain.grass": [
-    { key: "prop.bush", weight: 34 },
-    { key: "prop.flowers", weight: 30 },
-    { key: "prop.sapling", weight: 16 },
+    { key: "prop.bush", weight: 30 },
+    { key: "prop.flowers", weight: 28 },
+    { key: "prop.sapling", weight: 14 },
     { key: "prop.mushrooms", weight: 10 },
     { key: "prop.ferns", weight: 10 },
+    { key: "prop.fallen_log", weight: 5 },
+    { key: "prop.stump", weight: 3 },
   ],
   "terrain.dry_grass": [
-    { key: "prop.desert_shrub", weight: 60 },
-    { key: "prop.flowers", weight: 20 },
-    { key: "prop.bush", weight: 20 },
+    { key: "prop.desert_shrub", weight: 48 },
+    { key: "prop.flowers", weight: 18 },
+    { key: "prop.bush", weight: 18 },
+    { key: "prop.cactus", weight: 12 },
+    { key: "prop.bone_pile", weight: 4 },
   ],
   "terrain.snow": [
-    { key: "prop.snow_shrub", weight: 72 },
+    { key: "prop.snow_shrub", weight: 62 },
     { key: "prop.fallen_log", weight: 12 },
-    { key: "prop.stump", weight: 16 },
+    { key: "prop.stump", weight: 14 },
+    { key: "prop.boulder", weight: 8 },
+    { key: "prop.dead_tree", weight: 4 },
   ],
   "terrain.rock": [
     { key: "prop.rock_outcrop", weight: 40 },
@@ -213,12 +234,15 @@ const SCATTER_SPECIES: Readonly<Record<string, readonly SpeciesWeight[]>> = {
     { key: "prop.pine", weight: 16 },
   ],
   "terrain.mud": [
-    { key: "prop.roots", weight: 60 },
-    { key: "prop.reeds", weight: 40 },
+    { key: "prop.roots", weight: 46 },
+    { key: "prop.reeds", weight: 32 },
+    { key: "prop.mushrooms", weight: 14 },
+    { key: "prop.cattails", weight: 8 },
   ],
   "terrain.swamp": [
-    { key: "prop.reeds", weight: 55 },
-    { key: "prop.cattails", weight: 45 },
+    { key: "prop.reeds", weight: 50 },
+    { key: "prop.cattails", weight: 40 },
+    { key: "prop.mushrooms", weight: 10 },
   ],
 };
 

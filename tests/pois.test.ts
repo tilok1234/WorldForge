@@ -94,6 +94,11 @@ describe("points of interest, phase A", () => {
       "structure.ruin": [],
       "structure.giant_skeleton": [5, 6, 7],
       "structure.den": [2, 3],
+      // Lone buildings (behavior 41) block fully, like ruins: the POI is
+      // the dressing around them, not an interior.
+      "structure.house_abandoned": [],
+      "structure.cottage": [],
+      "structure.hermit_hut": [],
     };
     let checkedStructures = 0;
     for (let seed = 1; seed <= 8 && checkedStructures < 3; seed += 1) {

@@ -60,6 +60,9 @@ export const POI_TYPES = [
   "poi.beast_den",
   "poi.pass_memorial",
   "poi.steam_vents",
+  // Append-only (behavior 41): lone buildings in the wilderness.
+  "poi.abandoned_homestead",
+  "poi.lone_cottage",
 ] as const;
 export type PoiType = (typeof POI_TYPES)[number];
 
@@ -113,6 +116,7 @@ export function planPois(
   const snow = PALETTE_INDEX["terrain.snow"];
   const gravel = PALETTE_INDEX["terrain.gravel"];
   const rockValue = PALETTE_INDEX["terrain.rock"];
+  const mudValue = PALETTE_INDEX["terrain.mud"];
   const propIndex = new Map<string, number>();
   DECOR_TYPES.forEach((key, index) => propIndex.set(key, index + 1));
   const decalIndex = new Map<string, number>();
@@ -260,6 +264,8 @@ export function planPois(
     "poi.beast_den": 2,
     "poi.pass_memorial": 2,
     "poi.steam_vents": 2,
+    "poi.abandoned_homestead": 2,
+    "poi.lone_cottage": 2,
   };
   // Far-reach quota (decoration.pois v4): rock- and snow-bound kinds get a
   // reserved slice of the budget. Rock edges are ~2% of cells, so without a
@@ -681,6 +687,51 @@ export function planPois(
         putProp(x - 1, y - 1, "prop.flowers");
         putProp(x + 1, y + 2, "prop.flower_bed");
         record("poi.hermit_hut", x, y, stamp);
+        continue;
+      }
+    }
+
+    // Abandoned homestead (behavior 41): a farm that failed — the house
+    // stands, the fields never came in. Lone buildings between settlements
+    // make the country read inhabited rather than four set-pieces.
+    if (
+      (material === grass || material === dryGrass || material === mudValue) &&
+      !capped("poi.abandoned_homestead") &&
+      variant >= 120 &&
+      variant < 240 &&
+      settlementGap > 16 &&
+      clearRegion(x - 1, y - 1, 4, 3)
+    ) {
+      const stamp = stampStructure("structure.house_abandoned", x, y);
+      if (stamp !== null) {
+        putProp(x - 1, y + 1, "prop.broken_wagon");
+        putProp(x + 2, y, "prop.hay_bales");
+        putProp(x + 2, y + 2, "prop.ash_pile");
+        putProp(x - 1, y - 1, "prop.lone_grave");
+        putDecal(x + 1, y + 2, "decal.cracks");
+        record("poi.abandoned_homestead", x, y, stamp);
+        continue;
+      }
+    }
+
+    // Lone cottage (behavior 41): someone still lives out here — smoke in
+    // the chimney, wood split for winter.
+    if (
+      material === grass &&
+      !capped("poi.lone_cottage") &&
+      variant >= 240 &&
+      variant < 340 &&
+      settlementGap > 16 &&
+      clearRegion(x - 1, y - 1, 4, 3)
+    ) {
+      const stamp = stampStructure("structure.cottage", x, y);
+      if (stamp !== null) {
+        putProp(x - 1, y + 1, "prop.firewood");
+        putProp(x + 2, y, "prop.chopping_block");
+        putProp(x + 2, y + 2, "prop.trough");
+        putProp(x - 1, y - 1, "prop.beehive");
+        putProp(x + 1, y + 2, "prop.flower_bed");
+        record("poi.lone_cottage", x, y, stamp);
         continue;
       }
     }
