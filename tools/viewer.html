@@ -24,6 +24,7 @@
   input[type="file"] { max-width: 200px; }
   button { background: #2b2b34; color: #d8d8de; border: 1px solid #45454f; border-radius: 4px; padding: 3px 10px; cursor: pointer; }
   button:hover { background: #34343e; }
+  select { background: #2b2b34; color: #d8d8de; border: 1px solid #45454f; border-radius: 4px; padding: 3px 6px; cursor: pointer; max-width: 230px; }
   #refreshState { color: #8f8fa0; font-size: 12px; }
 </style>
 </head>
@@ -31,6 +32,9 @@
 <header>
   <h1>WorldForge Viewer</h1>
   <span class="readonly">read-only by contract — this tool never writes world data</span>
+  <select id="worldSelect" title="switch to another generated world">
+    <option value="">— world —</option>
+  </select>
   <input type="file" id="file" accept=".json,application/json">
   <button id="refresh" title="re-fetch the loaded directory (R)">refresh</button>
   <span id="refreshState"></span>
@@ -49,7 +53,8 @@
 <main>
   <div id="stage">
     <canvas id="canvas"></canvas>
-    <div id="drop">semantic mode: drop a world.json here, use the file picker, or add ?url=&lt;path&gt;<br>
+    <div id="drop">pick a world from the dropdown above, or:<br>
+      semantic mode: drop a world.json here, use the file picker, or add ?url=&lt;path&gt;<br>
       native mode: add ?dir=&lt;resolve output dir&gt; (e.g. ?dir=outputs/w7-slice)</div>
   </div>
   <aside>
@@ -431,14 +436,74 @@ stage.addEventListener("drop", async (event) => {
   const file = event.dataTransfer.files[0];
   if (file) loadWorld(JSON.parse(await file.text()));
 });
+// World picker: populated from the serve-viewer /api/worlds listing. Purely
+// read-only navigation — switching worlds just reloads with ?dir= / ?url=.
+// When the listing is unavailable (file://, foreign static host, or an older
+// serve-viewer) the picker hides and the URL-parameter workflow remains.
+const worldSelect = document.getElementById("worldSelect");
+async function initWorldPicker(currentDir) {
+  let worlds;
+  try {
+    const response = await fetch("/api/worlds");
+    if (!response.ok) throw new Error(String(response.status));
+    worlds = (await response.json()).worlds || [];
+  } catch {
+    worldSelect.style.display = "none";
+    return;
+  }
+  // Old-doctrine relics (pre-corridor roads, artifact formats the public
+  // loader rejects) stay out of the picker: they cannot be opened anyway.
+  await loaderReady;
+  const supported = loaderModule === null ? null : loaderModule.SUPPORTED_ARTIFACT_FORMAT;
+  worlds = worlds.filter((world) =>
+    world.native || supported === null || world.format === supported);
+  if (worlds.length === 0) {
+    worldSelect.style.display = "none";
+    return;
+  }
+  const sections = new Map();
+  for (const world of worlds) {
+    const section = world.dir.slice(0, world.dir.lastIndexOf("/"));
+    if (!sections.has(section)) sections.set(section, []);
+    sections.get(section).push(world);
+  }
+  for (const [section, entries] of sections) {
+    const group = document.createElement("optgroup");
+    group.label = section;
+    for (const world of entries) {
+      const option = document.createElement("option");
+      option.value = world.dir;
+      option.textContent = world.name + (world.native ? "" : " (semantic only)");
+      option.dataset.native = world.native ? "1" : "";
+      group.appendChild(option);
+    }
+    worldSelect.appendChild(group);
+  }
+  if (currentDir) worldSelect.value = currentDir;
+}
+worldSelect.addEventListener("change", () => {
+  const option = worldSelect.selectedOptions[0];
+  if (!option || option.value === "") return;
+  location.search = option.dataset.native
+    ? `?dir=${option.value}`
+    : `?url=/${option.value}/world.json`;
+});
+
 const params = new URLSearchParams(location.search);
+// Normalize the loaded target back to a repo-relative dir so the picker can
+// show the current world as selected.
+let currentDir = null;
 if (params.get("dir")) {
+  currentDir = params.get("dir").replace(/^\//, "").replace(/\/$/, "");
   loadNativeDir(params.get("dir"), false)
     .catch((error) => { document.getElementById("drop").textContent = `failed to load: ${error}`; });
 } else if (params.get("url")) {
+  const urlMatch = params.get("url").match(/^\/?(.*)\/world\.json$/);
+  currentDir = urlMatch ? urlMatch[1] : null;
   fetch(params.get("url")).then((response) => response.json()).then(loadWorld)
     .catch((error) => { document.getElementById("drop").textContent = `failed to load: ${error}`; });
 }
+initWorldPicker(currentDir);
 </script>
 </body>
 </html>

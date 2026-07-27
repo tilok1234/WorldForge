@@ -85,6 +85,10 @@ without a fresh verdict. If "feels empty" returns: gameplay-zoom review
 - Viewer: `http://127.0.0.1:8787/tools/viewer.html?dir=outputs/w7-slice`
   (server may belong to another session — do NOT restart; regenerate
   into the same dir; `?dir=outputs/gallery/<name>` browses archetypes).
+  Header world picker (2026-07-27): serve-viewer's read-only
+  `/api/worlds` lists outputs/ dirs; the dropdown hides artifacts whose
+  formatVersion the public loader rejects, so pre-corridor-roads relics
+  (demo-a, demo-b, w4-demo) stay invisible.
 - Verify chain on EVERY generation change:
   `node dist/tools/godot-consumer.js --world outputs/w7-slice` (0 errors)
   + `node consumers/typescript/traverse.mjs outputs/w7-slice/world.json`
