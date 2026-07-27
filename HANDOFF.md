@@ -10,10 +10,12 @@ file. HANDOFF.md is the tiebreaker.
 ## Where the project stands
 
 W0–W9 complete, ALIVE-WORLDS ARC complete (behaviors 15–30), VARIETY ARC
-underway (behavior 31). Versions: behavior 31, recipe compiler 15,
-artifact format 8, resolved-config 11, TileForge adapter 6. 152 tests;
-CI green through `a9cd3b8` (all pushed). Standing commit+push
-authorization held this whole arc — re-confirm with the user per policy.
+underway (behaviors 31–32). Versions: behavior 32, recipe compiler 16,
+artifact format 8, resolved-config 11 (NOT bumped for behavior 32: the
+medium preset added no fields, and the doctrine says format bumps track
+shape changes — the earlier prediction of a bump was wrong), TileForge
+adapter 6. 153 tests. Standing commit+push authorization held this whole
+arc — re-confirm with the user per policy.
 
 ### The canonical world (fixtures/recipes/small-cold-coastal.json, seed 103991)
 
@@ -58,15 +60,19 @@ Seed-hunt method (works, reuse): loop candidate seeds → composeWorld →
 count target material %, pick winner (script pattern in session log;
 composeWorld ~1-2s per small world).
 
-**NEXT on the variety arc** (user approved the sequenced rec with
-"sure"): warm-up DONE — the-long-winter + hearth-hollow built, verified
-(both floods equal, 0 errors, 152 tests), overviews sent 2026-07-27,
-verdicts PENDING. On verdicts: iterate seeds/budgets if wanted, then
-start the `medium` size preset milestone (fill the seven
-SizePreset-keyed tables in compile.ts + schema enum + compile.test.ts
-literal; behavior + resolvedConfigFormat bumps; regenerate 2-3
-archetypes at medium; stress-tests POI budget/far-reach/route scaling).
-`large` gated on medium verdicts; new climates last.
+**NEXT on the variety arc**: ALL NINE archetypes approved 2026-07-27
+("these seem great" covered the hearth-hollow revision). MEDIUM SIZE
+PRESET SHIPPED (behavior 32): 512×512 in 16×16 chunks, octaves shifted
+one level (largest still spans half the map), sublinear scaling on
+river thresholds (800/2000), spacing (44), settlement geometry
+(cityLots 84, townCount 4), POI base 150 — per-cell POI density FALLS
+vs small, honoring density doctrine. Three medium worlds built +
+verified (floods equal, 0 errors): warm-vale-medium (balanced),
+the-old-war-medium (dense), frontier-sparse-medium (sparse) — one per
+density preset. Overviews sent 2026-07-27; verdicts PENDING. Note:
+warm-vale-medium's coastal lighthouse sat on a lake shore (map has no
+sea at seed 424242) — acceptable fallback, flag to user. On verdicts:
+`large` preset next; new climates last.
 
 ## Density doctrine (IMPORTANT — two standing user verdicts)
 

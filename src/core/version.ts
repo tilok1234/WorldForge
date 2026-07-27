@@ -86,23 +86,30 @@ export const GENERATOR_VERSION = "0.1.0";
  *     recipe exposed roads crossing sites picked before carving), and
  *     the §2.7 sand margin holds on all four world edges (the highland
  *     recipe pushed beaches to the far edge and the emitter threw).
+ * 32: the medium size preset (recipe.presets 4, macro.fields 5,
+ *     macro.biomes 6, hydrology.water 3, routes.graph 9,
+ *     settlements.plans 8, decoration.pois 11) — world.sizePreset gains
+ *     medium: 512x512 in 16x16 chunks, octaves shifted one level up so
+ *     half the map is still one landform, sublinear scaling everywhere
+ *     else (river thresholds, spacing, settlement geometry, POI base
+ *     150) so bigger reads as roomier country, never denser cities.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 31;
+export const GENERATOR_BEHAVIOR_VERSION = 32;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 15;
+export const RECIPE_COMPILER_VERSION = 16;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
-  "recipe.presets": 3,
-  "macro.fields": 4,
-  "macro.biomes": 5,
-  "hydrology.water": 2,
-  "routes.graph": 8,
-  "settlements.plans": 7,
+  "recipe.presets": 4,
+  "macro.fields": 5,
+  "macro.biomes": 6,
+  "hydrology.water": 3,
+  "routes.graph": 9,
+  "settlements.plans": 8,
   "landmarks.stamps": 5,
   "decoration.props": 8,
-  "decoration.pois": 10,
+  "decoration.pois": 11,
   "density.presets": 1,
   "adapter.tileforge": 6,
 };

@@ -10,7 +10,7 @@ import { normalizeRecipe } from "../src/recipe/normalize.js";
 import { validateRecipe } from "../src/recipe/validate.js";
 import type { NormalizedWorldRecipe } from "../src/recipe/schema.js";
 
-function normalized(seed: number, sizePreset: "tiny" | "small", climatePreset: "temperate" | "cold_coastal"): NormalizedWorldRecipe {
+function normalized(seed: number, sizePreset: "tiny" | "small" | "medium", climatePreset: "temperate" | "cold_coastal"): NormalizedWorldRecipe {
   const validation = validateRecipe({
     recipeFormat: 1,
     seed,
@@ -26,6 +26,26 @@ describe("recipe compiler", () => {
     assert.deepEqual(tiny.world, { width: 64, height: 64, chunkWidth: 16, chunkHeight: 16 });
     const small = compileRecipe(normalized(1, "small", "cold_coastal"));
     assert.deepEqual(small.world, { width: 256, height: 256, chunkWidth: 32, chunkHeight: 32 });
+    const medium = compileRecipe(normalized(1, "medium", "temperate"));
+    assert.deepEqual(medium.world, { width: 512, height: 512, chunkWidth: 32, chunkHeight: 32 });
+  });
+
+  it("scales medium sublinearly: roomier country, not denser cities", () => {
+    const config = compileRecipe(normalized(1, "medium", "cold_coastal"));
+    // Largest octave still spans half the map (one dominant landform).
+    assert.equal(config.macroFields.elevation.octaves[0]?.cellSizeLog2, 8);
+    assert.equal(config.water.riverAccumulationThreshold, 800);
+    assert.equal(config.water.majorRiverAccumulationThreshold, 2000);
+    assert.equal(config.routes.minDestinationSpacing, 44);
+    assert.equal(config.routes.remoteQuarterMin, 4);
+    assert.equal(config.settlements.cityCount, 2);
+    assert.equal(config.settlements.townCount, 4);
+    assert.equal(config.biomes.minRegionCells, 240);
+    // POI density per cell falls versus small (density doctrine).
+    const small = compileRecipe(normalized(1, "small", "cold_coastal"));
+    assert.ok(
+      config.decoration.poiCount / (512 * 512) < small.decoration.poiCount / (256 * 256),
+    );
   });
 
   it("expands climate presets and carries biases separately", () => {

@@ -22,6 +22,7 @@ import type { ClimatePreset, DensityPreset, NormalizedWorldRecipe, SizePreset } 
 const SIZE_RULES: { readonly [key in SizePreset]: WorldDimensions } = {
   tiny: { width: 64, height: 64, chunkWidth: 16, chunkHeight: 16 },
   small: { width: 256, height: 256, chunkWidth: 32, chunkHeight: 32 },
+  medium: { width: 512, height: 512, chunkWidth: 32, chunkHeight: 32 },
 };
 
 const CLIMATE_RULES: { readonly [key in ClimatePreset]: ClimateBase } = {
@@ -219,6 +220,13 @@ const OCTAVE_RULES: { readonly [key in SizePreset]: MacroFieldSpec["octaves"] } 
     { cellSizeLog2: 4, weightPermille: 80 },
     { cellSizeLog2: 3, weightPermille: 60 },
   ],
+  medium: [
+    { cellSizeLog2: 8, weightPermille: 430 },
+    { cellSizeLog2: 7, weightPermille: 290 },
+    { cellSizeLog2: 6, weightPermille: 140 },
+    { cellSizeLog2: 5, weightPermille: 80 },
+    { cellSizeLog2: 4, weightPermille: 60 },
+  ],
 };
 
 /** hydrology.water rule pack v1: water levels and thresholds per preset. */
@@ -242,6 +250,16 @@ const WATER_RULES: {
       wetlandMoistureMin: 560,
       coastalInfluenceRadius: 16,
     },
+    medium: {
+      // Accumulation thresholds scale sublinearly with area (tiny->small
+      // precedent) so a 512-map still reads as a few coherent rivers.
+      seaLevelPermille: 310,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 800,
+      majorRiverAccumulationThreshold: 2000,
+      wetlandMoistureMin: 560,
+      coastalInfluenceRadius: 24,
+    },
   },
   cold_coastal: {
     tiny: {
@@ -259,6 +277,14 @@ const WATER_RULES: {
       majorRiverAccumulationThreshold: 800,
       wetlandMoistureMin: 560,
       coastalInfluenceRadius: 16,
+    },
+    medium: {
+      seaLevelPermille: 370,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 800,
+      majorRiverAccumulationThreshold: 2000,
+      wetlandMoistureMin: 560,
+      coastalInfluenceRadius: 24,
     },
   },
 };
@@ -300,6 +326,24 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     shortcutTrailSpan: 80,
     remoteQuarterMin: 3,
   },
+  medium: {
+    // Spacing/spans grow sublinearly with the 2x edge (tiny->small
+    // precedent): the map gets roomier, not proportionally emptier.
+    stepCost: 10,
+    slopeCostPerPermille: 1,
+    networkRiverCrossCost: 70,
+    majorRiverCrossCost: 120,
+    shallowWaterCrossCost: 160,
+    minDestinationSpacing: 44,
+    streetWidth: 2,
+    highwayWidth: 3,
+    detourWarnRatioPermille: 1800,
+    edgePenaltyRadius: 18,
+    edgePenaltyCost: 40,
+    shortcutTrailMax: 6,
+    shortcutTrailSpan: 120,
+    remoteQuarterMin: 4,
+  },
 };
 
 /**
@@ -338,6 +382,26 @@ const SETTLEMENT_RULES: { readonly [key in SizePreset]: SettlementRules } = {
     townRadius: 20, outpostRadius: 10, townLots: 34, outpostLots: 9,
     approachMaxLength: 8, townPlazaRadius: 3, outpostPlazaRadius: 1, streetArmLength: 14,
   },
+  medium: {
+    // Settlements grow modestly, not with the map (density doctrine):
+    // medium worlds read as roomier country, not denser cities.
+    cityCount: 2,
+    cityRadius: 30, cityLots: 84, cityPlazaRadius: 5, cityStreetArmLength: 24,
+    cityRingRadius: 13, townCount: 4,
+    townRadius: 22, outpostRadius: 11, townLots: 40, outpostLots: 10,
+    approachMaxLength: 8, townPlazaRadius: 3, outpostPlazaRadius: 1, streetArmLength: 16,
+  },
+};
+
+/**
+ * decoration.pois rule pack: wilderness POI budget base per size preset,
+ * scaled by densityPreset. Sublinear in area — per-cell POI density FALLS
+ * as maps grow (78/256² > 150/512²), honoring the density doctrine.
+ */
+const POI_BASE: { readonly [key in SizePreset]: number } = {
+  tiny: 18,
+  small: 78,
+  medium: 150,
 };
 
 /** macro.biomes rule pack v1: thresholds and region limits per size preset. */
@@ -359,6 +423,19 @@ const BIOME_RULES: { readonly [key in SizePreset]: BiomeRules } = {
     minRegionCells: 80,
     smoothingPasses: 8,
     knollCount: 30,
+    thresholds: {
+      rockElevationMin: 650,
+      snowTemperatureMax: 320,
+      mudMoistureMin: 600,
+      mudElevationMax: 500,
+      dryMoistureMax: 375,
+      dryTemperatureMin: 460,
+    },
+  },
+  medium: {
+    minRegionCells: 240,
+    smoothingPasses: 8,
+    knollCount: 60,
     thresholds: {
       rockElevationMin: 650,
       snowTemperatureMax: 320,
@@ -419,7 +496,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
     budgets: normalized.budgets,
     decoration: {
       densityPermille: normalized.decoration.densityPermille,
-      poiCount: Math.max(4, Math.trunc((normalized.world.sizePreset === "tiny" ? 18 : 78) * DENSITY_SCALE[normalized.world.densityPreset].pois / 1000)),
+      poiCount: Math.max(4, Math.trunc(POI_BASE[normalized.world.sizePreset] * DENSITY_SCALE[normalized.world.densityPreset].pois / 1000)),
       ambientPermille: DENSITY_SCALE[normalized.world.densityPreset].ambient,
     },
     passes: ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "decoration.props", "adapter.tileforge"],
