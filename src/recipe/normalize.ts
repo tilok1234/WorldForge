@@ -72,6 +72,7 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
             entries: recipe.zones.entries.map((entry) => ({
               temperaturePermille: entry.temperaturePermille ?? 0,
               moisturePermille: entry.moisturePermille ?? 0,
+              elevationPermille: entry.elevationPermille ?? 0,
               anchor: entry.anchor === undefined ? null : [entry.anchor[0], entry.anchor[1]],
               weight: entry.weight ?? 1000,
             })),

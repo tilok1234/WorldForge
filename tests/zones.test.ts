@@ -179,6 +179,36 @@ describe("anchor-shaped zones (behavior 45)", () => {
     assert.ok(count(heavy) > count(light), "heavier anchor claims more cold land");
   });
 
+  it("zone elevation drowns a sea zone and keeps land land (behavior 46)", () => {
+    const { config } = compiled({
+      ...BASE,
+      zones: {
+        layout: "anchors",
+        seams: "hard",
+        entries: [
+          { anchor: [16, 32], weight: 1000, elevationPermille: 350 },
+          { anchor: [48, 32], weight: 1000, elevationPermille: -500 },
+        ],
+      },
+    });
+    const fields = buildMacroFields(config);
+    const width = 64;
+    let landHigher = 0;
+    let samples = 0;
+    for (let y = 8; y < 56; y += 6) {
+      for (let dx = 0; dx < 12; dx += 3) {
+        const west = fields.elevation[y * width + 8 + dx] as number;
+        const east = fields.elevation[y * width + 44 + dx] as number;
+        samples += 1;
+        if (west > east) landHigher += 1;
+      }
+    }
+    assert.ok(landHigher / samples > 0.9, `land zone higher in ${landHigher}/${samples}`);
+    // The drowned zone's core sits below the temperate sea level (310).
+    const seaCore = fields.elevation[32 * width + 50] as number;
+    assert.ok(seaCore < 310, `sea-zone core ${seaCore} below sea level`);
+  });
+
   it("requires an anchor per entry and rejects grid fields", () => {
     const missing = validateRecipe({
       ...BASE,

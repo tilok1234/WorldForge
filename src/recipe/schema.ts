@@ -158,6 +158,12 @@ export interface ZoneGridRequest {
 export interface ZoneEntryRequest {
   readonly temperaturePermille?: number;
   readonly moisturePermille?: number;
+  /**
+   * Elevation character (behavior 46): strongly negative drowns the zone
+   * into sea (islands, channels, bays), positive raises highland. Always
+   * blended at the border regardless of seam mode, so coasts shelve.
+   */
+  readonly elevationPermille?: number;
   /** Anchor cell [x, y]; required for anchors layout, forbidden for grid. */
   readonly anchor?: readonly [number, number];
   /** Territory weight (anchors layout): bigger claims more land. 100-10000, default 1000. */
@@ -167,6 +173,7 @@ export interface ZoneEntryRequest {
 export interface NormalizedZoneEntry {
   readonly temperaturePermille: number;
   readonly moisturePermille: number;
+  readonly elevationPermille: number;
   readonly anchor: readonly [number, number] | null;
   readonly weight: number;
 }

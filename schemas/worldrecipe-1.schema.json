@@ -291,6 +291,12 @@
                 "minimum": 100,
                 "maximum": 10000,
                 "description": "territory weight (anchors layout); bigger claims more land; default 1000"
+              },
+              "elevationPermille": {
+                "type": "integer",
+                "minimum": -1000,
+                "maximum": 1000,
+                "description": "elevation character (behavior 46): strongly negative drowns the zone into sea; always blended at borders so coasts shelve"
               }
             }
           },

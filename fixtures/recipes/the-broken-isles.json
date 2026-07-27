@@ -1,0 +1,254 @@
+{
+  "recipeFormat": 1,
+  "seed": 90909,
+  "world": {
+    "sizePreset": "medium",
+    "climatePreset": "temperate",
+    "densityPreset": "dense"
+  },
+  "zones": {
+    "layout": "anchors",
+    "seams": "hard",
+    "entries": [
+      {
+        "anchor": [
+          400,
+          200
+        ],
+        "weight": 1500,
+        "elevationPermille": 60,
+        "temperaturePermille": 0,
+        "moisturePermille": 0
+      },
+      {
+        "anchor": [
+          350,
+          60
+        ],
+        "weight": 900,
+        "elevationPermille": 40,
+        "temperaturePermille": -140,
+        "moisturePermille": 30
+      },
+      {
+        "anchor": [
+          280,
+          340
+        ],
+        "weight": 800,
+        "elevationPermille": 50,
+        "temperaturePermille": 80,
+        "moisturePermille": -30
+      },
+      {
+        "anchor": [
+          200,
+          450
+        ],
+        "weight": 650,
+        "elevationPermille": 60,
+        "temperaturePermille": 40,
+        "moisturePermille": 220
+      },
+      {
+        "anchor": [
+          90,
+          80
+        ],
+        "weight": 450,
+        "elevationPermille": 80,
+        "temperaturePermille": -50,
+        "moisturePermille": 0
+      },
+      {
+        "anchor": [
+          470,
+          440
+        ],
+        "weight": 400,
+        "elevationPermille": 90,
+        "temperaturePermille": 150,
+        "moisturePermille": -100
+      },
+      {
+        "anchor": [
+          150,
+          250
+        ],
+        "weight": 1200,
+        "elevationPermille": -480
+      },
+      {
+        "anchor": [
+          350,
+          470
+        ],
+        "weight": 800,
+        "elevationPermille": -480
+      }
+    ]
+  },
+  "settlements": [
+    {
+      "near": {
+        "cell": [
+          300,
+          120
+        ],
+        "radius": 22
+      }
+    },
+    {
+      "near": {
+        "cell": [
+          280,
+          300
+        ],
+        "radius": 22
+      }
+    },
+    {
+      "near": {
+        "cell": [
+          400,
+          60
+        ],
+        "radius": 22
+      }
+    },
+    {
+      "near": {
+        "cell": [
+          350,
+          200
+        ],
+        "radius": 22
+      }
+    },
+    {
+      "near": {
+        "cell": [
+          250,
+          230
+        ],
+        "radius": 22
+      }
+    },
+    {
+      "near": {
+        "cell": [
+          230,
+          450
+        ],
+        "radius": 22
+      }
+    },
+    {
+      "near": {
+        "cell": [
+          440,
+          120
+        ],
+        "radius": 22
+      }
+    },
+    {
+      "near": {
+        "cell": [
+          330,
+          400
+        ],
+        "radius": 22
+      }
+    },
+    {
+      "near": {
+        "cell": [
+          340,
+          300
+        ],
+        "radius": 22
+      }
+    },
+    {
+      "near": {
+        "cell": [
+          460,
+          40
+        ],
+        "radius": 22
+      }
+    }
+  ],
+  "landmarks": [
+    {
+      "type": "lighthouse",
+      "near": {
+        "cell": [
+          300,
+          430
+        ],
+        "radius": 28
+      }
+    },
+    {
+      "type": "ancient_fortress",
+      "near": {
+        "cell": [
+          420,
+          220
+        ],
+        "radius": 28
+      }
+    },
+    {
+      "type": "world_tree",
+      "near": {
+        "cell": [
+          320,
+          350
+        ],
+        "radius": 24
+      }
+    },
+    {
+      "type": "crystal_spire",
+      "near": {
+        "cell": [
+          430,
+          340
+        ],
+        "radius": 30
+      }
+    },
+    {
+      "type": "hunters_lodge",
+      "near": {
+        "cell": [
+          240,
+          470
+        ],
+        "radius": 28
+      }
+    },
+    {
+      "type": "mountain_hamlet",
+      "near": {
+        "cell": [
+          410,
+          250
+        ],
+        "radius": 32
+      }
+    }
+  ],
+  "budgets": {
+    "regionCount": 8,
+    "settlementCount": 10,
+    "primaryRouteCount": 5,
+    "landmarkCount": 6
+  },
+  "decoration": {
+    "densityPermille": 500
+  }
+}

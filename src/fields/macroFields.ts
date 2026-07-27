@@ -23,9 +23,14 @@ export function buildMacroFields(config: ResolvedWorldConfig): MacroFields {
   // Zone composition (behavior 43, macro.fields v7): per-zone climate
   // character as additive per-cell offset maps. Elevation stays global —
   // one landmass, one sea level, which is what keeps the world seamless.
-  const zoneTemperature = zoneOffsetMap(config, width, height, (zones) => zones.temperatureOffsets);
-  const zoneMoisture = zoneOffsetMap(config, width, height, (zones) => zones.moistureOffsets);
-  const elevation = buildField(config, "macro.elevation", config.macroFields.elevation, null);
+  const zoneTemperature = zoneOffsetMap(config, width, height, (zones) => zones.temperatureOffsets, false);
+  const zoneMoisture = zoneOffsetMap(config, width, height, (zones) => zones.moistureOffsets, false);
+  // Elevation zone offsets (behavior 46) ALWAYS blend, whatever the seam
+  // mode: a hard temperature frontier reads as a border; a hard elevation
+  // cliff line across the map would read as a rendering bug. The wander
+  // still applies first, so coastlines meander before they shelve.
+  const zoneElevation = zoneOffsetMap(config, width, height, (zones) => zones.elevationOffsets, true);
+  const elevation = buildField(config, "macro.elevation", config.macroFields.elevation, zoneElevation);
   const temperature = buildField(config, "macro.temperature", config.macroFields.temperature, zoneTemperature);
 
   // Snow-elevation coupling (macro.fields v2): above the start elevation,
@@ -85,6 +90,7 @@ function zoneOffsetMap(
   width: number,
   height: number,
   pick: (zones: ZoneRules) => readonly number[],
+  alwaysBlend: boolean,
 ): number[] | null {
   const zones = config.zones;
   if (zones === null) return null;
@@ -114,7 +120,7 @@ function zoneOffsetMap(
       map[y * width + x] = offsets[zoneAt(zones, sampleX, sampleY, zoneWidth, zoneHeight)] as number;
     }
   }
-  if (zones.seams === "hard") {
+  if (zones.seams === "hard" && !alwaysBlend) {
     return boxBlur(boxBlur(map, width, height, 2, true), width, height, 2, false);
   }
   return boxBlur(boxBlur(map, width, height, zones.seamBandCells, true), width, height, zones.seamBandCells, false);

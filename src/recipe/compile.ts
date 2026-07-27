@@ -219,6 +219,8 @@ export interface ZoneRules {
   readonly seamJitterCells: number;
   readonly temperatureOffsets: readonly number[];
   readonly moistureOffsets: readonly number[];
+  /** Elevation character per zone (behavior 46): negative drowns to sea. */
+  readonly elevationOffsets: readonly number[];
 }
 
 /**
@@ -257,7 +259,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 21;
+  readonly resolvedConfigFormat: 22;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -740,7 +742,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 21,
+    resolvedConfigFormat: 22,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -803,6 +805,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
             seamJitterCells: 10,
             temperatureOffsets: normalized.zones.entries.map((entry) => entry.temperaturePermille),
             moistureOffsets: normalized.zones.entries.map((entry) => entry.moisturePermille),
+            elevationOffsets: normalized.zones.entries.map((entry) => entry.elevationPermille),
           },
     authoring: {
       stamps: Object.fromEntries(

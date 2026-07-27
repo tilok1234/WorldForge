@@ -223,16 +223,27 @@ export const GENERATOR_VERSION = "0.1.0";
  *     shapes follow authored geography. Grid layout stays the default;
  *     seam modes apply unchanged on top. Zone-free and grid recipes
  *     generate identical layers.
+ * 46: zone elevation (macro.fields 10; user direction "one with islands
+ *     and semi islands") — zone entries gain elevationPermille:
+ *     strongly negative drowns a zone into sea (islands, channels,
+ *     bays), positive raises highland. Sea level stays world-global;
+ *     elevation offsets ALWAYS blend at the border whatever the seam
+ *     mode (coasts shelve, no cliff lines), and the frontier wander
+ *     applies first so coastlines meander. CAUTION on record: routes
+ *     and reachability validators assume one connected landmass —
+ *     inhabited zones must stay land-connected (peninsulas, isthmuses);
+ *     true detached islands are safe only while uninhabited.
+ *     Multi-component routing is an OPEN DECISION for a later behavior.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 45;
+export const GENERATOR_BEHAVIOR_VERSION = 46;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 27;
+export const RECIPE_COMPILER_VERSION = 28;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "recipe.presets": 6,
-  "macro.fields": 9,
+  "macro.fields": 10,
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 14,
