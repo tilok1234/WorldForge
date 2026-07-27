@@ -1,11 +1,15 @@
-# WorldForge — handoff (2026-07-27, mobile session → merge at PC)
+# WorldForge — handoff (2026-07-28, post-merge at PC)
 
-This file was rewritten at the end of a long mobile session so the next
-session (you, at the PC) can merge and continue without archaeology.
-`AGENTS.md` and the `README.md` reading list still apply. HANDOFF.md is
-the tiebreaker over machine-local assistant memory.
+MERGE COMPLETE 2026-07-28: main fast-forwarded to the mobile branch
+(d840a4e) and pushed; 202 tests green on the PC; update-golden a no-op;
+canonical chain reproduced the container numbers exactly (flood 33845
+both consumers, 0 errors); the-broken-isles regenerated locally and
+verified (flood 73008) then APPROVED. Section 1 below is kept for the
+record but is DONE. `AGENTS.md` and the `README.md` reading list still
+apply. HANDOFF.md is the tiebreaker over machine-local assistant
+memory.
 
-## 1. Merge instructions (do this first at the PC)
+## 1. Merge instructions (COMPLETED 2026-07-28 — kept for the record)
 
 Everything from the mobile session lives on ONE branch, fully pushed:
 
@@ -106,11 +110,13 @@ through version stamps).
 - `the-eight-lands` (medium, seed 80808): the zone-composition pilot,
   now 8 ANCHOR-SHAPED zones with hard wandering seams. Approved.
 
-**Verdict open:**
 - `the-broken-isles` (medium, seed 90909): archipelago pilot — two sea
   zones carve a west channel + south bay, NW island wild/uninhabited,
   mainland + peninsula carry all 10 near-pinned settlements and 6
-  near-pinned landmarks (flood 73008, generation clean).
+  near-pinned landmarks (flood 73008, generation clean). APPROVED
+  2026-07-28 at the PC ("i think this works tbh") after the merge
+  verification reproduced the container numbers exactly. Zone arc
+  behaviors 43-46 are now fully verdict-ratified.
 
 **Mobile viewer artifact** (pan/zoom, phone-friendly; hollows + Eight
 Lands + Broken Isles):
