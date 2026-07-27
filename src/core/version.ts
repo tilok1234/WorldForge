@@ -86,7 +86,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "landmarks.stamps": 5,
   "decoration.props": 7,
   "decoration.pois": 9,
-  "adapter.tileforge": 5,
+  "adapter.tileforge": 6,
 };
 
 /**
@@ -98,5 +98,6 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
  * (walkable cells stay level 0), rendered by the §2.8 cliff pass.
  * 5: mountain water — waterfall decals on stream drop lips, sparse rapids
  * on terrace runs.
+ * 6: two-tile cascades — the plunge cell below each lip falls too.
  */
-export const TILEFORGE_ADAPTER_VERSION = 5;
+export const TILEFORGE_ADAPTER_VERSION = 6;

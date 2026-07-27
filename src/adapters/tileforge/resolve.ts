@@ -583,19 +583,23 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
       if (composed.hydro.isRiver[index] !== 1 || decal[index] !== 0) continue;
       const x = index % width;
       const y = Math.trunc(index / width);
-      let drop = false;
+      let plunge = -1;
       for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
         const nx = x + dx;
         const ny = y + dy;
         if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
         const neighbor = ny * width + nx;
         if (composed.hydro.isRiver[neighbor] === 1 && (elev[neighbor] as number) < (elev[index] as number)) {
-          drop = true;
+          plunge = neighbor;
           break;
         }
       }
-      if (drop && waterfallId !== undefined) {
+      if (plunge !== -1 && waterfallId !== undefined) {
+        // Two-tile cascade: the lip and the plunge pool below it both fall.
         decal[index] = waterfallId;
+        if (decal[plunge] === 0) {
+          decal[plunge] = waterfallId;
+        }
       } else if ((elev[index] as number) >= 1 && rapidsId !== undefined && (x * 7 + y * 13) % 5 === 0) {
         decal[index] = rapidsId;
       }
