@@ -695,7 +695,7 @@ export function planPois(
     // stands, the fields never came in. Lone buildings between settlements
     // make the country read inhabited rather than four set-pieces.
     if (
-      (material === grass || material === dryGrass || material === mudValue) &&
+      (material === grass || material === dryGrass || material === mudValue || material === snow) &&
       !capped("poi.abandoned_homestead") &&
       variant >= 120 &&
       variant < 240 &&

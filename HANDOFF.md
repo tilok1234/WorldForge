@@ -41,14 +41,13 @@ size-scaled (tiny 7, others 14 — the flat 14 starved tiny to ~6 of 18
 budgeted POIs; small+ layers identical). fen-hollow v2: rank-2 pinned
 outpost mid-north via behavior-38 near-pin (the tiny-fusion gotcha
 dodge), 3rd landmark (fortress across_river), densityPermille 550;
-6→12 POIs, floods clean; organic pass CONTINUES: behavior 41 wilderness variety (species accents + poi.abandoned_homestead/poi.lone_cottage lone buildings, homestead accepts mud). Canonical flood 34058->33845 (ambient rerolls). VERDICT OPEN on fen v3, frost/dust hollows queue
-next on approval. Mobile viewer artifact live (three hollows, pan/
+6→12 POIs, floods clean; organic pass CONTINUES: behavior 41 wilderness variety (species accents + poi.abandoned_homestead/poi.lone_cottage lone buildings, homestead accepts mud). Canonical flood 34058->33845 (ambient rerolls). fen v3 delivered; FROST-HOLLOW v2 done same pattern (behavior 42, decoration.pois 15: homestead accepts snow; pinned outpost 24,36, fortress high_ground, 8->20 POIs, flood 2752). VERDICT OPEN on fen v3 + frost v2; dust-hollow queues next. Mobile viewer artifact live (three hollows, pan/
 zoom): https://claude.ai/code/artifact/7850ac94-e0e9-466a-8ffc-4bee23adeff3
 (rebuild: scratchpad build-viewer.mjs). Richened 256² fen/waste
 recipes committed but NOT approved — revert or iterate on user word.
-Versions: behavior 41, recipe compiler 24, artifact format 8,
+Versions: behavior 42, recipe compiler 24, artifact format 8,
 resolved-config 18, terrain.texture 1, decoration.props 10,
-decoration.pois 14. 191 tests, all green. Standing commit+push
+decoration.pois 15. 191 tests, all green. Standing commit+push
 authorization held this whole arc — re-confirm with the user per
 policy.
 

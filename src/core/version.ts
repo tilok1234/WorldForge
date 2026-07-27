@@ -196,8 +196,12 @@ export const GENERATOR_VERSION = "0.1.0";
  *     failed-farm dressing; grass/dry) and poi.lone_cottage (cottage +
  *     lived-in dressing; grass), cap 2 each, away from settlements.
  *     LAYER-VISIBLE on every world (ambient rerolls + new POIs).
+ * 42: snowed-in homesteads (decoration.pois 15; frost-hollow organic
+ *     pass) — poi.abandoned_homestead accepts snow ground: the frozen
+ *     north's version of the failed farm. Snow worlds gain the kind;
+ *     other worlds' layers change only through the version-bump reroll.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 41;
+export const GENERATOR_BEHAVIOR_VERSION = 42;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 24;
@@ -213,7 +217,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "landmarks.stamps": 6,
   "terrain.texture": 1,
   "decoration.props": 10,
-  "decoration.pois": 14,
+  "decoration.pois": 15,
   "density.presets": 1,
   "authoring.overrides": 1,
   "adapter.tileforge": 6,
