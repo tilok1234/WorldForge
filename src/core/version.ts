@@ -73,8 +73,12 @@ export const GENERATOR_VERSION = "0.1.0";
  *     dens, pass memorials beside the old trails, steam vents where the
  *     mountain breathes; steam vents are the one decal allowed on rock
  *     (spec substrate; hazard, never walk-granting).
+ * 29: the thicket (decoration.props 8, macro.biomes 4) — rock gains its
+ *     own scatter table (impassable, so blocking costs nothing), every
+ *     biome dials up again, overlays widen, zones multiply, and rocky
+ *     knolls rise 18 -> 30.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 28;
+export const GENERATOR_BEHAVIOR_VERSION = 29;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 14;
@@ -83,12 +87,12 @@ export const RECIPE_COMPILER_VERSION = 14;
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "recipe.presets": 2,
   "macro.fields": 4,
-  "macro.biomes": 3,
+  "macro.biomes": 4,
   "hydrology.water": 2,
   "routes.graph": 7,
   "settlements.plans": 7,
   "landmarks.stamps": 5,
-  "decoration.props": 7,
+  "decoration.props": 8,
   "decoration.pois": 10,
   "adapter.tileforge": 6,
 };

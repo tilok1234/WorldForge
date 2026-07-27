@@ -345,7 +345,7 @@ const BIOME_RULES: { readonly [key in SizePreset]: BiomeRules } = {
   small: {
     minRegionCells: 80,
     smoothingPasses: 8,
-    knollCount: 18,
+    knollCount: 30,
     thresholds: {
       rockElevationMin: 650,
       snowTemperatureMax: 320,

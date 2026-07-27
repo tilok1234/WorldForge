@@ -201,7 +201,17 @@ const SCATTER_SPECIES: Readonly<Record<string, readonly SpeciesWeight[]>> = {
     { key: "prop.flowers", weight: 20 },
     { key: "prop.bush", weight: 20 },
   ],
-  "terrain.snow": [{ key: "prop.snow_shrub", weight: 100 }],
+  "terrain.snow": [
+    { key: "prop.snow_shrub", weight: 72 },
+    { key: "prop.fallen_log", weight: 12 },
+    { key: "prop.stump", weight: 16 },
+  ],
+  "terrain.rock": [
+    { key: "prop.rock_outcrop", weight: 40 },
+    { key: "prop.boulder", weight: 30 },
+    { key: "prop.dead_tree", weight: 14 },
+    { key: "prop.pine", weight: 16 },
+  ],
   "terrain.mud": [
     { key: "prop.roots", weight: 60 },
     { key: "prop.reeds", weight: 40 },
@@ -215,20 +225,21 @@ const SCATTER_SPECIES: Readonly<Record<string, readonly SpeciesWeight[]>> = {
 /** Forest patch-roll base chance permille (before the patch gate). */
 const FOREST_BASE_PERMILLE: Readonly<Record<string, number>> = {
   "terrain.grass": 900,
-  "terrain.dry_grass": 430,
-  "terrain.snow": 780,
-  "terrain.rock": 200,
-  "terrain.mud": 520,
+  "terrain.dry_grass": 520,
+  "terrain.snow": 850,
+  "terrain.rock": 340,
+  "terrain.mud": 620,
   "terrain.swamp": 520,
 };
 
 /** Flat scatter chance permille per biome. */
 const SCATTER_PERMILLE: Readonly<Record<string, number>> = {
-  "terrain.grass": 58,
-  "terrain.dry_grass": 48,
-  "terrain.snow": 32,
-  "terrain.mud": 55,
-  "terrain.swamp": 62,
+  "terrain.grass": 72,
+  "terrain.dry_grass": 62,
+  "terrain.snow": 50,
+  "terrain.rock": 74,
+  "terrain.mud": 70,
+  "terrain.swamp": 72,
 };
 
 export interface DecorationResult {
@@ -411,13 +422,13 @@ export function decorateWorld(
       const material = grid[index] as number;
       if (material === grassValue || material === dryGrassValue) {
         const patch = latticePermille(overlayField, x, y, 9, 1);
-        if (patch > 660 && overlayField.permilleAt(x, y, 2) < 720) {
+        if (patch > 620 && overlayField.permilleAt(x, y, 2) < 780) {
           tallGrassLayer[index] = 1;
           overlayCount += 1;
         }
       } else if (material === rockValue) {
         const patch = latticePermille(overlayField, x, y, 9, 3);
-        if (patch > 730 && overlayField.permilleAt(x, y, 4) < 600) {
+        if (patch > 660 && overlayField.permilleAt(x, y, 4) < 700) {
           mossLayer[index] = 1;
           overlayCount += 1;
         }
@@ -702,7 +713,7 @@ export function decorateWorld(
       },
     ];
     const zones = channel(seed, "decor.zones");
-    const zoneTarget = Math.max(3, Math.trunc(width / 22));
+    const zoneTarget = Math.max(4, Math.trunc(width / 16));
     const centers: Array<readonly [number, number]> = [];
     const attempts = zoneTarget * 30;
     for (let attempt = 0; attempt < attempts && centers.length < zoneTarget; attempt += 1) {
@@ -722,7 +733,7 @@ export function decorateWorld(
       }
       if (!spaced) continue;
       const kind = eligible[zones.intAt(attempt, 2, 0, eligible.length, 0)] as ZoneKind;
-      const radius = 8 + zones.intAt(attempt, 3, 0, 7, 0);
+      const radius = 9 + zones.intAt(attempt, 3, 0, 8, 0);
       const weights = kind.species.map((s) => s.weight);
       for (let dy = -radius; dy <= radius; dy += 1) {
         for (let dx = -radius; dx <= radius; dx += 1) {
