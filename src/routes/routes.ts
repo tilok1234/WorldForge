@@ -460,6 +460,39 @@ function pickDestinations(
       config.routes.minDestinationSpacing,
     );
   }
+  //   2b. quadrant floors (routes.graph v10): pure score competition lets
+  //       selections cluster into the best-scoring bands — the first 512
+  //       map left whole quadrants settlement-free. Each map quadrant gets
+  //       at least quadrantMin settlements (terrain permitting) before the
+  //       open competition, capped by the recipe's settlement budget.
+  if (config.routes.quadrantMin > 0) {
+    const halfW = Math.trunc(fields.width / 2);
+    const halfH = Math.trunc(fields.height / 2);
+    const settlementsTaken = (): number =>
+      taken.filter((d) => d.kind === "settlement_candidate").length;
+    for (let quadrant = 0; quadrant < 4; quadrant += 1) {
+      const qx0 = quadrant % 2 === 0 ? 0 : halfW;
+      const qy0 = quadrant < 2 ? 0 : halfH;
+      const inQuadrant = (index: number): boolean => {
+        const x = index % fields.width;
+        const y = Math.trunc(index / fields.width);
+        return x >= qx0 && x < qx0 + halfW && y >= qy0 && y < qy0 + halfH;
+      };
+      const have = taken.filter(
+        (d) => d.kind === "settlement_candidate" && inQuadrant(d.cell),
+      ).length;
+      const room = config.budgets.settlementCount - settlementsTaken();
+      const want = Math.min(config.routes.quadrantMin - have, room);
+      if (want <= 0) continue;
+      bySpacing(
+        scored.filter((candidate) => inQuadrant(candidate.index)),
+        settlementsTaken() + want,
+        taken,
+        "settlement_candidate",
+        config.routes.minDestinationSpacing,
+      );
+    }
+  }
   bySpacing(scored, config.budgets.settlementCount, taken, "settlement_candidate", config.routes.minDestinationSpacing);
 
   // Landmark slots honor their relational specs (W5 solver). Unsatisfiable

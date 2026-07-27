@@ -36,10 +36,11 @@ describe("recipe compiler", () => {
     assert.equal(config.macroFields.elevation.octaves[0]?.cellSizeLog2, 8);
     assert.equal(config.water.riverAccumulationThreshold, 800);
     assert.equal(config.water.majorRiverAccumulationThreshold, 2000);
-    assert.equal(config.routes.minDestinationSpacing, 44);
+    assert.equal(config.routes.minDestinationSpacing, 40);
     assert.equal(config.routes.remoteQuarterMin, 4);
+    assert.equal(config.routes.quadrantMin, 2);
     assert.equal(config.settlements.cityCount, 2);
-    assert.equal(config.settlements.townCount, 4);
+    assert.equal(config.settlements.townCount, 5);
     assert.equal(config.biomes.minRegionCells, 240);
     // POI density per cell falls versus small (density doctrine).
     const small = compileRecipe(normalized(1, "small", "cold_coastal"));
@@ -61,7 +62,7 @@ describe("recipe compiler", () => {
     assert.equal(config.dependencies.tileforge?.packageId, "forest-a5baf52-seed103991");
     assert.match(config.dependencies.tileforge?.packageSha256 ?? "", /^3e58c902/);
     assert.deepEqual(config.passes, ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "decoration.props", "adapter.tileforge"]);
-    assert.equal(config.resolvedConfigFormat, 11);
+    assert.equal(config.resolvedConfigFormat, 12);
     assert.equal(config.water.seaLevelPermille, 310);
     assert.equal(config.macroFields.temperatureLapse.startElevationPermille, 640);
     assert.equal(config.routes.streetWidth, 2);

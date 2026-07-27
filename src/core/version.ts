@@ -93,11 +93,21 @@ export const GENERATOR_VERSION = "0.1.0";
  *     half the map is still one landform, sublinear scaling everywhere
  *     else (river thresholds, spacing, settlement geometry, POI base
  *     150) so bigger reads as roomier country, never denser cities.
+ * 33: the connected medium (routes.graph 10, settlements.plans 9) — the
+ *     first-medium verdict ("a lot more settlements and roads connecting
+ *     the whole map"): medium towns 4 -> 5, shortcut trails 6 -> 10 with
+ *     longer span, destination spacing 44 -> 40; NEW quadrant floors
+ *     (RouteRules.quadrantMin, resolved-config format 12) guarantee every
+ *     map quadrant a minimum settlement presence — score competition
+ *     alone left whole 512-map quadrants empty. quadrantMin 0 on
+ *     tiny/small keeps approved selections byte-identical. The three
+ *     medium recipes push settlement/route/landmark budgets so the web
+ *     spans the map. Prop/POI density doctrine untouched.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 32;
+export const GENERATOR_BEHAVIOR_VERSION = 33;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 16;
+export const RECIPE_COMPILER_VERSION = 17;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -105,8 +115,8 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 5,
   "macro.biomes": 6,
   "hydrology.water": 3,
-  "routes.graph": 9,
-  "settlements.plans": 8,
+  "routes.graph": 10,
+  "settlements.plans": 9,
   "landmarks.stamps": 5,
   "decoration.props": 8,
   "decoration.pois": 11,

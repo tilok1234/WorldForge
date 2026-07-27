@@ -101,6 +101,13 @@ export interface RouteRules {
   readonly shortcutTrailSpan: number;
   /** Settlements reserved for the capital-remote map quarter (v7). */
   readonly remoteQuarterMin: number;
+  /**
+   * Minimum settlements per map quadrant (v10). Score competition alone
+   * clusters selections into the best-scoring bands — visible on 512 maps
+   * where whole quadrants stayed empty. 0 disables (tiny/small keep their
+   * approved selections byte-identical).
+   */
+  readonly quadrantMin: number;
 }
 
 export interface SettlementRules {
@@ -160,7 +167,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 11;
+  readonly resolvedConfigFormat: 12;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -309,6 +316,7 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     shortcutTrailMax: 2,
     shortcutTrailSpan: 40,
     remoteQuarterMin: 0,
+    quadrantMin: 0,
   },
   small: {
     stepCost: 10,
@@ -325,24 +333,28 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     shortcutTrailMax: 4,
     shortcutTrailSpan: 80,
     remoteQuarterMin: 3,
+    quadrantMin: 0,
   },
   medium: {
-    // Spacing/spans grow sublinearly with the 2x edge (tiny->small
-    // precedent): the map gets roomier, not proportionally emptier.
+    // Spacing grows sublinearly with the 2x edge, but the NETWORK scales
+    // with the map (the first-medium verdict: "a lot more settlements and
+    // roads connecting the whole map"): shortcuts more than double so the
+    // road web actually spans the extra country.
     stepCost: 10,
     slopeCostPerPermille: 1,
     networkRiverCrossCost: 70,
     majorRiverCrossCost: 120,
     shallowWaterCrossCost: 160,
-    minDestinationSpacing: 44,
+    minDestinationSpacing: 40,
     streetWidth: 2,
     highwayWidth: 3,
     detourWarnRatioPermille: 1800,
     edgePenaltyRadius: 18,
     edgePenaltyCost: 40,
-    shortcutTrailMax: 6,
-    shortcutTrailSpan: 120,
+    shortcutTrailMax: 10,
+    shortcutTrailSpan: 140,
     remoteQuarterMin: 4,
+    quadrantMin: 2,
   },
 };
 
@@ -383,11 +395,13 @@ const SETTLEMENT_RULES: { readonly [key in SizePreset]: SettlementRules } = {
     approachMaxLength: 8, townPlazaRadius: 3, outpostPlazaRadius: 1, streetArmLength: 14,
   },
   medium: {
-    // Settlements grow modestly, not with the map (density doctrine):
-    // medium worlds read as roomier country, not denser cities.
+    // Individual settlements grow modestly (density doctrine: roomier
+    // country, not denser cities) but the map holds MORE of them — the
+    // first-medium verdict asked for a settlement web spanning the whole
+    // map, so towns rise to 5 and recipes push settlementCount toward 16.
     cityCount: 2,
     cityRadius: 30, cityLots: 84, cityPlazaRadius: 5, cityStreetArmLength: 24,
-    cityRingRadius: 13, townCount: 4,
+    cityRingRadius: 13, townCount: 5,
     townRadius: 22, outpostRadius: 11, townLots: 40, outpostLots: 10,
     approachMaxLength: 8, townPlazaRadius: 3, outpostPlazaRadius: 1, streetArmLength: 16,
   },
@@ -452,7 +466,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 11,
+    resolvedConfigFormat: 12,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,

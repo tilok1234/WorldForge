@@ -55867,12 +55867,12 @@
   ],
   "formatVersion": 8,
   "generator": {
-    "generationIdentitySha256": "e1a74d3f91f21a1ca50470405e5989ffc3032225a19f502bf1d1d5b40aa2907c",
-    "generatorBehaviorVersion": 32,
+    "generationIdentitySha256": "72a42b68803c0fe9267d1066d52fce332cdb2735731170a477435346fbfa46d2",
+    "generatorBehaviorVersion": 33,
     "name": "worldforge",
-    "recipeCompilerVersion": 16,
+    "recipeCompilerVersion": 17,
     "recipeSha256": "a13c0fc8a9a44529e8eac0b35601f5f85b88a0429f358737400e0c739e3ff76f",
-    "resolvedConfigSha256": "518bc9ff65a80b344c6fa703c70ecb373dd5252bf60651160b4e42c958f46358",
+    "resolvedConfigSha256": "4f07985ee3a49cf6d41c8e26eb9c15daeaf12098b58b581ead5f2b1272e4e347",
     "seed": 1,
     "version": "0.1.0"
   },

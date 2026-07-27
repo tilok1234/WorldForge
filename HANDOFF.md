@@ -10,12 +10,12 @@ file. HANDOFF.md is the tiebreaker.
 ## Where the project stands
 
 W0–W9 complete, ALIVE-WORLDS ARC complete (behaviors 15–30), VARIETY ARC
-underway (behaviors 31–32). Versions: behavior 32, recipe compiler 16,
-artifact format 8, resolved-config 11 (NOT bumped for behavior 32: the
-medium preset added no fields, and the doctrine says format bumps track
-shape changes — the earlier prediction of a bump was wrong), TileForge
-adapter 6. 153 tests. Standing commit+push authorization held this whole
-arc — re-confirm with the user per policy.
+underway (behaviors 31–33). Versions: behavior 33, recipe compiler 17,
+artifact format 8, resolved-config 12 (bumped by behavior 33's
+RouteRules.quadrantMin field — behavior 32 alone added no fields and
+correctly kept 11), TileForge adapter 6. 153 tests. Standing
+commit+push authorization held this whole arc — re-confirm with the
+user per policy.
 
 ### The canonical world (fixtures/recipes/small-cold-coastal.json, seed 103991)
 
@@ -62,17 +62,21 @@ composeWorld ~1-2s per small world).
 
 **NEXT on the variety arc**: ALL NINE archetypes approved 2026-07-27
 ("these seem great" covered the hearth-hollow revision). MEDIUM SIZE
-PRESET SHIPPED (behavior 32): 512×512 in 16×16 chunks, octaves shifted
-one level (largest still spans half the map), sublinear scaling on
-river thresholds (800/2000), spacing (44), settlement geometry
-(cityLots 84, townCount 4), POI base 150 — per-cell POI density FALLS
-vs small, honoring density doctrine. Three medium worlds built +
-verified (floods equal, 0 errors): warm-vale-medium (balanced),
-the-old-war-medium (dense), frontier-sparse-medium (sparse) — one per
-density preset. Overviews sent 2026-07-27; verdicts PENDING. Note:
-warm-vale-medium's coastal lighthouse sat on a lake shore (map has no
-sea at seed 424242) — acceptable fallback, flag to user. On verdicts:
-`large` preset next; new climates last.
+PRESET SHIPPED (behavior 32) then RETUNED on the first medium verdict
+"very empty... a lot more settlements and roads connecting the whole
+map" (behavior 33): townCount 5, shortcuts 10/span 140, spacing 40,
+recipe budgets pushed (settlements 11/15/16, routes 5/6/7, landmarks
+3/6/8), and NEW quadrant floors — RouteRules.quadrantMin (0 tiny/small,
+2 medium; resolved-config format 12) reserves a per-quadrant minimum
+because pure score competition left whole 512-map quadrants empty
+(frontier's west had ZERO settlements before; per-quadrant spread now
+4/2/2/3, 4/5/4/2, 6/6/2/2). POI/prop density doctrine untouched. All
+three verified (floods equal, 0 errors), canonical still 33887.
+Overviews sent 2026-07-27 (second round); verdicts PENDING. Note:
+warm-vale-medium's coastal lighthouse sits on a lake shore (no sea at
+seed 424242) — acceptable fallback, flagged. On verdicts: `large`
+preset next (quadrant floors should scale — consider quadrantMin 3-4 or
+finer grid at 1024); new climates last.
 
 ## Density doctrine (IMPORTANT — two standing user verdicts)
 

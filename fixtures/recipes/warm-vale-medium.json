@@ -10,12 +10,14 @@
     { "type": "world_tree", "relation": "far_from_town" },
     { "type": "lighthouse", "relation": "coastal" },
     { "type": "ruined_city", "relation": "high_ground" },
-    { "type": "crystal_spire", "relation": "high_ground" }
+    { "type": "crystal_spire", "relation": "high_ground" },
+    { "type": "hunters_lodge", "relation": "remote_corner" },
+    { "type": "mountain_hamlet", "relation": "high_ground" }
   ],
   "budgets": {
     "regionCount": 4,
-    "settlementCount": 11,
-    "primaryRouteCount": 3,
-    "landmarkCount": 4
+    "settlementCount": 15,
+    "primaryRouteCount": 6,
+    "landmarkCount": 6
   }
 }
