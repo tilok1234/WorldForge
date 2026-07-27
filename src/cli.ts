@@ -20,6 +20,7 @@ import {
   compileRecipe,
   generationIdentity,
   resolvedConfigIdentity,
+  type ResolvedWorldConfig,
 } from "./recipe/compile.js";
 import { generateWorldDetailed } from "./generation/generate.js";
 import { validateArtifact } from "./validation/validateArtifact.js";
@@ -241,7 +242,7 @@ function runSmoke(): number {
   const config = compileRecipe(normalized);
   const result = generateWorldDetailed(normalized, config);
   const artifact = result.artifact;
-  const report = validateArtifact(artifact, { minRegionCells: config.biomes.minRegionCells });
+  const report = validateArtifact(artifact, { minRegionCells: config.biomes.minRegionCells, authoredCells: authoredCellsOf(config) });
   if (report.status !== "pass" || result.composed.hydro.topologyErrors.length > 0 || result.composed.routesResult.errors.length > 0) {
     process.stderr.write(
       `smoke: FAIL\n${[...report.errors, ...result.composed.hydro.topologyErrors, ...result.composed.routesResult.errors].join("\n")}\n`,
@@ -330,7 +331,7 @@ function runGenerate(argv: readonly string[]): number {
   const config = compileRecipe(normalized);
   const generated = generateWorldDetailed(normalized, config);
   const artifact = generated.artifact;
-  const report = validateArtifact(artifact, { minRegionCells: config.biomes.minRegionCells });
+  const report = validateArtifact(artifact, { minRegionCells: config.biomes.minRegionCells, authoredCells: authoredCellsOf(config) });
   if (report.status !== "pass" || generated.composed.hydro.topologyErrors.length > 0 || generated.composed.routesResult.errors.length > 0) {
     process.stderr.write(
       `validation FAILED; nothing written\n${[...report.errors, ...generated.composed.hydro.topologyErrors, ...generated.composed.routesResult.errors].join("\n")}\n`,
@@ -366,7 +367,7 @@ function runRenderMacro(argv: readonly string[]): number {
   const normalized = normalizeRecipe(loaded);
   const config = compileRecipe(normalized);
   const result = generateWorldDetailed(normalized, config);
-  const report = validateArtifact(result.artifact, { minRegionCells: config.biomes.minRegionCells });
+  const report = validateArtifact(result.artifact, { minRegionCells: config.biomes.minRegionCells, authoredCells: authoredCellsOf(config) });
   const topologyErrors = [...result.composed.hydro.topologyErrors, ...result.composed.routesResult.errors];
   if (report.status !== "pass" || topologyErrors.length > 0) {
     process.stderr.write(
@@ -700,7 +701,7 @@ function runExportGamePack(argv: readonly string[]): number {
     process.stderr.write(`generation FAILED; nothing packed\n${gateErrors.join("\n")}\n`);
     return 1;
   }
-  const report = validateArtifact(result.artifact, { minRegionCells: config.biomes.minRegionCells });
+  const report = validateArtifact(result.artifact, { minRegionCells: config.biomes.minRegionCells, authoredCells: authoredCellsOf(config) });
   if (report.status !== "pass") {
     process.stderr.write(`validation FAILED; nothing packed\n${report.errors.join("\n")}\n`);
     return 1;
@@ -1014,6 +1015,14 @@ function loadRecipe(file: string | undefined): WorldRecipe | number {
     );
   }
   return validation.recipe;
+}
+
+
+/** Material-override cells for the validator's authored-singleton exemption. */
+function authoredCellsOf(config: ResolvedWorldConfig): ReadonlyArray<readonly [number, number]> {
+  return config.authoring.cellOverrides
+    .filter((override) => override.material !== null)
+    .map((override) => [override.cell[0], override.cell[1]] as const);
 }
 
 function exitWith(code: number): void {

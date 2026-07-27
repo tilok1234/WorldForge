@@ -10,6 +10,13 @@ export interface ValidationReport {
 export interface ValidationOptions {
   /** Regions below this size warn; one-cell regions are always errors. */
   readonly minRegionCells?: number;
+  /**
+   * Authored material-override cells (behavior 36). A one-cell region that
+   * is exactly an authored spot decision is deliberate, not confetti — each
+   * authored cell whose material differs from all four neighbours excuses
+   * one one-cell region (as a warning); any excess still errors.
+   */
+  readonly authoredCells?: ReadonlyArray<readonly [number, number]>;
 }
 
 const HEX64 = /^[0-9a-f]{64}$/;
@@ -209,6 +216,35 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
   }
 
   if (errors.length === 0 && artifact.regions.length > 0) {
+    // Authored singletons: override cells isolated in the material layer.
+    let authoredSingletons = 0;
+    if (options.authoredCells !== undefined && options.authoredCells.length > 0) {
+      const material = new Uint16Array(width * height);
+      for (const chunk of artifact.chunks) {
+        const originX = (chunk.coord[0] as number) * chunkWidth;
+        const originY = (chunk.coord[1] as number) * chunkHeight;
+        for (let ly = 0; ly < chunkHeight; ly += 1) {
+          const row = chunk.layers.material[ly] as readonly number[];
+          for (let lx = 0; lx < chunkWidth; lx += 1) {
+            material[(originY + ly) * width + originX + lx] = row[lx] as number;
+          }
+        }
+      }
+      for (const [x, y] of options.authoredCells) {
+        const own = material[y * width + x] as number;
+        let isolated = true;
+        for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+          if ((material[ny * width + nx] as number) === own) {
+            isolated = false;
+            break;
+          }
+        }
+        if (isolated) authoredSingletons += 1;
+      }
+    }
     let regionCellTotal = 0;
     for (const region of artifact.regions) {
       regionCellTotal += region.cellCount;
@@ -216,7 +252,12 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
         errors.push(`region ${region.id} names biome "${region.biome}" outside the palette`);
       }
       if (region.cellCount === 1) {
-        errors.push(`region ${region.id} is one-cell biome confetti`);
+        if (authoredSingletons > 0) {
+          authoredSingletons -= 1;
+          warnings.push(`region ${region.id} is a one-cell authored override`);
+        } else {
+          errors.push(`region ${region.id} is one-cell biome confetti`);
+        }
       } else if (options.minRegionCells !== undefined && region.cellCount < options.minRegionCells) {
         warnings.push(
           `region ${region.id} (${region.biome}) has ${region.cellCount} cells, below the ${options.minRegionCells}-cell minimum`,

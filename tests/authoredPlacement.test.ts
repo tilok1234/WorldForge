@@ -4,6 +4,7 @@ import { validateRecipe } from "../src/recipe/validate.js";
 import { normalizeRecipe } from "../src/recipe/normalize.js";
 import { compileRecipe } from "../src/recipe/compile.js";
 import { generateWorldDetailed } from "../src/generation/generate.js";
+import { validateArtifact } from "../src/validation/validateArtifact.js";
 import { loadWorldArtifact } from "../src/consumers/typescript/loader.js";
 
 /** A minimal valid per-recipe stamp: a 5x5 gravel platform. */
@@ -171,6 +172,31 @@ describe("authored placement: cell overrides", () => {
     assert.ok(loaded.ok);
     assert.equal(loaded.world.materialAt(grassCell[0], grassCell[1]), "terrain.gravel");
     assert.equal(loaded.world.propAt(propCell[0], propCell[1]), null);
+  });
+
+  it("excuses an isolated authored cell from the confetti gate, but only when declared", () => {
+    const { result, config } = generate({
+      ...BASE,
+      cellOverrides: [{ cell: [32, 32], material: "terrain.cobble" }],
+    });
+    const undeclared = validateArtifact(result.artifact, {
+      minRegionCells: config.biomes.minRegionCells,
+    });
+    const declared = validateArtifact(result.artifact, {
+      minRegionCells: config.biomes.minRegionCells,
+      authoredCells: [[32, 32]],
+    });
+    // The isolated cobble cell is a one-cell region either way; only the
+    // declared authored cell turns the error into a warning.
+    if (undeclared.status === "fail") {
+      assert.match(undeclared.errors.join("\n"), /one-cell biome confetti/);
+      assert.equal(declared.status, "pass");
+      assert.match(declared.warnings.join("\n"), /one-cell authored override/);
+    } else {
+      // Seed placed the override beside same-material cells: still a pass,
+      // and the declared variant must agree.
+      assert.equal(declared.status, "pass");
+    }
   });
 
   it("rejects water materials and duplicate cells at validation", () => {

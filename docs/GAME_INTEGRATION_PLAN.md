@@ -208,13 +208,33 @@ shared stamp library.
 
 ## 5. Phases
 
-| Phase | Work | Where | Depends on |
+| Phase | Work | Where | Status |
 |---|---|---|---|
-| 1 | Ratify this contract (designer review of §3–§4) | this doc | §6 decisions |
-| 2 | `export-game-pack` CLI + tests | WorldForge | Phase 1 |
-| 3 | Authored placement extension | WorldForge | Phase 1 (independent of 2) |
-| 4 | `addons/worldforge_importer/` in the game repo | game repo (separately scoped task) | Phase 2; game's Gate 1 timing |
-| 5 | Slice-zone drafting: generate candidates, curate via §4, export | both | Phases 2–4 |
+| 1 | Ratify this contract (designer review of §3–§4) | this doc | ✅ ratified 2026-07-27 |
+| 2 | `export-game-pack` CLI + tests | WorldForge | ✅ **implemented 2026-07-27** (behavior-neutral; `src/gamepack/`, `tests/gamepack.test.ts`) |
+| 3 | Authored placement extension | WorldForge | ✅ **implemented 2026-07-27** (behavior 36; landmark `at`/`near`, `authoredStamps`, `cellOverrides`; `tests/authoredPlacement.test.ts`) |
+| 4 | `addons/worldforge_importer/` in the game repo | game repo (separately scoped task) | pending; post-Gate-1 |
+| 5 | Slice-zone drafting: generate candidates, curate via §4, export | both | pending; needs 4 + dusk pin |
+
+Implementation notes (2026-07-27):
+
+- **Settlement pins are deferred** to a follow-up behavior. §4.1's "settlements
+  gain the same fields" collides with the phased settlement selection
+  (capital → remote quarter → sector floors → competition, routes.graph
+  v10/v11): a pinned settlement must decide its rank interaction explicitly
+  (does a pin become the capital? does it satisfy a sector floor?). That is
+  its own solver design, not a ride-along — landmark pins, per-recipe stamps,
+  and cell overrides cover the progression-critical placement lane the
+  handcrafted contract needs first (portals, dungeons, quest anchors are
+  landmark/POI-shaped).
+- Landmark pins select before free competition; a failed pin is a named
+  generation error, never a relocation.
+- The Godot half of the verify chain (godot-consumer + verify_world.gd) for
+  the behavior-36 commit is **pending on a desktop session** — this change
+  landed from a container without Godot. TS-side proof: canonical
+  small-cold-coastal flood 33890 (unchanged), 169 tests green. Run
+  `node dist/tools/godot-consumer.js --world <dir>` on the canonical world
+  before the next visual-facing change.
 
 Phases 2 and 3 are ordinary WorldForge milestones (tests, golden fixtures,
 verify chain, version bumps). Phase 4 must be separately scoped by the user
