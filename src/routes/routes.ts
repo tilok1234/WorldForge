@@ -169,12 +169,31 @@ export function buildRoutes(
     const byLength = [...edges].sort((p, q) => q.weight - p.weight || p.b - q.b);
     const highwaySet = new Set(byLength.slice(0, highwayCount));
 
+    // Future landmark stamp footprints (plus a one-cell apron): roads must
+    // not cross them, or the stamp honestly refuses to place later.
+    const landmarkAvoid = new Set<number>();
+    for (let slot = 0; slot < landmarks.length; slot += 1) {
+      const spec = config.landmarkSpecs[slot] ?? { type: "ancient_fortress", relation: null };
+      const stampSpec = loadStamp(spec.type);
+      const anchorCell = (landmarks[slot] as Destination).cell;
+      const originX = (anchorCell % width) - stampSpec.anchorX;
+      const originY = Math.trunc(anchorCell / width) - stampSpec.anchorY;
+      for (let sy = -1; sy <= stampSpec.height; sy += 1) {
+        for (let sx = -1; sx <= stampSpec.width; sx += 1) {
+          const cx = originX + sx;
+          const cy = originY + sy;
+          if (cx < 0 || cy < 0 || cx >= width || cy >= height) continue;
+          landmarkAvoid.add(cy * width + cx);
+        }
+      }
+    }
+
     for (const edge of edges) {
       connectedPairs.add(`${Math.min(edge.a, edge.b)}:${Math.max(edge.a, edge.b)}`);
       const routeClass = highwaySet.has(edge) ? "highway" : "street";
       const fromCell = (settlements[edge.a] as Destination).cell;
       const toCell = (settlements[edge.b] as Destination).cell;
-      const path = dijkstra(fromCell, new Set([toCell]), grid, hydro, config, width, height);
+      const path = dijkstra(fromCell, new Set([toCell]), grid, hydro, config, width, height, landmarkAvoid);
       if (path === null) {
         errors.push(`no route between destinations ${edge.a} and ${edge.b}`);
         continue;
@@ -544,6 +563,7 @@ function dijkstra(
   config: ResolvedWorldConfig,
   width: number,
   height: number,
+  avoid?: ReadonlySet<number>,
 ): number[] | null {
   const rules = config.routes;
   const cellCount = width * height;
@@ -585,6 +605,12 @@ function dijkstra(
         continue; // deep water is impassable for routes
       }
       let cost = rules.stepCost;
+      // Roads respect the ancients (routes.graph v8): future landmark stamp
+      // footprints carry a heavy soft-avoid cost, so corridors route around
+      // the sites instead of invalidating them.
+      if (avoid !== undefined && avoid.has(neighbor)) {
+        cost += 600;
+      }
       const nx2 = neighbor % width;
       const ny2 = (neighbor - nx2) / width;
       const edgeDist = Math.min(nx2, ny2, width - 1 - nx2, height - 1 - ny2);

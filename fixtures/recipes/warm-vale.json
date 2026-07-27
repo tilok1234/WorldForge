@@ -1,0 +1,20 @@
+{
+  "recipeFormat": 1,
+  "seed": 424242,
+  "world": { "sizePreset": "small", "climatePreset": "temperate", "densityPreset": "balanced" },
+  "biases": {
+    "moisturePermille": 60,
+    "temperaturePermille": 40
+  },
+  "landmarks": [
+    { "type": "world_tree", "relation": "far_from_town" },
+    { "type": "lighthouse", "relation": "coastal" },
+    { "type": "ruined_city", "relation": "high_ground" }
+  ],
+  "budgets": {
+    "regionCount": 4,
+    "settlementCount": 8,
+    "primaryRouteCount": 2,
+    "landmarkCount": 3
+  }
+}

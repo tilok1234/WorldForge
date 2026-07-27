@@ -125,8 +125,8 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     const sandable = new Set<number>([GRASS, DRY_GRASS, MUD]);
     const beachElevationMax = config.water.seaLevelPermille + 45;
     const placements = beachOriginals;
-    for (let y = 1; y < height; y += 1) {
-      for (let x = 1; x < width; x += 1) {
+    for (let y = 2; y < height - 2; y += 1) {
+      for (let x = 2; x < width - 2; x += 1) {
         const index = y * width + x;
         if (hydro.waterKind[index] !== WATER_NONE) continue;
         if (!sandable.has(grid[index] as number)) continue;
@@ -155,8 +155,10 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     let filled = true;
     while (filled) {
       filled = false;
-      for (let y = 1; y < height; y += 1) {
-        for (let x = 1; x < width; x += 1) {
+      // The §2.7 sand margin holds on ALL four edges (behavior 31): the
+      // dual grid cannot represent sand on the outermost rows/columns.
+      for (let y = 2; y < height - 2; y += 1) {
+        for (let x = 2; x < width - 2; x += 1) {
           const index = y * width + x;
           if (hydro.waterKind[index] !== WATER_NONE) continue;
           if (!fillable.has(grid[index] as number)) continue;

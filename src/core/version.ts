@@ -81,8 +81,13 @@ export const GENERATOR_VERSION = "0.1.0";
  *     3) — world.densityPreset sparse|balanced|dense scales the POI
  *     budget, ambient decoration, and shortcut trails; default balanced,
  *     the canonical world pins dense.
+ * 31: generation variety hardening (routes.graph 8, macro.biomes 5) —
+ *     roads soft-avoid future landmark stamp footprints (the warm-vale
+ *     recipe exposed roads crossing sites picked before carving), and
+ *     the §2.7 sand margin holds on all four world edges (the highland
+ *     recipe pushed beaches to the far edge and the emitter threw).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 30;
+export const GENERATOR_BEHAVIOR_VERSION = 31;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 15;
@@ -91,9 +96,9 @@ export const RECIPE_COMPILER_VERSION = 15;
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "recipe.presets": 3,
   "macro.fields": 4,
-  "macro.biomes": 4,
+  "macro.biomes": 5,
   "hydrology.water": 2,
-  "routes.graph": 7,
+  "routes.graph": 8,
   "settlements.plans": 7,
   "landmarks.stamps": 5,
   "decoration.props": 8,
