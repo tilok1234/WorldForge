@@ -1,0 +1,33 @@
+{
+  "recipeFormat": 1,
+  "seed": 71717,
+  "world": {
+    "sizePreset": "small",
+    "climatePreset": "temperate",
+    "densityPreset": "balanced"
+  },
+  "biases": {
+    "moisturePermille": -240,
+    "temperaturePermille": 260
+  },
+  "landmarks": [
+    {
+      "type": "ruined_city",
+      "relation": "high_ground"
+    },
+    {
+      "type": "crystal_spire",
+      "relation": "far_from_town"
+    },
+    {
+      "type": "hunters_lodge",
+      "relation": "remote_corner"
+    }
+  ],
+  "budgets": {
+    "regionCount": 4,
+    "settlementCount": 7,
+    "primaryRouteCount": 2,
+    "landmarkCount": 3
+  }
+}
