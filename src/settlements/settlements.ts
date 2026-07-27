@@ -250,13 +250,17 @@ export function planSettlements(
       // Plaza legibility (W5.1): the fountain anchors the square. Its 2x2
       // footprint centers on the plaza; the south-side cobble is the
       // approach. Falls back to the classic well if the plaza is clipped.
+      // Neither may sit on pathLayer (behavior 47): a spur trail may thread
+      // the plaza, and in a mountain notch that trail can be the ONLY
+      // corridor — the-eight-lands' ruined-city spur was severed by a
+      // fountain exactly this way. Trails win; the square stays open.
       const fountainOrigin = cellAt(anchorX - 1, anchorY - 1, width, height);
       let fountainDown = false;
       if (fountainOrigin !== -1) {
         let clear = true;
         for (const [sx, sy] of [[0, 0], [1, 0], [0, 1], [1, 1]] as const) {
           const cell = cellAt(anchorX - 1 + sx, anchorY - 1 + sy, width, height);
-          if (cell === -1 || grid[cell] !== COBBLE || structureLayer[cell] !== 0) {
+          if (cell === -1 || grid[cell] !== COBBLE || structureLayer[cell] !== 0 || routes.pathLayer[cell] !== 0) {
             clear = false;
             break;
           }
@@ -297,7 +301,7 @@ export function planSettlements(
       }
       if (!fountainDown) {
         const wellCell = cellAt(anchorX, anchorY, width, height);
-        if (wellCell !== -1 && grid[wellCell] === COBBLE && structureLayer[wellCell] === 0) {
+        if (wellCell !== -1 && grid[wellCell] === COBBLE && structureLayer[wellCell] === 0 && routes.pathLayer[wellCell] === 0) {
           structureLayer[wellCell] = STRUCTURE_LAYER_VALUE["structure.well"];
           placed.push({
             type: "structure.well",

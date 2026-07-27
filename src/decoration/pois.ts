@@ -374,10 +374,34 @@ export function planPois(
       farms.pierLayer[cell] === 0 &&
       !crossings.has(cell) &&
       !entrances.has(cell);
+    // A blocking piece may cover a trail END (the spur leads TO it — the
+    // norm for landmark furniture) but never a THROUGH-trail: if the
+    // covered trail continues outside the footprint on two or more sides,
+    // placing there severs the corridor (behavior 47 — the-eight-lands'
+    // lodge sat astride the only pass through a mountain notch). Gates
+    // are exempt: their pass cells keep the trail open by design.
+    const seversThroughTrail = (originX: number, originY: number, w: number, h: number): boolean => {
+      let crossings = 0;
+      for (let yy = 0; yy < h; yy += 1) {
+        for (let xx = 0; xx < w; xx += 1) {
+          const inside = cellAt(originX + xx, originY + yy);
+          if (inside === -1 || routesResult.pathLayer[inside] !== 1) continue;
+          for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+            const ox = originX + xx + dx;
+            const oy = originY + yy + dy;
+            if (ox >= originX && ox < originX + w && oy >= originY && oy < originY + h) continue;
+            const outside = cellAt(ox, oy);
+            if (outside !== -1 && routesResult.pathLayer[outside] === 1) crossings += 1;
+          }
+        }
+      }
+      return crossings >= 2;
+    };
     const cityStamp = (
       type: StructureType,
       spots: ReadonlyArray<readonly [number, number]>,
       allowPath = false,
+      allowThroughTrail = false,
     ): void => {
       const footprint = STRUCTURE_FOOTPRINTS[type];
       if (footprint === undefined) return;
@@ -390,6 +414,9 @@ export function planPois(
           for (let xx = 0; xx < w && fits; xx += 1) {
             if (!cityCell(cellAt(originX + xx, originY + yy), allowPath)) fits = false;
           }
+        }
+        if (fits && allowPath && !allowThroughTrail && seversThroughTrail(originX, originY, w, h)) {
+          fits = false;
         }
         if (!fits) continue;
         for (let yy = 0; yy < h; yy += 1) {
@@ -413,7 +440,7 @@ export function planPois(
       }
     };
     if (plan.type === "ruined_city") {
-      cityStamp("structure.ruined_gate", [[7, 11]], true);
+      cityStamp("structure.ruined_gate", [[7, 11]], true, true);
       cityStamp("structure.keep", [[4, 4], [10, 4], [4, 7], [10, 7]]);
       cityStamp("structure.ruined_tower", [[1, 1], [1, 2]]);
       cityStamp("structure.ruined_tower", [[14, 1], [14, 2]]);
@@ -480,7 +507,7 @@ export function planPois(
     } else if (plan.type === "hunters_lodge") {
       // The Winterlodge: the last warm roof before the deep snow — every
       // trapper in the quarter hauls their furs here.
-      cityStamp("structure.hunter_lodge", [[2, 2], [2, 1], [1, 2]], true);
+      cityStamp("structure.hunter_lodge", [[2, 2], [2, 1], [1, 2], [0, 2], [4, 2], [0, 1], [4, 1]], true);
       putProp(plan.x + 1, plan.y + 4, "prop.game_rack");
       putProp(plan.x + 5, plan.y + 4, "prop.game_rack");
       putProp(plan.x + 5, plan.y + 2, "prop.firewood");

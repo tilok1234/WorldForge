@@ -234,8 +234,26 @@ export const GENERATOR_VERSION = "0.1.0";
  *     inhabited zones must stay land-connected (peninsulas, isthmuses);
  *     true detached islands are safe only while uninhabited.
  *     Multi-component routing is an OPEN DECISION for a later behavior.
+ * 47: trails stay open (settlements.plans 11, landmarks.stamps 7,
+ *     decoration.pois 16) — three sever mechanics exposed by
+ *     the-eight-lands' mountain-notch spurs, all invisible to the
+ *     compose-time gate (it walks corridors without structure
+ *     knowledge): plaza furniture (fountain, well) never sits on
+ *     pathLayer; a ruined city's wall BREACHES where an old trail
+ *     passes (stamps also honestly interrupt covered trails — pathLayer
+ *     clears under stamped structure cells); and POI-pass furniture may
+ *     cover a trail END but never a THROUGH-trail (>= 2 boundary
+ *     crossings refuse the spot; gates exempt — their pass cells keep
+ *     the trail open; the lodge gains alternate spots). The approach
+ *     carver only joins trail segments that provably reach a corridor
+ *     (hopping ford-width stream gaps — wet worlds' trails continue
+ *     across fords) and falls back to any trail rather than stranding a
+ *     gate. The CLI gates resolve and export on destination reachability
+ *     through the PUBLIC loader (the consumers' own nudge+flood rule),
+ *     so a severed world can never ship silently again. Canonical
+ *     shifted +48 walkable cells (33845 -> 33893), consumers equal.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 46;
+export const GENERATOR_BEHAVIOR_VERSION = 47;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 28;
@@ -247,11 +265,11 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 14,
-  "settlements.plans": 10,
-  "landmarks.stamps": 6,
+  "settlements.plans": 11,
+  "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 10,
-  "decoration.pois": 15,
+  "decoration.pois": 16,
   "density.presets": 1,
   "authoring.overrides": 1,
   "adapter.tileforge": 6,

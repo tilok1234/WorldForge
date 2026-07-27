@@ -1,6 +1,28 @@
 # WorldForge — handoff (2026-07-28, post-merge at PC)
 
-## 0. DUSK RE-PIN executed 2026-07-28 (newest state)
+## 0a. BEHAVIOR 47 "trails stay open" (2026-07-28, newest state)
+
+The first full destination-check of the zone worlds on the PC (prompted
+by the dusk re-pin regen) exposed THREE latent sever mechanics, all in
+mountain notches where a trail is the only corridor, all invisible to
+the compose-time gate (it walks corridors without structure knowledge),
+all present under forest too (dusk exonerated — generation-relevant
+manifest tables are theme-identical): (1) plaza fountain on a village
+trail; (2) ruined-city wall stamped over a route-era trail — walls now
+BREACH there (crumbled gap), and stamps honestly clear pathLayer under
+their structure cells; (3) POI furniture astride a through-trail — may
+cover trail ENDS (the norm) but >= 2 boundary crossings refuse the spot
+(gates exempt; lodge gained alternate spots). The approach carver joins
+only corridor-verified trail segments (hopping ford-width stream gaps —
+wet worlds broke without this) with an any-trail fallback. resolve +
+export-game-pack now GATE on destination reachability through the
+PUBLIC loader — a severed world can never ship silently. Full 22-world
+library sweep green; canonical 33845 -> 33893 (+48, consumers equal, 0
+errors; approval sidecar still valid — no vocabulary change).
+settlements.plans 11, landmarks.stamps 7, decoration.pois 16; 203
+tests.
+
+## 0b. DUSK RE-PIN executed 2026-07-28
 
 Pinned package is now `dusk-ae1eecb-seed103991` (game plan §6.1;
 designer: "use dusk for now, we can change later"). Forest fixture

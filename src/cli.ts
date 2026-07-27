@@ -53,6 +53,71 @@ import {
 import { emitResolvedTmj } from "./adapters/tileforge/emitTmj.js";
 import type { TmjDocument } from "./adapters/tileforge/tmj.js";
 import { buildGamePack } from "./gamepack/export.js";
+import { loadWorldArtifact } from "./consumers/typescript/loader.js";
+
+/**
+ * Destination reachability through the PUBLIC loader — the consumers' own
+ * rule (nudge up to 8 cells to walkable, 4-neighbor flood from destination
+ * 0). Structures may legally occupy trail ends (the spur leads TO the
+ * monument), and the compose-time gate walks corridors without structure
+ * knowledge — so a stamp CAN sever a sole corridor without any earlier
+ * check noticing (the-eight-lands' plaza fountain did). This gate refuses
+ * to ship such a world.
+ */
+function verifyDestinationReachability(artifact: WorldArtifact): string[] {
+  const loaded = loadWorldArtifact(artifact as unknown as Record<string, unknown>);
+  if (!loaded.ok) {
+    return loaded.issues.map((issue) => `loader: ${issue.path}: ${issue.message}`);
+  }
+  const world = loaded.world;
+  const nudge = (cx: number, cy: number): readonly [number, number] | null => {
+    for (let radius = 0; radius < 8; radius += 1) {
+      for (let dy = -radius; dy <= radius; dy += 1) {
+        for (let dx = -radius; dx <= radius; dx += 1) {
+          const x = cx + dx;
+          const y = cy + dy;
+          if (world.inBounds(x, y) && world.walkableAt(x, y)) return [x, y];
+        }
+      }
+    }
+    return null;
+  };
+  const destinations = artifact.destinations ?? [];
+  const first = destinations[0];
+  if (first === undefined) return [];
+  const origin = nudge(first.cell[0], first.cell[1]);
+  if (origin === null) return [`destination ${first.id}: no walkable cell within 8`];
+  const { width } = world.dimensions;
+  const reached = new Uint8Array(width * world.dimensions.height);
+  reached[origin[1] * width + origin[0]] = 1;
+  const queue: number[] = [origin[1] * width + origin[0]];
+  for (let head = 0; head < queue.length; head += 1) {
+    const index = queue[head] as number;
+    const x = index % width;
+    const y = (index - x) / width;
+    for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (!world.inBounds(nx, ny)) continue;
+      const next = ny * width + nx;
+      if (reached[next] === 0 && world.walkableAt(nx, ny)) {
+        reached[next] = 1;
+        queue.push(next);
+      }
+    }
+  }
+  const errors: string[] = [];
+  for (const destination of destinations) {
+    const goal = nudge(destination.cell[0], destination.cell[1]);
+    if (goal === null || reached[goal[1] * width + goal[0]] === 0) {
+      errors.push(
+        `destination ${destination.id} (${destination.kind}) at ` +
+          `(${destination.cell[0]}, ${destination.cell[1]}) is unreachable from destination ${first.id}`,
+      );
+    }
+  }
+  return errors;
+}
 import type { ResolvedWorld } from "./adapters/tileforge/resolve.js";
 import type { GenerationResult } from "./generation/generate.js";
 
@@ -537,6 +602,13 @@ function runResolveTileForge(argv: readonly string[]): number {
     process.stderr.write(`generation FAILED; nothing resolved\n${gateErrors.join("\n")}\n`);
     return 1;
   }
+  const reachabilityErrors = verifyDestinationReachability(result.artifact);
+  if (reachabilityErrors.length > 0) {
+    process.stderr.write(
+      `reachability FAILED (public-loader walkability); nothing resolved\n${reachabilityErrors.join("\n")}\n`,
+    );
+    return 1;
+  }
   const resolved = resolveToTileForge(result.composed);
   if (resolved.diagnostics.unresolvedKeys.length > 0) {
     process.stderr.write(
@@ -704,6 +776,13 @@ function runExportGamePack(argv: readonly string[]): number {
   const report = validateArtifact(result.artifact, { minRegionCells: config.biomes.minRegionCells, authoredCells: authoredCellsOf(config) });
   if (report.status !== "pass") {
     process.stderr.write(`validation FAILED; nothing packed\n${report.errors.join("\n")}\n`);
+    return 1;
+  }
+  const packReachabilityErrors = verifyDestinationReachability(result.artifact);
+  if (packReachabilityErrors.length > 0) {
+    process.stderr.write(
+      `reachability FAILED (public-loader walkability); nothing packed\n${packReachabilityErrors.join("\n")}\n`,
+    );
     return 1;
   }
   const resolved = resolveToTileForge(result.composed);

@@ -96,16 +96,16 @@
       "biomeCellTotals": {
         "terrain.cobble": 3382,
         "terrain.dry_grass": 994,
-        "terrain.grass": 21402,
-        "terrain.gravel": 1424,
+        "terrain.grass": 21400,
+        "terrain.gravel": 1434,
         "terrain.mud": 958,
         "terrain.packed_road": 822,
-        "terrain.rock": 18273,
+        "terrain.rock": 18268,
         "terrain.sand": 69,
-        "terrain.snow": 9483,
+        "terrain.snow": 9481,
         "terrain.swamp": 747,
         "water.deep": 1348,
-        "water.shallow": 6634
+        "water.shallow": 6633
       },
       "hydrology": {
         "lakeCount": 22,
@@ -189,7 +189,7 @@
           "crossing",
           "crossing"
         ],
-        "structureCount": 280
+        "structureCount": 277
       }
     }
   ]

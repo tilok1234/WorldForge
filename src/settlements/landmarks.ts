@@ -202,8 +202,20 @@ export function placeLandmarks(
           grid[cell] = material;
         }
         const structure = stamp.structure[stampIndex] as number;
-        if (structure !== 0) {
+        // A ruined city's wall BREACHES where an old trail passes
+        // (behavior 47): routes soft-avoid stamp footprints, but in a
+        // mountain notch the only corridor may thread the site — painting
+        // the wall over that trail severed the-eight-lands' west spur.
+        // Ruins keep crumbled gaps; intact landmarks keep their walls.
+        if (structure !== 0 && !(spec.type === "ruined_city" && pathLayer[cell] === 1)) {
           structureLayer[cell] = structure;
+          // A building interrupts any trail it covers (behavior 47).
+          // Leaving pathLayer set under walls made the compose-time graph
+          // walk THROUGH buildings and let the approach carver "join" a
+          // severed trail under the stamp (the-eight-lands' lodge sat
+          // astride its own spur with a dead-end approach). The gateway
+          // repaint below restores the gate's pass line.
+          pathLayer[cell] = 0;
         }
       }
     }
@@ -214,7 +226,17 @@ export function placeLandmarks(
     // path, and the walkable network reaches its gate.
     const gateX = originX + stamp.entranceX;
     const gateY = originY + stamp.entranceY;
-    const approach = carveTrailApproach(gateX, gateY + 1, grid, structureLayer, pathLayer, hydro, width, height);
+    const approach = carveTrailApproach(
+      gateX,
+      gateY + 1,
+      grid,
+      structureLayer,
+      pathLayer,
+      hydro,
+      width,
+      height,
+      { x0: originX, y0: originY, x1: originX + stamp.width - 1, y1: originY + stamp.height - 1 },
+    );
     const rockIndex = PALETTE_INDEX["terrain.rock"];
     for (const cell of approach) {
       if (grid[cell] === rockIndex) {
@@ -332,45 +354,125 @@ function carveTrailApproach(
   hydro: HydrologyResult,
   width: number,
   height: number,
+  /** The stamp's own footprint: its internal cobble (courtyards) and gate
+   *  lines must not count as "the network" — an enclosed yard would
+   *  satisfy the corridor test without ever reaching the world. */
+  ownStamp?: { readonly x0: number; readonly y0: number; readonly x1: number; readonly y1: number },
 ): number[] {
   const carved: number[] = [];
   const start = startY * width + startX;
   if (startX < 0 || startY < 0 || startX >= width || startY >= height) {
     return carved;
   }
-  const previous = new Map<number, number>();
-  const queue = [start];
-  previous.set(start, -1);
-  for (let head = 0; head < queue.length && head < 4096; head += 1) {
-    const cell = queue[head] as number;
-    const isTarget =
-      pathLayer[cell] === 1 || grid[cell] === PACKED_ROAD || grid[cell] === COBBLE;
-    if (isTarget && cell !== start) {
-      let cursor: number = previous.get(cell) as number;
-      while (cursor !== -1) {
-        if (pathLayer[cursor] === 0 && hydro.waterKind[cursor] === WATER_NONE && hydro.isRiver[cursor] === 0) {
-          pathLayer[cursor] = 1;
-          carved.push(cursor);
-        }
-        cursor = previous.get(cursor) as number;
-      }
-      return carved;
-    }
+  // A trail cell only counts as "the network" if its segment actually
+  // reaches a corridor (behavior 47): stamps now interrupt trails they
+  // cover, which can orphan a stub on the far side of a building — the
+  // lodge's dead-end approach "joined" exactly such a stub. Bounded
+  // segment flood, memoized per call.
+  const insideOwnStamp = (cell: number): boolean => {
+    if (ownStamp === undefined) return false;
     const x = cell % width;
     const y = (cell - x) / width;
-    for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
-      const nx = x + dx;
-      const ny = y + dy;
-      if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
-        continue;
+    return x >= ownStamp.x0 && x <= ownStamp.x1 && y >= ownStamp.y0 && y <= ownStamp.y1;
+  };
+  const corridorHere = (cell: number): boolean =>
+    (grid[cell] === PACKED_ROAD || grid[cell] === COBBLE) && !insideOwnStamp(cell);
+  const segmentVerdict = new Map<number, boolean>();
+  const segmentReachesCorridor = (fromCell: number): boolean => {
+    const known = segmentVerdict.get(fromCell);
+    if (known !== undefined) return known;
+    const seen = new Set<number>([fromCell]);
+    const segment = [fromCell];
+    let reaches = false;
+    for (let head = 0; head < segment.length && head < 4096 && !reaches; head += 1) {
+      const cell = segment[head] as number;
+      const x = cell % width;
+      const y = (cell - x) / width;
+      for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+        const next = ny * width + nx;
+        if (corridorHere(next)) {
+          reaches = true;
+          break;
+        }
+        if (!seen.has(next) && pathLayer[next] === 1) {
+          seen.add(next);
+          segment.push(next);
+        } else if (hydro.isRiver[next] === 1) {
+          // Trails continue across fords (runs of <= 2 stream cells): hop
+          // the ford-width gap or the flood dead-ends at every stream bank
+          // and calls a whole wet-world network an orphan (drowned-fen).
+          for (const hop of [2, 3] as const) {
+            const hx = x + dx * hop;
+            const hy = y + dy * hop;
+            if (hx < 0 || hy < 0 || hx >= width || hy >= height) break;
+            const across = hy * width + hx;
+            if (hop === 3 && hydro.isRiver[(y + dy * 2) * width + x + dx * 2] !== 1) break;
+            if (corridorHere(across)) {
+              reaches = true;
+              break;
+            }
+            if (pathLayer[across] === 1) {
+              if (!seen.has(across)) {
+                seen.add(across);
+                segment.push(across);
+              }
+              break;
+            }
+          }
+          if (reaches) break;
+        }
       }
-      const next = ny * width + nx;
-      if (previous.has(next) || structureLayer[next] !== 0) {
-        continue;
+    }
+    for (const cell of seen) segmentVerdict.set(cell, reaches);
+    return reaches;
+  };
+  // Two passes: prefer targets whose segment provably reaches a corridor;
+  // when none exists within bounds (segments can legitimately reach the
+  // network in ways this conservative test cannot see), fall back to any
+  // outside-stamp trail — never leave a gate stranded that the pre-47
+  // carver would have joined. The CLI reachability gate remains the final
+  // arbiter of whether the world ships.
+  for (const requireCorridor of [true, false]) {
+    const previous = new Map<number, number>();
+    const queue = [start];
+    previous.set(start, -1);
+    for (let head = 0; head < queue.length && head < 4096; head += 1) {
+      const cell = queue[head] as number;
+      const isTarget =
+        corridorHere(cell) ||
+        (pathLayer[cell] === 1 &&
+          !insideOwnStamp(cell) &&
+          (!requireCorridor || segmentReachesCorridor(cell)));
+      if (isTarget && cell !== start) {
+        let cursor: number = previous.get(cell) as number;
+        while (cursor !== -1) {
+          if (pathLayer[cursor] === 0 && hydro.waterKind[cursor] === WATER_NONE && hydro.isRiver[cursor] === 0) {
+            pathLayer[cursor] = 1;
+            carved.push(cursor);
+          }
+          cursor = previous.get(cursor) as number;
+        }
+        return carved;
       }
-      if (hydro.waterKind[next] === WATER_NONE && hydro.isRiver[next] === 0) {
-        previous.set(next, cell);
-        queue.push(next);
+      const x = cell % width;
+      const y = (cell - x) / width;
+      for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+          continue;
+        }
+        const next = ny * width + nx;
+        if (previous.has(next) || structureLayer[next] !== 0) {
+          continue;
+        }
+        if (hydro.waterKind[next] === WATER_NONE && hydro.isRiver[next] === 0) {
+          previous.set(next, cell);
+          queue.push(next);
+        }
       }
     }
   }
