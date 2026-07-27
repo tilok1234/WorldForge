@@ -18,10 +18,14 @@ green, everything pushed through `96fd860`. Standing commit+push
 authorization held this whole arc — re-confirm with the user per
 policy.
 
-**The ONLY open variety-arc item: verdicts on the three climate worlds
-(dust-sea, drowned-fen, white-waste — overviews sent 2026-07-27).**
-After that: windowed Godot playthrough, formal baseline, taste-polish
-round (all user-gated, parked since the start).
+**VARIETY ARC CLOSED 2026-07-27 (mobile session): all three climate
+worlds approved** — dust-sea and white-waste liked outright,
+drowned-fen "cool for now" (kept as-is; a moisture-bias exploration at
+−80/−120 was shown and declined — recipe untouched). Parked idea, NOT
+on the plan: fine-grained fen variety (mud mottling / wider swamp
+margins) would need engine vocabulary; user deferred. Remaining
+user-gated items: windowed Godot playthrough, formal baseline,
+taste-polish round (parked since the start).
 
 ### The canonical world (fixtures/recipes/small-cold-coastal.json, seed 103991)
 
@@ -53,10 +57,11 @@ settlements), the-old-war-medium (dense, 16), frontier-sparse-medium
 (balanced, 24 settlements, flood 646918), the-old-war-large (dense, 28
 settlements, 10 landmarks, flood 650230).
 
-PENDING VERDICT (climate worlds, behavior 35): dust-sea (arid_steppe,
-seed 15551, 76.8% dry steppe), drowned-fen (wet_lowland, seed 24680,
-74.9% wet), white-waste (frozen_north, seed 12007, 77.6% snow). Floods
-55404 / 48858 / 53656, all 0 errors.
+APPROVED (climate worlds, behavior 35, 2026-07-27 mobile): dust-sea
+(arid_steppe, seed 15551, 76.8% dry steppe), drowned-fen (wet_lowland,
+seed 24680, 74.9% wet — "cool for now", liked less than the other two),
+white-waste (frozen_north, seed 12007, 77.6% snow). Floods 55404 /
+48858 / 53656, all 0 errors.
 
 ### Recipe vocabulary after the arc
 
@@ -176,8 +181,6 @@ floors grow with map size; props/POIs per cell FALL as maps grow.
 
 ## User-gated, still open
 
-- Verdicts on dust-sea / drowned-fen / white-waste (then the variety
-  arc is DONE).
 - Windowed Godot playthrough: `godot --path consumers/godot`.
 - FORMAL baseline: `node dist/src/cli.js approve-recipe
   fixtures/recipes/small-cold-coastal.json --baseline` (note: record it
