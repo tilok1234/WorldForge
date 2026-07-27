@@ -11,7 +11,7 @@
       4,
       2
     ],
-    "seams": "blended",
+    "seams": "hard",
     "entries": [
       {
         "temperaturePermille": -350,
