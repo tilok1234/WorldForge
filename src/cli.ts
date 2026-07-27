@@ -488,6 +488,37 @@ function runResolveTileForge(argv: readonly string[]): number {
     rgb[p * 3 + 2] = render.rgba[p * 4 + 2] as number;
   }
   writeFileSync(join(parsed.outDir, "resolved-render.png"), encodePng(render.width, render.height, rgb));
+  // Renders past 8192px on a side exceed what browsers will decode (a 512-cell
+  // world is 16384px — Chrome refuses the ~1 GB bitmap), so the viewer gets a
+  // box-averaged preview alongside the full-detail evidence render.
+  const previewCap = 8192;
+  const previewFactor = Math.ceil(Math.max(render.width, render.height) / previewCap);
+  let previewLine: string | null = null;
+  if (previewFactor > 1) {
+    const previewW = Math.floor(render.width / previewFactor);
+    const previewH = Math.floor(render.height / previewFactor);
+    const preview = new Uint8Array(previewW * previewH * 3);
+    const n = previewFactor * previewFactor;
+    for (let py = 0; py < previewH; py += 1) {
+      for (let px = 0; px < previewW; px += 1) {
+        let r = 0, g = 0, b = 0;
+        for (let dy = 0; dy < previewFactor; dy += 1) {
+          const rowBase = ((py * previewFactor + dy) * render.width + px * previewFactor) * 3;
+          for (let dx = 0; dx < previewFactor; dx += 1) {
+            r += rgb[rowBase + dx * 3] as number;
+            g += rgb[rowBase + dx * 3 + 1] as number;
+            b += rgb[rowBase + dx * 3 + 2] as number;
+          }
+        }
+        const out = (py * previewW + px) * 3;
+        preview[out] = Math.round(r / n);
+        preview[out + 1] = Math.round(g / n);
+        preview[out + 2] = Math.round(b / n);
+      }
+    }
+    writeFileSync(join(parsed.outDir, "resolved-preview.png"), encodePng(previewW, previewH, preview));
+    previewLine = `wrote ${join(parsed.outDir, "resolved-preview.png")} (${previewW}x${previewH}, 1/${previewFactor})`;
+  }
   // Slice manifest for game consumers and the viewer: destination and route
   // endpoints in cell coordinates plus the small id->name tables hover
   // inspection needs (CLI-composed; not adapter output).
@@ -541,6 +572,7 @@ function runResolveTileForge(argv: readonly string[]): number {
       `wrote ${join(parsed.outDir, "tileforge-diagnostics.json")}`,
       `wrote ${join(parsed.outDir, "resolved-map.tmj")}`,
       `wrote ${join(parsed.outDir, "resolved-render.png")} (${render.width}x${render.height})`,
+      ...(previewLine === null ? [] : [previewLine]),
       `wrote ${join(parsed.outDir, "tileforge-slice.json")}`,
     ].join("\n") + "\n",
   );

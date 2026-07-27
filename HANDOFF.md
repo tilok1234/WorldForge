@@ -94,7 +94,10 @@ without a fresh verdict. If "feels empty" returns: gameplay-zoom review
   Header world picker (2026-07-27): serve-viewer's read-only
   `/api/worlds` lists outputs/ dirs; the dropdown hides artifacts whose
   formatVersion the public loader rejects, so pre-corridor-roads relics
-  (demo-a, demo-b, w4-demo) stay invisible.
+  (demo-a, demo-b, w4-demo) stay invisible. Renders past 8192px on a
+  side (medium 512-cell worlds render at 16384px) exceed what browsers
+  will decode: the CLI emits a box-averaged `resolved-preview.png`
+  alongside, and the viewer picks it by map size up front.
 - Verify chain on EVERY generation change:
   `node dist/tools/godot-consumer.js --world outputs/w7-slice` (0 errors)
   + `node consumers/typescript/traverse.mjs outputs/w7-slice/world.json`

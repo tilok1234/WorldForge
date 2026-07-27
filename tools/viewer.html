@@ -206,14 +206,33 @@ async function loadNativeDir(rawDir, keepView) {
     fetchJson("tileforge-slice.json"),
     fetchJson("tileforge-diagnostics.json"),
   ]);
+  // Browsers choke on very large bitmaps (a 512-cell world renders at
+  // 16384px — a ~1 GB decode Chrome refuses). The CLI emits a box-averaged
+  // resolved-preview.png alongside any render past 8192px, so pick by the
+  // known map size instead of burning memory on a doomed decode.
+  const renderSide = Math.max(mapData.mapW, mapData.mapH) * TILE;
   const img = new Image();
-  img.src = `${dir}/resolved-render.png?${bust}`;
-  await img.decode();
+  let renderNote = "";
+  if (renderSide > 8192) {
+    img.src = `${dir}/resolved-preview.png?${bust}`;
+    renderNote = ", preview";
+    try {
+      await img.decode();
+    } catch {
+      // Pre-preview output dir: attempt the full render as a last resort.
+      img.src = `${dir}/resolved-render.png?${bust}`;
+      renderNote = "";
+      await img.decode();
+    }
+  } else {
+    img.src = `${dir}/resolved-render.png?${bust}`;
+    await img.decode();
+  }
   setMode("native");
   state.dir = dir;
   state.native = { img, mapData, slice, diagnostics };
   document.getElementById("worldInfo").textContent =
-    `${mapData.mapW}×${mapData.mapH} native (${img.naturalWidth}×${img.naturalHeight}px)\n` +
+    `${mapData.mapW}×${mapData.mapH} native (${img.naturalWidth}×${img.naturalHeight}px${renderNote})\n` +
     `package ${diagnostics.packageId}\n` +
     `${diagnostics.metaCells} structure cells, ${diagnostics.fordDecals} fords, ` +
     `${diagnostics.bridgeStructures} bridges\n` +
