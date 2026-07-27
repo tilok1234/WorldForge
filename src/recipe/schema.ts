@@ -12,7 +12,13 @@ export const RECIPE_FORMAT = 1;
 export const SIZE_PRESET_NAMES = ["tiny", "small", "medium", "large"] as const;
 export type SizePreset = (typeof SIZE_PRESET_NAMES)[number];
 
-export const CLIMATE_PRESET_NAMES = ["temperate", "cold_coastal"] as const;
+export const CLIMATE_PRESET_NAMES = [
+  "temperate",
+  "cold_coastal",
+  "arid_steppe",
+  "wet_lowland",
+  "frozen_north",
+] as const;
 export type ClimatePresetX = never;
 
 /** How populated a world is: structures, roads, props, discoveries. */

@@ -120,18 +120,24 @@ export const GENERATOR_VERSION = "0.1.0";
  *     never hit the odds). Approved worlds shift by single cells, not
  *     looks: the canonical world drops 3 of 12460 props (they stood in
  *     crossings) and gains 3 walkable cells (flood 33887 -> 33890).
+ * 35: the climate library (recipe.presets 6, hydrology.water 5) —
+ *     world.climatePreset gains arid_steppe, wet_lowland, frozen_north:
+ *     the palettes the variety arc proved through raw biases become
+ *     vocabulary (sunburnt-reach, weeping-marsh, the-long-winter lineage).
+ *     Sea level and the wetland gate carry each climate's water character;
+ *     author biases stay additive on top.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 34;
+export const GENERATOR_BEHAVIOR_VERSION = 35;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 18;
+export const RECIPE_COMPILER_VERSION = 19;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
-  "recipe.presets": 5,
+  "recipe.presets": 6,
   "macro.fields": 6,
   "macro.biomes": 7,
-  "hydrology.water": 4,
+  "hydrology.water": 5,
   "routes.graph": 11,
   "settlements.plans": 10,
   "landmarks.stamps": 5,

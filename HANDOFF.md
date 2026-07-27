@@ -10,11 +10,12 @@ file. HANDOFF.md is the tiebreaker.
 ## Where the project stands
 
 W0–W9 complete, ALIVE-WORLDS ARC complete (behaviors 15–30), VARIETY ARC
-underway (behaviors 31–34). Versions: behavior 34, recipe compiler 18,
-artifact format 8, resolved-config 13 (12: quadrantMin; 13: quadrantMin
-generalized to sectorGrid+sectorMin), TileForge adapter 6. 154 tests.
-Standing commit+push authorization held this whole arc — re-confirm
-with the user per policy.
+functionally COMPLETE (behaviors 31–35: archetype library, medium +
+large size presets, climate library). Versions: behavior 35, recipe
+compiler 19, artifact format 8, resolved-config 13 (12: quadrantMin;
+13: quadrantMin generalized to sectorGrid+sectorMin), TileForge adapter
+6. 155 tests. Standing commit+push authorization held this whole arc —
+re-confirm with the user per policy.
 
 ### The canonical world (fixtures/recipes/small-cold-coastal.json, seed 103991)
 
@@ -83,8 +84,18 @@ band margin absorbs the sand 16px offset); serve-viewer's native check
 accepts render OR preview. Two large worlds BUILT + VERIFIED (0 errors,
 floods equal): warm-vale-large (balanced, 24 settlements, flood 646918)
 + the-old-war-large (dense, 28 settlements, 10 landmarks, flood
-650230); every 4×4 sector settled in both. Overviews sent 2026-07-27;
-verdicts PENDING. The first 1024 map instantly caught a LATENT BUG: a
+650230); every 4×4 sector settled in both. Large APPROVED 2026-07-27
+("ye seems cool with that mountain and lake etc in the middle").
+CLIMATE LIBRARY SHIPPED (behavior 35, recipe.presets 6,
+hydrology.water 5, compiler 19): world.climatePreset gains arid_steppe
+(temp +220/moist −200, sea 280, wetland 640), wet_lowland (+70/+260,
+sea 350, wetland 480), frozen_north (−380/+60, sea 370) — the palettes
+sunburnt-reach/weeping-marsh/the-long-winter proved via biases, now
+vocabulary. Seed-hunted archetypes (hunt script pattern:
+scratchpad/climate-hunt.mjs style, ~1.5s per small compose): dust-sea
+(15551, 76.8% dry steppe), drowned-fen (24680, 74.9% wet), white-waste
+(12007, 77.6% snow); all verified (0 errors, floods equal), overviews
+sent 2026-07-27, verdicts PENDING. The first 1024 map instantly caught a LATENT BUG: a
 blocking tree scattered onto a street-ford cell severed the street
 (ladder error). Fix (decoration.props 9): blocking props barred from
 streetFordCells + route crossings via composeWorld's ford list (single

@@ -1,0 +1,16 @@
+{
+  "recipeFormat": 1,
+  "seed": 24680,
+  "world": { "sizePreset": "small", "climatePreset": "wet_lowland", "densityPreset": "balanced" },
+  "landmarks": [
+    { "type": "lighthouse", "relation": "coastal" },
+    { "type": "world_tree", "relation": "far_from_town" },
+    { "type": "hunters_lodge", "relation": "remote_corner" }
+  ],
+  "budgets": {
+    "regionCount": 4,
+    "settlementCount": 7,
+    "primaryRouteCount": 2,
+    "landmarkCount": 3
+  }
+}

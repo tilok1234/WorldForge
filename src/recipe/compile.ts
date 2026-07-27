@@ -41,6 +41,24 @@ const CLIMATE_RULES: { readonly [key in ClimatePreset]: ClimateBase } = {
     baseMoisturePermille: 80,
     coastalInfluencePermille: 500,
   },
+  // Behavior 35: the palettes the variety arc proved via biases become
+  // vocabulary (sunburnt-reach ~ arid_steppe, weeping-marsh ~ wet_lowland,
+  // the-long-winter ~ frozen_north). Author biases stay additive on top.
+  arid_steppe: {
+    baseTemperaturePermille: 220,
+    baseMoisturePermille: -200,
+    coastalInfluencePermille: 0,
+  },
+  wet_lowland: {
+    baseTemperaturePermille: 70,
+    baseMoisturePermille: 260,
+    coastalInfluencePermille: 250,
+  },
+  frozen_north: {
+    baseTemperaturePermille: -380,
+    baseMoisturePermille: 60,
+    coastalInfluencePermille: 400,
+  },
 };
 
 interface WorldDimensions {
@@ -290,6 +308,112 @@ const WATER_RULES: {
     },
   },
   cold_coastal: {
+    tiny: {
+      seaLevelPermille: 370,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 48,
+      majorRiverAccumulationThreshold: 100,
+      wetlandMoistureMin: 560,
+      coastalInfluenceRadius: 8,
+    },
+    small: {
+      seaLevelPermille: 370,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 320,
+      majorRiverAccumulationThreshold: 800,
+      wetlandMoistureMin: 560,
+      coastalInfluenceRadius: 16,
+    },
+    medium: {
+      seaLevelPermille: 370,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 800,
+      majorRiverAccumulationThreshold: 2000,
+      wetlandMoistureMin: 560,
+      coastalInfluenceRadius: 24,
+    },
+    large: {
+      seaLevelPermille: 370,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 2000,
+      majorRiverAccumulationThreshold: 5000,
+      wetlandMoistureMin: 560,
+      coastalInfluenceRadius: 32,
+    },
+  },
+  // Behavior 35 climates share the per-size accumulation ladder; sea level
+  // and the wetland gate carry the climate character (dry basins with rare
+  // swamp, drowned margins with easy marsh, frozen shores like the cold
+  // coast).
+  arid_steppe: {
+    tiny: {
+      seaLevelPermille: 280,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 48,
+      majorRiverAccumulationThreshold: 100,
+      wetlandMoistureMin: 640,
+      coastalInfluenceRadius: 8,
+    },
+    small: {
+      seaLevelPermille: 280,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 320,
+      majorRiverAccumulationThreshold: 800,
+      wetlandMoistureMin: 640,
+      coastalInfluenceRadius: 16,
+    },
+    medium: {
+      seaLevelPermille: 280,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 800,
+      majorRiverAccumulationThreshold: 2000,
+      wetlandMoistureMin: 640,
+      coastalInfluenceRadius: 24,
+    },
+    large: {
+      seaLevelPermille: 280,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 2000,
+      majorRiverAccumulationThreshold: 5000,
+      wetlandMoistureMin: 640,
+      coastalInfluenceRadius: 32,
+    },
+  },
+  wet_lowland: {
+    tiny: {
+      seaLevelPermille: 350,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 48,
+      majorRiverAccumulationThreshold: 100,
+      wetlandMoistureMin: 480,
+      coastalInfluenceRadius: 8,
+    },
+    small: {
+      seaLevelPermille: 350,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 320,
+      majorRiverAccumulationThreshold: 800,
+      wetlandMoistureMin: 480,
+      coastalInfluenceRadius: 16,
+    },
+    medium: {
+      seaLevelPermille: 350,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 800,
+      majorRiverAccumulationThreshold: 2000,
+      wetlandMoistureMin: 480,
+      coastalInfluenceRadius: 24,
+    },
+    large: {
+      seaLevelPermille: 350,
+      shallowBandPermille: 45,
+      riverAccumulationThreshold: 2000,
+      majorRiverAccumulationThreshold: 5000,
+      wetlandMoistureMin: 480,
+      coastalInfluenceRadius: 32,
+    },
+  },
+  frozen_north: {
     tiny: {
       seaLevelPermille: 370,
       shallowBandPermille: 45,

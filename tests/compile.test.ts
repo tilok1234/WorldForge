@@ -10,7 +10,11 @@ import { normalizeRecipe } from "../src/recipe/normalize.js";
 import { validateRecipe } from "../src/recipe/validate.js";
 import type { NormalizedWorldRecipe } from "../src/recipe/schema.js";
 
-function normalized(seed: number, sizePreset: "tiny" | "small" | "medium" | "large", climatePreset: "temperate" | "cold_coastal"): NormalizedWorldRecipe {
+function normalized(
+  seed: number,
+  sizePreset: "tiny" | "small" | "medium" | "large",
+  climatePreset: "temperate" | "cold_coastal" | "arid_steppe" | "wet_lowland" | "frozen_north",
+): NormalizedWorldRecipe {
   const validation = validateRecipe({
     recipeFormat: 1,
     seed,
@@ -96,6 +100,23 @@ describe("recipe compiler", () => {
     assert.equal(config.macroFields.moisture.offsetPermille, 80);
     assert.equal(config.macroFields.elevation.northGradientPermille, 0);
     assert.equal(config.biomes.minRegionCells, 80);
+  });
+
+  it("expands the behavior-35 climates with their water character", () => {
+    const arid = compileRecipe(normalized(1, "small", "arid_steppe"));
+    assert.equal(arid.climate.baseTemperaturePermille, 220);
+    assert.equal(arid.climate.baseMoisturePermille, -200);
+    assert.equal(arid.water.seaLevelPermille, 280);
+    assert.equal(arid.water.wetlandMoistureMin, 640);
+    const wet = compileRecipe(normalized(1, "medium", "wet_lowland"));
+    assert.equal(wet.climate.baseMoisturePermille, 260);
+    assert.equal(wet.water.seaLevelPermille, 350);
+    assert.equal(wet.water.wetlandMoistureMin, 480);
+    assert.equal(wet.water.riverAccumulationThreshold, 800);
+    const frozen = compileRecipe(normalized(1, "large", "frozen_north"));
+    assert.equal(frozen.climate.baseTemperaturePermille, -380);
+    assert.equal(frozen.water.seaLevelPermille, 370);
+    assert.equal(frozen.water.majorRiverAccumulationThreshold, 5000);
   });
 
   it("is deterministic: same recipe, byte-identical config and hashes", () => {
