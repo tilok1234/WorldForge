@@ -209,16 +209,22 @@ export const GENERATOR_VERSION = "0.1.0";
  *     level stay world-global — one landmass, one ocean — which is
  *     what keeps the composed world seamless. Zone-free recipes
  *     generate identical layers (identities shift with the bumps).
+ * 44: wandering hard seams (macro.fields 8; verdict "those are way too
+ *     hard seams") — hard mode keeps its sharp transition but the
+ *     border line itself meanders: the zone lookup is warped by smooth
+ *     two-octave fbm up to seamJitterCells (10), then a 2-cell settle
+ *     blur de-aliases the frontier. Blended mode unchanged. Zone-free
+ *     recipes generate identical layers.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 43;
+export const GENERATOR_BEHAVIOR_VERSION = 44;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 25;
+export const RECIPE_COMPILER_VERSION = 26;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "recipe.presets": 6,
-  "macro.fields": 7,
+  "macro.fields": 8,
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 14,

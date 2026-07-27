@@ -49,25 +49,42 @@ describe("zone composition (behavior 43)", () => {
     assert.ok(westColder / samples > 0.9, `west colder in ${westColder}/${samples} samples`);
   });
 
-  it("blended seams grade the border instead of stepping it", () => {
+  it("hard seams stay sharper than blended, and the frontier wanders", () => {
     const hard = buildMacroFields(compiled({ ...BASE, zones: TWO_ZONES }).config);
     const blended = buildMacroFields(
       compiled({ ...BASE, zones: { ...TWO_ZONES, seams: "blended" } }).config,
     );
-    const { width } = { width: 64 };
-    const y = 32;
-    // At the seam column the hard map steps the full offset difference;
-    // the blended map must be strictly gentler there.
-    const seam = width / 2;
-    const hardStep = Math.abs(
-      (hard.temperature[y * width + seam] as number) - (hard.temperature[y * width + seam - 1] as number),
-    );
-    const blendedStep = Math.abs(
-      (blended.temperature[y * width + seam] as number) -
-        (blended.temperature[y * width + seam - 1] as number),
-    );
-    assert.ok(blendedStep < hardStep, `blended step ${blendedStep} < hard step ${hardStep}`);
+    const width = 64;
+    // Per row, find the biggest single-cell temperature step and where it
+    // sits. Hard mode (behavior 44: wandering frontier + 2-cell settle
+    // blur) must remain sharper than blended, and the frontier column must
+    // vary across rows instead of running ruler-straight down the grid line.
+    const rowMaxStep = (fields: { temperature: readonly number[] }, y: number) => {
+      let best = 0;
+      let at = 0;
+      for (let x = 17; x < width - 16; x += 1) {
+        const step = Math.abs(
+          (fields.temperature[y * width + x] as number) - (fields.temperature[y * width + x - 1] as number),
+        );
+        if (step > best) {
+          best = step;
+          at = x;
+        }
+      }
+      return { best, at };
+    };
+    let hardSharper = 0;
+    const frontier = new Set<number>();
+    for (let y = 6; y < 60; y += 3) {
+      const h = rowMaxStep(hard, y);
+      const b = rowMaxStep(blended, y);
+      if (h.best > b.best) hardSharper += 1;
+      frontier.add(h.at);
+    }
+    assert.ok(hardSharper >= 14, `hard sharper in ${hardSharper}/18 rows`);
+    assert.ok(frontier.size >= 4, `frontier wanders across ${frontier.size} columns`);
     // And far inside a zone core the character survives blending.
+    const y = 32;
     const westCore = blended.temperature[y * width + 8] as number;
     const eastCore = blended.temperature[y * width + width - 8] as number;
     assert.ok(westCore < eastCore, "zone cores keep their character under blending");

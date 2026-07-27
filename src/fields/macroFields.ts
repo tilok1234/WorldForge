@@ -23,8 +23,8 @@ export function buildMacroFields(config: ResolvedWorldConfig): MacroFields {
   // Zone composition (behavior 43, macro.fields v7): per-zone climate
   // character as additive per-cell offset maps. Elevation stays global —
   // one landmass, one sea level, which is what keeps the world seamless.
-  const zoneTemperature = zoneOffsetMap(config.zones, width, height, (zones) => zones.temperatureOffsets);
-  const zoneMoisture = zoneOffsetMap(config.zones, width, height, (zones) => zones.moistureOffsets);
+  const zoneTemperature = zoneOffsetMap(config, width, height, (zones) => zones.temperatureOffsets);
+  const zoneMoisture = zoneOffsetMap(config, width, height, (zones) => zones.moistureOffsets);
   const elevation = buildField(config, "macro.elevation", config.macroFields.elevation, null);
   const temperature = buildField(config, "macro.temperature", config.macroFields.temperature, zoneTemperature);
 
@@ -70,33 +70,55 @@ function buildField(
 }
 
 /**
- * Per-cell additive offset map for one field. Hard seams: each cell takes
- * its zone's offset verbatim. Blended seams: the hard map is smoothed with
- * a separable integer box blur of seamBandCells (edge-clamped), producing a
- * deterministic climate gradient roughly two bands wide at every border
- * while zone cores keep their full character. Returns null when the zones
- * carry no offsets for this field, so zone-free worlds pay nothing.
+ * Per-cell additive offset map for one field. Hard seams (behavior 44):
+ * the zone lookup is warped by smooth deterministic noise up to
+ * seamJitterCells, so borders stay SHARP but meander like real frontiers
+ * instead of running ruler-straight; a 2-cell settle blur de-aliases the
+ * wandering line without softening the zone identity. Blended seams: the
+ * unwarped map is smoothed with a separable integer box blur of
+ * seamBandCells, producing a climate gradient roughly two bands wide.
+ * Returns null when the zones carry no offsets for this field, so
+ * zone-free worlds pay nothing.
  */
 function zoneOffsetMap(
-  zones: ZoneRules | null,
+  config: ResolvedWorldConfig,
   width: number,
   height: number,
   pick: (zones: ZoneRules) => readonly number[],
 ): number[] | null {
+  const zones = config.zones;
   if (zones === null) return null;
   const offsets = pick(zones);
   if (offsets.every((value) => value === 0)) return null;
   const zoneWidth = Math.trunc(width / zones.gridColumns);
   const zoneHeight = Math.trunc(height / zones.gridRows);
+  const jitter = zones.seams === "hard" ? channel(config.seed, "zones.seam") : null;
+  const wanderOctaves = [
+    { cellSizeLog2: 5, weightPermille: 700 },
+    { cellSizeLog2: 3, weightPermille: 300 },
+  ];
   const map = new Array<number>(width * height);
   for (let y = 0; y < height; y += 1) {
-    const row = Math.min(zones.gridRows - 1, Math.trunc(y / zoneHeight));
     for (let x = 0; x < width; x += 1) {
-      const column = Math.min(zones.gridColumns - 1, Math.trunc(x / zoneWidth));
+      let sampleX = x;
+      let sampleY = y;
+      if (jitter !== null) {
+        // fbm 0-999 -> [-seamJitterCells, +seamJitterCells], smooth in space.
+        const wx = fbmPermille(jitter, x, y, wanderOctaves);
+        const wy = fbmPermille(jitter, x + 4096, y + 4096, wanderOctaves);
+        sampleX = x + Math.trunc(((wx - 500) * zones.seamJitterCells) / 500);
+        sampleY = y + Math.trunc(((wy - 500) * zones.seamJitterCells) / 500);
+        sampleX = Math.min(width - 1, Math.max(0, sampleX));
+        sampleY = Math.min(height - 1, Math.max(0, sampleY));
+      }
+      const row = Math.min(zones.gridRows - 1, Math.trunc(sampleY / zoneHeight));
+      const column = Math.min(zones.gridColumns - 1, Math.trunc(sampleX / zoneWidth));
       map[y * width + x] = offsets[row * zones.gridColumns + column] as number;
     }
   }
-  if (zones.seams === "hard") return map;
+  if (zones.seams === "hard") {
+    return boxBlur(boxBlur(map, width, height, 2, true), width, height, 2, false);
+  }
   return boxBlur(boxBlur(map, width, height, zones.seamBandCells, true), width, height, zones.seamBandCells, false);
 }
 

@@ -205,6 +205,12 @@ export interface ZoneRules {
   readonly gridRows: number;
   readonly seams: "blended" | "hard";
   readonly seamBandCells: number;
+  /**
+   * Hard-seam border wander (behavior 44): the zone lookup is warped by
+   * smooth deterministic noise up to this many cells, so hard borders stay
+   * sharp but meander like real frontiers instead of running ruler-straight.
+   */
+  readonly seamJitterCells: number;
   readonly temperatureOffsets: readonly number[];
   readonly moistureOffsets: readonly number[];
 }
@@ -245,7 +251,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 19;
+  readonly resolvedConfigFormat: 20;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -728,7 +734,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 19,
+    resolvedConfigFormat: 20,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -779,6 +785,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
             gridRows: normalized.zones.grid[1],
             seams: normalized.zones.seams,
             seamBandCells: 12,
+            seamJitterCells: 10,
             temperatureOffsets: normalized.zones.entries.map((entry) => entry.temperaturePermille),
             moistureOffsets: normalized.zones.entries.map((entry) => entry.moisturePermille),
           },
