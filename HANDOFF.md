@@ -1,235 +1,212 @@
-# WorldForge — session handoff (2026-07-27, account switch #4)
+# WorldForge — handoff (2026-07-27, mobile session → merge at PC)
 
-For a fresh AI session with no prior context. Read `AGENTS.md` and the
-`README.md` reading list first; this file carries session state the docs
-don't. File-based assistant memory at
-`~/.claude/projects/C--Users-headc-Documents-WorldForge/memory/` is
-machine-local and survives account switches; it cross-validates this
-file. HANDOFF.md is the tiebreaker.
+This file was rewritten at the end of a long mobile session so the next
+session (you, at the PC) can merge and continue without archaeology.
+`AGENTS.md` and the `README.md` reading list still apply. HANDOFF.md is
+the tiebreaker over machine-local assistant memory.
 
-## Where the project stands
+## 1. Merge instructions (do this first at the PC)
 
-W0–W9 complete. ALIVE-WORLDS ARC complete (behaviors 15–30). VARIETY
-ARC COMPLETE AND VERDICT-CLOSED (behaviors 31–35). GAME INTEGRATION
-PLAN merged to main (ratified; export-game-pack Phase 2 + authored
-placement behavior 36) and extended by SETTLEMENT PINS (behavior 37,
-2026-07-27 mobile session, rank design designer-ratified: pin order =
-rank, first pin is the capital) + EXPLICIT RANKS (behavior 38, same
-session, user-picked next: optional rank field, pin a village while
-the capital stays free). TERRAIN TEXTURE ARC OPEN (behavior 39,
-terrain.texture 1, user-picked direction "terrain texture"): interior
-mottling (mud→grass tussocks, grass→parched patches, dry_grass→
-gravel hardpan, snow→gravel scree; organic 1-5 cell patches) + edge
-dithering between ground materials; after all structural passes,
-before decoration; walkability-neutral swaps only (swamp widening
-EXCLUDED v1 — swamp BLOCKS movement per loader contract); confetti
-sweep enforces no one-cell regions. FIRST layer-visible change since
-the variety arc: canonical flood 33890→34058 (prop rerolls, both
-consumers equal, Godot 0 errors). Texture before/afters were superseded by the organic-arc approvals;
-baseline unblocked and re-recorded (see below). Texture geography
-verdict: "geography seems good... a little empty" → richened fen/waste
-recipes (9/8 settlements, 6 landmarks, dense) — STILL "a little
-empty" at 256² → user pivot: "start making the smaller maps first" →
-THREE TINY CLIMATE HOLLOWS committed (fen-hollow 20033, frost-hollow
-20113, dust-hollow 20093; hearth-hollow template, city+town gap ≥53,
-both landmarks placed, dense tier; floods 3001/2818/3312, 0 errors;
-overviews sent; hollows verdict "very good works great on phone" but
-"feels like 4 spots on map" → ORGANIC SMALL MAPS opened, one world at
-a time per user. BEHAVIOR 40 (decoration.pois 13): POI spacing
-size-scaled (tiny 7, others 14 — the flat 14 starved tiny to ~6 of 18
-budgeted POIs; small+ layers identical). fen-hollow v2: rank-2 pinned
-outpost mid-north via behavior-38 near-pin (the tiny-fusion gotcha
-dodge), 3rd landmark (fortress across_river), densityPermille 550;
-6→12 POIs, floods clean; organic pass CONTINUES: behavior 41 wilderness variety (species accents + poi.abandoned_homestead/poi.lone_cottage lone buildings, homestead accepts mud). Canonical flood 34058->33845 (ambient rerolls). fen v3 delivered; FROST-HOLLOW v2 done same pattern (behavior 42, decoration.pois 15: homestead accepts snow; pinned outpost 24,36, fortress high_ground, 8->20 POIs, flood 2752). FROST v2 APPROVED ('ye seems better') with DESIGN NOTE: frost-hollow is intended as one of the game's exploration-heavy maps — bias future tuning toward discoveries over settlement fabric there. DUST-HOLLOW v2 done recipe-only (pinned outpost 39,40 on the SE road, world_tree far_from_town oasis, 10->20 POIs, flood 3163, no behavior bump). FEN v3 + DUST v2 APPROVED ('nice'). ALL THREE HOLLOWS RATIFIED. Organic stack then carried UP to the 256-squared climate worlds: dust-sea richened to match fen/waste (9 settlements, 6 landmarks incl world_tree oasis + mountain_hamlet, dense, 3 routes), all three at densityPermille 550; regen under behavior 42 gives dust-sea 96 POIs/19 kinds, drowned-fen 67/20, white-waste 91/12 (floods 51127/44820/44010, 0 unreachable). ORGANIC 256s APPROVED ('these look good') — the terrain-texture arc verdict chain is CLOSED end-to-end (texture geography + hollows + organic 256s all ratified). Canonical visual baseline re-recorded at the behavior-42 identity (flood 33845). LIBRARY REFRESH swept 2026-07-27: all 14 older approved worlds regenerated under behavior 42 with RECIPES UNTOUCHED (archetype identity preserved per density doctrine); floods all clean (frontier-sparse 44107, warm-vale 38261, highland-fastness 29472, sunburnt-reach 53878, weeping-marsh 53529, drowned-shore 41245, the-old-war 38607, the-long-winter 50725, hearth-hollow 2536, mediums 161492/160721/179429, larges 646853/651252); REFRESH APPROVED ('these look good') — the ENTIRE LIBRARY (17 recipes + canonical) is ratified under behavior 42. No open verdicts. ZONE COMPOSITION ARC OPEN (docs/ZONE_COMPOSITION_ASSESSMENT.md RATIFIED: approach C, 512-squared 4x2 zones, BOTH seam modes for A/B, start now). BEHAVIOR 43 (macro.fields 7): recipes gain zones {grid, seams blended|hard, entries: additive temp/moisture offsets, reading order}; blended = separable 12-cell box blur over the offset map; elevation + sea level stay world-global. Pilot fixtures/recipes/the-eight-lands.json (medium 512-squared, seed 80808, frozen NW -> scorched SE, 16 settlements, 7 landmarks, 159 POIs, flood 168602, 0 unreachable); SEAM VERDICT: HARD, then 'way too hard' -> BEHAVIOR 44 (macro.fields 8): wandering hard seams — zone lookup warped by two-octave fbm up to seamJitterCells (10) + 2-cell settle blur, so the frontier stays sharp but meanders; blended unchanged. eight-lands regenerated (flood 168779). Wander comparison sent, then user direction 'make shapes that make sense instead of filling a square' -> BEHAVIOR 45 (macro.fields 9): zones layout 'anchors' — each entry carries an anchor cell + territory weight (100-10000, default 1000), cells belong to the weighted nearest anchor (integer d2w2 comparison, first-entry tiebreak); grid stays default; seam modes unchanged on top. the-eight-lands reshaped with geography-meaningful anchors (snow wraps the great lake, fen holds the mud heart, steppe hugs the west rock; flood 172185, 0 unreachable). SHAPED WORLD APPROVED ('last pic looks best awesome') -> user asked for islands -> BEHAVIOR 46 (macro.fields 10): zone entries gain elevationPermille (negative drowns to sea; ALWAYS blended at borders so coasts shelve; wander first so coastlines meander; sea level stays global). Pilot fixtures/recipes/the-broken-isles.json (medium, seed 90909, anchors: 2 sea zones carve a great W channel + S bay, NW island WILD/uninhabited, mainland + peninsula carry ALL 10 near-pinned settlements + 6 near-pinned landmarks; flood 73008 = mainland component). CAUTION ON RECORD: routes/reachability assume ONE connected landmass — inhabited zones must stay land-connected; true islands safe only uninhabited; MULTI-COMPONENT ROUTING = OPEN DECISION for a later behavior (per-component route webs, causeways/ferries). Authoring recipe for island worlds: generate BARE first (no pins), eyeball the landmass, then place near-pins on real land (broken-isles took 2 iterations of exactly this). VERDICT OPEN on the broken isles. Viewer has an Eight Lands tab. Arc next steps: zone-scoped settlement floors, zone-crop preview loop. Mobile viewer artifact live (three hollows, pan/
-zoom): https://claude.ai/code/artifact/7850ac94-e0e9-466a-8ffc-4bee23adeff3
-(rebuild: scratchpad build-viewer.mjs). Versions: behavior 46, recipe compiler 28, artifact format 8,
-resolved-config 22, macro.fields 10, terrain.texture 1,
-decoration.props 10, decoration.pois 15. 198 tests, all green. Standing commit+push
-authorization held this whole arc — re-confirm with the user per
-policy.
+Everything from the mobile session lives on ONE branch, fully pushed:
 
-**VARIETY ARC CLOSED 2026-07-27 (mobile session): all three climate
-worlds approved** — dust-sea and white-waste liked outright,
-drowned-fen "cool for now" (kept as-is; a moisture-bias exploration at
-−80/−120 was shown and declined — recipe untouched). Parked idea, NOT
-on the plan: fine-grained fen variety (mud mottling / wider swamp
-margins) would need engine vocabulary; user deferred. FORMAL BASELINE
-RECORDED 2026-07-27 ("run it"): approval file committed, flood-33890
-canonical locked. Remaining user-gated items: windowed Godot
-playthrough, taste-polish round (parked since the start).
+    claude/world-forge-mobile-eiqrr3
 
-### The canonical world (fixtures/recipes/small-cold-coastal.json, seed 103991)
+`main` already contains the game-integration-plan merge (done early in
+the session, explicitly authorized); the branch contains `main`, so the
+merge is a clean fast-forward:
 
-Two cities (capital 240,125 + second city 94,128 via the remote-quarter
-reservation) + 3 towns + 5 villages; EIGHT trail-served landmarks
-(fortress, ruined city w/ keep + dungeon/temple/portal/crypt delves,
-world tree, crystal spire, lighthouse, Winterlodge, two mountain
-hamlets); ~103 story POIs / 24 kinds; roads + shortcut trails + graded
-mountain trails + POI spurs; mountain relief (adapter-side elev inside
-rock only, walkable cells stay level 0) with two-tile waterfall
-cascades + rapids; character zones; thicket ambience. Verify chain last
-green: Godot 0 errors, both consumers flood **33,890** (was 33,887
-before the behavior-34 ford guard — 3 props that stood in crossings are
-no longer placed; flagged and accepted; FORMAL BASELINE APPROVED
-2026-07-27 — fixtures/recipes/small-cold-coastal.json.approval.json,
-re-recorded per behavior version bump (37 then 38); layers
-byte-identical each time, floods the invariant). Godot verifies for
-behaviors 36–38 all ran green in this container (Godot 4.6.2
-downloaded to ~/bin/godot; flood parity 33890/33890 every time).
+    git fetch origin
+    git checkout main
+    git merge --ff-only origin/claude/world-forge-mobile-eiqrr3
+    git push origin main
 
-### The recipe library (fixtures/recipes/, galleries in outputs/gallery/<name>/)
+Then, because `outputs/` is gitignored and this container's galleries
+die with it:
 
-Fifteen worlds; viewer dropdown lists them all. Approval status:
+    npm install && npm test          # expect 202 tests, 0 failures
+    node dist/tools/update-golden.js # should be a no-op after merge
+    # regenerate whatever galleries you want to view locally, e.g.:
+    node dist/src/cli.js resolve-tileforge fixtures/recipes/small-cold-coastal.json --out outputs/gallery/small-cold-coastal
+    node dist/tools/godot-consumer.js --world outputs/gallery/small-cold-coastal
+    node consumers/typescript/traverse.mjs outputs/gallery/small-cold-coastal/world.json
+    # canonical expectation: BOTH consumers flood 33845, Godot 0 errors
 
-APPROVED (small archetypes, 2026-07-27): frontier-sparse, warm-vale,
-highland-fastness, sunburnt-reach (77% steppe via biases),
-weeping-marsh, drowned-shore, the-old-war, the-long-winter (74.5% snow,
-seed 87514), hearth-hollow (tiny 64², seed 1286006, dense, city+town).
+The full verify chain ran green in the container at every behavior
+(Godot 4.6.2 official build was downloaded into the container for it),
+but re-running the canonical chain on your machine is the honest
+cross-check of the merge.
 
-APPROVED (medium 512², "lets do next"): warm-vale-medium (balanced, 15
-settlements), the-old-war-medium (dense, 16), frontier-sparse-medium
-(sparse, 11). APPROVED (large 1024², "ye seems cool"): warm-vale-large
-(balanced, 24 settlements, flood 646918), the-old-war-large (dense, 28
-settlements, 10 landmarks, flood 650230).
+## 2. What the mobile session shipped (behaviors 37–46)
 
-APPROVED (climate worlds, behavior 35, 2026-07-27 mobile): dust-sea
-(arid_steppe, seed 15551, 76.8% dry steppe), drowned-fen (wet_lowland,
-seed 24680, 74.9% wet — "cool for now", liked less than the other two),
-white-waste (frozen_north, seed 12007, 77.6% snow). Floods 55404 /
-48858 / 53656, all 0 errors.
+Ten behaviors, all tested, all verdict-ratified except where noted:
 
-### Recipe vocabulary after the arc
+- **37 — settlement pins** (routes.graph 13): recipes gain a
+  rank-ordered `settlements` array of `at`/`near` constraints; pin
+  order = rank, first pin is the capital (designer-ratified). Named
+  errors, never relocation.
+- **38 — explicit ranks** (routes.graph 14): optional `rank` per entry
+  claims any budget slot, so a village can be pinned while the capital
+  stays free-competed. Rank permutation is identity for 37-style pins.
+- **39 — terrain texture** (terrain.texture 1): interior mottling
+  (mud→grass tussocks, grass→parched, dry→gravel hardpan, snow→scree)
+  + edge dithering between ground materials. Runs after all structural
+  passes, before decoration; walkability-neutral; confetti sweep.
+  Swamp widening deliberately EXCLUDED (swamp blocks movement).
+- **40 — size-scaled POI spacing** (decoration.pois 13): the flat
+  14-cell spacing starved tiny worlds to ~6 POIs; tiny now 7.
+- **41 — wilderness variety** (decoration.props 10, decoration.pois
+  14): rare species accents in every biome table; two lone-building
+  POI kinds append-only: `poi.abandoned_homestead` (grass/dry/mud),
+  `poi.lone_cottage` (grass), cap 2 each, block fully like ruins.
+- **42 — snowed-in homesteads** (decoration.pois 15): homestead
+  accepts snow.
+- **43 — zone composition, step 1** (macro.fields 7): recipes gain
+  `zones` — per-zone climate character as ADDITIVE temp/moisture
+  offsets; seam modes `blended` (12-cell box-blur gradient) and `hard`.
+  Approach C of docs/ZONE_COMPOSITION_ASSESSMENT.md (ratified).
+- **44 — wandering hard seams** (macro.fields 8): hard borders stay
+  sharp but meander (two-octave fbm warp up to 10 cells + 2-cell
+  settle blur). Verdict path: ruler-straight hard was "way too hard".
+- **45 — anchor-shaped zones** (macro.fields 9): `layout: "anchors"` —
+  per-zone anchor cell + territory weight, weighted-nearest-anchor
+  territories instead of grid squares. Grid stays the default.
+  Verdict: "last pic looks best, awesome".
+- **46 — zone elevation** (macro.fields 10): zone entries gain
+  `elevationPermille` — negative drowns a zone to sea (channels, bays,
+  islands), positive raises highland. Sea level stays world-global;
+  elevation ALWAYS blends at borders (coasts shelve); wander first so
+  coastlines meander. **VERDICT OPEN on the-broken-isles.**
 
-- sizePreset: tiny 64² | small 256² | medium 512² | large 1024² (chunk
-  32 except tiny 16). Budget caps: settlements 32, routes 12,
-  landmarks 12 (validate.ts follows BUDGET_RANGES — no stale literals).
-- climatePreset: temperate | cold_coastal | arid_steppe (+220/−200, sea
-  280, wetland 640) | wet_lowland (+70/+260, 350, 480) | frozen_north
-  (−380/+60, 370, 560). Biases stay additive on top.
-- densityPreset: sparse | balanced | dense (scales POIs, ambient,
-  shortcut trails ONLY — settlements/landmarks are recipe budgets).
+Plus, ratified along the way: hollows organic passes, the organic
+256² climate worlds, and a full library refresh (all below).
 
-## Density doctrine (IMPORTANT — standing user verdicts)
+## 3. Versions after the session
 
-"We shouldn't overdo it" + "not all maps should be this populated" →
-NEVER raise the dense-tier ambient/POI numbers without a fresh verdict.
-BUT: the medium verdict ("very empty... more settlements and roads
-connecting the whole map") established that STRUCTURAL density on big
-maps is a separate axis — settlement counts, road webs, and sector
-floors grow with map size; props/POIs per cell FALL as maps grow.
+behavior 46 · recipe compiler 28 · resolvedConfigFormat 22 · artifact
+format 8 · macro.fields 10 · routes.graph 14 · terrain.texture 1 ·
+decoration.props 10 · decoration.pois 15 · adapter.tileforge 6.
+202 tests, all green. Canonical baseline
+(`fixtures/recipes/small-cold-coastal.json.approval.json`) re-recorded
+at the behavior-46 identity; canonical layers are byte-identical since
+behavior 42 (flood 33845 — zone behaviors change zone-free layers only
+through version stamps).
 
-## Working agreements
+## 4. The world library (all in fixtures/recipes/)
 
-- Loop: implement → `npm test` + `node dist/tools/update-golden.js` →
-  verify chain → overviews/crops → SendUserFile → user refreshes viewer
-  → verdict → iterate.
-- Viewer: `http://127.0.0.1:8787` (launch.json "viewer"; server may
-  belong to another session — do NOT restart; regenerate into the same
-  dir and refresh). Header world picker: serve-viewer's read-only
-  `/api/worlds` lists outputs/ dirs; old-format relics (demo-a/b,
-  w4-demo) auto-hidden; native check accepts resolved-render.png OR
-  resolved-preview.png.
-- Renders: ≤8192px worlds get the full render; >8192px also get a
-  box-averaged resolved-preview.png (browser decode cap); >16384px
-  (large) SKIP the full render entirely — a 32768px rgba buffer is
-  exactly 2^32 bytes — and band-compose the preview (one-cell band
-  margin absorbs the sand 16px offset). Native-scale crops for large
-  come from re-rendering a slice, not the full PNG.
-- Overviews for verdicts: scratchpad downscale-png.mjs pattern (box
-  average, factor to ~1024px), Read to eyeball, then SendUserFile.
-- Verify chain on EVERY generation change, canonical + touched worlds:
-  `node dist/tools/godot-consumer.js --world <dir>` (0 errors) +
-  `node consumers/typescript/traverse.mjs <dir>/world.json` — floods
-  must be EQUAL between consumers.
-- Versioning: behavior bump + touched rule packs (bump SEQUENTIALLY and
-  check the changelog comment matches the table — this session
-  mis-skipped twice); adapter-only → TILEFORGE_ADAPTER_VERSION +
-  adapter.tileforge; RouteRules/SettlementRules/decoration SHAPE →
-  resolvedConfigFormat + compiler + literal in tests/compile.test.ts
-  (currently 13).
-- APPEND-ONLY: WORLD_PALETTE, STRUCTURE_TYPES, DECOR_TYPES, DECAL_TYPES,
-  POI_TYPES. Parity: decorate BLOCKING == loader BLOCKING_PROPS; loader
-  STRUCTURE_PASS_CELLS mirrors package manifest pass arrays; package
-  walkable flags are truth. Decals never on rock/swamp EXCEPT
-  decal.steam_vent (spec substrate).
-- Seed-hunt method (proven repeatedly): loop candidate seeds →
-  compose (import dist modules from a scratchpad .mjs via file:// URLs)
-  → count target material %, pick winner. ~1.5s per small world; the
-  climate hunt scored 16 seeds × 3 climates in ~90s.
-- TileForge upstream (`C:\Users\headc\Documents\Semantic tile generator
-  design`) is read-only; guard denylist in gitignored worldforge.local.json.
+**Approved this session** (visual verdicts on the phone viewer):
+- Three tiny climate hollows with organic passes: `fen-hollow` (20033,
+  v3), `frost-hollow` (20113, v2 — DESIGN NOTE: intended as an
+  exploration-heavy map; bias tuning toward discoveries there),
+  `dust-hollow` (20093, v2).
+- Organic 256² climate worlds: `dust-sea`, `drowned-fen`,
+  `white-waste` (richened budgets + dense + cover 550).
+- Library refresh: all 14 pre-existing worlds regenerated under the
+  organic stack with RECIPES UNTOUCHED (archetype identity preserved
+  per the density doctrine) — approved wholesale.
+- `the-eight-lands` (medium, seed 80808): the zone-composition pilot,
+  now 8 ANCHOR-SHAPED zones with hard wandering seams. Approved.
 
-## Gotchas earned across the arcs (do not relearn)
+**Verdict open:**
+- `the-broken-isles` (medium, seed 90909): archipelago pilot — two sea
+  zones carve a west channel + south bay, NW island wild/uninhabited,
+  mainland + peninsula carry all 10 near-pinned settlements and 6
+  near-pinned landmarks (flood 73008, generation clean).
 
-- Landmark stamps carry ONLY walls/materials/road-marks; multi-cell
-  furniture (keep, delves, tree, spire...) goes through the POI pass as
-  poi.city_ruin records (cityStamp helper in pois.ts) — adapter/loader
-  consume POI structure records. Landmark rects are "districts" in
-  validateArtifact (poi structures may sit inside).
-- Landmark trails are built by ROUTES before stamps; entrance validation
-  runs BEFORE the POI pass → gate cells must be corridor at landmark
-  time (placeLandmarks paints pathLayer through the gateway).
-- Roads soft-avoid future landmark stamp footprints (dijkstra avoid set,
-  +600 cost) — without it a road crosses the site and the stamp honestly
-  refuses (warm-vale exposed it).
-- §2.7 sand margin: TWO cells off ALL FOUR edges (highland-fastness
-  exposed the far-edge + 1-cell cases; emitTmj throws on violation).
-- Ford rule bridges runs of ≤2 stream cells; the loader DUPLICATES the
-  rule (zero-imports contract) — change both or parity fails.
-- BLOCKING PROPS never on ford/crossing cells (behavior 34,
-  decoration.props 9): composeWorld's streetFordCells is the single
-  source of truth, passed into decorateWorld; rowboat/buoy direct
-  writes have their own guard. The first 1024 map caught this — a
-  scattered tree severed a street at a ford. Refusing a placement does
-  NOT relocate it (per-cell rolls), so fixes like this shift approved
-  worlds by single cells — measure and flag, never assume identical.
-- Settlement selection phases (routes.graph v11): capital → remote
-  quarter (crowns second city) → SECTOR FLOORS (sectorGrid×sectorGrid,
-  each ≥ sectorMin; 1×1/0 disables on tiny+small, 2×2×2 medium, 4×4×1
-  large) → open competition. Score competition alone clusters into
-  bands — frontier-sparse-medium's west half had ZERO settlements
-  before floors. Sectors fill in reading order; medium's 2×2 grid is
-  byte-identical to the old quadrant floors (regen floods matched).
-- POI budget = budget + cityCount (landmark furniture exempt); far-reach
-  quota 30%; rare kinds need their own channel lane or variant windows —
-  the general stream starves latecomers.
-- elev derivation lives in the ADAPTER (rock quartiles capped by
-  distance-from-open-land, relaxed to ≤1 steps; artifact untouched).
-  Waterfalls = lip + plunge cells where a stream drops a level.
-- Settlement structures must not stamp on pathLayer (trails are
-  corridors) — footprintFits checks it.
-- gradeRockCell: trail cells over rock become gravel; LONE interruptions
-  adopt a walkable neighbor material (one-cell-region confetti guard).
-- Lone-cobble cleanup must treat street-ford neighbors as corridor
-  continuation or it deletes ford landings (parity mismatch).
-- TINY FUSION: with THREE settlements on 64x64 the outpost always fuses
-  the band. CITY+TOWN ALONE SEPARATE FINE on ~40% of seeds (measured
-  16/37 with gap up to 24) — hunt seeds on gap, don't cap at 1.
-- verify_world.gd walkability ladder: rungs apply only to cell types
-  the world CONTAINS (wall-less worlds exist — hearth-hollow); absent
-  types print a named skip instead of failing.
-- warm-vale-medium's "coastal" lighthouse sits on a lake shore (seed
-  424242 has no sea) — accepted fallback, on record.
-- Chrome refuses giant image decodes and its decode service can wedge
-  after repeated ~GB attempts — a browser restart clears it; the
-  preview system exists so this never matters in normal use.
+**Mobile viewer artifact** (pan/zoom, phone-friendly; hollows + Eight
+Lands + Broken Isles):
+https://claude.ai/code/artifact/7850ac94-e0e9-466a-8ffc-4bee23adeff3
+Rebuild script: scratchpad `build-viewer.mjs` (container-local — it
+inlines gallery renders as data URIs; recreate from any session).
 
-## User-gated, still open
+## 5. Open decisions and next steps
 
-- Windowed Godot playthrough: `godot --path consumers/godot`.
-- End-of-plan taste-polish round.
-- Phase 4 of docs/GAME_INTEGRATION_PLAN.md (game-repo importer addon):
-  post-Gate-1, needs the user to separately scope the game repo.
+**Zone arc (docs/ZONE_COMPOSITION_ASSESSMENT.md, ratified, open):**
+- Zone-scoped settlement floors: guarantee each zone ≥1 settlement
+  (generalize sector floors to zone territories).
+- Zone-crop preview tooling for the per-zone verdict loop.
+- **Multi-component routing — OPEN DECISION.** Routes and reachability
+  validators assume ONE connected landmass. Island worlds currently
+  require inhabited land to stay connected (peninsulas/isthmuses);
+  true detached islands are safe only uninhabited. Inhabited islands
+  need per-component route webs, causeways, or ferries — a designer
+  decision before an engine behavior.
+- Island authoring recipe (proven on broken-isles): generate BARE
+  (no pins) first, eyeball the landmass render, then place near-pins
+  on real land. Named errors catch every miss.
 
-## Commands
+**Game integration plan (docs/GAME_INTEGRATION_PLAN.md):**
+- Phase 4 (worldforge_importer addon in the game repo): post-Gate-1,
+  needs the game repo explicitly scoped writable.
+- Dusk package export from TileForge (designer-side) → theme re-pin.
+- Phase 5 slice-zone drafting: now effectively superseded-and-expanded
+  by the zone arc; reconcile the plan text when Phase 4 starts.
 
-```
-npm test                          # build + 155 tests (~3s)
-node dist/tools/update-golden.js
-node dist/src/cli.js resolve-tileforge fixtures/recipes/<name>.json --out outputs/gallery/<name>
-node --max-old-space-size=8192 dist/src/cli.js resolve-tileforge fixtures/recipes/<large>.json --out outputs/gallery/<large>
-node dist/tools/godot-consumer.js --world outputs/w7-slice
-node consumers/typescript/traverse.mjs outputs/<dir>/world.json
-node dist/tools/serve-viewer.js   # viewer :8787 (if not already up)
-godot --path consumers/godot
-```
+**Parked (user-gated):** windowed Godot playthrough; taste-polish
+round; fen swamp-margin widening (needs walkability care).
+
+## 6. Standing doctrine (unchanged, still binding)
+
+- **Density doctrine:** never raise dense-tier ambient/POI numbers
+  without a fresh verdict. Structural density (settlements, roads,
+  floors) scales with map size; per-cell props/POIs fall as maps grow.
+- **Loop:** implement → `npm test` + update-golden → verify chain →
+  overviews → verdict → iterate. Verify chain on EVERY generation
+  change: godot-consumer (0 errors) + TS traverse, floods EQUAL.
+- **Versioning:** behavior bump + touched rule packs, sequential;
+  config-shape changes bump resolvedConfigFormat + compiler + the
+  literal in tests/compile.test.ts (currently 22).
+- **APPEND-ONLY:** WORLD_PALETTE, STRUCTURE_TYPES, DECOR_TYPES,
+  DECAL_TYPES, POI_TYPES. Parity contracts as before.
+- TileForge upstream stays read-only.
+
+## 7. Gotchas earned (new this session — old ones still apply)
+
+- **Swamp BLOCKS movement** (loader contract): any pass that could
+  write swamp changes walkability — texture pass forbids it.
+- **Sand law:** every sand cell must touch standing water; texture
+  never writes sand (steppe mottle uses gravel).
+- **Confetti law is 4-connected:** any texture/zone change must leave
+  no one-cell regions — texture ends with a revert sweep for both its
+  own specks and enclosed originals.
+- **Tiny fusion dodge:** 3 free settlements on 64² always fuse; a
+  rank-2 near-pin places the third safely (fen/frost/dust hollows).
+- **POI spacing is size-scaled now** (tiny 7); the flat constant was
+  why tiny maps felt like "4 spots on a map".
+- **Zone elevation + connectivity:** see §5 — pins keep civilization
+  off wild islands; generation fails loudly (named errors) when a pin
+  misses land or a settlement strands.
+- **Landmark/settlement near-pins on unseen terrain:** expect 1-2
+  iterations; the bare-world render first saves most of them.
+- **Approval file recipeSha shifts with vocabulary versions** (the
+  normalized recipe gained `zones`/`rank` fields), not only when the
+  recipe file changes — re-record the baseline after behavior bumps
+  once floods are confirmed invariant.
+- Container trick, if ever needed again: the official Godot 4.6.2
+  Linux build downloads and runs headless fine (`~/bin/godot`), so the
+  full Godot verify chain works from a phone session.
+
+## 8. The canonical world (unchanged content since behavior 42)
+
+`fixtures/recipes/small-cold-coastal.json`, seed 103991. Two cities
+(capital 240,125; second city 94,128) + 3 towns + 5 villages; eight
+trail-served landmarks; ~100+ story POIs (kinds grew with behavior 41);
+roads + shortcut trails + graded mountain trails + POI spurs; mountain
+relief with two-tile cascades + rapids; character zones; thicket
+ambience; terrain texture since 39. Both consumers flood **33845**,
+Godot 0 errors. History of the number: 33887 → 33890 (behavior-34 ford
+guard) → 34058 (behavior-39 texture prop rerolls) → 33845 (behavior-41
+ambient rerolls); every step flagged and accepted, consumer equality
+never broken.
+
+## 9. Commands
+
+    npm test                          # build + 202 tests
+    node dist/tools/update-golden.js
+    node dist/src/cli.js resolve-tileforge fixtures/recipes/<name>.json --out outputs/gallery/<name>
+    node --max-old-space-size=8192 dist/src/cli.js resolve-tileforge fixtures/recipes/<medium-or-large>.json --out outputs/gallery/<name>
+    node dist/tools/godot-consumer.js --world outputs/gallery/<name>
+    node consumers/typescript/traverse.mjs outputs/gallery/<name>/world.json
+    node dist/src/cli.js export-game-pack fixtures/recipes/<name>.json --out <dir>
+    node dist/src/cli.js approve-recipe fixtures/recipes/<name>.json --baseline
+    node dist/tools/serve-viewer.js   # local viewer :8787
+    godot --path consumers/godot
