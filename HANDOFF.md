@@ -45,10 +45,12 @@ warm-up worlds below them are PENDING verdicts:
 - the-old-war — dense war-north: TWO fortresses + ruined city + hamlet.
 - the-long-winter — seed-hunted 74.5% snow (cold_coastal, temp −420,
   northElev +240): fully frozen (0% grass), dark lakes, mossy NE rock
-  massif, fortress/spire/lighthouse/Winterlodge/hamlet. PENDING verdict.
+  massif, fortress/spire/lighthouse/Winterlodge/hamlet. APPROVED
+  2026-07-27 ("the winter world looks good").
 - hearth-hollow — FIRST tiny (64x64) gallery world: ONE village + world
   tree on a gravel knoll + Winterlodge in its snow pocket, wild south.
-  settlementCount 1 is deliberate — see tiny-fusion gotcha. PENDING.
+  settlementCount 1 is deliberate — see tiny-fusion gotcha. PENDING
+  verdict (viewer pointed at it 2026-07-27).
 
 Seed-hunt method (works, reuse): loop candidate seeds → composeWorld →
 count target material %, pick winner (script pattern in session log;
