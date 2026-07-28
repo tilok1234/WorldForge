@@ -95,7 +95,8 @@
   "settlementStyle": {
     "growthPermille": 600,
     "scatterPermille": 450,
-    "variety": true
+    "variety": true,
+    "organicStreets": true
   },
   "landmarks": [
     {

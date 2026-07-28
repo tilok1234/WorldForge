@@ -132,6 +132,12 @@ export interface PlacedStructure {
   readonly height: number;
   readonly entranceX: number;
   readonly entranceY: number;
+  /**
+   * How the approach was expressed (behavior 50; internal — never
+   * serialized into the artifact). Solid entrances must join the corridor
+   * network; worn/none entrances are verified against walkable ground.
+   */
+  readonly laneMode: "solid" | "worn" | "none";
 }
 
 export interface SettlementPlan {
@@ -152,6 +158,7 @@ export function planSettlements(
   routes: RoutesResult,
   config: ResolvedWorldConfig,
   errors: string[],
+  laneCells: number[] = [],
 ): SettlementPlan[] {
   const { width, height } = fields;
   const rules = config.settlements;
@@ -162,6 +169,9 @@ export function planSettlements(
   const organics = channel(config.seed, "settlements.organics");
   const scatterChannel = channel(config.seed, "settlements.scatter");
   const wear = channel(config.seed, "settlements.wear");
+  // Lane cells double as a stamp keep-out (like pathLayer): a later house
+  // must not build over an earlier house's verified way to its door.
+  const laneSet = new Set<number>();
 
   for (let rank = 0; rank < candidates.length; rank += 1) {
     const anchor = (candidates[rank] as { cell: number }).cell;
@@ -352,6 +362,7 @@ export function planSettlements(
               height: 2,
               entranceX: entrance % width,
               entranceY: Math.trunc(entrance / width),
+              laneMode: "solid",
             });
             fountainDown = true;
           }
@@ -369,6 +380,7 @@ export function planSettlements(
             height: 1,
             entranceX: anchorX,
             entranceY: anchorY,
+            laneMode: "solid",
           });
         }
       }
@@ -416,7 +428,7 @@ export function planSettlements(
             rules.organicStreets && fillSlot && depthPermille > 350 && wear.chanceAt(originX, originY, 350, 8)
               ? 2
               : 1;
-          if (!footprintFits(originX, originY, fw, fh, grid, structureLayer, routes.pathLayer, hydro, width, height, yardGap)) {
+          if (!footprintFits(originX, originY, fw, fh, grid, structureLayer, routes.pathLayer, hydro, width, height, yardGap, laneSet)) {
             continue;
           }
           // Stamp provisionally; a placement whose entrance cannot join the
@@ -435,17 +447,27 @@ export function planSettlements(
           // Lived-in streets (behavior 50): civic specials keep their solid
           // cobble approaches; ordinary houses get worn packed-earth lane
           // fragments ("a few tiles indicating not much used roads"), the
-          // deep fringe barely a trace — and some outer houses skip the
-          // lane entirely, standing free in the grass. The route is still
-          // BFS-verified whenever a lane is carved; roadless houses rely on
-          // open ground exactly like any walkable meadow.
-          let connected: boolean;
-          if (rules.organicStreets && fillSlot && depthPermille > 450 && wear.chanceAt(originX, originY, 500, 7)) {
-            connected = true;
-          } else {
-            const wornPermille =
-              rules.organicStreets && fillSlot ? (depthPermille > 600 ? 250 : 450) : 0;
-            connected = carveApproach(entranceX, entranceY, grid, structureLayer, hydro, approachBudget, width, height, wornPermille, wear);
+          // deep fringe barely a trace — and some outer houses paint no
+          // lane at all, standing free in the grass. EVERY mode still runs
+          // the BFS and rolls back on failure: the connectivity check is
+          // load-bearing, not cosmetic — a doorstep can open into a pocket
+          // enclosed by neighboring structures, and the first styled
+          // generation shipped exactly three of those before the compose
+          // entrance check refused the world. No road ≠ no route.
+          const laneMode: "solid" | "worn" | "none" =
+            !rules.organicStreets || !fillSlot
+              ? "solid"
+              : depthPermille > 450 && wear.chanceAt(originX, originY, 500, 7)
+                ? "none"
+                : "worn";
+          const wornPermille = laneMode === "worn" ? (depthPermille > 600 ? 250 : 450) : 0;
+          const laneStart = laneCells.length;
+          const connected = carveApproach(
+            entranceX, entranceY, grid, structureLayer, hydro, approachBudget, width, height,
+            laneMode, wornPermille, wear, laneCells,
+          );
+          for (let recorded = laneStart; recorded < laneCells.length; recorded += 1) {
+            laneSet.add(laneCells[recorded] as number);
           }
           if (!connected) {
             let restore = 0;
@@ -459,7 +481,7 @@ export function planSettlements(
             }
             continue;
           }
-          placed.push({ type, x: originX, y: originY, width: fw, height: fh, entranceX, entranceY });
+          placed.push({ type, x: originX, y: originY, width: fw, height: fh, entranceX, entranceY, laneMode });
           sequenceIndex += 1;
           if (sequenceIndex >= sequence.length) {
             break outer;
@@ -591,6 +613,7 @@ function footprintFits(
   width: number,
   height: number,
   gap = 1,
+  laneSet: ReadonlySet<number> | null = null,
 ): boolean {
   // The footprint plus the gap ring must be clear of other structures
   // (behavior 50 varies the ring to break the uniform packing texture).
@@ -608,8 +631,12 @@ function footprintFits(
         return false;
       }
       // Trails are corridors (behavior 21): a house on a dirt path would
-      // sever a route the network already promised.
+      // sever a route the network already promised. Worn/unpainted lanes
+      // (behavior 50) carry the same promise.
       if (inFootprint && pathLayer[cell] !== 0) {
+        return false;
+      }
+      if (inFootprint && laneSet !== null && laneSet.has(cell)) {
         return false;
       }
     }
@@ -626,13 +653,20 @@ function carveApproach(
   maxLength: number,
   width: number,
   height: number,
+  mode: "solid" | "worn" | "none" = "solid",
   wornPermille = 0,
   wear: Channel | null = null,
+  laneCells: number[] | null = null,
 ): boolean {
-  // Deterministic BFS to the nearest street (cobble or road). Solid mode
-  // carves cobble; worn mode (behavior 50) verifies the same route but
-  // paints only scattered packed-earth cells along it — a barely-there
-  // lane — always marking the doorstep.
+  // Deterministic BFS to the nearest street (cobble or road). The
+  // verification and rollback contract is identical in every mode; only
+  // the painting differs. Solid carves cobble; worn (behavior 50) paints
+  // scattered packed-earth cells along the verified route — a barely-there
+  // lane, doorstep always marked; none verifies and paints nothing.
+  // Worn/none routes are RECORDED in laneCells so decoration keeps its
+  // blocking props off them: solid cobble protected the route implicitly,
+  // and an invisible lane must stay just as open (the first styled
+  // generation sealed three verified grass routes with rolled trees).
   const start = cellAt(startX, startY, width, height);
   if (start === -1) {
     return false;
@@ -644,7 +678,11 @@ function carveApproach(
     return false;
   }
   const paint = (target: number): void => {
-    if (wornPermille === 0 || wear === null) {
+    if (mode !== "solid" && laneCells !== null) {
+      laneCells.push(target);
+    }
+    if (mode === "none") return;
+    if (mode === "solid" || wear === null) {
       grid[target] = COBBLE;
       return;
     }
@@ -665,7 +703,12 @@ function carveApproach(
         paint(cursor);
         cursor = previous.get(cursor) as number;
       }
-      grid[start] = wornPermille === 0 || wear === null ? COBBLE : PACKED_ROAD;
+      if (mode !== "solid" && laneCells !== null) {
+        laneCells.push(start);
+      }
+      if (mode !== "none") {
+        grid[start] = mode === "solid" || wear === null ? COBBLE : PACKED_ROAD;
+      }
       return true;
     }
     const x = cell % width;

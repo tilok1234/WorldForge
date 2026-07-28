@@ -286,8 +286,18 @@ export const GENERATOR_VERSION = "0.1.0";
  *     cobble approaches while ordinary houses get worn packed-earth lane
  *     fragments (BFS still verifies the route; the settlements.wear
  *     channel paints ~450‰ of its cells, ~250‰ past depth 600, doorstep
- *     always marked), some fringe houses (depth > 450, ~half) stand free
- *     with no lane at all, yard clearance varies 1-2 cells, street arms
+ *     always marked), some fringe houses (depth > 450, ~half) paint no
+ *     lane at all — every mode still BFS-verifies the route and rolls
+ *     back on failure, and the verified route becomes a LANE PROMISE
+ *     recorded in laneCells: later structures refuse to stamp on it,
+ *     farms keep fences and crops off it, decoration keeps every prop
+ *     off it. The W5 entrance check gains a second tier to match: solid
+ *     entrances still must join the CORRIDOR network byte-for-byte,
+ *     while worn/none entrances check against walkable GROUND (their
+ *     lanes are deliberately gappy — a corridor-only flood reads them
+ *     as islands; the first styled generation refused exactly three
+ *     such doorsteps before the tier existed — no road never means no
+ *     route), yard clearance varies 1-2 cells, street arms
  *     roll per-direction lengths (50-130%), and deep fill houses humble
  *     into cottages. Off (and for every style-free recipe) the fabric is
  *     byte-identical to behavior 49.

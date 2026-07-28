@@ -249,7 +249,11 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   // cobble streets, structure footprints, stamps, blending) before cleanup.
   const structureLayer = new Uint8Array(width * height);
   const planErrors: string[] = [];
-  const settlementPlans = planSettlements(grid, structureLayer, fields, hydro, routesResult, config, planErrors);
+  // Verified-but-unpainted approach routes (behavior 50 worn/none lanes):
+  // decoration must keep blocking props off them exactly as solid cobble
+  // kept itself clear. Empty for every style-free recipe.
+  const laneCells: number[] = [];
+  const settlementPlans = planSettlements(grid, structureLayer, fields, hydro, routesResult, config, planErrors, laneCells);
   const landmarkPlans = placeLandmarks(grid, structureLayer, routesResult.pathLayer, fields, hydro, routesResult, config, planErrors);
 
   // Absorb one-cell regions introduced by overlays and road carving. Road
@@ -334,7 +338,13 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   }
 
   // Entrance reachability (W5 exit criterion): every structure entrance and
-  // landmark gate joins the walkable network.
+  // landmark gate joins the walkable network. Two tiers since behavior 50:
+  // solid-lane entrances (every pre-50 structure) must join the CORRIDOR
+  // network exactly as before, while worn/none-lane entrances are checked
+  // against walkable GROUND — their lanes are deliberately gappy or
+  // unpainted, so a corridor-only flood would read them as islands, but the
+  // recorded lane keep-outs (stamps, fences, crops, blocking props) keep
+  // the verified ground route open through every later pass.
   {
     const walkable = new Uint8Array(grid.length);
     const cobbleValue = PALETTE_INDEX["terrain.cobble"];
@@ -356,30 +366,59 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     if (settlementPlans.length > 0) {
       seeds.push((settlementPlans[0] as SettlementPlan).anchorY * width + (settlementPlans[0] as SettlementPlan).anchorX);
     }
-    const reached = new Uint8Array(grid.length);
-    const queue: number[] = [];
-    for (const seed of seeds) {
-      walkable[seed] = 1;
-      reached[seed] = 1;
-      queue.push(seed);
-    }
-    for (let head = 0; head < queue.length; head += 1) {
-      const index = queue[head] as number;
-      const x = index % width;
-      for (const neighbor of [index - width, index + width, index - 1, index + 1]) {
-        if (neighbor < 0 || neighbor >= grid.length) continue;
-        if (x === 0 && neighbor === index - 1) continue;
-        if (x === width - 1 && neighbor === index + 1) continue;
-        if (reached[neighbor] === 0 && walkable[neighbor] === 1) {
-          reached[neighbor] = 1;
-          queue.push(neighbor);
+    const flood = (open: Uint8Array): Uint8Array => {
+      const reached = new Uint8Array(grid.length);
+      const queue: number[] = [];
+      for (const seed of seeds) {
+        open[seed] = 1;
+        reached[seed] = 1;
+        queue.push(seed);
+      }
+      for (let head = 0; head < queue.length; head += 1) {
+        const index = queue[head] as number;
+        const x = index % width;
+        for (const neighbor of [index - width, index + width, index - 1, index + 1]) {
+          if (neighbor < 0 || neighbor >= grid.length) continue;
+          if (x === 0 && neighbor === index - 1) continue;
+          if (x === width - 1 && neighbor === index + 1) continue;
+          if (reached[neighbor] === 0 && open[neighbor] === 1) {
+            reached[neighbor] = 1;
+            queue.push(neighbor);
+          }
         }
       }
+      return reached;
+    };
+    const reached = flood(walkable);
+    // Ground tier: corridors plus any open land a player can walk. Built
+    // only when a styled settlement actually produced worn/none lanes.
+    let groundReached: Uint8Array | null = null;
+    if (laneCells.length > 0) {
+      const ground = new Uint8Array(walkable);
+      const rockValue = PALETTE_INDEX["terrain.rock"];
+      const deepValue = PALETTE_INDEX["water.deep"];
+      const shallowValue = PALETTE_INDEX["water.shallow"];
+      for (let index = 0; index < grid.length; index += 1) {
+        if (
+          ground[index] === 0 &&
+          structureLayer[index] === 0 &&
+          hydro.waterKind[index] === WATER_NONE &&
+          hydro.isRiver[index] === 0 &&
+          grid[index] !== rockValue &&
+          grid[index] !== deepValue &&
+          grid[index] !== shallowValue
+        ) {
+          ground[index] = 1;
+        }
+      }
+      groundReached = flood(ground);
     }
     for (const plan of settlementPlans) {
       for (const structure of plan.structures) {
         const entrance = structure.entranceY * width + structure.entranceX;
-        if (entrance >= 0 && entrance < grid.length && reached[entrance] === 0) {
+        if (entrance < 0 || entrance >= grid.length) continue;
+        const tier = structure.laneMode === "solid" ? reached : (groundReached ?? reached);
+        if (tier[entrance] === 0) {
           postCleanupErrors.push(
             `settlement ${plan.id}: entrance of ${structure.type} at (${structure.entranceX}, ${structure.entranceY}) is unreachable`,
           );
@@ -399,7 +438,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
 
   // Farm plots and harbor piers (stage 3) are settlement infrastructure:
   // planned after every traversal-critical pass, before decoration.
-  const farms = planFarmsAndPiers(grid, structureLayer, hydro, routesResult.pathLayer, settlementPlans, config);
+  const farms = planFarmsAndPiers(grid, structureLayer, hydro, routesResult.pathLayer, settlementPlans, config, laneCells);
 
   // Terrain texture (behavior 39): cosmetic-material mottle + edge dither.
   // After everything structural (nothing can move) and before decoration
@@ -426,7 +465,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   for (const plan of landmarkPlans) {
     entranceCells.push(plan.entranceY * width + plan.entranceX);
   }
-  const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config, farms, streetFordCells);
+  const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config, farms, streetFordCells, laneCells);
 
   // Points of interest stamp after ambient decoration and overwrite it:
   // deliberate discoveries beat scattered flavor.
