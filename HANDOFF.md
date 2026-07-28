@@ -132,17 +132,16 @@ identity).
 ## 6. Open items
 
 **User-gated:**
-- **SECOND REWORK directive (2026-07-28, verdict round 2):** "you
-  don't have to always use a solid road… a few tiles indicating not
-  much used roads; some houses don't have to have a road; it all
-  looks so very generic… should be more organic." Behavior 50
-  (lived-in streets) scoped: worn packed-road lane fragments instead
-  of solid cobble approaches for ordinary houses, roadless fringe
-  houses standing free in the grass, varied yard gaps, per-direction
-  street-arm length rolls, house→cottage humbling at depth. Opt-in
-  `settlementStyle.organicStreets`.
-- the-eight-holds verdict: first rework executed, superseded by round
-  2 above.
+- the-eight-holds verdict: **round-3 RE-VERDICT PENDING.** Behavior
+  50 (lived-in streets) SHIPPED and the demo regenerated with the
+  full style (growth 600 / scatter 450 / variety / organicStreets):
+  cobbled civic cores, worn barely-there lanes, roadless fringe
+  houses on natural ground, cottages at the edges. Flood **182947**,
+  9/9 reachable, identity v50. NEW GOTCHA on record (§5): the W5
+  entrance check floods corridors only — behavior 50 added the lane
+  promise (laneCells keep-outs in settlements/farms/decoration) and
+  the ground tier for worn/none entrances after the gate refused
+  three sealed doorsteps on the first styled run.
   Behavior 49 SHIPPED (settlement organics + variety, opt-in
   `settlementStyle`); demo regenerated with growth 600 / scatter 450 /
   variety on — crossing city rolled radius 60 with 154 buildings,
