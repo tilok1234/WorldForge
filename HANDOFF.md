@@ -60,9 +60,9 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   humble into cottages. See §5 for the lane promise + two-tier
   entrance check this required.
 
-Versions: behavior **57**, recipe compiler **33**, resolved-config
-**27**, artifact format 8, TileForge adapter 7, packFormat 1.
-**227 tests, all green on this machine** (19 in
+Versions: behavior **58**, recipe compiler **34**, resolved-config
+**28**, artifact format 8, TileForge adapter 7, packFormat 1.
+**228 tests, all green on this machine** (19 in
 tests/settlementStyle.test.ts). Everything pushed through the merge +
 this handoff. Standing commit+push authorization (memory) — re-confirm
 per policy; visual verdicts always user-gated.
@@ -72,7 +72,7 @@ per policy; visual verdicts always user-gated.
 23 recipes, all generating clean through the behavior-47 reachability
 gate. ALL APPROVED except one:
 
-- **PENDING VERDICT (round 9, final look): `the-eight-holds`** — now the
+- **PENDING VERDICT (round 10): `the-eight-holds`** — now the
   settlement-style showcase (eight anchor territories, budget 8,
   settlementFloor 1 per zone, style growth 600 / scatter 450 /
   variety / organicStreets / narrowStreets): cobbled civic cores, worn barely-there
@@ -105,7 +105,13 @@ gate. ALL APPROVED except one:
   value-agnostic; styled parity case proves both ladders agree; flood
   183065 (art-only vs round 8); pack re-exported behavior 57/adapter
   7 flood 34556. UPSTREAM ASK ADDED: improved road-band art
-  (designer-planned) -> plain re-pin when it ships. Round-6 sheet adds a 16px/cell city close-up
+  (designer-planned) -> plain re-pin when it ships. v58 URBAN BLOCKS
+  (round-9 "suburbs not cities"): urbanBlocks style flag — city core
+  (depth<=350) packs zero-gap attached rows, core cottages upgrade to
+  houses; compiler corrected 32->34 (33 = the late b54 shape bump).
+  Round 10 flood 182705. OPEN CITY-NESS LEVERS for the designer: city
+  WALLS + gates (wall families exist in package; b47 gate machinery
+  ready), forced long terrace rows along lanes, denser core budget. Round-6 sheet adds a 16px/cell city close-up
   — at map zoom dusk MUD reads like cobble; check the close-up before
   judging paving. Regenerated at
   outputs/gallery/the-eight-holds (viewer-ready); the remote session's
