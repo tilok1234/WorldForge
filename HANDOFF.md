@@ -53,9 +53,9 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   humble into cottages. See §5 for the lane promise + two-tier
   entrance check this required.
 
-Versions: behavior **52**, recipe compiler **32**, resolved-config
-**26**, artifact format 8, TileForge adapter 6, packFormat 1.
-**225 tests, all green on this machine** (18 in
+Versions: behavior **54**, recipe compiler **33**, resolved-config
+**27**, artifact format 8, TileForge adapter 6, packFormat 1.
+**226 tests, all green on this machine** (19 in
 tests/settlementStyle.test.ts). Everything pushed through the merge +
 this handoff. Standing commit+push authorization (memory) — re-confirm
 per policy; visual verdicts always user-gated.
@@ -65,19 +65,23 @@ per policy; visual verdicts always user-gated.
 23 recipes, all generating clean through the behavior-47 reachability
 gate. ALL APPROVED except one:
 
-- **PENDING VERDICT (round 5): `the-eight-holds`** — now the
+- **PENDING VERDICT (round 6): `the-eight-holds`** — now the
   settlement-style showcase (eight anchor territories, budget 8,
   settlementFloor 1 per zone, style growth 600 / scatter 450 /
   variety / organicStreets / narrowStreets): cobbled civic cores, worn barely-there
   lanes, roadless fringe houses, cottages at the edges. Flood history
   183218 (v48) → 182872 (v49) → 182947 (v50) → 182895 (v51
-  narrow arms) → **182787** (v52 through-road necking, round 5: route
-  corridors run 1-wide inside settlement bounds — the painter records
-  centerline + flank ground, planSettlements restores flanks under
-  narrowStreets; fords/bridges keep their full line; country roads
-  outside bounds keep doctrine width). Verified on this machine: 9/9
-  destinations reachable, TS traverse 182787, Godot verify_world 0
-  errors. Regenerated at
+  narrow arms) → 182787 (v52 through-road necking) → **182916** (v53
+  unpaved yards: NO building pad paints cobble — the pads were tiling
+  cores into one slab; plaza stays the paved area; worn/none carves
+  verify GROUND truth with ROCK closed — a route flank painted over a
+  rock notch had sealed a doorstep. v54 trunk sharing: dijkstra
+  discounts steps onto stamped road (roadReusePermille 600,
+  style-gated) so spokes merge instead of braiding parallel lanes).
+  Verified on this machine: 9/9 reachable, TS traverse 182916, Godot
+  verify_world 0 errors. Round-6 sheet adds a 16px/cell city close-up
+  — at map zoom dusk MUD reads like cobble; check the close-up before
+  judging paving. Regenerated at
   outputs/gallery/the-eight-holds (viewer-ready); the remote session's
   verdict sheet used adaptive per-hold crops. AWAITING THE DESIGNER.
 - Approved small archetypes (9): frontier-sparse, warm-vale,
@@ -254,7 +258,7 @@ discipline (§5 identity rule).
   props/POIs fall.
 - Versioning: behavior bump + touched packs; config-shape changes bump
   resolvedConfigFormat + compiler + literal in tests/compile.test.ts
-  (currently 26).
+  (currently 27).
 - APPEND-ONLY: WORLD_PALETTE, STRUCTURE_TYPES, DECOR_TYPES,
   DECAL_TYPES, POI_TYPES. Parity: decorate BLOCKING == loader
   BLOCKING_PROPS; loader STRUCTURE_PASS_CELLS mirrors package manifest;
@@ -271,7 +275,7 @@ discipline (§5 identity rule).
 ## 8. Commands
 
 ```
-npm test                          # build + 225 tests
+npm test                          # build + 226 tests
 node dist/tools/update-golden.js
 node dist/src/cli.js resolve-tileforge fixtures/recipes/<name>.json --out outputs/gallery/<name>
 node --max-old-space-size=8192 dist/src/cli.js resolve-tileforge fixtures/recipes/<medium-or-large>.json --out outputs/gallery/<name>
