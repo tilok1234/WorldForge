@@ -43,6 +43,7 @@ export function planFarmsAndPiers(
   pathLayer: Uint8Array,
   settlementPlans: readonly SettlementPlan[],
   config: ResolvedWorldConfig,
+  laneCells: readonly number[] = [],
 ): FarmResult {
   const { width, height } = config.world;
   const cellCount = width * height;
@@ -55,9 +56,13 @@ export function planFarmsAndPiers(
   const farms = channel(config.seed, "settlements.farms");
   const harbor = channel(config.seed, "settlements.harbor");
 
+  // Worn/unpainted approach lanes (behavior 50) are corridor promises like
+  // pathLayer: no crops or fences on somebody's way to their door.
+  const laneSet = new Set(laneCells);
   const usable = (index: number): boolean =>
     structureLayer[index] === 0 &&
     pathLayer[index] === 0 &&
+    !laneSet.has(index) &&
     hydro.waterKind[index] === WATER_NONE &&
     hydro.isRiver[index] === 0 &&
     grid[index] !== COBBLE &&

@@ -311,6 +311,33 @@
         }
       }
     },
+    "settlementStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "settlement organics + variety (behavior 49): opt-in per-settlement size growth, center-to-rim scatter falloff, and purpose-flavored building mixes; absent means pre-49 fabric byte-for-byte",
+      "properties": {
+        "growthPermille": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000,
+          "description": "max extra settlement radius as a permille of base, rolled per settlement (squared roll; cities full, towns half, outposts never); lots and approach budgets scale with the grown area"
+        },
+        "scatterPermille": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 900,
+          "description": "structure acceptance falls linearly from the plaza to 1000-scatterPermille at the rim, and the fabric footprint extends by the same fraction; civic specials always place"
+        },
+        "variety": {
+          "type": "boolean",
+          "description": "purpose-flavored specials and fill from the expanded roster: warehouses/fisher huts (harbor), quarries (mining), windmills (farming), watermills (crossing), stores/guardhouses/tents"
+        },
+        "organicStreets": {
+          "type": "boolean",
+          "description": "lived-in streets (behavior 50): worn packed-earth lane fragments instead of solid cobble approaches for ordinary houses, roadless fringe houses, varied yards, asymmetric street arms, cottages at depth"
+        }
+      }
+    },
     "decoration": {
       "type": "object",
       "additionalProperties": false,

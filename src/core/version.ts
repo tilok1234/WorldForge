@@ -260,11 +260,52 @@ export const GENERATOR_VERSION = "0.1.0";
  *     pre-48 zone recipe and deliberately wild zone (the broken-isles
  *     island) generates unchanged. The last ratified zone-arc engine
  *     item from docs/ZONE_COMPOSITION_ASSESSMENT.md.
+ * 49: settlement organics + variety (settlements.plans 12, resolved-config
+ *     24; eight-holds rework directive "larger in some cases, dense middle
+ *     thinning to scattered edges, more building variety") — recipes gain
+ *     opt-in `settlementStyle`: growthPermille rolls per-settlement size
+ *     (squared roll so most stay modest, some grow near the cap; cities
+ *     full, towns half, outposts never; lots and approach budgets scale
+ *     with the grown area), scatterPermille turns the uniform ring fill
+ *     into a dense core thinning linearly to a scattered rim — and
+ *     EXTENDS the fabric footprint by the scatter fraction so the lot
+ *     list redistributes outward instead of losing its tail (civic
+ *     specials always place; acceptance is per-cell on the new
+ *     settlements.scatter channel), and variety flavors the building mix
+ *     by purpose from nine newly rostered package structures (windmill,
+ *     watermill, sawmill, quarry, store, warehouse, guardhouse, fisherhut,
+ *     tent — all fully blocking, so loader walkability parity is
+ *     untouched; dock deferred: pass-cells + waterline placement).
+ *     Style-free recipes generate byte-identical layers AND keep their
+ *     recipeSha256 (the normalized key exists only when authored — the
+ *     canonical baseline sidecar stays valid).
+ * 50: lived-in streets (settlements.plans 13, resolved-config 25; verdict
+ *     round 2 "you don't have to always use a solid road… some houses
+ *     doesn't have to have a road… should be more organic") —
+ *     settlementStyle gains organicStreets: civic specials keep solid
+ *     cobble approaches while ordinary houses get worn packed-earth lane
+ *     fragments (BFS still verifies the route; the settlements.wear
+ *     channel paints ~450‰ of its cells, ~250‰ past depth 600, doorstep
+ *     always marked), some fringe houses (depth > 450, ~half) paint no
+ *     lane at all — every mode still BFS-verifies the route and rolls
+ *     back on failure, and the verified route becomes a LANE PROMISE
+ *     recorded in laneCells: later structures refuse to stamp on it,
+ *     farms keep fences and crops off it, decoration keeps every prop
+ *     off it. The W5 entrance check gains a second tier to match: solid
+ *     entrances still must join the CORRIDOR network byte-for-byte,
+ *     while worn/none entrances check against walkable GROUND (their
+ *     lanes are deliberately gappy — a corridor-only flood reads them
+ *     as islands; the first styled generation refused exactly three
+ *     such doorsteps before the tier existed — no road never means no
+ *     route), yard clearance varies 1-2 cells, street arms
+ *     roll per-direction lengths (50-130%), and deep fill houses humble
+ *     into cottages. Off (and for every style-free recipe) the fabric is
+ *     byte-identical to behavior 49.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 48;
+export const GENERATOR_BEHAVIOR_VERSION = 50;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 29;
+export const RECIPE_COMPILER_VERSION = 31;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -273,7 +314,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 15,
-  "settlements.plans": 11,
+  "settlements.plans": 13,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 10,

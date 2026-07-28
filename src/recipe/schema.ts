@@ -194,6 +194,49 @@ export interface NormalizedZoneGrid {
   readonly entries: readonly NormalizedZoneEntry[];
 }
 
+/**
+ * Settlement organics + variety (behavior 49; eight-holds rework directive
+ * "larger in some cases, scattered at the edges, more building variety").
+ * Opt-in: recipes without the block generate byte-identical layers.
+ */
+export interface SettlementStyleRequest {
+  /**
+   * Max extra settlement size as a permille fraction of the base radius,
+   * rolled per settlement (squared roll, so most stay modest and a few grow
+   * near the cap — "a lot larger in SOME cases"). Cities roll the full
+   * value, towns half, outposts none. Lots scale with the grown area.
+   */
+  readonly growthPermille?: number;
+  /**
+   * Center-to-rim density falloff: structure acceptance falls linearly from
+   * the plaza (always dense) to 1000-scatterPermille at the rim, and the
+   * fabric footprint extends by the same fraction, so the lot list
+   * redistributes into scattered outskirts instead of packing a blob (or
+   * losing its tail on small radii). Civic specials always place.
+   */
+  readonly scatterPermille?: number;
+  /**
+   * Purpose-flavored building mixes drawing on the package roster: harbors
+   * gain warehouses/fisher huts, mining quarries, farming windmills, river
+   * crossings watermills, plus stores/guardhouses in the civic mix.
+   */
+  readonly variety?: boolean;
+  /**
+   * Lived-in streets (behavior 50): civic specials keep solid cobble
+   * approaches, ordinary houses get worn packed-earth lane fragments, some
+   * fringe houses stand free with no lane at all, yards vary, street arms
+   * roll asymmetric lengths, and deep fill houses humble into cottages.
+   */
+  readonly organicStreets?: boolean;
+}
+
+export interface NormalizedSettlementStyle {
+  readonly growthPermille: number;
+  readonly scatterPermille: number;
+  readonly variety: boolean;
+  readonly organicStreets: boolean;
+}
+
 /** An inline authored stamp: stampFormat 1, type "recipe.<name>". */
 export interface AuthoredStampEntry {
   readonly name: string;
@@ -239,6 +282,8 @@ export interface WorldRecipe {
   readonly settlements?: readonly SettlementRequest[];
   /** Zone composition (behavior 43): per-zone climate character. */
   readonly zones?: ZoneGridRequest;
+  /** Settlement organics + variety (behavior 49). */
+  readonly settlementStyle?: SettlementStyleRequest;
   /** Decoration stage 1: ambient vegetation/ground-cover density. */
   readonly decoration?: { readonly [key in DecorationField]?: number };
   /** Authored placement (behavior 36): per-recipe stamps for one-off sites. */
@@ -262,6 +307,14 @@ export interface NormalizedWorldRecipe {
   readonly landmarks: readonly NormalizedLandmarkRequest[];
   readonly settlements: readonly NormalizedSettlementRequest[];
   readonly zones: NormalizedZoneGrid | null;
+  /**
+   * OPTIONAL (not nullable) on purpose: recipeSha256 hashes the normalized
+   * recipe byte-for-byte, and every pre-49 approval (including the canonical
+   * baseline sidecar) was recorded without this key. A style-free recipe
+   * must normalize to the exact same canonical JSON it did under 48, so the
+   * key exists only when the recipe authors it.
+   */
+  readonly settlementStyle?: NormalizedSettlementStyle;
   readonly decoration: { readonly [key in DecorationField]: number };
   readonly authoredStamps: readonly AuthoredStampEntry[];
   readonly cellOverrides: readonly NormalizedCellOverride[];

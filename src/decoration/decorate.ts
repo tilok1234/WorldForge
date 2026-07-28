@@ -314,6 +314,7 @@ export function decorateWorld(
   config: ResolvedWorldConfig,
   farms: FarmResult,
   streetFordCells: readonly number[],
+  laneCells: readonly number[] = [],
 ): DecorationResult {
   const { width, height } = config.world;
   const cellCount = width * height;
@@ -382,6 +383,12 @@ export function decorateWorld(
     if (cell + width < cellCount) protectedCells[cell + width] = 1;
     if (x > 0) protectedCells[cell - 1] = 1;
     if (x < width - 1) protectedCells[cell + 1] = 1;
+  }
+  // Worn/unpainted approach lanes (behavior 50): a verified route that grew
+  // grass back is still the way to somebody's door — no props on it, same
+  // as the solid cobble it replaced. Cell-exact, no halo.
+  for (const cell of laneCells) {
+    protectedCells[cell] = 1;
   }
   const nearStructure = (index: number): boolean => {
     const x = index % width;

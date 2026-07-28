@@ -43,6 +43,18 @@ export const STRUCTURE_TYPES = [
   "structure.lighthouse",
   "structure.hunter_lodge",
   "structure.hermit_hut",
+  // Behavior 49 (settlement organics + variety): the package structures the
+  // roster had never claimed. All fully blocking in the package, so loader
+  // pass-cell parity is untouched. dock (walkable platform) stays deferred.
+  "structure.windmill",
+  "structure.watermill",
+  "structure.sawmill",
+  "structure.quarry",
+  "structure.store",
+  "structure.warehouse",
+  "structure.guardhouse",
+  "structure.fisher_hut",
+  "structure.tent",
 ] as const;
 
 export type StructureType = (typeof STRUCTURE_TYPES)[number];
@@ -90,4 +102,13 @@ export const STRUCTURE_FOOTPRINTS: { readonly [key in StructureType]?: readonly 
   "structure.lighthouse": [2, 3],
   "structure.hunter_lodge": [3, 2],
   "structure.hermit_hut": [2, 2],
+  "structure.windmill": [2, 3],
+  "structure.watermill": [3, 2],
+  "structure.sawmill": [3, 2],
+  "structure.quarry": [3, 3],
+  "structure.store": [3, 2],
+  "structure.warehouse": [3, 2],
+  "structure.guardhouse": [2, 2],
+  "structure.fisher_hut": [2, 2],
+  "structure.tent": [2, 2],
 };

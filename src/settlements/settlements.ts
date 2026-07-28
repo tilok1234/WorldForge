@@ -15,7 +15,7 @@ import { WATER_NONE } from "../hydrology/hydrology.js";
 import type { MacroFields } from "../fields/macroFields.js";
 import type { RoutesResult } from "../routes/routes.js";
 import { PALETTE_INDEX } from "../regions/biomes.js";
-import { channel } from "../core/channels.js";
+import { channel, type Channel } from "../core/channels.js";
 import {
   STRUCTURE_FOOTPRINTS,
   STRUCTURE_LAYER_VALUE,
@@ -77,6 +77,46 @@ const OUTPOST_SEQUENCES: { readonly [key in SettlementPlan["purpose"]]: readonly
   waypoint: ["structure.watchtower", "structure.cottage", "structure.cottage", "structure.cottage", "structure.house", "structure.stall", "structure.cottage", "structure.house", "structure.well"],
 };
 
+/**
+ * Behavior 49 variety: purpose-flavored additions from the newly rostered
+ * package structures. City/town packs SPLICE into the civic specials after
+ * the leading institutions; outpost swaps replace filler slots in the
+ * purpose kits. Only consulted when rules.variety is true.
+ */
+const CITY_PURPOSE_SPECIALS: { readonly [key in SettlementPlan["purpose"]]: readonly StructureType[] } = {
+  harbor: ["structure.warehouse", "structure.fisher_hut", "structure.store"],
+  crossing: ["structure.watermill", "structure.store", "structure.guardhouse"],
+  farming: ["structure.windmill", "structure.store", "structure.guardhouse"],
+  mining: ["structure.quarry", "structure.store", "structure.guardhouse"],
+  waypoint: ["structure.guardhouse", "structure.store", "structure.warehouse"],
+};
+const TOWN_PURPOSE_SPECIALS: { readonly [key in SettlementPlan["purpose"]]: readonly StructureType[] } = {
+  harbor: ["structure.fisher_hut", "structure.store"],
+  crossing: ["structure.watermill", "structure.guardhouse"],
+  farming: ["structure.windmill", "structure.guardhouse"],
+  mining: ["structure.quarry", "structure.guardhouse"],
+  waypoint: ["structure.guardhouse", "structure.store"],
+};
+const VARIETY_CITY_FILL: readonly { readonly type: StructureType; readonly weight: number }[] = [
+  ...CITY_FILL,
+  { type: "structure.store", weight: 6 },
+  { type: "structure.guardhouse", weight: 4 },
+];
+const VARIETY_TOWN_FILL: readonly { readonly type: StructureType; readonly weight: number }[] = [
+  ...TOWN_FILL,
+  { type: "structure.store", weight: 5 },
+  { type: "structure.guardhouse", weight: 4 },
+];
+// Swap slots stay below the smallest outpostLots (tiny: 6) so every size
+// carries its flavor structure.
+const OUTPOST_VARIETY_SWAPS: { readonly [key in SettlementPlan["purpose"]]: readonly (readonly [number, StructureType])[] } = {
+  farming: [[2, "structure.windmill"]],
+  mining: [[2, "structure.quarry"]],
+  harbor: [[2, "structure.fisher_hut"]],
+  crossing: [[5, "structure.guardhouse"]],
+  waypoint: [[1, "structure.tent"], [5, "structure.guardhouse"]],
+};
+
 const COBBLE = PALETTE_INDEX["terrain.cobble"];
 const PACKED_ROAD = PALETTE_INDEX["terrain.packed_road"];
 const GRASS = PALETTE_INDEX["terrain.grass"];
@@ -92,6 +132,12 @@ export interface PlacedStructure {
   readonly height: number;
   readonly entranceX: number;
   readonly entranceY: number;
+  /**
+   * How the approach was expressed (behavior 50; internal — never
+   * serialized into the artifact). Solid entrances must join the corridor
+   * network; worn/none entrances are verified against walkable ground.
+   */
+  readonly laneMode: "solid" | "worn" | "none";
 }
 
 export interface SettlementPlan {
@@ -112,11 +158,20 @@ export function planSettlements(
   routes: RoutesResult,
   config: ResolvedWorldConfig,
   errors: string[],
+  laneCells: number[] = [],
 ): SettlementPlan[] {
   const { width, height } = fields;
   const rules = config.settlements;
   const plans: SettlementPlan[] = [];
   const candidates = routes.destinations.filter((d) => d.kind === "settlement_candidate");
+  // Behavior 49 channels. Positional and salt-keyed, so consulting them only
+  // when the style knobs are non-zero keeps style-free worlds byte-identical.
+  const organics = channel(config.seed, "settlements.organics");
+  const scatterChannel = channel(config.seed, "settlements.scatter");
+  const wear = channel(config.seed, "settlements.wear");
+  // Lane cells double as a stamp keep-out (like pathLayer): a later house
+  // must not build over an earlier house's verified way to its door.
+  const laneSet = new Set<number>();
 
   for (let rank = 0; rank < candidates.length; rank += 1) {
     const anchor = (candidates[rank] as { cell: number }).cell;
@@ -124,10 +179,29 @@ export function planSettlements(
     const anchorY = (anchor - anchorX) / width;
     const kind =
       rank < rules.cityCount ? "city" : rank < rules.cityCount + rules.townCount ? "town" : "outpost";
-    const radius =
+    const baseRadius =
       kind === "city" ? rules.cityRadius : kind === "town" ? rules.townRadius : rules.outpostRadius;
+    // Growth roll (behavior 49): squared so most settlements stay near base
+    // and a few approach the cap — cities roll the full growthPermille,
+    // towns half, outposts none. Zero style means zero bonus, and radius,
+    // lots, and the approach budget all fall through to their v11 values.
+    const growthCap =
+      kind === "city" ? rules.growthPermille : kind === "town" ? Math.trunc(rules.growthPermille / 2) : 0;
+    const growthRoll = growthCap > 0 ? organics.permilleAt(anchorX, anchorY) : 0;
+    const growthPermille = Math.trunc((growthCap * growthRoll * growthRoll) / 1_000_000);
+    const grownRadius = baseRadius + Math.trunc((baseRadius * growthPermille) / 1000);
+    // Scatter EXTENDS the fabric's reach on top of growth: the same lot
+    // list redistributes over a wider footprint (dense core, thin rim)
+    // instead of thinning inside the old bound and losing its tail — on
+    // small radii the rings would otherwise run out before the lots do.
+    const radius = grownRadius + Math.trunc((grownRadius * rules.scatterPermille) / 1000);
+    const totalBonusPermille = Math.trunc(((radius - baseRadius) * 1000) / baseRadius);
+    const approachBudget =
+      rules.approachMaxLength + Math.trunc((rules.approachMaxLength * totalBonusPermille) / 1000);
 
-    const purpose = derivePurpose(anchorX, anchorY, radius, grid, hydro, width, height);
+    // Purpose reads the BASE-radius surroundings: what a settlement is comes
+    // from its geography, not from how large the growth roll let it sprawl.
+    const purpose = derivePurpose(anchorX, anchorY, baseRadius, grid, hydro, width, height);
 
     // Plaza and settlement streets are cobble areas (band-free doctrine).
     const plazaRadius =
@@ -147,9 +221,16 @@ export function planSettlements(
     const armLength =
       kind === "city" ? rules.cityStreetArmLength : kind === "town" ? rules.streetArmLength : 0;
     if (armLength > 0) {
-      for (const [dirX, dirY] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+      const directions = [[0, -1], [1, 0], [0, 1], [-1, 0]] as const;
+      for (let direction = 0; direction < directions.length; direction += 1) {
+        const [dirX, dirY] = directions[direction] as readonly [number, number];
+        // Lived-in streets (behavior 50): each arm rolls its own length
+        // (50%-130% of base) so the cross reads as grown, not drafted.
+        const rolledArm = rules.organicStreets
+          ? Math.max(2, Math.trunc((armLength * (500 + Math.trunc((wear.permilleAt(anchorX, anchorY, 100 + direction) * 800) / 1000))) / 1000))
+          : armLength;
         let skippedWet = 0;
-        for (let step = plazaRadius + 1; step <= plazaRadius + armLength; step += 1) {
+        for (let step = plazaRadius + 1; step <= plazaRadius + rolledArm; step += 1) {
           const armX = anchorX + dirX * step;
           const armY = anchorY + dirY * step;
           const lane = cellAt(armX, armY, width, height);
@@ -225,25 +306,12 @@ export function planSettlements(
 
     // Structures spiral outward from the plaza in deterministic ring order.
     // The city and towns lead with civic specials then a channel-rolled fill
-    // mix; outposts follow their purpose kit (settlements.plans v5).
+    // mix; outposts follow their purpose kit (settlements.plans v5; the v12
+    // variety packs and lot growth join inside buildStructureSequence).
     const variety = channel(config.seed, "settlements.variety");
-    let sequence: StructureType[];
-    if (kind === "city" || kind === "town") {
-      const specials = kind === "city" ? CITY_SPECIALS : TOWN_SPECIALS;
-      const fill = kind === "city" ? CITY_FILL : TOWN_FILL;
-      const lots = kind === "city" ? rules.cityLots : rules.townLots;
-      sequence = [...specials.slice(0, Math.min(specials.length, lots))];
-      for (let slot = sequence.length; slot < lots; slot += 1) {
-        const pick = variety.weightedPickAt(anchorX, anchorY, fill.map((f) => f.weight), slot);
-        sequence.push((fill[pick] as { type: StructureType }).type);
-      }
-    } else {
-      const pool = OUTPOST_SEQUENCES[purpose];
-      sequence = Array.from(
-        { length: rules.outpostLots },
-        (_, slot) => pool[Math.min(slot, pool.length - 1)] as StructureType,
-      );
-    }
+    const { sequence, alwaysPlace } = buildStructureSequence(
+      kind, purpose, rules, growthPermille, variety, anchorX, anchorY,
+    );
     const placed: PlacedStructure[] = [];
 
     if (kind === "city" || kind === "town") {
@@ -294,6 +362,7 @@ export function planSettlements(
               height: 2,
               entranceX: entrance % width,
               entranceY: Math.trunc(entrance / width),
+              laneMode: "solid",
             });
             fountainDown = true;
           }
@@ -311,6 +380,7 @@ export function planSettlements(
             height: 1,
             entranceX: anchorX,
             entranceY: anchorY,
+            laneMode: "solid",
           });
         }
       }
@@ -323,16 +393,42 @@ export function planSettlements(
           if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) {
             continue;
           }
-          const type = sequence[sequenceIndex] as StructureType;
+          const originX = anchorX + dx;
+          const originY = anchorY + dy;
+          const fillSlot = sequenceIndex >= alwaysPlace;
+          const depthPermille = Math.trunc(((ring - plazaRadius) * 1000) / Math.max(1, radius - plazaRadius));
+          let type = sequence[sequenceIndex] as StructureType;
+          // Humble outskirts (behavior 50): deep fill houses sometimes build
+          // as cottages — the core keeps its stature, the fringe reads
+          // poorer, the way settlements actually grow.
+          if (rules.organicStreets && fillSlot && type === "structure.house" && depthPermille > 500 && wear.chanceAt(originX, originY, 450, 9)) {
+            type = "structure.cottage";
+          }
           const footprint = STRUCTURE_FOOTPRINTS[type];
           if (footprint === undefined) {
             sequenceIndex += 1;
             continue;
           }
           const [fw, fh] = footprint;
-          const originX = anchorX + dx;
-          const originY = anchorY + dy;
-          if (!footprintFits(originX, originY, fw, fh, grid, structureLayer, routes.pathLayer, hydro, width, height)) {
+          // Scatter falloff (behavior 49): past the civic specials, cell
+          // acceptance falls linearly from the plaza out to the rim
+          // (1000 -> 1000-scatterPermille), so the fabric thins into
+          // scattered outskirts instead of packing every ring solid. The
+          // roll is per-cell and stable, so a rejected spot stays rejected
+          // for the whole settlement — real spatial gaps, not resampling.
+          if (rules.scatterPermille > 0 && fillSlot) {
+            const acceptance = 1000 - Math.trunc((depthPermille * rules.scatterPermille) / 1000);
+            if (!scatterChannel.chanceAt(originX, originY, acceptance)) {
+              continue;
+            }
+          }
+          // Varied yards (behavior 50): some outer houses demand a wider
+          // clearance ring, breaking the uniform one-cell packing texture.
+          const yardGap =
+            rules.organicStreets && fillSlot && depthPermille > 350 && wear.chanceAt(originX, originY, 350, 8)
+              ? 2
+              : 1;
+          if (!footprintFits(originX, originY, fw, fh, grid, structureLayer, routes.pathLayer, hydro, width, height, yardGap, laneSet)) {
             continue;
           }
           // Stamp provisionally; a placement whose entrance cannot join the
@@ -348,7 +444,31 @@ export function planSettlements(
           }
           const entranceX = originX + Math.trunc(fw / 2);
           const entranceY = originY + fh;
-          const connected = carveApproach(entranceX, entranceY, grid, structureLayer, hydro, rules.approachMaxLength, width, height);
+          // Lived-in streets (behavior 50): civic specials keep their solid
+          // cobble approaches; ordinary houses get worn packed-earth lane
+          // fragments ("a few tiles indicating not much used roads"), the
+          // deep fringe barely a trace — and some outer houses paint no
+          // lane at all, standing free in the grass. EVERY mode still runs
+          // the BFS and rolls back on failure: the connectivity check is
+          // load-bearing, not cosmetic — a doorstep can open into a pocket
+          // enclosed by neighboring structures, and the first styled
+          // generation shipped exactly three of those before the compose
+          // entrance check refused the world. No road ≠ no route.
+          const laneMode: "solid" | "worn" | "none" =
+            !rules.organicStreets || !fillSlot
+              ? "solid"
+              : depthPermille > 450 && wear.chanceAt(originX, originY, 500, 7)
+                ? "none"
+                : "worn";
+          const wornPermille = laneMode === "worn" ? (depthPermille > 600 ? 250 : 450) : 0;
+          const laneStart = laneCells.length;
+          const connected = carveApproach(
+            entranceX, entranceY, grid, structureLayer, hydro, approachBudget, width, height,
+            laneMode, wornPermille, wear, laneCells,
+          );
+          for (let recorded = laneStart; recorded < laneCells.length; recorded += 1) {
+            laneSet.add(laneCells[recorded] as number);
+          }
           if (!connected) {
             let restore = 0;
             for (let sy = 0; sy < fh; sy += 1) {
@@ -361,7 +481,7 @@ export function planSettlements(
             }
             continue;
           }
-          placed.push({ type, x: originX, y: originY, width: fw, height: fh, entranceX, entranceY });
+          placed.push({ type, x: originX, y: originY, width: fw, height: fh, entranceX, entranceY, laneMode });
           sequenceIndex += 1;
           if (sequenceIndex >= sequence.length) {
             break outer;
@@ -378,6 +498,57 @@ export function planSettlements(
     plans.push({ id: rank, kind, anchorX, anchorY, purpose, radius, structures: placed });
   }
   return plans;
+}
+
+/**
+ * The settlement's build order (settlements.plans v12, exported for direct
+ * tests): civic specials first — with the variety purpose pack spliced in
+ * after the leading institutions when rules.variety is on — then the
+ * channel-rolled fill mix out to the lot count. Lots grow with the same
+ * growthPermille the radius did (area is quadratic in radius, so lots scale
+ * by twice the linear bonus). alwaysPlace is the specials count: those slots
+ * are exempt from the scatter falloff so the civic core always forms.
+ */
+export function buildStructureSequence(
+  kind: SettlementPlan["kind"],
+  purpose: SettlementPlan["purpose"],
+  rules: ResolvedWorldConfig["settlements"],
+  growthPermille: number,
+  variety: Channel,
+  anchorX: number,
+  anchorY: number,
+): { sequence: StructureType[]; alwaysPlace: number } {
+  if (kind === "city" || kind === "town") {
+    const baseSpecials = kind === "city" ? CITY_SPECIALS : TOWN_SPECIALS;
+    const purposePack = kind === "city" ? CITY_PURPOSE_SPECIALS[purpose] : TOWN_PURPOSE_SPECIALS[purpose];
+    const spliceAt = kind === "city" ? 5 : 4;
+    const specials = rules.variety
+      ? [...baseSpecials.slice(0, spliceAt), ...purposePack, ...baseSpecials.slice(spliceAt)]
+      : [...baseSpecials];
+    const fill = rules.variety
+      ? kind === "city" ? VARIETY_CITY_FILL : VARIETY_TOWN_FILL
+      : kind === "city" ? CITY_FILL : TOWN_FILL;
+    const baseLots = kind === "city" ? rules.cityLots : rules.townLots;
+    const lots = baseLots + Math.trunc((baseLots * 2 * growthPermille) / 1000);
+    const sequence = [...specials.slice(0, Math.min(specials.length, lots))];
+    for (let slot = sequence.length; slot < lots; slot += 1) {
+      const pick = variety.weightedPickAt(anchorX, anchorY, fill.map((f) => f.weight), slot);
+      sequence.push((fill[pick] as { type: StructureType }).type);
+    }
+    return { sequence, alwaysPlace: Math.min(specials.length, lots) };
+  }
+  const basePool = OUTPOST_SEQUENCES[purpose];
+  let pool: StructureType[] = [...basePool];
+  if (rules.variety) {
+    for (const [slot, type] of OUTPOST_VARIETY_SWAPS[purpose]) {
+      pool[slot] = type;
+    }
+  }
+  const sequence = Array.from(
+    { length: rules.outpostLots },
+    (_, slot) => pool[Math.min(slot, pool.length - 1)] as StructureType,
+  );
+  return { sequence, alwaysPlace: 1 };
 }
 
 function derivePurpose(
@@ -441,10 +612,13 @@ function footprintFits(
   hydro: HydrologyResult,
   width: number,
   height: number,
+  gap = 1,
+  laneSet: ReadonlySet<number> | null = null,
 ): boolean {
-  // The footprint plus a one-cell gap must be clear of other structures.
-  for (let sy = -1; sy <= fh; sy += 1) {
-    for (let sx = -1; sx <= fw; sx += 1) {
+  // The footprint plus the gap ring must be clear of other structures
+  // (behavior 50 varies the ring to break the uniform packing texture).
+  for (let sy = -gap; sy <= fh + gap - 1; sy += 1) {
+    for (let sx = -gap; sx <= fw + gap - 1; sx += 1) {
       const cell = cellAt(originX + sx, originY + sy, width, height);
       if (cell === -1) {
         return false;
@@ -457,8 +631,12 @@ function footprintFits(
         return false;
       }
       // Trails are corridors (behavior 21): a house on a dirt path would
-      // sever a route the network already promised.
+      // sever a route the network already promised. Worn/unpainted lanes
+      // (behavior 50) carry the same promise.
       if (inFootprint && pathLayer[cell] !== 0) {
+        return false;
+      }
+      if (inFootprint && laneSet !== null && laneSet.has(cell)) {
         return false;
       }
     }
@@ -475,8 +653,20 @@ function carveApproach(
   maxLength: number,
   width: number,
   height: number,
+  mode: "solid" | "worn" | "none" = "solid",
+  wornPermille = 0,
+  wear: Channel | null = null,
+  laneCells: number[] | null = null,
 ): boolean {
-  // Deterministic BFS to the nearest street (cobble or road); carve cobble.
+  // Deterministic BFS to the nearest street (cobble or road). The
+  // verification and rollback contract is identical in every mode; only
+  // the painting differs. Solid carves cobble; worn (behavior 50) paints
+  // scattered packed-earth cells along the verified route — a barely-there
+  // lane, doorstep always marked; none verifies and paints nothing.
+  // Worn/none routes are RECORDED in laneCells so decoration keeps its
+  // blocking props off them: solid cobble protected the route implicitly,
+  // and an invisible lane must stay just as open (the first styled
+  // generation sealed three verified grass routes with rolled trees).
   const start = cellAt(startX, startY, width, height);
   if (start === -1) {
     return false;
@@ -487,6 +677,21 @@ function carveApproach(
   if (!isOpenLand(start, grid, hydro) || structureLayer[start] !== 0) {
     return false;
   }
+  const paint = (target: number): void => {
+    if (mode !== "solid" && laneCells !== null) {
+      laneCells.push(target);
+    }
+    if (mode === "none") return;
+    if (mode === "solid" || wear === null) {
+      grid[target] = COBBLE;
+      return;
+    }
+    const px = target % width;
+    const py = (target - px) / width;
+    if (wear.chanceAt(px, py, wornPermille, 11)) {
+      grid[target] = PACKED_ROAD;
+    }
+  };
   const previous = new Map<number, number>();
   const queue = [start];
   previous.set(start, -1);
@@ -495,10 +700,15 @@ function carveApproach(
     if ((grid[cell] === COBBLE || grid[cell] === PACKED_ROAD) && cell !== start) {
       let cursor: number = previous.get(cell) as number;
       while (cursor !== -1 && cursor !== start) {
-        grid[cursor] = COBBLE;
+        paint(cursor);
         cursor = previous.get(cursor) as number;
       }
-      grid[start] = COBBLE;
+      if (mode !== "solid" && laneCells !== null) {
+        laneCells.push(start);
+      }
+      if (mode !== "none") {
+        grid[start] = mode === "solid" || wear === null ? COBBLE : PACKED_ROAD;
+      }
       return true;
     }
     const x = cell % width;

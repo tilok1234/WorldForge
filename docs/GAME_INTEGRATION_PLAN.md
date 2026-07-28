@@ -318,9 +318,11 @@ recommendations)
    byte-identical (canonical flood 33845 invariant); lock swapped with
    designer approval ("use dusk for now, we can change later"); the
    forest fixture stays committed, so re-pinning back is a lock change.
-   OPEN designer ruling: ruined-city dead streets are authored with the
-   legacy ruined-road band (renders fine; the new guide says never
-   author new legacy-band runs — bless as archaeology or re-express).
+   RULED 2026-07-28: ruined-city dead streets BLESSED as archaeology on
+   the legacy ruined-road band (renders fine; thematically relics; the
+   no-new-legacy-runs doctrine holds elsewhere). Upgrade path: if a
+   future TileForge release ships a dedicated live ruined-road band,
+   re-pin and switch the stamp to it (behavior bump + re-verdict then).
 2. **Resolution ownership → WorldForge [P].** Packs ship
    WorldForge-resolved layers (§3.1); blob47/mask logic lives in the
    adapter, once. The game never re-derives resolution from semantics.
