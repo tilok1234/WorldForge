@@ -12,6 +12,7 @@ import { compileRecipe } from "../src/recipe/compile.js";
 import { generateWorldDetailed } from "../src/generation/generate.js";
 import { validateArtifact } from "../src/validation/validateArtifact.js";
 import { loadWorldArtifact } from "../src/consumers/typescript/loader.js";
+import { resolveToTileForge } from "../src/adapters/tileforge/resolve.js";
 import {
   buildWalkability,
   packBits,
@@ -39,7 +40,8 @@ function generatedTiny() {
     minRegionCells: config.biomes.minRegionCells,
   });
   assert.equal(report.status, "pass");
-  return { result, report };
+  const mapData = resolveToTileForge(result.composed).mapData;
+  return { result, report, mapData };
 }
 
 describe("gamepack bit packing", () => {
@@ -57,9 +59,9 @@ describe("gamepack bit packing", () => {
 });
 
 describe("gamepack walkability", () => {
-  it("is the loader grid under the Phase-A structures-solid stamp", () => {
-    const { result } = generatedTiny();
-    const walkability = buildWalkability(result.artifact);
+  it("is the loader grid under the moss ruling and the Phase-A stamp", () => {
+    const { result, mapData } = generatedTiny();
+    const walkability = buildWalkability(result.artifact, mapData);
     const loaded = loadWorldArtifact(result.artifact as unknown);
     assert.ok(loaded.ok);
     const world = loaded.world;
@@ -116,38 +118,63 @@ describe("gamepack walkability", () => {
         world.trailAt(x, y) ||
         world.pierAt(x, y) !== null ||
         world.riverTierAt(x, y) > 0 ||
+        world.mossAt(x, y) ||
         inLandmark[y * width + x] === 1
       );
     };
+    // The moss ruling, independently restated: bare carpet on level-0 rock
+    // (the adapter's flat apron) walks; raised or covered moss stays solid.
+    const mossWalksAt = (x: number, y: number): boolean =>
+      world.mossAt(x, y) &&
+      world.materialAt(x, y) === "terrain.rock" &&
+      (mapData.elev[y * width + x] as number) === 0 &&
+      world.structureAt(x, y) === null &&
+      world.propAt(x, y) === null &&
+      world.fenceAt(x, y) === null &&
+      world.riverTierAt(x, y) === 0;
 
     const packed = Buffer.from(walkability.grid, "base64");
     let walkableTotal = 0;
     let stampedCells = 0;
+    let mossWalkCells = 0;
+    let mossSolidCells = 0;
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const index = y * width + x;
-        const loaderWalkable = world.walkableAt(x, y);
+        const baseWalkable = world.walkableAt(x, y) || mossWalksAt(x, y);
         const packWalkable = unpackBit(packed, index);
-        if (loaderWalkable) walkableTotal += 1;
+        if (baseWalkable) walkableTotal += 1;
 
-        // Stamping only ever REMOVES walkability.
+        // Stamping only ever REMOVES walkability from the moss-adjusted base.
         if (packWalkable) {
-          assert.ok(loaderWalkable, `pack walks where the loader blocks at ${x},${y}`);
+          assert.ok(baseWalkable, `pack walks where the base blocks at ${x},${y}`);
         }
         // Placement footprints are solid, doors and pass cells included.
         if (inRect[index] === 1) {
           assert.equal(packWalkable, false, `placement cell ${x},${y} stayed walkable`);
         }
-        // Streets, trails, piers, fords, and landmark interiors never seal
-        // outside placement footprints.
-        if (loaderWalkable && inRect[index] === 0 && keepOpenAt(x, y)) {
+        // Level-0 bare moss carpet walks (outside placement footprints).
+        if (mossWalksAt(x, y) && inRect[index] === 0) {
+          assert.equal(packWalkable, true, `flat moss carpet at ${x},${y} does not walk`);
+          mossWalkCells += 1;
+        }
+        // Raised or covered moss stays exactly as the loader has it.
+        if (world.mossAt(x, y) && !mossWalksAt(x, y) && !world.walkableAt(x, y)) {
+          assert.equal(packWalkable, false, `raised/covered moss at ${x},${y} walks`);
+          mossSolidCells += 1;
+        }
+        // Streets, trails, piers, fords, moss, and landmark interiors never
+        // seal outside placement footprints.
+        if (baseWalkable && inRect[index] === 0 && keepOpenAt(x, y)) {
           assert.equal(packWalkable, true, `protected cell ${x},${y} was sealed`);
         }
-        if (loaderWalkable && !packWalkable) stampedCells += 1;
+        if (baseWalkable && !packWalkable) stampedCells += 1;
       }
     }
-    // The fixture actually exercises the stamp.
+    // The fixture actually exercises the stamp and both moss outcomes.
     assert.ok(stampedCells > 0, "no cells stamped; fixture no longer exercises the stamp");
+    assert.ok(mossWalkCells > 0, "fixture has no walking moss carpet");
+    assert.ok(mossSolidCells > 0, "fixture has no raised/covered moss");
     assert.ok(walkability.floodCount > 0);
     assert.ok(walkability.floodCount <= walkableTotal - stampedCells);
 
@@ -175,13 +202,14 @@ describe("gamepack walkability", () => {
     }
     assert.equal(seen.size, walkability.floodCount);
 
-    // No-orphan arithmetic: from the same spawn, the loader-grid flood
-    // exceeds the pack flood by exactly the stamped cells it could reach —
-    // stamping consumed cells, it never severed a region beyond them.
-    const loaderSeen = new Set<number>([sy * width + sx]);
-    const loaderQueue: number[] = [sy * width + sx];
-    for (let head = 0; head < loaderQueue.length; head += 1) {
-      const index = loaderQueue[head] as number;
+    // No-orphan arithmetic: from the same spawn, the moss-adjusted base
+    // flood exceeds the pack flood by exactly the stamped cells it could
+    // reach — stamping consumed cells, it never severed a region beyond
+    // them.
+    const baseSeen = new Set<number>([sy * width + sx]);
+    const baseQueue: number[] = [sy * width + sx];
+    for (let head = 0; head < baseQueue.length; head += 1) {
+      const index = baseQueue[head] as number;
       const x = index % width;
       const y = (index - x) / width;
       for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
@@ -189,17 +217,17 @@ describe("gamepack walkability", () => {
         const ny = y + dy;
         if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
         const next = ny * width + nx;
-        if (!loaderSeen.has(next) && world.walkableAt(nx, ny)) {
-          loaderSeen.add(next);
-          loaderQueue.push(next);
+        if (!baseSeen.has(next) && (world.walkableAt(nx, ny) || mossWalksAt(nx, ny))) {
+          baseSeen.add(next);
+          baseQueue.push(next);
         }
       }
     }
     let stampedReachable = 0;
-    for (const index of loaderSeen) {
+    for (const index of baseSeen) {
       if (!unpackBit(packed, index)) stampedReachable += 1;
     }
-    assert.equal(loaderSeen.size, walkability.floodCount + stampedReachable);
+    assert.equal(baseSeen.size, walkability.floodCount + stampedReachable);
   });
 });
 

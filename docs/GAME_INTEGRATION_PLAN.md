@@ -145,6 +145,19 @@ must not re-derive walkability from tile art. Proposed encoding:
   The BASE artifact and both consumer lanes are untouched — `floodCount`
   in the pack is the stamped grid's flood and therefore smaller than the
   loader flood on `world.json` (canonical: 33712 packed vs 33893 base).
+- **Moss-walks ruling (2026-07-28, designer-verified in play):** flat
+  foliage that blocks is an unreadable promise, so bare moss carpet on
+  LEVEL-0 rock (the adapter's cliff quantization: the flat apron where a
+  rock mass meets open land, no rendered cliff face) is walkable in the
+  pack grid. Moss stays solid up the terraced peaks (level >= 1, behind
+  cliff faces — re-checkable later), under blocking props (trees,
+  boulders), under structure tiles (the porosity audit's 11-cell count
+  is unchanged), and on stream water. Moss also joins the keep-open set
+  so the slit pass never re-seals a carpet. Canonical: 626 carpet cells
+  walk (478 join the main region, 148 stay enclave pockets inside rock
+  rings), and the aprons also reconnect 366 previously-unreachable
+  walkable wilderness cells — pack flood 33712 -> 34556 (base 33893
+  unchanged; the pack flood may now EXCEED the base loader flood).
 
 ### 3.3a Contract as built (clarifications recorded 2026-07-28, from the
 Phase-4 importer's independent validation)

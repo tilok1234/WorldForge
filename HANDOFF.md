@@ -172,6 +172,21 @@ identity).
   template ask, recorded in plan §3.3a; not a WorldForge-side change
   (the §4 acceptance proves pixel-identity against the package
   reference, and layer placement is the package's contract).
+- MOSS-WALKS ruling added same day (plan §3.3): bare moss carpet on
+  LEVEL-0 rock (adapter cliff quantization's flat apron) walks in the
+  pack; moss behind cliff faces (level >= 1), under blocking props,
+  under structure tiles, or on streams stays solid. Pack flood
+  33712 -> 34556 (+626 carpet cells, of which 478 join the main
+  region and 148 are enclave pockets; aprons also reconnect 366
+  previously-unreachable wilderness cells). Monotone vs a1304b9 (zero
+  cells lost, proven), audit still exactly 11, deterministic. OPEN
+  designer collision: the annotated inter-house gaps in the start town
+  (region 208-248 x 126-148) contain ZERO moss — they are the 13
+  grass-like slit cells the Phase-A stamp sealed, i.e. the porous-
+  collision fix and the flat-green-must-walk readability rule want
+  opposite things on those exact cells. Needs a designer ruling:
+  keep seals (sprite-overlap protection), reopen flat-green slits, or
+  ask TileForge for blocked-ground dressing art.
 - Phase 5 slice-zone drafting: fully unblocked (dusk pinned, importer
   live, gate protecting exports); needs the user's creative direction.
 

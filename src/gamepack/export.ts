@@ -4,9 +4,10 @@
  * Packs an approved, validated world into the frozen consumer layout a game
  * importer can trust: the engine-neutral artifact, the TileForge-resolved
  * layers, a precomputed walkability bitgrid — the PUBLIC loader ladder
- * (parity-proven by construction) with the Phase-A structures-solid stamp
- * on top (buildings collide as their full footprints; see
- * stampStructuresSolid) — a minimap, and a byte-stable manifest naming
+ * (parity-proven by construction) with the pack-level semantics on top
+ * (the moss-walks ruling and the Phase-A structures-solid stamp; see
+ * buildWalkability and stampStructuresSolid) — a minimap, and a
+ * byte-stable manifest naming
  * every file's hash plus the base artifact and adapter identities (the
  * multi-game consumer rule, made mechanical).
  *
@@ -214,9 +215,11 @@ export function stampStructuresSolid(
  * Cells the slit and back-pocket passes must never seal: paved corridor
  * materials (the planner's streets), trail cells, pier decks, walkable
  * water (a river cell is walkable only because it fords or bridges a
- * corridor), and landmark-footprint interiors (curated compounds — their
- * lanes are band art over bare ground, invisible to material paving).
- * Mirrors the loader's corridor vocabulary plus the landmark records.
+ * corridor), moss carpet (readable ground cover — where the moss ruling
+ * makes it walkable it must STAY walkable), and landmark-footprint
+ * interiors (curated compounds — their lanes are band art over bare
+ * ground, invisible to material paving). Mirrors the loader's corridor
+ * vocabulary plus the landmark records.
  */
 export function buildKeepOpenMask(
   world: {
@@ -225,6 +228,7 @@ export function buildKeepOpenMask(
     trailAt(x: number, y: number): boolean;
     pierAt(x: number, y: number): string | null;
     riverTierAt(x: number, y: number): number;
+    mossAt(x: number, y: number): boolean;
   },
   landmarks: ReadonlyArray<{
     readonly cell: readonly [number, number];
@@ -241,7 +245,8 @@ export function buildKeepOpenMask(
         material === "terrain.cobble" ||
         world.trailAt(x, y) ||
         world.pierAt(x, y) !== null ||
-        world.riverTierAt(x, y) > 0
+        world.riverTierAt(x, y) > 0 ||
+        world.mossAt(x, y)
       ) {
         keepOpen[y * width + x] = 1;
       }
@@ -264,15 +269,28 @@ export function buildKeepOpenMask(
 /**
  * Derive the walkability grid from the artifact through the PUBLIC loader —
  * the same ladder the parity fixture proves cell-identical to the resolved
- * §3 ladder — then apply the Phase-A structures-solid stamp (see
- * stampStructuresSolid) and verify the packed encoding by re-flooding from
- * the packed bytes. A flood mismatch is a hard failure (plan §3.4,
- * refusal 2), and so is stamping that orphans any walkable region beyond
- * the stamped cells themselves: the flood may shrink by exactly the stamped
- * cells that were reachable, nothing more. A bigger drop means a street or
- * pocket lost its only corridor, and a severed world cannot ship silently.
+ * §3 ladder — then apply the pack-level semantics on top: the moss-walks
+ * ruling and the Phase-A structures-solid stamp (see stampStructuresSolid).
+ * The packed encoding is verified by re-flooding from the packed bytes. A
+ * flood mismatch is a hard failure (plan §3.4, refusal 2), and so is
+ * stamping that orphans any walkable region beyond the stamped cells
+ * themselves: the flood may shrink by exactly the stamped cells that were
+ * reachable, nothing more. A bigger drop means a street or pocket lost its
+ * only corridor, and a severed world cannot ship silently.
+ *
+ * Moss-walks ruling (2026-07-28, designer-verified in play): flat foliage
+ * that blocks movement is an unreadable promise, so bare moss carpet on
+ * LEVEL-0 rock — the adapter's own cliff quantization, the flat apron
+ * where a rock mass meets open land with no rendered cliff face — is
+ * walkable in the pack. Moss stays solid where anything raised sits on or
+ * under it: up the terraced peaks (level >= 1, behind cliff faces), under
+ * a blocking prop (trees, boulders), under a structure tile (keeps the
+ * porosity audit's 11-cell count exact), or on stream water.
  */
-export function buildWalkability(artifact: WorldArtifact): WalkabilitySummary {
+export function buildWalkability(
+  artifact: WorldArtifact,
+  mapData: Pick<TileForgeMapData, "elev">,
+): WalkabilitySummary {
   const loaded = loadWorldArtifact(artifact as unknown);
   if (!loaded.ok) {
     throw new Error(
@@ -282,10 +300,33 @@ export function buildWalkability(artifact: WorldArtifact): WalkabilitySummary {
   }
   const world = loaded.world;
   const { width, height } = world.dimensions;
+  if (mapData.elev.length !== width * height) {
+    throw new Error(
+      `resolved elev grid is ${mapData.elev.length} cells, expected ${width * height}; refusing`,
+    );
+  }
   const bits = new Uint8Array(width * height);
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       bits[y * width + x] = world.walkableAt(x, y) ? 1 : 0;
+    }
+  }
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = y * width + x;
+      if (
+        bits[index] === 0 &&
+        world.mossAt(x, y) &&
+        world.materialAt(x, y) === "terrain.rock" &&
+        (mapData.elev[index] as number) === 0 &&
+        world.structureAt(x, y) === null &&
+        world.propAt(x, y) === null &&
+        world.fenceAt(x, y) === null &&
+        world.riverTierAt(x, y) === 0
+      ) {
+        bits[index] = 1;
+      }
     }
   }
 
@@ -539,7 +580,7 @@ export function buildGamePack(input: GamePackInput): GamePackResult {
     throw new Error("artifact carries no pinned TileForge identity; refusing to pack");
   }
 
-  const walkability = buildWalkability(input.artifact);
+  const walkability = buildWalkability(input.artifact, input.mapData);
 
   const worldBytes = Buffer.from(canonicalJson(input.artifact), "utf8");
   const content: Array<[string, Buffer]> = [
