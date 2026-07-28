@@ -53,9 +53,9 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   humble into cottages. See §5 for the lane promise + two-tier
   entrance check this required.
 
-Versions: behavior **51**, recipe compiler **32**, resolved-config
+Versions: behavior **52**, recipe compiler **32**, resolved-config
 **26**, artifact format 8, TileForge adapter 6, packFormat 1.
-**224 tests, all green on this machine** (17 in
+**225 tests, all green on this machine** (18 in
 tests/settlementStyle.test.ts). Everything pushed through the merge +
 this handoff. Standing commit+push authorization (memory) — re-confirm
 per policy; visual verdicts always user-gated.
@@ -65,16 +65,19 @@ per policy; visual verdicts always user-gated.
 23 recipes, all generating clean through the behavior-47 reachability
 gate. ALL APPROVED except one:
 
-- **PENDING VERDICT (round 4): `the-eight-holds`** — now the
+- **PENDING VERDICT (round 5): `the-eight-holds`** — now the
   settlement-style showcase (eight anchor territories, budget 8,
   settlementFloor 1 per zone, style growth 600 / scatter 450 /
   variety / organicStreets / narrowStreets): cobbled civic cores, worn barely-there
   lanes, roadless fringe houses, cottages at the edges. Flood history
-  183218 (v48) → 182872 (v49) → 182947 (v50) → **182895** (v51
-  narrow streets, round 4: arms hold 2-wide only through the civic
-  core, 1-wide beyond; ring roads and worn lanes already 1-wide).
-  Verified on this machine: 9/9 destinations reachable, TS traverse
-  182895, Godot verify_world 0 errors. Regenerated at
+  183218 (v48) → 182872 (v49) → 182947 (v50) → 182895 (v51
+  narrow arms) → **182787** (v52 through-road necking, round 5: route
+  corridors run 1-wide inside settlement bounds — the painter records
+  centerline + flank ground, planSettlements restores flanks under
+  narrowStreets; fords/bridges keep their full line; country roads
+  outside bounds keep doctrine width). Verified on this machine: 9/9
+  destinations reachable, TS traverse 182787, Godot verify_world 0
+  errors. Regenerated at
   outputs/gallery/the-eight-holds (viewer-ready); the remote session's
   verdict sheet used adaptive per-hold crops. AWAITING THE DESIGNER.
 - Approved small archetypes (9): frontier-sparse, warm-vale,
@@ -268,7 +271,7 @@ discipline (§5 identity rule).
 ## 8. Commands
 
 ```
-npm test                          # build + 224 tests
+npm test                          # build + 225 tests
 node dist/tools/update-golden.js
 node dist/src/cli.js resolve-tileforge fixtures/recipes/<name>.json --out outputs/gallery/<name>
 node --max-old-space-size=8192 dist/src/cli.js resolve-tileforge fixtures/recipes/<medium-or-large>.json --out outputs/gallery/<name>
