@@ -60,7 +60,7 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   humble into cottages. See §5 for the lane promise + two-tier
   entrance check this required.
 
-Versions: behavior **58**, recipe compiler **34**, resolved-config
+Versions: behavior **59**, recipe compiler **34**, resolved-config
 **28**, artifact format 8, TileForge adapter 7, packFormat 1.
 **228 tests, all green on this machine** (19 in
 tests/settlementStyle.test.ts). Everything pushed through the merge +
@@ -72,7 +72,7 @@ per policy; visual verdicts always user-gated.
 23 recipes, all generating clean through the behavior-47 reachability
 gate. ALL APPROVED except one:
 
-- **PENDING VERDICT (round 10): `the-eight-holds`** — now the
+- **PENDING VERDICT (round 11): `the-eight-holds`** — now the
   settlement-style showcase (eight anchor territories, budget 8,
   settlementFloor 1 per zone, style growth 600 / scatter 450 /
   variety / organicStreets / narrowStreets): cobbled civic cores, worn barely-there
@@ -109,9 +109,15 @@ gate. ALL APPROVED except one:
   (round-9 "suburbs not cities"): urbanBlocks style flag — city core
   (depth<=350) packs zero-gap attached rows, core cottages upgrade to
   houses; compiler corrected 32->34 (33 = the late b54 shape bump).
-  Round 10 flood 182705. OPEN CITY-NESS LEVERS for the designer: city
-  WALLS + gates (wall families exist in package; b47 gate machinery
-  ready), forced long terrace rows along lanes, denser core budget. Round-6 sheet adds a 16px/cell city close-up
+  Round 10 flood 182705. v59 CITY QUARTERS (round-10 clarification: "suburbs" = monotony, no
+  "open spots and markets and churches and graveyards"): urbanBlocks
+  REPURPOSED — b58 attached rows reverted; the flag reserves quarter
+  squares (market + stall row + well; church close + gravestone yard,
+  sequence chapel stands down; greens w/ birch + flower beds). Cities
+  market+church+2 greens, towns market+church. Furniture verifies its
+  lane (double budget) and rolls back; an unconnectable square
+  UNCLAIMS (no dead patches). Round 11 flood 183185. OPEN LEVER: city
+  WALLS + gates (package wall families; b47 machinery ready). Round-6 sheet adds a 16px/cell city close-up
   — at map zoom dusk MUD reads like cobble; check the close-up before
   judging paving. Regenerated at
   outputs/gallery/the-eight-holds (viewer-ready); the remote session's
