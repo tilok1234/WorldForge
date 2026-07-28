@@ -65,10 +65,10 @@ per policy; visual verdicts always user-gated.
 23 recipes, all generating clean through the behavior-47 reachability
 gate. ALL APPROVED except one:
 
-- **PENDING VERDICT (round 3): `the-eight-holds`** — now the
+- **PENDING VERDICT (round 4): `the-eight-holds`** — now the
   settlement-style showcase (eight anchor territories, budget 8,
   settlementFloor 1 per zone, style growth 600 / scatter 450 /
-  variety / organicStreets): cobbled civic cores, worn barely-there
+  variety / organicStreets / narrowStreets): cobbled civic cores, worn barely-there
   lanes, roadless fringe houses, cottages at the edges. Flood history
   183218 (v48) → 182872 (v49) → 182947 (v50) → **182895** (v51
   narrow streets, round 4: arms hold 2-wide only through the civic
