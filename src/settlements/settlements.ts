@@ -455,6 +455,16 @@ export function planSettlements(
           if (rules.organicStreets && fillSlot && type === "structure.house" && depthPermille > 500 && wear.chanceAt(originX, originY, 450, 9)) {
             type = "structure.cottage";
           }
+          // Urban blocks (behavior 58, round-9 verdict "looks more like
+          // suburbs than like cities"): the city core packs ATTACHED
+          // terraced rows — zero clearance ring below — and its fill rolls
+          // big: cottages build as full houses inside the core. Outside
+          // the core (and everywhere without the flag) the detached fabric
+          // and behavior 50's varied yards stand.
+          const inUrbanCore = rules.urbanBlocks && kind === "city" && depthPermille <= 350;
+          if (inUrbanCore && fillSlot && type === "structure.cottage") {
+            type = "structure.house";
+          }
           const footprint = STRUCTURE_FOOTPRINTS[type];
           if (footprint === undefined) {
             sequenceIndex += 1;
@@ -475,8 +485,9 @@ export function planSettlements(
           }
           // Varied yards (behavior 50): some outer houses demand a wider
           // clearance ring, breaking the uniform one-cell packing texture.
-          const yardGap =
-            rules.organicStreets && fillSlot && depthPermille > 350 && wear.chanceAt(originX, originY, 350, 8)
+          const yardGap = inUrbanCore
+            ? 0
+            : rules.organicStreets && fillSlot && depthPermille > 350 && wear.chanceAt(originX, originY, 350, 8)
               ? 2
               : 1;
           if (!footprintFits(originX, originY, fw, fh, grid, structureLayer, routes.pathLayer, hydro, width, height, yardGap, laneSet)) {

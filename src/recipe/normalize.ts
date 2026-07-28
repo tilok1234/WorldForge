@@ -70,6 +70,7 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
             variety: recipe.settlementStyle.variety ?? false,
             organicStreets: recipe.settlementStyle.organicStreets ?? false,
             narrowStreets: recipe.settlementStyle.narrowStreets ?? false,
+            urbanBlocks: recipe.settlementStyle.urbanBlocks ?? false,
           },
         }),
     zones:

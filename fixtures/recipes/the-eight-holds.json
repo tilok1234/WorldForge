@@ -97,7 +97,8 @@
     "scatterPermille": 450,
     "variety": true,
     "organicStreets": true,
-    "narrowStreets": true
+    "narrowStreets": true,
+    "urbanBlocks": true
   },
   "landmarks": [
     {

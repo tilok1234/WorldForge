@@ -414,11 +414,27 @@ export const GENERATOR_VERSION = "0.1.0";
  *     the road-band family is walkable:true in the pinned manifest, so
  *     the resolved §3 ladder and Godot agree by construction.
  *     Style-free recipes never write value 2 and stay byte-identical.
+ * 58: urban blocks (settlements.plans 20, resolved-config 28, compiler
+ *     34; round-9 verdict "it honestly looks more like suburbs then
+ *     like cities") — detached houses at even spacing ARE a suburb.
+ *     settlementStyle gains `urbanBlocks`: inside a CITY's core (depth
+ *     <= 350 permille), placements pack with a ZERO clearance ring so
+ *     buildings attach into terraced rows, and core cottages build as
+ *     full houses — a dense center of big attached blocks thinning to
+ *     the familiar detached outskirts. Towns and outposts keep their
+ *     scale; behavior 50's varied yards stand outside the core. The
+ *     lane promise and entrance checks hold (doorsteps carve before a
+ *     neighbour can attach across them, and a placement that cannot
+ *     reach a lane rolls back as always). Style-free recipes and
+ *     urbanBlocks-free styles stay byte-identical.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 57;
+export const GENERATOR_BEHAVIOR_VERSION = 58;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 32;
+// 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
+// exactly the sequential-bump slip the handoff warns about); 34 is behavior
+// 58's urbanBlocks.
+export const RECIPE_COMPILER_VERSION = 34;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -427,7 +443,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 17,
-  "settlements.plans": 19,
+  "settlements.plans": 20,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 10,

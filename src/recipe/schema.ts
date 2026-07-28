@@ -236,6 +236,13 @@ export interface SettlementStyleRequest {
    * cell wide; plazas stay areas.
    */
   readonly narrowStreets?: boolean;
+  /**
+   * Urban blocks (behavior 58): city cores pack attached terraced rows of
+   * larger buildings (zero side gaps, house-heavy mix), thinning to the
+   * familiar detached fabric outside the core — cities read as cities,
+   * not suburbs.
+   */
+  readonly urbanBlocks?: boolean;
 }
 
 export interface NormalizedSettlementStyle {
@@ -244,6 +251,7 @@ export interface NormalizedSettlementStyle {
   readonly variety: boolean;
   readonly organicStreets: boolean;
   readonly narrowStreets: boolean;
+  readonly urbanBlocks: boolean;
 }
 
 /** An inline authored stamp: stampFormat 1, type "recipe.<name>". */

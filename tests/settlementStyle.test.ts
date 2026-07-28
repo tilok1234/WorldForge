@@ -38,6 +38,7 @@ describe("settlement style vocabulary (behavior 49)", () => {
       variety: false,
       organicStreets: false,
       narrowStreets: false,
+      urbanBlocks: false,
     });
     assert.equal(config.settlements.growthPermille, 600);
     assert.equal(config.settlements.scatterPermille, 0);
@@ -52,6 +53,7 @@ describe("settlement style vocabulary (behavior 49)", () => {
       { swagger: 500 },
       { variety: "yes" },
       { narrowStreets: "yes" },
+      { urbanBlocks: "yes" },
     ]) {
       const validation = validateRecipe({ ...BASE, settlementStyle: style });
       assert.ok(!validation.ok, `expected rejection: ${JSON.stringify(style)}`);
@@ -279,6 +281,32 @@ describe("narrow streets (behavior 51)", () => {
     let plainCityLanes = 0;
     for (const value of a.composed.routesResult.pathLayer) if (value === 2) plainCityLanes += 1;
     assert.equal(plainCityLanes, 0, "value 2 leaked into a style-free path layer");
+  });
+
+  it("urban blocks attach terraced rows in the city core (behavior 58)", () => {
+    const urban = compiled({
+      ...BASE,
+      settlementStyle: { growthPermille: 600, narrowStreets: true, urbanBlocks: true },
+    });
+    const b = generateWorldDetailed(urban.normalized, urban.config);
+    const city = b.artifact.settlements.find((s) => s.kind === "city");
+    assert.ok(city !== undefined, "no city in the fixture");
+    // At least one pair of city structures shares an edge (zero gap).
+    let attached = 0;
+    const rects = city.structures.map((st) => ({
+      x0: st.cell[0], y0: st.cell[1],
+      x1: st.cell[0] + st.footprint[0] - 1, y1: st.cell[1] + st.footprint[1] - 1,
+    }));
+    for (let i = 0; i < rects.length; i += 1) {
+      for (let j = i + 1; j < rects.length; j += 1) {
+        const a2 = rects[i] as { x0: number; y0: number; x1: number; y1: number };
+        const b2 = rects[j] as { x0: number; y0: number; x1: number; y1: number };
+        const touchX = (a2.x1 + 1 === b2.x0 || b2.x1 + 1 === a2.x0) && a2.y0 <= b2.y1 && b2.y0 <= a2.y1;
+        const touchY = (a2.y1 + 1 === b2.y0 || b2.y1 + 1 === a2.y0) && a2.x0 <= b2.x1 && b2.x0 <= a2.x1;
+        if (touchX || touchY) attached += 1;
+      }
+    }
+    assert.ok(attached > 0, "no attached building pair in the urban core");
   });
 
   it("necks through-roads to the centerline inside settlement bounds", () => {
