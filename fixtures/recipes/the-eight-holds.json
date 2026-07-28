@@ -92,6 +92,11 @@
       }
     ]
   },
+  "settlementStyle": {
+    "growthPermille": 600,
+    "scatterPermille": 450,
+    "variety": true
+  },
   "landmarks": [
     {
       "type": "ancient_fortress",

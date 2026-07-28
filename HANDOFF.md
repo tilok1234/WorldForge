@@ -132,14 +132,14 @@ identity).
 ## 6. Open items
 
 **User-gated:**
-- the-eight-holds verdict: **REWORK directive (2026-07-28)** — cities
-  larger in some cases; settlements dense at the core thinning to
-  scattered fringe instead of a uniform blob; richer structure variety
-  (dusk package ships 52 structures, roster used 40 — windmill,
-  watermill, sawmill, quarry, store, warehouse, guardhouse, fisherhut,
-  tent, dock unrostered). Behavior 49 (settlement organics + variety)
-  in progress, opt-in via recipe `settlementStyle` so approved worlds
-  stay byte-identical. Re-verdict on the regenerated demo.
+- the-eight-holds verdict: rework executed, **RE-VERDICT PENDING**.
+  Behavior 49 SHIPPED (settlement organics + variety, opt-in
+  `settlementStyle`); demo regenerated with growth 600 / scatter 450 /
+  variety on — crossing city rolled radius 60 with 154 buildings,
+  harbor city 47/105, towns 31–39, spread still 1/1/1/1/1/1/1/1,
+  flood **182872** (9/9 reachable through the public loader; Godot
+  half of the verify chain pending a machine with the binary).
+  Verdict sheet republished with adaptive per-hold crops.
   **TileForge upstream note (user-side task, per AGENTS.md):** chapel
   (2×3) is the only church-type art; a larger temple/church structure
   would need a new package structure — smallest ask recorded here.
