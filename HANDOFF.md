@@ -129,14 +129,17 @@ identity).
 
 **User-gated:**
 - the-eight-holds verdict (last open visual).
-- Multi-component routing DECISION (island worlds): ferries (session
-  recommendation) vs causeways vs per-component webs. Routing assumes
-  one landmass; inhabited detached islands are blocked on this call.
 - Ruined-road-band ruling (§3).
 - Windowed Godot playthrough; taste-polish round; fen swamp-margin
   widening (walkability care needed).
 
 **Engine-ready when wanted:**
+- **Ferry routing (DECIDED 2026-07-28: ferries, "for now")** — piers
+  on facing shores joined by a water route the loader treats as a
+  legal crossing; unblocks inhabited detached islands (broken-isles
+  NW island is the pilot case). Causeways/per-island webs rejected;
+  "for now" = revisit allowed after Phase 5 shows game needs. New
+  behavior + loader/consumer parity work when scheduled.
 - Zone-crop preview tooling (per-zone verdict loop QoL) — last
   unbuilt zone-arc line item.
 
