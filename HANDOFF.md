@@ -60,9 +60,9 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   humble into cottages. See §5 for the lane promise + two-tier
   entrance check this required.
 
-Versions: behavior **56**, recipe compiler **33**, resolved-config
-**27**, artifact format 8, TileForge adapter 6, packFormat 1.
-**226 tests, all green on this machine** (19 in
+Versions: behavior **57**, recipe compiler **33**, resolved-config
+**27**, artifact format 8, TileForge adapter 7, packFormat 1.
+**227 tests, all green on this machine** (19 in
 tests/settlementStyle.test.ts). Everything pushed through the merge +
 this handoff. Standing commit+push authorization (memory) — re-confirm
 per policy; visual verdicts always user-gated.
@@ -72,7 +72,7 @@ per policy; visual verdicts always user-gated.
 23 recipes, all generating clean through the behavior-47 reachability
 gate. ALL APPROVED except one:
 
-- **PENDING VERDICT (round 8 A/B): `the-eight-holds`** — now the
+- **PENDING VERDICT (round 9, final look): `the-eight-holds`** — now the
   settlement-style showcase (eight anchor territories, budget 8,
   settlementFloor 1 per zone, style growth 600 / scatter 450 /
   variety / organicStreets / narrowStreets): cobbled civic cores, worn barely-there
@@ -97,7 +97,15 @@ gate. ALL APPROVED except one:
   (arms, ring, house lanes, in-bounds through-route via
   corridorCenterPrev); plaza stays paved; band cells ride pathLayer so
   every trail protection applies natively; dense-core fusion gone.
-  A/B sent (A=v55 cobble lanes, B=v56 band lines); B live in viewer. Round-6 sheet adds a 16px/cell city close-up
+  A/B RULED: band lines ("ye these works better"), then the weight
+  three-way RULED: the heavier "road" band. v57 city-lane band: path
+  layer value 2 = in-settlement lane -> adapter renders the package
+  road band (adapter.tileforge 7; scoped un-retirement, archaeology
+  precedent); wilderness trails keep 1/dirtpath; all readers
+  value-agnostic; styled parity case proves both ladders agree; flood
+  183065 (art-only vs round 8); pack re-exported behavior 57/adapter
+  7 flood 34556. UPSTREAM ASK ADDED: improved road-band art
+  (designer-planned) -> plain re-pin when it ships. Round-6 sheet adds a 16px/cell city close-up
   — at map zoom dusk MUD reads like cobble; check the close-up before
   judging paving. Regenerated at
   outputs/gallery/the-eight-holds (viewer-ready); the remote session's
