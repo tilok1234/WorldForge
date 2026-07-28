@@ -59,6 +59,17 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
         rank: request.rank ?? index,
       }))
       .sort((a, b) => a.rank - b.rank),
+    // Conditionally PRESENT (never null): see the NormalizedWorldRecipe
+    // field comment — pre-49 recipeSha256 values must not move.
+    ...(recipe.settlementStyle === undefined
+      ? {}
+      : {
+          settlementStyle: {
+            growthPermille: recipe.settlementStyle.growthPermille ?? 0,
+            scatterPermille: recipe.settlementStyle.scatterPermille ?? 0,
+            variety: recipe.settlementStyle.variety ?? false,
+          },
+        }),
     zones:
       recipe.zones === undefined
         ? null

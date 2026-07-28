@@ -160,6 +160,15 @@ export interface SettlementRules {
   readonly outpostPlazaRadius: number;
   /** Street arms radiate from the plaza and buildings line them. */
   readonly streetArmLength: number;
+  /**
+   * Settlement organics + variety (behavior 49, resolved-config 24): recipe
+   * settlementStyle carried onto the rules. All zero/false when the recipe
+   * declares no style — settlements.plans treats that as pre-49 behavior
+   * and generates byte-identical fabric.
+   */
+  readonly growthPermille: number;
+  readonly scatterPermille: number;
+  readonly variety: boolean;
 }
 
 export interface LandmarkSpec {
@@ -261,7 +270,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 23;
+  readonly resolvedConfigFormat: 24;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -631,7 +640,10 @@ const DENSITY_SCALE: {
  * preset. Rank 0 is the capital city, ranks 1..townCount towns, the rest
  * outposts — grown lots all around so the hierarchy reads at a glance.
  */
-const SETTLEMENT_RULES: { readonly [key in SizePreset]: SettlementRules } = {
+/** Preset geometry only — the style knobs join from the recipe at compile. */
+const SETTLEMENT_RULES: {
+  readonly [key in SizePreset]: Omit<SettlementRules, "growthPermille" | "scatterPermille" | "variety">;
+} = {
   tiny: {
     // Tiny worlds stay cramped: the city keeps the old town street reach
     // (plaza 2 + arms 9) so near_town landmarks remain satisfiable, and
@@ -744,7 +756,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 23,
+    resolvedConfigFormat: 24,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -779,7 +791,12 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
       ...ROUTE_RULES[normalized.world.sizePreset],
       shortcutTrailMax: Math.trunc(ROUTE_RULES[normalized.world.sizePreset].shortcutTrailMax * DENSITY_SCALE[normalized.world.densityPreset].shortcuts / 1000),
     },
-    settlements: SETTLEMENT_RULES[normalized.world.sizePreset],
+    settlements: {
+      ...SETTLEMENT_RULES[normalized.world.sizePreset],
+      growthPermille: normalized.settlementStyle?.growthPermille ?? 0,
+      scatterPermille: normalized.settlementStyle?.scatterPermille ?? 0,
+      variety: normalized.settlementStyle?.variety ?? false,
+    },
     landmarkSpecs: Array.from({ length: normalized.budgets.landmarkCount }, (_, slot) => {
       const spec = normalized.landmarks[slot];
       return spec === undefined

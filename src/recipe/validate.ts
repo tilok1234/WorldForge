@@ -36,7 +36,7 @@ export type RecipeValidation =
   | { readonly ok: true; readonly recipe: WorldRecipe }
   | { readonly ok: false; readonly issues: readonly RecipeIssue[] };
 
-const ROOT_FIELDS = ["recipeFormat", "seed", "world", "biases", "budgets", "toggles", "landmarks", "settlements", "zones", "decoration", "authoredStamps", "cellOverrides"];
+const ROOT_FIELDS = ["recipeFormat", "seed", "world", "biases", "budgets", "toggles", "landmarks", "settlements", "zones", "settlementStyle", "decoration", "authoredStamps", "cellOverrides"];
 const WORLD_FIELDS = ["sizePreset", "climatePreset", "densityPreset"];
 
 export function validateRecipe(input: unknown): RecipeValidation {
@@ -388,6 +388,25 @@ export function validateRecipe(input: unknown): RecipeValidation {
             }
           }
         });
+      }
+    }
+  }
+
+  const settlementStyle = input["settlementStyle"];
+  if (settlementStyle !== undefined) {
+    if (!isPlainObject(settlementStyle)) {
+      issues.push({ path: "$.settlementStyle", message: "settlementStyle must be an object" });
+    } else {
+      for (const key of Object.keys(settlementStyle)) {
+        if (key !== "growthPermille" && key !== "scatterPermille" && key !== "variety") {
+          issues.push({ path: `$.settlementStyle.${key}`, message: `unknown field "${key}"` });
+        }
+      }
+      checkInteger(issues, settlementStyle, "growthPermille", "$.settlementStyle.growthPermille", 0, 1000, false);
+      checkInteger(issues, settlementStyle, "scatterPermille", "$.settlementStyle.scatterPermille", 0, 900, false);
+      const variety = settlementStyle["variety"];
+      if (variety !== undefined && typeof variety !== "boolean") {
+        issues.push({ path: "$.settlementStyle.variety", message: "variety must be a boolean" });
       }
     }
   }
