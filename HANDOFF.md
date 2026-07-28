@@ -1,5 +1,23 @@
 # WorldForge — handoff (2026-07-28, post-merge at PC)
 
+## 0. BEHAVIOR 48 zone settlement floors (2026-07-28, newest state)
+
+Zone entries gain optional `settlementFloor` (0-8, default 0 — OPT-IN
+by design so every pre-48 zone recipe and deliberately wild zone
+generates unchanged; proven: eight-lands 172389 / broken-isles 73077 /
+canonical 33893 floods all invariant). The floor phase runs right
+after the capital and BEFORE the geometric reservations (authored
+intent outranks heuristics); the remote-quarter reservation is now
+room-capped (pre-48 arithmetic always fit, so the cap is a no-op for
+floor-free recipes — WITHOUT it, floors + quarter overshot the budget
+12>8 in the demo). Territory = PURE zoneOwnerAt (exported from
+macroFields; seam wander stays climate display). routes.graph 15,
+compiler 29, resolved-config 23, behavior 48; 207 tests. Demo world
+`the-eight-holds` (eight-lands terrain, budget 8, floor 1 per zone):
+exactly 1/1/1/1/1/1/1/1, verified both consumers (183218), verdict
+PENDING. Zone-arc remaining: zone-crop preview tooling;
+multi-component routing DECISION.
+
 ## 0a. BEHAVIOR 47 "trails stay open" (2026-07-28, newest state)
 
 The first full destination-check of the zone worlds on the PC (prompted

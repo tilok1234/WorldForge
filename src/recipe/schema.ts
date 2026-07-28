@@ -168,6 +168,14 @@ export interface ZoneEntryRequest {
   readonly anchor?: readonly [number, number];
   /** Territory weight (anchors layout): bigger claims more land. 100-10000, default 1000. */
   readonly weight?: number;
+  /**
+   * Zone-scoped settlement floor (behavior 48): the zone's territory keeps
+   * at least this many settlements (terrain permitting, capped by the
+   * settlement budget). Default 0 — opt-in, so zone worlds authored before
+   * floors (and deliberately wild zones like the broken-isles island)
+   * generate unchanged.
+   */
+  readonly settlementFloor?: number;
 }
 
 export interface NormalizedZoneEntry {
@@ -176,6 +184,7 @@ export interface NormalizedZoneEntry {
   readonly elevationPermille: number;
   readonly anchor: readonly [number, number] | null;
   readonly weight: number;
+  readonly settlementFloor: number;
 }
 
 export interface NormalizedZoneGrid {

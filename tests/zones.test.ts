@@ -31,6 +31,76 @@ function compiled(recipe: unknown) {
   return { normalized, config: compileRecipe(normalized) };
 }
 
+describe("zone settlement floors (behavior 48)", () => {
+  it("normalizes the floor, defaults to 0, and joins the resolved config", () => {
+    const { normalized, config } = compiled({
+      ...BASE,
+      zones: {
+        ...TWO_ZONES,
+        entries: [
+          { temperaturePermille: -400, settlementFloor: 2 },
+          { temperaturePermille: 250 },
+        ],
+      },
+    });
+    assert.deepEqual(
+      normalized.zones?.entries.map((entry) => entry.settlementFloor),
+      [2, 0],
+    );
+    assert.deepEqual(config.zones?.settlementFloors, [2, 0]);
+  });
+
+  it("rejects an out-of-range floor", () => {
+    const validation = validateRecipe({
+      ...BASE,
+      zones: {
+        ...TWO_ZONES,
+        entries: [{ settlementFloor: 9 }, {}],
+      },
+    });
+    assert.ok(!validation.ok);
+  });
+
+  it("guarantees a floored zone its settlements", () => {
+    // Without floors, seed 11's two settlements both score into one half;
+    // the floor pulls one into each zone territory.
+    const floored = compiled({
+      ...BASE,
+      zones: {
+        ...TWO_ZONES,
+        entries: [
+          { temperaturePermille: -400, moisturePermille: 60, settlementFloor: 1 },
+          { temperaturePermille: 250, moisturePermille: -250, settlementFloor: 1 },
+        ],
+      },
+    });
+    const result = generateWorldDetailed(floored.normalized, floored.config);
+    const width = floored.config.world.width;
+    const settlements = result.artifact.destinations.filter(
+      (d) => d.kind === "settlement_candidate",
+    );
+    const west = settlements.filter((d) => d.cell[0] < width / 2).length;
+    const east = settlements.length - west;
+    assert.ok(west >= 1, `west zone holds ${west} settlements`);
+    assert.ok(east >= 1, `east zone holds ${east} settlements`);
+  });
+
+  it("floors are recipe identity", () => {
+    const plain = compiled({ ...BASE, zones: TWO_ZONES });
+    const floored = compiled({
+      ...BASE,
+      zones: {
+        ...TWO_ZONES,
+        entries: [
+          { temperaturePermille: -400, moisturePermille: 60, settlementFloor: 1 },
+          { temperaturePermille: 250, moisturePermille: -250 },
+        ],
+      },
+    });
+    assert.notEqual(recipeIdentity(plain.normalized), recipeIdentity(floored.normalized));
+  });
+});
+
 describe("zone composition (behavior 43)", () => {
   it("hard seams give each zone its climate character", () => {
     const { config } = compiled({ ...BASE, zones: TWO_ZONES });

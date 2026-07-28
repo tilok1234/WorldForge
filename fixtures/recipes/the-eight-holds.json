@@ -1,0 +1,107 @@
+{
+  "recipeFormat": 1,
+  "seed": 80808,
+  "world": {
+    "sizePreset": "medium",
+    "climatePreset": "temperate",
+    "densityPreset": "dense"
+  },
+  "zones": {
+    "layout": "anchors",
+    "seams": "hard",
+    "entries": [
+      {
+        "anchor": [
+          120,
+          60
+        ],
+        "weight": 1200,
+        "temperaturePermille": -350,
+        "moisturePermille": 40,
+        "settlementFloor": 1
+      },
+      {
+        "anchor": [
+          300,
+          50
+        ],
+        "weight": 800,
+        "temperaturePermille": -160,
+        "moisturePermille": 20,
+        "settlementFloor": 1
+      },
+      {
+        "anchor": [
+          450,
+          140
+        ],
+        "weight": 1000,
+        "temperaturePermille": 0,
+        "moisturePermille": 0,
+        "settlementFloor": 1
+      },
+      {
+        "anchor": [
+          300,
+          270
+        ],
+        "weight": 1100,
+        "temperaturePermille": 30,
+        "moisturePermille": 240,
+        "settlementFloor": 1
+      },
+      {
+        "anchor": [
+          80,
+          340
+        ],
+        "weight": 1000,
+        "temperaturePermille": 200,
+        "moisturePermille": -230,
+        "settlementFloor": 1
+      },
+      {
+        "anchor": [
+          450,
+          320
+        ],
+        "weight": 900,
+        "temperaturePermille": 90,
+        "moisturePermille": -40,
+        "settlementFloor": 1
+      },
+      {
+        "anchor": [
+          280,
+          440
+        ],
+        "weight": 800,
+        "temperaturePermille": 50,
+        "moisturePermille": 260,
+        "settlementFloor": 1
+      },
+      {
+        "anchor": [
+          100,
+          480
+        ],
+        "weight": 800,
+        "temperaturePermille": 260,
+        "moisturePermille": -170,
+        "settlementFloor": 1
+      }
+    ]
+  },
+  "landmarks": [
+    {
+      "type": "ancient_fortress",
+      "relation": "high_ground"
+    }
+  ],
+  "budgets": {
+    "regionCount": 8,
+    "settlementCount": 8,
+    "primaryRouteCount": 4,
+    "landmarkCount": 1
+  }
+}

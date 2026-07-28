@@ -221,6 +221,8 @@ export interface ZoneRules {
   readonly moistureOffsets: readonly number[];
   /** Elevation character per zone (behavior 46): negative drowns to sea. */
   readonly elevationOffsets: readonly number[];
+  /** Settlement floor per zone (behavior 48): 0 = no guarantee (opt-in). */
+  readonly settlementFloors: readonly number[];
 }
 
 /**
@@ -259,7 +261,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 22;
+  readonly resolvedConfigFormat: 23;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -742,7 +744,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 22,
+    resolvedConfigFormat: 23,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -806,6 +808,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
             temperatureOffsets: normalized.zones.entries.map((entry) => entry.temperaturePermille),
             moistureOffsets: normalized.zones.entries.map((entry) => entry.moisturePermille),
             elevationOffsets: normalized.zones.entries.map((entry) => entry.elevationPermille),
+            settlementFloors: normalized.zones.entries.map((entry) => entry.settlementFloor),
           },
     authoring: {
       stamps: Object.fromEntries(

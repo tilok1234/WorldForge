@@ -131,9 +131,18 @@ function zoneOffsetMap(
  * (behavior 45): weighted nearest anchor — territory belongs to the anchor
  * minimizing distance/weight, compared in integers as d²·w'² < d'²·w², so
  * heavier zones claim proportionally more land and shapes follow the
- * authored anchor geography instead of squares.
+ * authored anchor geography instead of squares. Exported for the
+ * settlement zone-floor phase (behavior 48), which uses the PURE
+ * territory — the seam wander is a climate-display detail, not identity.
  */
-function zoneAt(zones: ZoneRules, x: number, y: number, zoneWidth: number, zoneHeight: number): number {
+export function zoneOwnerAt(zones: ZoneRules, width: number, height: number, x: number, y: number): number {
+  const zoneWidth = zones.layout === "grid" ? Math.trunc(width / zones.gridColumns) : 0;
+  const zoneHeight = zones.layout === "grid" ? Math.trunc(height / zones.gridRows) : 0;
+  return zoneAt(zones, x, y, zoneWidth, zoneHeight);
+}
+
+/** See zoneOwnerAt. */
+export function zoneAt(zones: ZoneRules, x: number, y: number, zoneWidth: number, zoneHeight: number): number {
   if (zones.layout === "grid") {
     const row = Math.min(zones.gridRows - 1, Math.trunc(y / zoneHeight));
     const column = Math.min(zones.gridColumns - 1, Math.trunc(x / zoneWidth));

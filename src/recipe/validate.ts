@@ -364,13 +364,14 @@ export function validateRecipe(input: unknown): RecipeValidation {
             return;
           }
           for (const key of Object.keys(entry)) {
-            if (key !== "temperaturePermille" && key !== "moisturePermille" && key !== "elevationPermille" && key !== "anchor" && key !== "weight") {
+            if (key !== "temperaturePermille" && key !== "moisturePermille" && key !== "elevationPermille" && key !== "anchor" && key !== "weight" && key !== "settlementFloor") {
               issues.push({ path: `$.zones.entries[${position}].${key}`, message: `unknown field "${key}"` });
             }
           }
           checkInteger(issues, entry, "temperaturePermille", `$.zones.entries[${position}].temperaturePermille`, PERMILLE_MIN, PERMILLE_MAX, false);
           checkInteger(issues, entry, "moisturePermille", `$.zones.entries[${position}].moisturePermille`, PERMILLE_MIN, PERMILLE_MAX, false);
           checkInteger(issues, entry, "elevationPermille", `$.zones.entries[${position}].elevationPermille`, PERMILLE_MIN, PERMILLE_MAX, false);
+          checkInteger(issues, entry, "settlementFloor", `$.zones.entries[${position}].settlementFloor`, 0, 8, false);
           if (layout === "anchors") {
             if (entry["anchor"] === undefined) {
               issues.push({ path: `$.zones.entries[${position}].anchor`, message: "anchors layout requires an anchor cell per entry" });

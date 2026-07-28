@@ -252,11 +252,19 @@ export const GENERATOR_VERSION = "0.1.0";
  *     through the PUBLIC loader (the consumers' own nudge+flood rule),
  *     so a severed world can never ship silently again. Canonical
  *     shifted +48 walkable cells (33845 -> 33893), consumers equal.
+ * 48: zone settlement floors (routes.graph 15, resolved-config 23) —
+ *     zone entries gain optional settlementFloor (default 0): the zone's
+ *     territory keeps at least that many settlements before open
+ *     competition, using the PURE territory function (zoneOwnerAt; the
+ *     seam wander stays climate display). Opt-in by design: every
+ *     pre-48 zone recipe and deliberately wild zone (the broken-isles
+ *     island) generates unchanged. The last ratified zone-arc engine
+ *     item from docs/ZONE_COMPOSITION_ASSESSMENT.md.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 47;
+export const GENERATOR_BEHAVIOR_VERSION = 48;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 28;
+export const RECIPE_COMPILER_VERSION = 29;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -264,7 +272,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 10,
   "macro.biomes": 7,
   "hydrology.water": 5,
-  "routes.graph": 14,
+  "routes.graph": 15,
   "settlements.plans": 11,
   "landmarks.stamps": 7,
   "terrain.texture": 1,

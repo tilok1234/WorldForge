@@ -75,6 +75,7 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
               elevationPermille: entry.elevationPermille ?? 0,
               anchor: entry.anchor === undefined ? null : [entry.anchor[0], entry.anchor[1]],
               weight: entry.weight ?? 1000,
+              settlementFloor: entry.settlementFloor ?? 0,
             })),
           },
     decoration: {

@@ -22,7 +22,7 @@ import type { ResolvedWorldConfig } from "../recipe/compile.js";
 import type { HydrologyResult } from "../hydrology/hydrology.js";
 import { WATER_DEEP, WATER_NONE, WATER_SHALLOW } from "../hydrology/hydrology.js";
 import { PALETTE_INDEX } from "../regions/biomes.js";
-import type { MacroFields } from "../fields/macroFields.js";
+import { zoneOwnerAt, type MacroFields } from "../fields/macroFields.js";
 import { loadStamp } from "../settlements/landmarks.js";
 
 const GRASS = PALETTE_INDEX["terrain.grass"];
@@ -529,6 +529,37 @@ function pickDestinations(
   const firstCompetitive =
     settlementCount() > beforeCapital ? (taken[taken.length - 1] as Destination).cell : undefined;
   const capitalCell = pinnedRankCell.get(0) ?? firstCompetitive;
+  // Zone floors (behavior 48, opt-in per zone entry): a zone with
+  // settlementFloor > 0 keeps at least that many settlements in its
+  // territory (terrain permitting, capped by the budget). Runs BEFORE the
+  // geometric reservations — authored zone floors are explicit intent and
+  // outrank the remote-quarter and sector heuristics, which gracefully
+  // stand down when the budget is already spoken for. Uses the PURE
+  // territory (zoneOwnerAt) — the seam wander is climate display, not
+  // identity. Floors of 0 (the default, and every pre-48 recipe) change
+  // nothing.
+  if (config.zones !== null && config.zones.settlementFloors.some((floor) => floor > 0)) {
+    const zones = config.zones;
+    const ownerOf = (cell: number): number =>
+      zoneOwnerAt(zones, fields.width, fields.height, cell % fields.width, Math.trunc(cell / fields.width));
+    for (let zone = 0; zone < zones.settlementFloors.length; zone += 1) {
+      const floor = zones.settlementFloors[zone] as number;
+      if (floor <= 0) continue;
+      const have = taken.filter(
+        (d) => d.kind === "settlement_candidate" && ownerOf(d.cell) === zone,
+      ).length;
+      const room = config.budgets.settlementCount - settlementCount();
+      const want = Math.min(floor - have, room);
+      if (want <= 0) continue;
+      bySpacing(
+        scored.filter((candidate) => ownerOf(candidate.index) === zone),
+        settlementCount() + want,
+        taken,
+        "settlement_candidate",
+        config.routes.minDestinationSpacing,
+      );
+    }
+  }
   if (
     config.routes.remoteQuarterMin > 0 &&
     !pinnedRankCell.has(1) &&
@@ -542,7 +573,14 @@ function pickDestinations(
       const qy = Math.trunc(candidate.index / fields.width);
       return Math.abs(qx - cornerX) <= quarterSpan && Math.abs(qy - cornerY) <= quarterSpan;
     });
-    addSettlements(quarterPool, config.routes.remoteQuarterMin);
+    // Room-capped (behavior 48): zone floors may run first and spend most
+    // of the budget; the quarter reservation stands down rather than
+    // overshooting. Pre-48 arithmetic always fit, so the cap changes
+    // nothing for floor-free recipes.
+    addSettlements(
+      quarterPool,
+      Math.min(config.routes.remoteQuarterMin, config.budgets.settlementCount - settlementCount()),
+    );
   }
   //   2b. sector floors (routes.graph v11, generalizing the v10 quadrants):
   //       pure score competition lets selections cluster into the
