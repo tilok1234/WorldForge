@@ -132,7 +132,17 @@ identity).
 ## 6. Open items
 
 **User-gated:**
-- the-eight-holds verdict (last open visual).
+- the-eight-holds verdict: **REWORK directive (2026-07-28)** — cities
+  larger in some cases; settlements dense at the core thinning to
+  scattered fringe instead of a uniform blob; richer structure variety
+  (dusk package ships 52 structures, roster used 40 — windmill,
+  watermill, sawmill, quarry, store, warehouse, guardhouse, fisherhut,
+  tent, dock unrostered). Behavior 49 (settlement organics + variety)
+  in progress, opt-in via recipe `settlementStyle` so approved worlds
+  stay byte-identical. Re-verdict on the regenerated demo.
+  **TileForge upstream note (user-side task, per AGENTS.md):** chapel
+  (2×3) is the only church-type art; a larger temple/church structure
+  would need a new package structure — smallest ask recorded here.
 - Windowed Godot playthrough; taste-polish round; fen swamp-margin
   widening (walkability care needed).
 
