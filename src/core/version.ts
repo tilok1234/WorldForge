@@ -279,11 +279,23 @@ export const GENERATOR_VERSION = "0.1.0";
  *     Style-free recipes generate byte-identical layers AND keep their
  *     recipeSha256 (the normalized key exists only when authored — the
  *     canonical baseline sidecar stays valid).
+ * 50: lived-in streets (settlements.plans 13, resolved-config 25; verdict
+ *     round 2 "you don't have to always use a solid road… some houses
+ *     doesn't have to have a road… should be more organic") —
+ *     settlementStyle gains organicStreets: civic specials keep solid
+ *     cobble approaches while ordinary houses get worn packed-earth lane
+ *     fragments (BFS still verifies the route; the settlements.wear
+ *     channel paints ~450‰ of its cells, ~250‰ past depth 600, doorstep
+ *     always marked), some fringe houses (depth > 450, ~half) stand free
+ *     with no lane at all, yard clearance varies 1-2 cells, street arms
+ *     roll per-direction lengths (50-130%), and deep fill houses humble
+ *     into cottages. Off (and for every style-free recipe) the fabric is
+ *     byte-identical to behavior 49.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 49;
+export const GENERATOR_BEHAVIOR_VERSION = 50;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 30;
+export const RECIPE_COMPILER_VERSION = 31;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -292,7 +304,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 15,
-  "settlements.plans": 12,
+  "settlements.plans": 13,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 10,

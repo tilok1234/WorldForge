@@ -331,6 +331,10 @@
         "variety": {
           "type": "boolean",
           "description": "purpose-flavored specials and fill from the expanded roster: warehouses/fisher huts (harbor), quarries (mining), windmills (farming), watermills (crossing), stores/guardhouses/tents"
+        },
+        "organicStreets": {
+          "type": "boolean",
+          "description": "lived-in streets (behavior 50): worn packed-earth lane fragments instead of solid cobble approaches for ordinary houses, roadless fringe houses, varied yards, asymmetric street arms, cottages at depth"
         }
       }
     },

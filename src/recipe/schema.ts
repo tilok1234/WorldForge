@@ -221,12 +221,20 @@ export interface SettlementStyleRequest {
    * crossings watermills, plus stores/guardhouses in the civic mix.
    */
   readonly variety?: boolean;
+  /**
+   * Lived-in streets (behavior 50): civic specials keep solid cobble
+   * approaches, ordinary houses get worn packed-earth lane fragments, some
+   * fringe houses stand free with no lane at all, yards vary, street arms
+   * roll asymmetric lengths, and deep fill houses humble into cottages.
+   */
+  readonly organicStreets?: boolean;
 }
 
 export interface NormalizedSettlementStyle {
   readonly growthPermille: number;
   readonly scatterPermille: number;
   readonly variety: boolean;
+  readonly organicStreets: boolean;
 }
 
 /** An inline authored stamp: stampFormat 1, type "recipe.<name>". */

@@ -161,6 +161,7 @@ export function planSettlements(
   // when the style knobs are non-zero keeps style-free worlds byte-identical.
   const organics = channel(config.seed, "settlements.organics");
   const scatterChannel = channel(config.seed, "settlements.scatter");
+  const wear = channel(config.seed, "settlements.wear");
 
   for (let rank = 0; rank < candidates.length; rank += 1) {
     const anchor = (candidates[rank] as { cell: number }).cell;
@@ -210,9 +211,16 @@ export function planSettlements(
     const armLength =
       kind === "city" ? rules.cityStreetArmLength : kind === "town" ? rules.streetArmLength : 0;
     if (armLength > 0) {
-      for (const [dirX, dirY] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+      const directions = [[0, -1], [1, 0], [0, 1], [-1, 0]] as const;
+      for (let direction = 0; direction < directions.length; direction += 1) {
+        const [dirX, dirY] = directions[direction] as readonly [number, number];
+        // Lived-in streets (behavior 50): each arm rolls its own length
+        // (50%-130% of base) so the cross reads as grown, not drafted.
+        const rolledArm = rules.organicStreets
+          ? Math.max(2, Math.trunc((armLength * (500 + Math.trunc((wear.permilleAt(anchorX, anchorY, 100 + direction) * 800) / 1000))) / 1000))
+          : armLength;
         let skippedWet = 0;
-        for (let step = plazaRadius + 1; step <= plazaRadius + armLength; step += 1) {
+        for (let step = plazaRadius + 1; step <= plazaRadius + rolledArm; step += 1) {
           const armX = anchorX + dirX * step;
           const armY = anchorY + dirY * step;
           const lane = cellAt(armX, armY, width, height);
@@ -373,29 +381,42 @@ export function planSettlements(
           if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) {
             continue;
           }
-          const type = sequence[sequenceIndex] as StructureType;
+          const originX = anchorX + dx;
+          const originY = anchorY + dy;
+          const fillSlot = sequenceIndex >= alwaysPlace;
+          const depthPermille = Math.trunc(((ring - plazaRadius) * 1000) / Math.max(1, radius - plazaRadius));
+          let type = sequence[sequenceIndex] as StructureType;
+          // Humble outskirts (behavior 50): deep fill houses sometimes build
+          // as cottages — the core keeps its stature, the fringe reads
+          // poorer, the way settlements actually grow.
+          if (rules.organicStreets && fillSlot && type === "structure.house" && depthPermille > 500 && wear.chanceAt(originX, originY, 450, 9)) {
+            type = "structure.cottage";
+          }
           const footprint = STRUCTURE_FOOTPRINTS[type];
           if (footprint === undefined) {
             sequenceIndex += 1;
             continue;
           }
           const [fw, fh] = footprint;
-          const originX = anchorX + dx;
-          const originY = anchorY + dy;
           // Scatter falloff (behavior 49): past the civic specials, cell
           // acceptance falls linearly from the plaza out to the rim
           // (1000 -> 1000-scatterPermille), so the fabric thins into
           // scattered outskirts instead of packing every ring solid. The
           // roll is per-cell and stable, so a rejected spot stays rejected
           // for the whole settlement — real spatial gaps, not resampling.
-          if (rules.scatterPermille > 0 && sequenceIndex >= alwaysPlace) {
-            const depthPermille = Math.trunc(((ring - plazaRadius) * 1000) / Math.max(1, radius - plazaRadius));
+          if (rules.scatterPermille > 0 && fillSlot) {
             const acceptance = 1000 - Math.trunc((depthPermille * rules.scatterPermille) / 1000);
             if (!scatterChannel.chanceAt(originX, originY, acceptance)) {
               continue;
             }
           }
-          if (!footprintFits(originX, originY, fw, fh, grid, structureLayer, routes.pathLayer, hydro, width, height)) {
+          // Varied yards (behavior 50): some outer houses demand a wider
+          // clearance ring, breaking the uniform one-cell packing texture.
+          const yardGap =
+            rules.organicStreets && fillSlot && depthPermille > 350 && wear.chanceAt(originX, originY, 350, 8)
+              ? 2
+              : 1;
+          if (!footprintFits(originX, originY, fw, fh, grid, structureLayer, routes.pathLayer, hydro, width, height, yardGap)) {
             continue;
           }
           // Stamp provisionally; a placement whose entrance cannot join the
@@ -411,7 +432,21 @@ export function planSettlements(
           }
           const entranceX = originX + Math.trunc(fw / 2);
           const entranceY = originY + fh;
-          const connected = carveApproach(entranceX, entranceY, grid, structureLayer, hydro, approachBudget, width, height);
+          // Lived-in streets (behavior 50): civic specials keep their solid
+          // cobble approaches; ordinary houses get worn packed-earth lane
+          // fragments ("a few tiles indicating not much used roads"), the
+          // deep fringe barely a trace — and some outer houses skip the
+          // lane entirely, standing free in the grass. The route is still
+          // BFS-verified whenever a lane is carved; roadless houses rely on
+          // open ground exactly like any walkable meadow.
+          let connected: boolean;
+          if (rules.organicStreets && fillSlot && depthPermille > 450 && wear.chanceAt(originX, originY, 500, 7)) {
+            connected = true;
+          } else {
+            const wornPermille =
+              rules.organicStreets && fillSlot ? (depthPermille > 600 ? 250 : 450) : 0;
+            connected = carveApproach(entranceX, entranceY, grid, structureLayer, hydro, approachBudget, width, height, wornPermille, wear);
+          }
           if (!connected) {
             let restore = 0;
             for (let sy = 0; sy < fh; sy += 1) {
@@ -555,10 +590,12 @@ function footprintFits(
   hydro: HydrologyResult,
   width: number,
   height: number,
+  gap = 1,
 ): boolean {
-  // The footprint plus a one-cell gap must be clear of other structures.
-  for (let sy = -1; sy <= fh; sy += 1) {
-    for (let sx = -1; sx <= fw; sx += 1) {
+  // The footprint plus the gap ring must be clear of other structures
+  // (behavior 50 varies the ring to break the uniform packing texture).
+  for (let sy = -gap; sy <= fh + gap - 1; sy += 1) {
+    for (let sx = -gap; sx <= fw + gap - 1; sx += 1) {
       const cell = cellAt(originX + sx, originY + sy, width, height);
       if (cell === -1) {
         return false;
@@ -589,8 +626,13 @@ function carveApproach(
   maxLength: number,
   width: number,
   height: number,
+  wornPermille = 0,
+  wear: Channel | null = null,
 ): boolean {
-  // Deterministic BFS to the nearest street (cobble or road); carve cobble.
+  // Deterministic BFS to the nearest street (cobble or road). Solid mode
+  // carves cobble; worn mode (behavior 50) verifies the same route but
+  // paints only scattered packed-earth cells along it — a barely-there
+  // lane — always marking the doorstep.
   const start = cellAt(startX, startY, width, height);
   if (start === -1) {
     return false;
@@ -601,6 +643,17 @@ function carveApproach(
   if (!isOpenLand(start, grid, hydro) || structureLayer[start] !== 0) {
     return false;
   }
+  const paint = (target: number): void => {
+    if (wornPermille === 0 || wear === null) {
+      grid[target] = COBBLE;
+      return;
+    }
+    const px = target % width;
+    const py = (target - px) / width;
+    if (wear.chanceAt(px, py, wornPermille, 11)) {
+      grid[target] = PACKED_ROAD;
+    }
+  };
   const previous = new Map<number, number>();
   const queue = [start];
   previous.set(start, -1);
@@ -609,10 +662,10 @@ function carveApproach(
     if ((grid[cell] === COBBLE || grid[cell] === PACKED_ROAD) && cell !== start) {
       let cursor: number = previous.get(cell) as number;
       while (cursor !== -1 && cursor !== start) {
-        grid[cursor] = COBBLE;
+        paint(cursor);
         cursor = previous.get(cursor) as number;
       }
-      grid[start] = COBBLE;
+      grid[start] = wornPermille === 0 || wear === null ? COBBLE : PACKED_ROAD;
       return true;
     }
     const x = cell % width;

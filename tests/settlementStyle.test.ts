@@ -10,6 +10,7 @@ import { STRUCTURE_FOOTPRINTS, STRUCTURE_TYPES } from "../src/settlements/struct
 import { STRUCTURE_NAME } from "../src/adapters/tileforge/resolve.js";
 import { loadPinnedManifest } from "../src/adapters/tileforge/manifest.js";
 import { channel } from "../src/core/channels.js";
+import { PALETTE_INDEX } from "../src/regions/biomes.js";
 
 const BASE = {
   recipeFormat: 1,
@@ -35,6 +36,7 @@ describe("settlement style vocabulary (behavior 49)", () => {
       growthPermille: 600,
       scatterPermille: 0,
       variety: false,
+      organicStreets: false,
     });
     assert.equal(config.settlements.growthPermille, 600);
     assert.equal(config.settlements.scatterPermille, 0);
@@ -134,6 +136,62 @@ describe("settlement organics (behavior 49)", () => {
     const blob = meanDistance(generateWorldDetailed(plain.normalized, plain.config));
     const spread = meanDistance(generateWorldDetailed(scattered.normalized, scattered.config));
     assert.ok(spread > blob, `mean structure distance ${spread.toFixed(2)} should exceed blob ${blob.toFixed(2)}`);
+  });
+});
+
+describe("lived-in streets (behavior 50)", () => {
+  it("validates and normalizes the flag", () => {
+    const { normalized, config } = compiled({
+      ...BASE,
+      settlementStyle: { organicStreets: true },
+    });
+    assert.equal(normalized.settlementStyle?.organicStreets, true);
+    assert.equal(config.settlements.organicStreets, true);
+    const rejected = validateRecipe({ ...BASE, settlementStyle: { organicStreets: "ye" } });
+    assert.ok(!rejected.ok);
+  });
+
+  it("off is byte-identical to a style without the key", () => {
+    const without = compiled({ ...BASE, settlementStyle: { scatterPermille: 300 } });
+    const withOff = compiled({
+      ...BASE,
+      settlementStyle: { scatterPermille: 300, organicStreets: false },
+    });
+    const a = generateWorldDetailed(without.normalized, without.config);
+    const b = generateWorldDetailed(withOff.normalized, withOff.config);
+    assert.deepEqual(b.artifact.settlements, a.artifact.settlements);
+    assert.deepEqual(b.composed.grid, a.composed.grid);
+  });
+
+  it("wears the lanes: less cobble, packed-earth fragments, and cottages appear", () => {
+    const COBBLE_INDEX = PALETTE_INDEX["terrain.cobble"] as number;
+    const PACKED_INDEX = PALETTE_INDEX["terrain.packed_road"] as number;
+    // Big fabric on the tiny map so the deep rings actually exist: full
+    // growth + heavy scatter puts fill houses past depth 500.
+    const knobs = { growthPermille: 1000, scatterPermille: 850 };
+    const plain = compiled({ ...BASE, settlementStyle: knobs });
+    const organic = compiled({
+      ...BASE,
+      settlementStyle: { ...knobs, organicStreets: true },
+    });
+    const a = generateWorldDetailed(plain.normalized, plain.config);
+    const b = generateWorldDetailed(organic.normalized, organic.config);
+    const count = (grid: readonly number[], value: number): number =>
+      grid.reduce((total, cell) => total + (cell === value ? 1 : 0), 0);
+    assert.ok(
+      count(b.composed.grid, COBBLE_INDEX) < count(a.composed.grid, COBBLE_INDEX),
+      "worn approaches must carve less solid cobble",
+    );
+    assert.ok(
+      count(b.composed.grid, PACKED_INDEX) > count(a.composed.grid, PACKED_INDEX),
+      "worn lanes must leave packed-earth fragments",
+    );
+    const cottages = (result: ReturnType<typeof generateWorldDetailed>): number =>
+      result.artifact.settlements.reduce(
+        (total, s) => total + s.structures.filter((st) => st.type === "structure.cottage").length,
+        0,
+      );
+    assert.ok(cottages(b) > cottages(a), "deep houses must humble into cottages");
   });
 });
 

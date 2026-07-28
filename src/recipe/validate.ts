@@ -398,15 +398,17 @@ export function validateRecipe(input: unknown): RecipeValidation {
       issues.push({ path: "$.settlementStyle", message: "settlementStyle must be an object" });
     } else {
       for (const key of Object.keys(settlementStyle)) {
-        if (key !== "growthPermille" && key !== "scatterPermille" && key !== "variety") {
+        if (key !== "growthPermille" && key !== "scatterPermille" && key !== "variety" && key !== "organicStreets") {
           issues.push({ path: `$.settlementStyle.${key}`, message: `unknown field "${key}"` });
         }
       }
       checkInteger(issues, settlementStyle, "growthPermille", "$.settlementStyle.growthPermille", 0, 1000, false);
       checkInteger(issues, settlementStyle, "scatterPermille", "$.settlementStyle.scatterPermille", 0, 900, false);
-      const variety = settlementStyle["variety"];
-      if (variety !== undefined && typeof variety !== "boolean") {
-        issues.push({ path: "$.settlementStyle.variety", message: "variety must be a boolean" });
+      for (const flag of ["variety", "organicStreets"] as const) {
+        const value = settlementStyle[flag];
+        if (value !== undefined && typeof value !== "boolean") {
+          issues.push({ path: `$.settlementStyle.${flag}`, message: `${flag} must be a boolean` });
+        }
       }
     }
   }

@@ -68,6 +68,7 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
             growthPermille: recipe.settlementStyle.growthPermille ?? 0,
             scatterPermille: recipe.settlementStyle.scatterPermille ?? 0,
             variety: recipe.settlementStyle.variety ?? false,
+            organicStreets: recipe.settlementStyle.organicStreets ?? false,
           },
         }),
     zones:
