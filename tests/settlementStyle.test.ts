@@ -258,6 +258,59 @@ describe("narrow streets (behavior 51)", () => {
     }
     assert.ok(oneWide > 0, "no one-wide arm segment found beyond the core");
   });
+
+  it("necks through-roads to the centerline inside settlement bounds", () => {
+    const COBBLE_INDEX = PALETTE_INDEX["terrain.cobble"] as number;
+    const PACKED_INDEX = PALETTE_INDEX["terrain.packed_road"] as number;
+    // organicStreets stays OFF: worn lanes also paint packed earth and
+    // would muddy the flank assertions below.
+    const narrow = compiled({
+      ...BASE,
+      settlementStyle: { growthPermille: 600, narrowStreets: true },
+    });
+    const b = generateWorldDetailed(narrow.normalized, narrow.config);
+    const { width, height } = narrow.config.world;
+    const grid = b.composed.grid;
+    const routesResult = b.composed.routesResult;
+    const corridorAt = (x: number, y: number): boolean => {
+      if (x < 0 || y < 0 || x >= width || y >= height) return false;
+      const value = grid[y * width + x];
+      return value === COBBLE_INDEX || value === PACKED_INDEX;
+    };
+    const insideBounds = (cell: number): boolean => {
+      const x = cell % width;
+      const y = (cell - x) / width;
+      return b.artifact.settlements.some((s) => {
+        const d = Math.max(Math.abs(x - s.anchor[0]), Math.abs(y - s.anchor[1]));
+        return d > 5 && d <= s.radius - 1;
+      });
+    };
+
+    // Every route flank inside settlement bounds gave its ground back: none
+    // may remain packed road (the settlement may deliberately repaint some
+    // as cobble plaza/arm/approach fabric, never as bare road), and at
+    // least some must now be plain ground again.
+    let reverted = 0;
+    for (const [cell] of routesResult.corridorFlankPrev) {
+      if (!insideBounds(cell)) continue;
+      assert.notEqual(grid[cell], PACKED_INDEX, `flank ${cell % width},${Math.trunc(cell / width)} still packed road`);
+      if (grid[cell] !== COBBLE_INDEX) reverted += 1;
+    }
+    assert.ok(reverted > 0, "no route flank inside settlement bounds was reverted");
+
+    // And the through-road itself runs one wide somewhere in the bounds: a
+    // centerline cell whose perpendicular corridor neighbours are gone.
+    let oneWide = 0;
+    for (const cell of routesResult.corridorCenterline) {
+      if (!insideBounds(cell)) continue;
+      const x = cell % width;
+      const y = (cell - x) / width;
+      const northSouth = !corridorAt(x, y - 1) && !corridorAt(x, y + 1);
+      const eastWest = !corridorAt(x - 1, y) && !corridorAt(x + 1, y);
+      if (corridorAt(x, y) && (northSouth || eastWest)) oneWide += 1;
+    }
+    assert.ok(oneWide > 0, "no one-wide through-road segment inside settlement bounds");
+  });
 });
 
 describe("settlement variety (behavior 49)", () => {

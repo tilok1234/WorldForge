@@ -111,6 +111,15 @@ export interface RoutesResult {
   readonly pathLayer: Uint8Array;
   readonly roadCellCount: number;
   readonly trailCellCount: number;
+  /**
+   * Corridor paint record (behavior 52): the stamped centerline cells and,
+   * per flank cell, the material the corridor covered (first paint wins).
+   * planSettlements uses it under narrowStreets to neck through-roads down
+   * to their centerline inside settlement bounds; style-free generation
+   * never reads it.
+   */
+  readonly corridorCenterline: ReadonlySet<number>;
+  readonly corridorFlankPrev: ReadonlyMap<number, number>;
   readonly errors: readonly string[];
   readonly warnings: readonly string[];
 }
@@ -125,6 +134,8 @@ export function buildRoutes(
   const rules = config.routes;
   const errors: string[] = [];
   const warnings: string[] = [];
+  const corridorCenterline = new Set<number>();
+  const corridorFlankPrev = new Map<number, number>();
 
   const destinations = pickDestinations(grid, fields, hydro, config, warnings, errors);
   const settlements = destinations.filter((d) => d.kind === "settlement_candidate");
@@ -198,7 +209,16 @@ export function buildRoutes(
         errors.push(`no route between destinations ${edge.a} and ${edge.b}`);
         continue;
       }
-      const crossings = stampRoad(path, grid, hydro, width, height, routeClass === "highway" ? rules.highwayWidth : rules.streetWidth);
+      const crossings = stampRoad(
+        path,
+        grid,
+        hydro,
+        width,
+        height,
+        routeClass === "highway" ? rules.highwayWidth : rules.streetWidth,
+        corridorCenterline,
+        corridorFlankPrev,
+      );
       roadCellCount += path.length;
       const record: RouteRecord = {
         id: routes.length,
@@ -321,6 +341,8 @@ export function buildRoutes(
     pathLayer,
     roadCellCount,
     trailCellCount,
+    corridorCenterline,
+    corridorFlankPrev,
     errors,
     warnings,
   };
@@ -884,9 +906,12 @@ function stampRoad(
   width: number,
   height: number,
   corridorWidth: number,
+  centerline: Set<number>,
+  flankPrev: Map<number, number>,
 ): Crossing[] {
   const crossings: Crossing[] = [];
   for (const cell of path) {
+    centerline.add(cell);
     if (hydro.waterKind[cell] !== WATER_NONE || hydro.isRiver[cell] === 1) {
       crossings.push({ cell, kind: hydro.isMajorRiver[cell] === 1 ? "bridge" : "ford" });
       continue;
@@ -914,6 +939,13 @@ function stampRoad(
       }
       const target = ny * width + nx;
       if (hydro.waterKind[target] === WATER_NONE && hydro.isRiver[target] === 0) {
+        // Record what a FLANK covers before it paints (first paint wins;
+        // centerline cells are never flank-restorable — behavior 52 necks
+        // through-roads to their centerline inside settlement bounds).
+        const isFlank = (offset[0] as number) !== 0 || (offset[1] as number) !== 0;
+        if (isFlank && grid[target] !== PACKED_ROAD && !flankPrev.has(target)) {
+          flankPrev.set(target, grid[target] as number);
+        }
         grid[target] = PACKED_ROAD;
       }
     }

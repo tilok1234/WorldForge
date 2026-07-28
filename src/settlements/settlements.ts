@@ -203,6 +203,27 @@ export function planSettlements(
     // from its geography, not from how large the growth roll let it sprawl.
     const purpose = derivePurpose(anchorX, anchorY, baseRadius, grid, hydro, width, height);
 
+    // Through-roads neck down inside the hold (behavior 52): a wide corridor
+    // between buildings reads as a solid clutter of road (round-4 verdict),
+    // so under narrowStreets the route painter's flank cells give their
+    // ground back within settlement bounds and only the centerline lane
+    // runs on. Fords and bridges are path cells — never flanks — so every
+    // crossing keeps its full walkable line, and the freed ground rejoins
+    // the lot pool before any building places.
+    if (rules.narrowStreets) {
+      for (let dy = -radius; dy <= radius; dy += 1) {
+        for (let dx = -radius; dx <= radius; dx += 1) {
+          const cell = cellAt(anchorX + dx, anchorY + dy, width, height);
+          if (cell === -1 || grid[cell] !== PACKED_ROAD) continue;
+          if (routes.corridorCenterline.has(cell)) continue;
+          const previous = routes.corridorFlankPrev.get(cell);
+          if (previous !== undefined) {
+            grid[cell] = previous;
+          }
+        }
+      }
+    }
+
     // Plaza and settlement streets are cobble areas (band-free doctrine).
     const plazaRadius =
       kind === "city" ? rules.cityPlazaRadius : kind === "town" ? rules.townPlazaRadius : rules.outpostPlazaRadius;

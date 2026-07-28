@@ -315,8 +315,24 @@ export const GENERATOR_VERSION = "0.1.0";
  *     stamp's street guard are all cell-based and width-agnostic. Off
  *     (and for every style-free recipe) the fabric is byte-identical to
  *     behavior 50.
+ * 52: narrow streets, part 2 — through-roads neck down (settlements.plans
+ *     15; round-4 verdict "you are using 3 tiles wide ones… it looks
+ *     like a clutter of a solid road when you do them wide") — behavior
+ *     51 narrowed the settlement's own arms but the ROUTE corridors
+ *     (streets 2-wide, highways 3-wide) still crossed settlements at
+ *     doctrine width. The route painter now records each corridor's
+ *     centerline and what every flank cell covered (first paint wins;
+ *     inert for style-free generation), and under narrowStreets the
+ *     settlement pass restores those flank cells to their original
+ *     ground within settlement bounds before anything places — the
+ *     through-road runs on as a one-wide centerline lane, fords and
+ *     bridges keep their full line (crossings are path cells, never
+ *     flanks), and the freed ground rejoins the lot pool. Country
+ *     corridors outside settlement bounds keep the 2-4-wide doctrine.
+ *     Off (and for every style-free recipe) the fabric is
+ *     byte-identical to behavior 51.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 51;
+export const GENERATOR_BEHAVIOR_VERSION = 52;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 32;
@@ -328,7 +344,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 15,
-  "settlements.plans": 14,
+  "settlements.plans": 15,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 10,
