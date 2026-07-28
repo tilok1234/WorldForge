@@ -64,10 +64,14 @@ can change later"). Forest fixture stays committed — re-pin back = lock
 retired as `roadTypesLegacy` (matches our corridor doctrine; dirtpath
 is the one live band). Semantic ids are THEME-IDENTICAL, so world
 content is byte-identical across themes. §2/§4 acceptance green against
-dusk's own reference. **OPEN designer ruling:** ruined-city dead
-streets are authored with the legacy ruined-road band (renders fine;
-new guide says never author new legacy runs) — bless as archaeology or
-re-express as materials+rubble later.
+dusk's own reference. **RULED 2026-07-28: blessed as archaeology,
+with an upstream upgrade path.** Ruined-city dead streets keep the
+legacy ruined-road band (renders fine; thematically relics). Doctrine
+unchanged: never author NEW legacy runs elsewhere. Upgrade path: the
+designer may add a dedicated live ruined-road band in TileForge
+(their forge, their side of the boundary); when a package ships it,
+re-pin and switch the ruined-city stamp to the new band (behavior
+bump + the-old-war family re-verdict at that point).
 
 ## 4. Zone vocabulary after behavior 48
 
@@ -129,7 +133,6 @@ identity).
 
 **User-gated:**
 - the-eight-holds verdict (last open visual).
-- Ruined-road-band ruling (§3).
 - Windowed Godot playthrough; taste-polish round; fen swamp-margin
   widening (walkability care needed).
 
