@@ -378,8 +378,30 @@ export const GENERATOR_VERSION = "0.1.0";
  *     roll roadless (the "none" lane mode) and stand free on the
  *     grass; worn fragments remain the organicStreets look wherever
  *     narrowStreets is off. Style-free recipes byte-identical.
+ * 56: line roads (settlements.plans 18, routes.graph 17; round-7
+ *     verdict with screenshot: "1 tile wide means 1 tile wide. not 2
+ *     and 3") — the miss was the RENDERER, not the width: cobble is an
+ *     area MATERIAL, and a one-cell cobble lane blob-renders with rims
+ *     and transition padding into two-three visual tiles, then fuses
+ *     with its neighbours into patches. The one-tile road LOOK is the
+ *     PATH BAND — the thin line art wilderness trails use, which the
+ *     corridor doctrine explicitly kept alive for minor spurs. Under
+ *     narrowStreets every in-settlement road now draws as the band
+ *     over natural ground: arms, the city ring, every house lane
+ *     (approaches write pathLayer and count band cells as network, so
+ *     lanes still chain into a street tree), and the through-route
+ *     inside settlement bounds (centerline ground restored from the
+ *     new corridorCenterPrev record, band drawn on top — its
+ *     wilderness continuation already renders as corridor per
+ *     doctrine, which stays untouched outside bounds along with every
+ *     style-free recipe, byte-identical). Only the plaza remains a
+ *     paved cobble area. Band cells live in routesResult.pathLayer, so
+ *     every existing trail protection applies natively: footprintFits
+ *     refuses to stamp on them, decoration keeps blocking props off,
+ *     the §3 ladder walks them, and the compose entrance check counts
+ *     them as network.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 55;
+export const GENERATOR_BEHAVIOR_VERSION = 56;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 32;
@@ -390,8 +412,8 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 10,
   "macro.biomes": 7,
   "hydrology.water": 5,
-  "routes.graph": 16,
-  "settlements.plans": 17,
+  "routes.graph": 17,
+  "settlements.plans": 18,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 10,

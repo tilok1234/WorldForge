@@ -120,6 +120,9 @@ export interface RoutesResult {
    */
   readonly corridorCenterline: ReadonlySet<number>;
   readonly corridorFlankPrev: ReadonlyMap<number, number>;
+  /** Centerline cell -> the material it covered (behavior 56: in-town
+   * line roads restore the ground and draw the band over it). */
+  readonly corridorCenterPrev: ReadonlyMap<number, number>;
   readonly errors: readonly string[];
   readonly warnings: readonly string[];
 }
@@ -136,6 +139,7 @@ export function buildRoutes(
   const warnings: string[] = [];
   const corridorCenterline = new Set<number>();
   const corridorFlankPrev = new Map<number, number>();
+  const corridorCenterPrev = new Map<number, number>();
 
   const destinations = pickDestinations(grid, fields, hydro, config, warnings, errors);
   const settlements = destinations.filter((d) => d.kind === "settlement_candidate");
@@ -218,6 +222,7 @@ export function buildRoutes(
         routeClass === "highway" ? rules.highwayWidth : rules.streetWidth,
         corridorCenterline,
         corridorFlankPrev,
+        corridorCenterPrev,
       );
       roadCellCount += path.length;
       const record: RouteRecord = {
@@ -343,6 +348,7 @@ export function buildRoutes(
     trailCellCount,
     corridorCenterline,
     corridorFlankPrev,
+    corridorCenterPrev,
     errors,
     warnings,
   };
@@ -915,10 +921,14 @@ function stampRoad(
   corridorWidth: number,
   centerline: Set<number>,
   flankPrev: Map<number, number>,
+  centerPrev: Map<number, number>,
 ): Crossing[] {
   const crossings: Crossing[] = [];
   for (const cell of path) {
     centerline.add(cell);
+    if (!centerPrev.has(cell) && grid[cell] !== PACKED_ROAD) {
+      centerPrev.set(cell, grid[cell] as number);
+    }
     if (hydro.waterKind[cell] !== WATER_NONE || hydro.isRiver[cell] === 1) {
       crossings.push({ cell, kind: hydro.isMajorRiver[cell] === 1 ? "bridge" : "ford" });
       continue;

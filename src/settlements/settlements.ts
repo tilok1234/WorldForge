@@ -215,7 +215,18 @@ export function planSettlements(
         for (let dx = -radius; dx <= radius; dx += 1) {
           const cell = cellAt(anchorX + dx, anchorY + dy, width, height);
           if (cell === -1 || grid[cell] !== PACKED_ROAD) continue;
-          if (routes.corridorCenterline.has(cell)) continue;
+          if (routes.corridorCenterline.has(cell)) {
+            // Line roads (behavior 56): the through-route inside the hold
+            // gives its ground back too and draws as the one-tile band —
+            // the same look as its wilderness trail continuation.
+            const prev =
+              routes.corridorCenterPrev.get(cell) ?? routes.corridorFlankPrev.get(cell);
+            if (prev !== undefined) {
+              grid[cell] = prev;
+              routes.pathLayer[cell] = 1;
+            }
+            continue;
+          }
           const previous = routes.corridorFlankPrev.get(cell);
           if (previous !== undefined) {
             grid[cell] = previous;
@@ -266,12 +277,18 @@ export function planSettlements(
             break;
           }
           skippedWet = 0;
-          if (isOpenLand(lane, grid, hydro)) grid[lane] = COBBLE;
-          // Narrow streets (behavior 51; ONE-wide everywhere since behavior
-          // 55): under narrowStreets the arm is a single-cell lane from the
-          // plaza edge out — the round-6 verdict rejected even the two-wide
-          // civic spine. Without the style the arm keeps its classic
-          // two-cell width.
+          // Line roads (behavior 56): under narrowStreets the arm draws as
+          // the one-tile PATH BAND over natural ground — cobble is an area
+          // material whose blob rendering reads two-three tiles wide however
+          // few cells it covers (the round-7 verdict, screenshot-confirmed).
+          // Without the style the arm keeps its classic two-cell cobble.
+          if (isOpenLand(lane, grid, hydro)) {
+            if (rules.narrowStreets) {
+              routes.pathLayer[lane] = 1;
+            } else {
+              grid[lane] = COBBLE;
+            }
+          }
           const boulevard = !rules.narrowStreets;
           if (boulevard && side !== -1 && isOpenLand(side, grid, hydro)) grid[side] = COBBLE;
         }
@@ -292,7 +309,11 @@ export function planSettlements(
         ] as const) {
           const cell = cellAt(rx, ry, width, height);
           if (cell !== -1 && isOpenLand(cell, grid, hydro)) {
-            grid[cell] = COBBLE;
+            if (rules.narrowStreets) {
+              routes.pathLayer[cell] = 1;
+            } else {
+              grid[cell] = COBBLE;
+            }
           }
         }
       }
@@ -514,6 +535,7 @@ export function planSettlements(
           const connected = carveApproach(
             entranceX, entranceY, grid, structureLayer, hydro, approachBudget, width, height,
             laneMode, wornPermille, wear, laneCells,
+            rules.narrowStreets ? routes.pathLayer : null,
           );
           for (let recorded = laneStart; recorded < laneCells.length; recorded += 1) {
             laneSet.add(laneCells[recorded] as number);
@@ -706,6 +728,9 @@ function carveApproach(
   wornPermille = 0,
   wear: Channel | null = null,
   laneCells: number[] | null = null,
+  /** Line roads (behavior 56): paint the path band instead of cobble, and
+   * count existing band cells as network so lanes chain into streets. */
+  bandLanes: Uint8Array | null = null,
 ): boolean {
   // Deterministic BFS to the nearest street (cobble or road). The
   // verification and rollback contract is identical in every mode; only
@@ -720,7 +745,10 @@ function carveApproach(
   if (start === -1) {
     return false;
   }
-  const startIsRoad = grid[start] === COBBLE || grid[start] === PACKED_ROAD;
+  const startIsRoad =
+    grid[start] === COBBLE ||
+    grid[start] === PACKED_ROAD ||
+    (bandLanes !== null && bandLanes[start] === 1);
   if (mode === "solid") {
     // Legacy contract, byte-for-byte: solid approaches trust road material
     // and pave whatever they cross (approved worlds bake this in).
@@ -750,6 +778,10 @@ function carveApproach(
       laneCells.push(target);
     }
     if (mode === "none") return;
+    if (bandLanes !== null) {
+      bandLanes[target] = 1;
+      return;
+    }
     if (mode === "solid" || wear === null) {
       grid[target] = COBBLE;
       return;
@@ -765,7 +797,11 @@ function carveApproach(
   previous.set(start, -1);
   for (let head = 0; head < queue.length && head <= maxLength * 8; head += 1) {
     const cell = queue[head] as number;
-    if ((grid[cell] === COBBLE || grid[cell] === PACKED_ROAD) && cell !== start) {
+    const cellIsNetwork =
+      grid[cell] === COBBLE ||
+      grid[cell] === PACKED_ROAD ||
+      (bandLanes !== null && bandLanes[cell] === 1);
+    if (cellIsNetwork && cell !== start) {
       let cursor: number = previous.get(cell) as number;
       while (cursor !== -1 && cursor !== start) {
         paint(cursor);
@@ -775,7 +811,11 @@ function carveApproach(
         laneCells.push(start);
       }
       if (mode !== "none") {
-        grid[start] = mode === "solid" || wear === null ? COBBLE : PACKED_ROAD;
+        if (bandLanes !== null) {
+          bandLanes[start] = 1;
+        } else {
+          grid[start] = mode === "solid" || wear === null ? COBBLE : PACKED_ROAD;
+        }
       }
       return true;
     }

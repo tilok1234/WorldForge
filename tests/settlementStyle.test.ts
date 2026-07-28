@@ -222,7 +222,7 @@ describe("narrow streets (behavior 51)", () => {
     assert.deepEqual(b.composed.grid, a.composed.grid);
   });
 
-  it("narrows the arms: less cobble, one-wide runs beyond the civic core", () => {
+  it("draws in-settlement roads as one-tile band lines, not cobble", () => {
     const COBBLE_INDEX = PALETTE_INDEX["terrain.cobble"] as number;
     const plain = compiled({ ...BASE, settlementStyle: { growthPermille: 600 } });
     const narrow = compiled({
@@ -233,33 +233,43 @@ describe("narrow streets (behavior 51)", () => {
     const b = generateWorldDetailed(narrow.normalized, narrow.config);
     const count = (grid: readonly number[]): number =>
       grid.reduce((total, cell) => total + (cell === COBBLE_INDEX ? 1 : 0), 0);
+    // Cobble shrinks to the plaza; the road look moves to the path band.
     assert.ok(
       count(b.composed.grid) < count(a.composed.grid),
-      "narrow arms must paint less cobble than boulevards",
+      "line roads must paint far less cobble than boulevards",
+    );
+    const bandCells = (result: ReturnType<typeof generateWorldDetailed>): number => {
+      let total = 0;
+      for (const value of result.composed.routesResult.pathLayer) total += value;
+      return total;
+    };
+    assert.ok(
+      bandCells(b) > bandCells(a),
+      "narrowStreets must add band lanes to the path layer",
     );
 
-    // Somewhere past the civic core an arm must run exactly one cell wide:
-    // an arm-axis cobble cell whose BOTH perpendicular neighbours are
-    // non-cobble (approaches may touch one side; not both on every step).
-    const { width, height } = narrow.config.world;
+    // The arm reads as a followable line: a run of consecutive band cells
+    // marching away from some anchor, on natural (non-cobble) ground.
+    const { width } = narrow.config.world;
+    const pathLayer = b.composed.routesResult.pathLayer;
     const grid = b.composed.grid;
-    const cobbleAt = (x: number, y: number): boolean =>
-      x >= 0 && y >= 0 && x < width && y < height && grid[y * width + x] === COBBLE_INDEX;
-    let oneWide = 0;
+    let armLine = false;
     for (const settlement of b.artifact.settlements) {
       const [ax, ay] = settlement.anchor;
       for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
-        for (let step = 4; step <= 20; step += 1) {
-          const x = ax + dx * step;
-          const y = ay + dy * step;
-          if (!cobbleAt(x, y)) continue;
-          if (!cobbleAt(x + Math.abs(dy), y + Math.abs(dx)) && !cobbleAt(x - Math.abs(dy), y - Math.abs(dx))) {
-            oneWide += 1;
+        let run = 0;
+        for (let step = 3; step <= 24; step += 1) {
+          const cell = (ay + dy * step) * width + ax + dx * step;
+          if (pathLayer[cell] === 1 && grid[cell] !== COBBLE_INDEX) {
+            run += 1;
+            if (run >= 4) armLine = true;
+          } else {
+            run = 0;
           }
         }
       }
     }
-    assert.ok(oneWide > 0, "no one-wide arm segment found beyond the core");
+    assert.ok(armLine, "no band arm line found leaving a plaza");
   });
 
   it("necks through-roads to the centerline inside settlement bounds", () => {
@@ -275,11 +285,6 @@ describe("narrow streets (behavior 51)", () => {
     const { width, height } = narrow.config.world;
     const grid = b.composed.grid;
     const routesResult = b.composed.routesResult;
-    const corridorAt = (x: number, y: number): boolean => {
-      if (x < 0 || y < 0 || x >= width || y >= height) return false;
-      const value = grid[y * width + x];
-      return value === COBBLE_INDEX || value === PACKED_INDEX;
-    };
     const insideBounds = (cell: number): boolean => {
       const x = cell % width;
       const y = (cell - x) / width;
@@ -291,8 +296,8 @@ describe("narrow streets (behavior 51)", () => {
 
     // Every route flank inside settlement bounds gave its ground back: none
     // may remain packed road (the settlement may deliberately repaint some
-    // as cobble plaza/arm/approach fabric, never as bare road), and at
-    // least some must now be plain ground again.
+    // as cobble plaza fabric, never as bare road), and at least some must
+    // now be plain ground again.
     let reverted = 0;
     for (const [cell] of routesResult.corridorFlankPrev) {
       if (!insideBounds(cell)) continue;
@@ -301,18 +306,20 @@ describe("narrow streets (behavior 51)", () => {
     }
     assert.ok(reverted > 0, "no route flank inside settlement bounds was reverted");
 
-    // And the through-road itself runs one wide somewhere in the bounds: a
-    // centerline cell whose perpendicular corridor neighbours are gone.
-    let oneWide = 0;
+    // And the through-road itself draws as the one-tile band over restored
+    // ground somewhere in the bounds (behavior 56 line roads).
+    let bandLine = 0;
     for (const cell of routesResult.corridorCenterline) {
       if (!insideBounds(cell)) continue;
-      const x = cell % width;
-      const y = (cell - x) / width;
-      const northSouth = !corridorAt(x, y - 1) && !corridorAt(x, y + 1);
-      const eastWest = !corridorAt(x - 1, y) && !corridorAt(x + 1, y);
-      if (corridorAt(x, y) && (northSouth || eastWest)) oneWide += 1;
+      if (
+        routesResult.pathLayer[cell] === 1 &&
+        grid[cell] !== PACKED_INDEX &&
+        grid[cell] !== COBBLE_INDEX
+      ) {
+        bandLine += 1;
+      }
     }
-    assert.ok(oneWide > 0, "no one-wide through-road segment inside settlement bounds");
+    assert.ok(bandLine > 0, "no band-line through-road segment inside settlement bounds");
   });
 
   it("keeps fill-building yards unpaved so lanes read as lanes", () => {
