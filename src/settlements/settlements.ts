@@ -246,7 +246,16 @@ export function planSettlements(
           }
           skippedWet = 0;
           if (isOpenLand(lane, grid, hydro)) grid[lane] = COBBLE;
-          if (side !== -1 && isOpenLand(side, grid, hydro)) grid[side] = COBBLE;
+          // Narrow streets (behavior 51): the arm keeps its second cell only
+          // through the civic core — the inner third of its own rolled
+          // length — and runs one cell wide beyond it, so the outer fabric
+          // reads as lanes between buildings instead of boulevards. With
+          // behavior 50's per-direction length rolls the narrowing point
+          // shifts arm by arm, which is what keeps it looking grown.
+          const boulevard =
+            !rules.narrowStreets ||
+            step <= plazaRadius + Math.max(2, Math.trunc(rolledArm / 3));
+          if (boulevard && side !== -1 && isOpenLand(side, grid, hydro)) grid[side] = COBBLE;
         }
       }
     }

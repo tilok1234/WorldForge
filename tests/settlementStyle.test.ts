@@ -37,6 +37,7 @@ describe("settlement style vocabulary (behavior 49)", () => {
       scatterPermille: 0,
       variety: false,
       organicStreets: false,
+      narrowStreets: false,
     });
     assert.equal(config.settlements.growthPermille, 600);
     assert.equal(config.settlements.scatterPermille, 0);
@@ -50,6 +51,7 @@ describe("settlement style vocabulary (behavior 49)", () => {
       { scatterPermille: 901 },
       { swagger: 500 },
       { variety: "yes" },
+      { narrowStreets: "yes" },
     ]) {
       const validation = validateRecipe({ ...BASE, settlementStyle: style });
       assert.ok(!validation.ok, `expected rejection: ${JSON.stringify(style)}`);
@@ -192,6 +194,69 @@ describe("lived-in streets (behavior 50)", () => {
         0,
       );
     assert.ok(cottages(b) > cottages(a), "deep houses must humble into cottages");
+  });
+});
+
+describe("narrow streets (behavior 51)", () => {
+  it("validates and normalizes the flag", () => {
+    const { normalized, config } = compiled({
+      ...BASE,
+      settlementStyle: { narrowStreets: true },
+    });
+    assert.equal(normalized.settlementStyle?.narrowStreets, true);
+    assert.equal(config.settlements.narrowStreets, true);
+  });
+
+  it("off is byte-identical to a style without the key", () => {
+    const without = compiled({ ...BASE, settlementStyle: { growthPermille: 400 } });
+    const withOff = compiled({
+      ...BASE,
+      settlementStyle: { growthPermille: 400, narrowStreets: false },
+    });
+    const a = generateWorldDetailed(without.normalized, without.config);
+    const b = generateWorldDetailed(withOff.normalized, withOff.config);
+    assert.deepEqual(b.artifact.settlements, a.artifact.settlements);
+    assert.deepEqual(b.composed.grid, a.composed.grid);
+  });
+
+  it("narrows the arms: less cobble, one-wide runs beyond the civic core", () => {
+    const COBBLE_INDEX = PALETTE_INDEX["terrain.cobble"] as number;
+    const plain = compiled({ ...BASE, settlementStyle: { growthPermille: 600 } });
+    const narrow = compiled({
+      ...BASE,
+      settlementStyle: { growthPermille: 600, narrowStreets: true },
+    });
+    const a = generateWorldDetailed(plain.normalized, plain.config);
+    const b = generateWorldDetailed(narrow.normalized, narrow.config);
+    const count = (grid: readonly number[]): number =>
+      grid.reduce((total, cell) => total + (cell === COBBLE_INDEX ? 1 : 0), 0);
+    assert.ok(
+      count(b.composed.grid) < count(a.composed.grid),
+      "narrow arms must paint less cobble than boulevards",
+    );
+
+    // Somewhere past the civic core an arm must run exactly one cell wide:
+    // an arm-axis cobble cell whose BOTH perpendicular neighbours are
+    // non-cobble (approaches may touch one side; not both on every step).
+    const { width, height } = narrow.config.world;
+    const grid = b.composed.grid;
+    const cobbleAt = (x: number, y: number): boolean =>
+      x >= 0 && y >= 0 && x < width && y < height && grid[y * width + x] === COBBLE_INDEX;
+    let oneWide = 0;
+    for (const settlement of b.artifact.settlements) {
+      const [ax, ay] = settlement.anchor;
+      for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+        for (let step = 4; step <= 20; step += 1) {
+          const x = ax + dx * step;
+          const y = ay + dy * step;
+          if (!cobbleAt(x, y)) continue;
+          if (!cobbleAt(x + Math.abs(dy), y + Math.abs(dx)) && !cobbleAt(x - Math.abs(dy), y - Math.abs(dx))) {
+            oneWide += 1;
+          }
+        }
+      }
+    }
+    assert.ok(oneWide > 0, "no one-wide arm segment found beyond the core");
   });
 });
 

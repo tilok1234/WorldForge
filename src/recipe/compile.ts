@@ -171,6 +171,8 @@ export interface SettlementRules {
   readonly variety: boolean;
   /** Lived-in streets (behavior 50, resolved-config 25). */
   readonly organicStreets: boolean;
+  /** Narrow streets (behavior 51, resolved-config 26). */
+  readonly narrowStreets: boolean;
 }
 
 export interface LandmarkSpec {
@@ -272,7 +274,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 25;
+  readonly resolvedConfigFormat: 26;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -644,7 +646,10 @@ const DENSITY_SCALE: {
  */
 /** Preset geometry only — the style knobs join from the recipe at compile. */
 const SETTLEMENT_RULES: {
-  readonly [key in SizePreset]: Omit<SettlementRules, "growthPermille" | "scatterPermille" | "variety" | "organicStreets">;
+  readonly [key in SizePreset]: Omit<
+    SettlementRules,
+    "growthPermille" | "scatterPermille" | "variety" | "organicStreets" | "narrowStreets"
+  >;
 } = {
   tiny: {
     // Tiny worlds stay cramped: the city keeps the old town street reach
@@ -758,7 +763,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 25,
+    resolvedConfigFormat: 26,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -799,6 +804,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
       scatterPermille: normalized.settlementStyle?.scatterPermille ?? 0,
       variety: normalized.settlementStyle?.variety ?? false,
       organicStreets: normalized.settlementStyle?.organicStreets ?? false,
+      narrowStreets: normalized.settlementStyle?.narrowStreets ?? false,
     },
     landmarkSpecs: Array.from({ length: normalized.budgets.landmarkCount }, (_, slot) => {
       const spec = normalized.landmarks[slot];

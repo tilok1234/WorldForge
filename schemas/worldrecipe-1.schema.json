@@ -335,6 +335,10 @@
         "organicStreets": {
           "type": "boolean",
           "description": "lived-in streets (behavior 50): worn packed-earth lane fragments instead of solid cobble approaches for ordinary houses, roadless fringe houses, varied yards, asymmetric street arms, cottages at depth"
+        },
+        "narrowStreets": {
+          "type": "boolean",
+          "description": "narrow streets (behavior 51): street arms keep their two-cell boulevard width only through the civic core (the inner third of each arm) and run one cell wide beyond it; ring roads and worn lanes are already one cell wide"
         }
       }
     },

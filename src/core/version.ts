@@ -301,11 +301,25 @@ export const GENERATOR_VERSION = "0.1.0";
  *     roll per-direction lengths (50-130%), and deep fill houses humble
  *     into cottages. Off (and for every style-free recipe) the fabric is
  *     byte-identical to behavior 49.
+ * 51: narrow streets (settlements.plans 14, resolved-config 26; verdict
+ *     round 3 "work on how we do roads inside cities and settlements —
+ *     more 1 tile wide roads inside the city") — settlementStyle gains
+ *     `narrowStreets`: street arms keep their two-cell boulevard width
+ *     only through the civic core (the inner third of each arm's own
+ *     rolled length, so behavior 50's asymmetric arms narrow at
+ *     different points) and run one cell wide beyond it. The freed side
+ *     cells return to the lot pool, densifying the fabric the arms
+ *     thread through. The city ring road and the behavior-50 worn house
+ *     lanes were already one cell wide; plazas stay areas; corridor
+ *     connectivity, street fords, the entrance checks, and the pack
+ *     stamp's street guard are all cell-based and width-agnostic. Off
+ *     (and for every style-free recipe) the fabric is byte-identical to
+ *     behavior 50.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 50;
+export const GENERATOR_BEHAVIOR_VERSION = 51;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
-export const RECIPE_COMPILER_VERSION = 31;
+export const RECIPE_COMPILER_VERSION = 32;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -314,7 +328,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 15,
-  "settlements.plans": 13,
+  "settlements.plans": 14,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 10,

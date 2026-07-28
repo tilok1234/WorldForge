@@ -96,7 +96,8 @@
     "growthPermille": 600,
     "scatterPermille": 450,
     "variety": true,
-    "organicStreets": true
+    "organicStreets": true,
+    "narrowStreets": true
   },
   "landmarks": [
     {

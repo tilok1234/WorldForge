@@ -228,6 +228,14 @@ export interface SettlementStyleRequest {
    * roll asymmetric lengths, and deep fill houses humble into cottages.
    */
   readonly organicStreets?: boolean;
+  /**
+   * Narrow streets (behavior 51): street arms keep their two-cell width
+   * only through the civic core and run one cell wide beyond it, so the
+   * settlement's road fabric reads as lanes between buildings instead of
+   * boulevards. The city ring road and worn house lanes are already one
+   * cell wide; plazas stay areas.
+   */
+  readonly narrowStreets?: boolean;
 }
 
 export interface NormalizedSettlementStyle {
@@ -235,6 +243,7 @@ export interface NormalizedSettlementStyle {
   readonly scatterPermille: number;
   readonly variety: boolean;
   readonly organicStreets: boolean;
+  readonly narrowStreets: boolean;
 }
 
 /** An inline authored stamp: stampFormat 1, type "recipe.<name>". */
