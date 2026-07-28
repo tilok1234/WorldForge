@@ -283,30 +283,47 @@ describe("narrow streets (behavior 51)", () => {
     assert.equal(plainCityLanes, 0, "value 2 leaked into a style-free path layer");
   });
 
-  it("urban blocks attach terraced rows in the city core (behavior 58)", () => {
+  it("city quarters break the fabric: markets, closes, greens (behavior 59)", () => {
     const urban = compiled({
       ...BASE,
       settlementStyle: { growthPermille: 600, narrowStreets: true, urbanBlocks: true },
     });
     const b = generateWorldDetailed(urban.normalized, urban.config);
-    const city = b.artifact.settlements.find((s) => s.kind === "city");
-    assert.ok(city !== undefined, "no city in the fixture");
-    // At least one pair of city structures shares an edge (zero gap).
-    let attached = 0;
-    const rects = city.structures.map((st) => ({
-      x0: st.cell[0], y0: st.cell[1],
-      x1: st.cell[0] + st.footprint[0] - 1, y1: st.cell[1] + st.footprint[1] - 1,
-    }));
-    for (let i = 0; i < rects.length; i += 1) {
-      for (let j = i + 1; j < rects.length; j += 1) {
-        const a2 = rects[i] as { x0: number; y0: number; x1: number; y1: number };
-        const b2 = rects[j] as { x0: number; y0: number; x1: number; y1: number };
-        const touchX = (a2.x1 + 1 === b2.x0 || b2.x1 + 1 === a2.x0) && a2.y0 <= b2.y1 && b2.y0 <= a2.y1;
-        const touchY = (a2.y1 + 1 === b2.y0 || b2.y1 + 1 === a2.y0) && a2.x0 <= b2.x1 && b2.x0 <= a2.x1;
-        if (touchX || touchY) attached += 1;
+    const quarters = b.composed.quarters;
+    assert.ok(quarters.length > 0, "no quarters placed");
+    assert.ok(quarters.some((q) => q.kind === "market"), "no market quarter");
+    const inQuarter = (q: { x: number; y: number; w: number; h: number }, cx: number, cy: number): boolean =>
+      cx >= q.x && cx < q.x + q.w && cy >= q.y && cy < q.y + q.h;
+    // A market carries its stall row and well inside the square.
+    const market = quarters.find((q) => q.kind === "market");
+    assert.ok(market !== undefined);
+    const furniture = b.artifact.settlements.flatMap((s2) => s2.structures);
+    assert.ok(
+      furniture.some((st) => st.type === "structure.stall" && inQuarter(market, st.cell[0], st.cell[1])),
+      "market square has no stalls",
+    );
+    // No house or cottage ever stamps inside a quarter.
+    for (const st of furniture) {
+      if (st.type !== "structure.house" && st.type !== "structure.cottage") continue;
+      for (const q of quarters) {
+        assert.ok(!inQuarter(q, st.cell[0], st.cell[1]), `${st.type} inside a ${q.kind} quarter`);
       }
     }
-    assert.ok(attached > 0, "no attached building pair in the urban core");
+    // A church close grows gravestones in its yard (when one fits).
+    const church = quarters.find((q) => q.kind === "church");
+    if (church !== undefined) {
+      const { width } = urban.config.world;
+      let graves = 0;
+      for (let sy = 0; sy < church.h; sy += 1) {
+        for (let sx = 0; sx < church.w; sx += 1) {
+          if (b.composed.decoration.propLayer[(church.y + sy) * width + church.x + sx] !== 0) graves += 1;
+        }
+      }
+      assert.ok(graves > 0, "church close has an empty yard");
+    }
+    // The flag off places nothing.
+    const plain = compiled({ ...BASE, settlementStyle: { growthPermille: 600 } });
+    assert.equal(generateWorldDetailed(plain.normalized, plain.config).composed.quarters.length, 0);
   });
 
   it("necks through-roads to the centerline inside settlement bounds", () => {

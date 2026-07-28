@@ -18,6 +18,7 @@ import { floorDiv } from "../core/coords.js";
 import { PALETTE_INDEX, WORLD_PALETTE } from "../regions/biomes.js";
 import { WATER_NONE, type HydrologyResult } from "../hydrology/hydrology.js";
 import type { RoutesResult } from "../routes/routes.js";
+import type { SettlementQuarter } from "../settlements/settlements.js";
 import type { ResolvedWorldConfig } from "../recipe/compile.js";
 import type { FarmResult } from "../settlements/farms.js";
 
@@ -315,6 +316,7 @@ export function decorateWorld(
   farms: FarmResult,
   streetFordCells: readonly number[],
   laneCells: readonly number[] = [],
+  quarters: readonly SettlementQuarter[] = [],
 ): DecorationResult {
   const { width, height } = config.world;
   const cellCount = width * height;
@@ -389,6 +391,15 @@ export function decorateWorld(
   // as the solid cobble it replaced. Cell-exact, no halo.
   for (const cell of laneCells) {
     protectedCells[cell] = 1;
+  }
+  // City quarters (behavior 59): ambient scatter stays out of the squares
+  // entirely — their dressing is deliberate, below.
+  for (const quarter of quarters) {
+    for (let sy = 0; sy < quarter.h; sy += 1) {
+      for (let sx = 0; sx < quarter.w; sx += 1) {
+        protectedCells[(quarter.y + sy) * width + quarter.x + sx] = 1;
+      }
+    }
   }
   const nearStructure = (index: number): boolean => {
     const x = index % width;
@@ -814,5 +825,45 @@ export function decorateWorld(
     }
   }
 
+  // Quarter dressing (behavior 59): the church close grows its graveyard
+  // — gravestone rows with walking gaps — and greens get a few flower
+  // beds and a birch; markets stay clear ground for the stall row. All
+  // deterministic offsets, no channels: the quarter's position already
+  // rolled deterministically.
+  {
+    const typeOf = (name: (typeof DECOR_TYPES)[number]): number => {
+      const index = DECOR_TYPES.indexOf(name);
+      return index === -1 ? 0 : index + 1;
+    };
+    const gravestones = typeOf("prop.gravestones");
+    const loneGrave = typeOf("prop.lone_grave");
+    const flowerBed = typeOf("prop.flower_bed");
+    const birch = typeOf("prop.birch");
+    for (const quarter of quarters) {
+      if (quarter.kind === "church") {
+        // Yard rows below the chapel (rows 0-2 are the chapel band).
+        for (let sy = 4; sy < quarter.h - 1; sy += 2) {
+          for (let sx = 1; sx < quarter.w - 1; sx += 2) {
+            const cell = (quarter.y + sy) * width + quarter.x + sx;
+            if (structureLayer[cell] !== 0 || propLayer[cell] !== 0) continue;
+            propLayer[cell] = (sx + sy) % 4 === 0 ? loneGrave : gravestones;
+            propCount += 1;
+          }
+        }
+      } else if (quarter.kind === "green") {
+        const corners: ReadonlyArray<readonly [number, number]> = [
+          [1, 1],
+          [quarter.w - 2, quarter.h - 2],
+          [quarter.w - 2, 1],
+        ];
+        corners.forEach(([sx, sy], index) => {
+          const cell = (quarter.y + sy) * width + quarter.x + sx;
+          if (structureLayer[cell] !== 0 || propLayer[cell] !== 0) return;
+          propLayer[cell] = index === 0 ? birch : flowerBed;
+          propCount += 1;
+        });
+      }
+    }
+  }
   return { propLayer, mossLayer, tallGrassLayer, decalLayer, propCount, decalCount, overlayCount };
 }

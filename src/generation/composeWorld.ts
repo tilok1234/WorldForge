@@ -25,7 +25,7 @@ import {
   type RegionSummary,
 } from "../regions/biomes.js";
 import { buildRoutes, verifyRouteConnectivity, type RoutesResult } from "../routes/routes.js";
-import { planSettlements, type SettlementPlan } from "../settlements/settlements.js";
+import { planSettlements, type SettlementPlan, type SettlementQuarter } from "../settlements/settlements.js";
 import { placeLandmarks, type LandmarkPlan } from "../settlements/landmarks.js";
 
 const SWAMP = PALETTE_INDEX["terrain.swamp"];
@@ -50,6 +50,8 @@ export interface ComposedWorld {
   readonly routesResult: RoutesResult;
   readonly structureLayer: Uint8Array;
   readonly settlementPlans: readonly SettlementPlan[];
+  /** City quarters (behavior 59): reserved market/church/green squares. */
+  readonly quarters: readonly SettlementQuarter[];
   readonly landmarkPlans: readonly LandmarkPlan[];
   readonly decoration: DecorationResult;
   readonly farms: FarmResult;
@@ -253,7 +255,8 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   // decoration must keep blocking props off them exactly as solid cobble
   // kept itself clear. Empty for every style-free recipe.
   const laneCells: number[] = [];
-  const settlementPlans = planSettlements(grid, structureLayer, fields, hydro, routesResult, config, planErrors, laneCells);
+  const quarters: SettlementQuarter[] = [];
+  const settlementPlans = planSettlements(grid, structureLayer, fields, hydro, routesResult, config, planErrors, laneCells, quarters);
   const landmarkPlans = placeLandmarks(grid, structureLayer, routesResult.pathLayer, fields, hydro, routesResult, config, planErrors);
 
   // Absorb one-cell regions introduced by overlays and road carving. Road
@@ -465,7 +468,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   for (const plan of landmarkPlans) {
     entranceCells.push(plan.entranceY * width + plan.entranceX);
   }
-  const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config, farms, streetFordCells, laneCells);
+  const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config, farms, streetFordCells, laneCells, quarters);
 
   // Points of interest stamp after ambient decoration and overwrite it:
   // deliberate discoveries beat scattered flavor.
@@ -619,6 +622,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     routesResult,
     structureLayer,
     settlementPlans,
+    quarters,
     landmarkPlans,
     decoration,
     farms,

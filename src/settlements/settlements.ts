@@ -143,6 +143,20 @@ export interface PlacedStructure {
   readonly laneMode: "solid" | "worn" | "none";
 }
 
+/**
+ * A reserved city quarter (behavior 59, urbanBlocks repurposed): an open
+ * square that breaks the house fabric — a market with its stall row, a
+ * church close with its graveyard, a grassy green. Structures refuse to
+ * stamp inside; decoration dresses the yard.
+ */
+export interface SettlementQuarter {
+  readonly kind: "market" | "church" | "green";
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+}
+
 export interface SettlementPlan {
   readonly id: number;
   readonly kind: "city" | "town" | "outpost";
@@ -162,6 +176,7 @@ export function planSettlements(
   config: ResolvedWorldConfig,
   errors: string[],
   laneCells: number[] = [],
+  quarters: SettlementQuarter[] = [],
 ): SettlementPlan[] {
   const { width, height } = fields;
   const rules = config.settlements;
@@ -175,6 +190,8 @@ export function planSettlements(
   // Lane cells double as a stamp keep-out (like pathLayer): a later house
   // must not build over an earlier house's verified way to its door.
   const laneSet = new Set<number>();
+  // City quarters (behavior 59) reserve their squares before houses place.
+  const quarterMask = new Uint8Array(width * height);
 
   for (let rank = 0; rank < candidates.length; rank += 1) {
     const anchor = (candidates[rank] as { cell: number }).cell;
@@ -355,6 +372,159 @@ export function planSettlements(
       }
     }
 
+    // City quarters (behavior 59, urbanBlocks repurposed after the
+    // round-10 clarification "different open spots and markets and
+    // churches and graveyards"): reserve open squares that break the
+    // house fabric before any house places. The market seats a stall row
+    // along its north edge and a central well; the church close seats the
+    // chapel with its yard left for the graveyard dressing; greens stay
+    // open ground. Sites scan deterministic rings outward, keep off
+    // streets, lanes, water, and each other, and simply drop when no
+    // ground fits — a cramped hold stays a plain hold.
+    const placed: PlacedStructure[] = [];
+    let churchPlaced = false;
+    if (rules.urbanBlocks && kind !== "outpost") {
+      const specs: ReadonlyArray<{ kind: SettlementQuarter["kind"]; w: number; h: number }> =
+        kind === "city"
+          ? [
+              { kind: "market", w: 7, h: 7 },
+              { kind: "church", w: 7, h: 8 },
+              { kind: "green", w: 6, h: 6 },
+              { kind: "green", w: 5, h: 5 },
+            ]
+          : [
+              { kind: "market", w: 5, h: 5 },
+              { kind: "church", w: 6, h: 7 },
+            ];
+      const claimed: Array<SettlementQuarter> = [];
+      for (const spec of specs) {
+        let placedQuarter: SettlementQuarter | null = null;
+        for (let ring = plazaRadius + 3; ring <= radius - 2 && placedQuarter === null; ring += 1) {
+          for (let dy = -ring; dy <= ring && placedQuarter === null; dy += 1) {
+            for (let dx = -ring; dx <= ring && placedQuarter === null; dx += 1) {
+              if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
+              const ox = anchorX + dx;
+              const oy = anchorY + dy;
+              let fits = true;
+              for (let sy = 0; sy < spec.h && fits; sy += 1) {
+                for (let sx = 0; sx < spec.w && fits; sx += 1) {
+                  const cell = cellAt(ox + sx, oy + sy, width, height);
+                  if (
+                    cell === -1 ||
+                    !isOpenLand(cell, grid, hydro) ||
+                    grid[cell] === COBBLE ||
+                    structureLayer[cell] !== 0 ||
+                    routes.pathLayer[cell] !== 0 ||
+                    quarterMask[cell] === 1
+                  ) {
+                    fits = false;
+                  }
+                }
+              }
+              if (!fits) continue;
+              // Quarters keep their distance from each other.
+              const centerX = ox + Math.trunc(spec.w / 2);
+              const centerY = oy + Math.trunc(spec.h / 2);
+              const crowded = claimed.some(
+                (q) =>
+                  Math.abs(q.x + Math.trunc(q.w / 2) - centerX) +
+                    Math.abs(q.y + Math.trunc(q.h / 2) - centerY) <
+                  10,
+              );
+              if (crowded) continue;
+              placedQuarter = { kind: spec.kind, x: ox, y: oy, w: spec.w, h: spec.h };
+            }
+          }
+        }
+        if (placedQuarter === null) continue;
+        claimed.push(placedQuarter);
+        for (let sy = 0; sy < placedQuarter.h; sy += 1) {
+          for (let sx = 0; sx < placedQuarter.w; sx += 1) {
+            const cell = (placedQuarter.y + sy) * width + placedQuarter.x + sx;
+            quarterMask[cell] = 1;
+            // The square is a stamp keep-out exactly like a lane: houses,
+            // farm fences, and crops all stay out of it.
+            laneSet.add(cell);
+          }
+        }
+        quarters.push(placedQuarter);
+        // Furnish: stalls face south into the market; the chapel fronts
+        // its yard. Structures stamp exactly like ring placements and
+        // carve their lanes, so every entrance joins the network.
+        // Quarter furniture verifies its lane exactly like ring placements:
+        // a doorstep that cannot reach the network rolls the piece back
+        // (the first styled quarter run stamped an edge chapel into a
+        // pocket, and the compose gate refused the world).
+        const furnish = (type: StructureType, fx: number, fy: number): boolean => {
+          const [fw, fh] = STRUCTURE_FOOTPRINTS[type] as readonly [number, number];
+          for (let sy = 0; sy < fh; sy += 1) {
+            for (let sx = 0; sx < fw; sx += 1) {
+              structureLayer[(fy + sy) * width + fx + sx] = STRUCTURE_LAYER_VALUE[type];
+            }
+          }
+          const entranceX = fx + Math.trunc(fw / 2);
+          const entranceY = fy + fh;
+          const laneStart = laneCells.length;
+          // Civic squares warrant a longer walk to the network than a
+          // house doorstep does.
+          const connected = carveApproach(
+            entranceX, entranceY, grid, structureLayer, hydro, approachBudget * 2, width, height,
+            "solid", 0, wear, laneCells,
+            rules.narrowStreets ? routes.pathLayer : null,
+          );
+          if (!connected) {
+            for (let sy = 0; sy < fh; sy += 1) {
+              for (let sx = 0; sx < fw; sx += 1) {
+                structureLayer[(fy + sy) * width + fx + sx] = 0;
+              }
+            }
+            laneCells.length = laneStart;
+            return false;
+          }
+          for (let recorded = laneStart; recorded < laneCells.length; recorded += 1) {
+            laneSet.add(laneCells[recorded] as number);
+          }
+          placed.push({
+            type, x: fx, y: fy, width: fw, height: fh, entranceX, entranceY, laneMode: "solid",
+          });
+          return true;
+        };
+        let furnished = 0;
+        if (placedQuarter.kind === "market") {
+          const stalls = kind === "city" ? 3 : 2;
+          for (let slot = 0; slot < stalls; slot += 1) {
+            const fx = placedQuarter.x + 1 + slot * 2;
+            if (fx + 2 > placedQuarter.x + placedQuarter.w) break;
+            if (furnish("structure.stall", fx, placedQuarter.y)) furnished += 1;
+          }
+          const wellX = placedQuarter.x + Math.trunc(placedQuarter.w / 2);
+          const wellY = placedQuarter.y + Math.trunc(placedQuarter.h / 2);
+          if (furnish("structure.well", wellX, wellY)) furnished += 1;
+        } else if (placedQuarter.kind === "church") {
+          if (furnish("structure.chapel", placedQuarter.x + Math.trunc((placedQuarter.w - 2) / 2), placedQuarter.y)) {
+            churchPlaced = true;
+            furnished += 1;
+          }
+        } else {
+          furnished = 1; // greens need no furniture
+        }
+        // A square whose furniture cannot reach the network is no square:
+        // unclaim it so the house fabric takes the ground back instead of
+        // leaving a dead empty patch.
+        if (furnished === 0) {
+          claimed.pop();
+          quarters.pop();
+          for (let sy = 0; sy < placedQuarter.h; sy += 1) {
+            for (let sx = 0; sx < placedQuarter.w; sx += 1) {
+              const cell = (placedQuarter.y + sy) * width + placedQuarter.x + sx;
+              quarterMask[cell] = 0;
+              laneSet.delete(cell);
+            }
+          }
+        }
+      }
+    }
+
     // Structures spiral outward from the plaza in deterministic ring order.
     // The city and towns lead with civic specials then a channel-rolled fill
     // mix; outposts follow their purpose kit (settlements.plans v5; the v12
@@ -363,7 +533,17 @@ export function planSettlements(
     const { sequence, alwaysPlace } = buildStructureSequence(
       kind, purpose, rules, growthPermille, variety, anchorX, anchorY,
     );
-    const placed: PlacedStructure[] = [];
+    // A church close already seats the chapel (behavior 59): drop the
+    // sequence's own chapel so the hold does not grow two.
+    let workingSequence: readonly StructureType[] = sequence;
+    let workingAlwaysPlace = alwaysPlace;
+    if (churchPlaced) {
+      const chapelAt = sequence.indexOf("structure.chapel");
+      if (chapelAt !== -1) {
+        workingSequence = [...sequence.slice(0, chapelAt), ...sequence.slice(chapelAt + 1)];
+        if (chapelAt < alwaysPlace) workingAlwaysPlace -= 1;
+      }
+    }
 
     if (kind === "city" || kind === "town") {
       // Plaza legibility (W5.1): the fountain anchors the square. Its 2x2
@@ -438,32 +618,22 @@ export function planSettlements(
     }
 
     let sequenceIndex = 0;
-    outer: for (let ring = plazaRadius + 1; ring <= radius && sequenceIndex < sequence.length; ring += 1) {
-      for (let dy = -ring; dy <= ring && sequenceIndex < sequence.length; dy += 1) {
-        for (let dx = -ring; dx <= ring && sequenceIndex < sequence.length; dx += 1) {
+    outer: for (let ring = plazaRadius + 1; ring <= radius && sequenceIndex < workingSequence.length; ring += 1) {
+      for (let dy = -ring; dy <= ring && sequenceIndex < workingSequence.length; dy += 1) {
+        for (let dx = -ring; dx <= ring && sequenceIndex < workingSequence.length; dx += 1) {
           if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) {
             continue;
           }
           const originX = anchorX + dx;
           const originY = anchorY + dy;
-          const fillSlot = sequenceIndex >= alwaysPlace;
+          const fillSlot = sequenceIndex >= workingAlwaysPlace;
           const depthPermille = Math.trunc(((ring - plazaRadius) * 1000) / Math.max(1, radius - plazaRadius));
-          let type = sequence[sequenceIndex] as StructureType;
+          let type = workingSequence[sequenceIndex] as StructureType;
           // Humble outskirts (behavior 50): deep fill houses sometimes build
           // as cottages — the core keeps its stature, the fringe reads
           // poorer, the way settlements actually grow.
           if (rules.organicStreets && fillSlot && type === "structure.house" && depthPermille > 500 && wear.chanceAt(originX, originY, 450, 9)) {
             type = "structure.cottage";
-          }
-          // Urban blocks (behavior 58, round-9 verdict "looks more like
-          // suburbs than like cities"): the city core packs ATTACHED
-          // terraced rows — zero clearance ring below — and its fill rolls
-          // big: cottages build as full houses inside the core. Outside
-          // the core (and everywhere without the flag) the detached fabric
-          // and behavior 50's varied yards stand.
-          const inUrbanCore = rules.urbanBlocks && kind === "city" && depthPermille <= 350;
-          if (inUrbanCore && fillSlot && type === "structure.cottage") {
-            type = "structure.house";
           }
           const footprint = STRUCTURE_FOOTPRINTS[type];
           if (footprint === undefined) {
@@ -485,9 +655,8 @@ export function planSettlements(
           }
           // Varied yards (behavior 50): some outer houses demand a wider
           // clearance ring, breaking the uniform one-cell packing texture.
-          const yardGap = inUrbanCore
-            ? 0
-            : rules.organicStreets && fillSlot && depthPermille > 350 && wear.chanceAt(originX, originY, 350, 8)
+          const yardGap =
+            rules.organicStreets && fillSlot && depthPermille > 350 && wear.chanceAt(originX, originY, 350, 8)
               ? 2
               : 1;
           if (!footprintFits(originX, originY, fw, fh, grid, structureLayer, routes.pathLayer, hydro, width, height, yardGap, laneSet)) {
@@ -568,7 +737,7 @@ export function planSettlements(
           }
           placed.push({ type, x: originX, y: originY, width: fw, height: fh, entranceX, entranceY, laneMode });
           sequenceIndex += 1;
-          if (sequenceIndex >= sequence.length) {
+          if (sequenceIndex >= workingSequence.length) {
             break outer;
           }
         }

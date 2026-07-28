@@ -237,10 +237,10 @@ export interface SettlementStyleRequest {
    */
   readonly narrowStreets?: boolean;
   /**
-   * Urban blocks (behavior 58): city cores pack attached terraced rows of
-   * larger buildings (zero side gaps, house-heavy mix), thinning to the
-   * familiar detached fabric outside the core — cities read as cities,
-   * not suburbs.
+   * City quarters (behavior 59; the flag behavior 58 briefly used for
+   * attached rows, repurposed by the round-10 clarification): settlements
+   * reserve open squares that break the house fabric — a market square
+   * with its stall row, a church close with its graveyard, grassy greens.
    */
   readonly urbanBlocks?: boolean;
 }

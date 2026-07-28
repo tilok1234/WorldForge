@@ -427,8 +427,25 @@ export const GENERATOR_VERSION = "0.1.0";
  *     neighbour can attach across them, and a placement that cannot
  *     reach a lane rolls back as always). Style-free recipes and
  *     urbanBlocks-free styles stay byte-identical.
+ * 59: city quarters (settlements.plans 21, decoration.props 11;
+ *     round-10 clarification "theres just a ton of houses packed
+ *     tightly together and doesnt look like an actual city with
+ *     different open spots and markets and churches and graveyards") —
+ *     urbanBlocks REPURPOSED one round after it shipped: the behavior-58
+ *     attached rows are reverted (packing was never the wish; places
+ *     were), and the flag now reserves QUARTERS that break the house
+ *     fabric: a market square with a stall row and central well, a
+ *     church close seating the chapel over a gravestone yard (the
+ *     sequence's own chapel stands down), and grassy greens with a
+ *     birch and flower beds. Cities seat market+church+two greens,
+ *     towns market+church, outposts none; sites ring-scan
+ *     deterministically, keep off streets, lanes, water, and each
+ *     other, drop when no ground fits, join laneSet as stamp keep-outs
+ *     (houses, fences, and crops stay out), and exclude ambient
+ *     scatter — their dressing is deliberate. Style-free recipes and
+ *     urbanBlocks-free styles stay byte-identical.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 58;
+export const GENERATOR_BEHAVIOR_VERSION = 59;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -443,10 +460,10 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 17,
-  "settlements.plans": 20,
+  "settlements.plans": 21,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
-  "decoration.props": 10,
+  "decoration.props": 11,
   "decoration.pois": 16,
   "density.presets": 1,
   "authoring.overrides": 1,
