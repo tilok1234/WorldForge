@@ -66,7 +66,7 @@ export function renderRoutesPng(composed: ComposedWorld): Buffer {
   const { width, height, grid, routesResult } = composed;
   const rgb = new Uint8Array(width * height * 3);
   for (let index = 0; index < grid.length; index += 1) {
-    const color = routesResult.pathLayer[index] === 1 ? TRAIL_COLOR : cellColor(grid[index] as number);
+    const color = routesResult.pathLayer[index] !== 0 ? TRAIL_COLOR : cellColor(grid[index] as number);
     rgb[index * 3] = color[0];
     rgb[index * 3 + 1] = color[1];
     rgb[index * 3 + 2] = color[2];
@@ -147,7 +147,7 @@ export function renderSettlementsPng(composed: ComposedWorld): Buffer {
   const { width, height, grid, routesResult, structureLayer } = composed;
   const rgb = new Uint8Array(width * height * 3);
   for (let index = 0; index < grid.length; index += 1) {
-    let color = routesResult.pathLayer[index] === 1 ? [206, 162, 74] as const : cellColor(grid[index] as number);
+    let color = routesResult.pathLayer[index] !== 0 ? [206, 162, 74] as const : cellColor(grid[index] as number);
     const structure = structureLayer[index] as number;
     if (structure !== 0) {
       color = structure === 1 ? GATE_COLOR : STRUCTURE_COLOR;
@@ -177,7 +177,7 @@ export function renderTownCropPng(composed: ComposedWorld, scale = 4): Buffer | 
   for (let y = 0; y < ch; y += 1) {
     for (let x = 0; x < cw; x += 1) {
       const index = (y0 + y) * width + x0 + x;
-      let color = composed.routesResult.pathLayer[index] === 1 ? [206, 162, 74] as const : cellColor(composed.grid[index] as number);
+      let color = composed.routesResult.pathLayer[index] !== 0 ? [206, 162, 74] as const : cellColor(composed.grid[index] as number);
       const structure = composed.structureLayer[index] as number;
       if (structure !== 0) {
         color = structure === 1 ? GATE_COLOR : STRUCTURE_COLOR;

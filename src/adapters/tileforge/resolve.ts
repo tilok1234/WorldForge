@@ -369,8 +369,16 @@ export function resolveToTileForge(composed: ComposedWorld): ResolvedWorld {
     mat[index] = materialIds[paletteIndex] as number;
     const key = WORLD_PALETTE[paletteIndex] as string;
     materialCells[key] = (materialCells[key] ?? 0) + 1;
-    if (composed.routesResult.pathLayer[index] === 1) {
+    // Behavior 57 (designer ruling "ye these works better"): wilderness
+    // trails (1) keep the dirtpath band; in-settlement lanes (2) draw the
+    // heavier "road" band — retired for country ROUTES by the corridor
+    // doctrine, blessed for city lanes; the designer plans improved band
+    // art upstream, which will arrive as a plain re-pin.
+    const lane = composed.routesResult.pathLayer[index];
+    if (lane === 1) {
       road[index] = manifest.roadTypeByKey.get("dirtpath") ?? 0;
+    } else if (lane === 2) {
+      road[index] = manifest.roadTypeByKey.get("road") ?? 0;
     }
     // The FULL two-tier river network: W4 places fords on crossing-tier
     // river cells, and the package's ford substrate rule (water/shallow/

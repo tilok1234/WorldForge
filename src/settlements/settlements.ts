@@ -122,6 +122,9 @@ const PACKED_ROAD = PALETTE_INDEX["terrain.packed_road"];
 const GRASS = PALETTE_INDEX["terrain.grass"];
 const ROCK = PALETTE_INDEX["terrain.rock"];
 const DEEP = PALETTE_INDEX["water.deep"];
+/** Path-layer value for in-settlement lanes (behavior 57): renders as the
+ * heavier "road" band while wilderness trails (1) keep dirtpath. */
+const CITY_LANE = 2;
 const SHALLOW = PALETTE_INDEX["water.shallow"];
 
 export interface PlacedStructure {
@@ -223,7 +226,7 @@ export function planSettlements(
               routes.corridorCenterPrev.get(cell) ?? routes.corridorFlankPrev.get(cell);
             if (prev !== undefined) {
               grid[cell] = prev;
-              routes.pathLayer[cell] = 1;
+              routes.pathLayer[cell] = CITY_LANE;
             }
             continue;
           }
@@ -284,7 +287,7 @@ export function planSettlements(
           // Without the style the arm keeps its classic two-cell cobble.
           if (isOpenLand(lane, grid, hydro)) {
             if (rules.narrowStreets) {
-              routes.pathLayer[lane] = 1;
+              routes.pathLayer[lane] = CITY_LANE;
             } else {
               grid[lane] = COBBLE;
             }
@@ -310,7 +313,7 @@ export function planSettlements(
           const cell = cellAt(rx, ry, width, height);
           if (cell !== -1 && isOpenLand(cell, grid, hydro)) {
             if (rules.narrowStreets) {
-              routes.pathLayer[cell] = 1;
+              routes.pathLayer[cell] = CITY_LANE;
             } else {
               grid[cell] = COBBLE;
             }
@@ -748,7 +751,7 @@ function carveApproach(
   const startIsRoad =
     grid[start] === COBBLE ||
     grid[start] === PACKED_ROAD ||
-    (bandLanes !== null && bandLanes[start] === 1);
+    (bandLanes !== null && bandLanes[start] !== 0);
   if (mode === "solid") {
     // Legacy contract, byte-for-byte: solid approaches trust road material
     // and pave whatever they cross (approved worlds bake this in).
@@ -779,7 +782,7 @@ function carveApproach(
     }
     if (mode === "none") return;
     if (bandLanes !== null) {
-      bandLanes[target] = 1;
+      bandLanes[target] = CITY_LANE;
       return;
     }
     if (mode === "solid" || wear === null) {
@@ -800,7 +803,7 @@ function carveApproach(
     const cellIsNetwork =
       grid[cell] === COBBLE ||
       grid[cell] === PACKED_ROAD ||
-      (bandLanes !== null && bandLanes[cell] === 1);
+      (bandLanes !== null && bandLanes[cell] !== 0);
     if (cellIsNetwork && cell !== start) {
       let cursor: number = previous.get(cell) as number;
       while (cursor !== -1 && cursor !== start) {
@@ -812,7 +815,7 @@ function carveApproach(
       }
       if (mode !== "none") {
         if (bandLanes !== null) {
-          bandLanes[start] = 1;
+          bandLanes[start] = CITY_LANE;
         } else {
           grid[start] = mode === "solid" || wear === null ? COBBLE : PACKED_ROAD;
         }

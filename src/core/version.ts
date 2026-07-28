@@ -400,8 +400,22 @@ export const GENERATOR_VERSION = "0.1.0";
  *     refuses to stamp on them, decoration keeps blocking props off,
  *     the §3 ladder walks them, and the compose entrance check counts
  *     them as network.
+ * 57: the city-lane band (settlements.plans 19, adapter.tileforge 7;
+ *     round-8 verdict "ye these works better" on the weight three-way,
+ *     designer add: band art gets improved in TileForge later — a
+ *     plain re-pin when it ships) — the path layer gains value 2 for
+ *     in-settlement lanes: the adapter renders 2 as the package's
+ *     heavier "road" band (retired for country ROUTES by the corridor
+ *     doctrine, now BLESSED for city lanes — a scoped exception like
+ *     the ruined-road archaeology), while wilderness trails (1) keep
+ *     dirtpath. Every path-layer reader is value-agnostic for
+ *     protection and walkability (loader trailAt, compose network +
+ *     spur goals, decoration/POI keep-offs, landmark carver, viewer);
+ *     the road-band family is walkable:true in the pinned manifest, so
+ *     the resolved §3 ladder and Godot agree by construction.
+ *     Style-free recipes never write value 2 and stay byte-identical.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 56;
+export const GENERATOR_BEHAVIOR_VERSION = 57;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 32;
@@ -413,14 +427,14 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 17,
-  "settlements.plans": 18,
+  "settlements.plans": 19,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 10,
   "decoration.pois": 16,
   "density.presets": 1,
   "authoring.overrides": 1,
-  "adapter.tileforge": 6,
+  "adapter.tileforge": 7,
 };
 
 /**
@@ -433,5 +447,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
  * 5: mountain water — waterfall decals on stream drop lips, sparse rapids
  * on terrace runs.
  * 6: two-tile cascades — the plunge cell below each lip falls too.
+ * 7: city-lane band mapping (behavior 57) — path-layer value 2 renders as
+ * the package's heavier "road" band; wilderness trails (1) keep dirtpath.
  */
-export const TILEFORGE_ADAPTER_VERSION = 6;
+export const TILEFORGE_ADAPTER_VERSION = 7;

@@ -107,7 +107,8 @@ export interface RouteRecord {
 export interface RoutesResult {
   readonly destinations: readonly Destination[];
   readonly routes: readonly RouteRecord[];
-  /** 1 where the dirt-path band runs (trail class), land cells only. */
+  /** 0 none; 1 wilderness trail (dirtpath band); 2 in-settlement lane
+   * (the heavier road band — behavior 57). Land cells only. */
   readonly pathLayer: Uint8Array;
   readonly roadCellCount: number;
   readonly trailCellCount: number;
@@ -985,7 +986,7 @@ export function verifyRouteConnectivity(
   }
   const walkable = new Uint8Array(grid.length);
   for (let index = 0; index < grid.length; index += 1) {
-    if (grid[index] === PACKED_ROAD || grid[index] === COBBLE || pathLayer[index] === 1) {
+    if (grid[index] === PACKED_ROAD || grid[index] === COBBLE || pathLayer[index] !== 0) {
       walkable[index] = 1;
     }
   }

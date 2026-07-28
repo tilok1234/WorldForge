@@ -348,7 +348,7 @@ export function decorateWorld(
     if (
       material === roadValue ||
       material === cobbleValue ||
-      routesResult.pathLayer[index] === 1 ||
+      routesResult.pathLayer[index] !== 0 ||
       structureLayer[index] !== 0 ||
       farms.cropLayer[index] !== 0 ||
       farms.fenceLayer[index] !== 0 ||

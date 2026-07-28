@@ -350,7 +350,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     const cobbleValue = PALETTE_INDEX["terrain.cobble"];
     const roadValue = PALETTE_INDEX["terrain.packed_road"];
     for (let index = 0; index < grid.length; index += 1) {
-      if (grid[index] === roadValue || grid[index] === cobbleValue || routesResult.pathLayer[index] === 1) {
+      if (grid[index] === roadValue || grid[index] === cobbleValue || routesResult.pathLayer[index] !== 0) {
         walkable[index] = 1;
       }
     }
@@ -518,7 +518,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
           if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
           const next = ny * width + nx;
           if (previous.has(next)) continue;
-          if (pathLayer[next] === 1 || grid[next] === roadValue || grid[next] === cobbleValue) {
+          if (pathLayer[next] !== 0 || grid[next] === roadValue || grid[next] === cobbleValue) {
             previous.set(next, cell);
             goal = next;
             break;

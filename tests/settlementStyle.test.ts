@@ -260,7 +260,7 @@ describe("narrow streets (behavior 51)", () => {
         let run = 0;
         for (let step = 3; step <= 24; step += 1) {
           const cell = (ay + dy * step) * width + ax + dx * step;
-          if (pathLayer[cell] === 1 && grid[cell] !== COBBLE_INDEX) {
+          if (pathLayer[cell] !== 0 && grid[cell] !== COBBLE_INDEX) {
             run += 1;
             if (run >= 4) armLine = true;
           } else {
@@ -270,6 +270,15 @@ describe("narrow streets (behavior 51)", () => {
       }
     }
     assert.ok(armLine, "no band arm line found leaving a plaza");
+
+    // Behavior 57: in-settlement lanes carry value 2 (the road band);
+    // nothing writes 2 without the style.
+    let cityLanes = 0;
+    for (const value of pathLayer) if (value === 2) cityLanes += 1;
+    assert.ok(cityLanes > 0, "no city-lane (value 2) cells with narrowStreets on");
+    let plainCityLanes = 0;
+    for (const value of a.composed.routesResult.pathLayer) if (value === 2) plainCityLanes += 1;
+    assert.equal(plainCityLanes, 0, "value 2 leaked into a style-free path layer");
   });
 
   it("necks through-roads to the centerline inside settlement bounds", () => {
@@ -312,7 +321,7 @@ describe("narrow streets (behavior 51)", () => {
     for (const cell of routesResult.corridorCenterline) {
       if (!insideBounds(cell)) continue;
       if (
-        routesResult.pathLayer[cell] === 1 &&
+        routesResult.pathLayer[cell] !== 0 &&
         grid[cell] !== PACKED_INDEX &&
         grid[cell] !== COBBLE_INDEX
       ) {

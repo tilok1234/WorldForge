@@ -196,7 +196,7 @@ export function planPois(
     for (let dy = -radius; dy <= radius; dy += 1) {
       for (let dx = -radius; dx <= radius; dx += 1) {
         const index = cellAt(x + dx, y + dy);
-        if (index !== -1 && routesResult.pathLayer[index] === 1) return true;
+        if (index !== -1 && routesResult.pathLayer[index] !== 0) return true;
       }
     }
     return false;
@@ -385,13 +385,13 @@ export function planPois(
       for (let yy = 0; yy < h; yy += 1) {
         for (let xx = 0; xx < w; xx += 1) {
           const inside = cellAt(originX + xx, originY + yy);
-          if (inside === -1 || routesResult.pathLayer[inside] !== 1) continue;
+          if (inside === -1 || routesResult.pathLayer[inside] === 0) continue;
           for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
             const ox = originX + xx + dx;
             const oy = originY + yy + dy;
             if (ox >= originX && ox < originX + w && oy >= originY && oy < originY + h) continue;
             const outside = cellAt(ox, oy);
-            if (outside !== -1 && routesResult.pathLayer[outside] === 1) crossings += 1;
+            if (outside !== -1 && routesResult.pathLayer[outside] !== 0) crossings += 1;
           }
         }
       }

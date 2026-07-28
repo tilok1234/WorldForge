@@ -128,6 +128,41 @@ describe("W8 cross-consumer parity", () => {
     }
   });
 
+  it("agrees on a styled world's city-lane band cells (behavior 57)", () => {
+    // narrowStreets writes path-layer value 2 (rendered as the road band);
+    // the loader walks any band value and the resolved ladder walks any
+    // road-band cell — prove they agree cell-for-cell on a styled world.
+    const validation = validateRecipe({
+      recipeFormat: 1,
+      seed: 11,
+      world: { sizePreset: "tiny", climatePreset: "temperate" },
+      budgets: { settlementCount: 3, landmarkCount: 1, primaryRouteCount: 1 },
+      settlementStyle: { growthPermille: 600, narrowStreets: true },
+    });
+    assert.ok(validation.ok);
+    const normalized = normalizeRecipe(validation.recipe);
+    const config = compileRecipe(normalized);
+    const result = generateWorldDetailed(normalized, config);
+    const resolved = resolveToTileForge(result.composed);
+    const loaded = loadWorldArtifact(JSON.parse(JSON.stringify(result.artifact)));
+    assert.ok(loaded.ok);
+    const world = loaded.world;
+    const { width, height } = world.dimensions;
+    let laneCells = 0;
+    let mismatches = 0;
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const index = y * width + x;
+        if (result.composed.routesResult.pathLayer[index] === 2) laneCells += 1;
+        if (world.walkableAt(x, y) !== ladderWalkable(resolved.mapData, index)) {
+          mismatches += 1;
+        }
+      }
+    }
+    assert.ok(laneCells > 0, "styled world produced no city-lane cells");
+    assert.equal(mismatches, 0, `${mismatches} walkability mismatches on the styled world`);
+  });
+
   it("threads the base identity into resolved consumer outputs", () => {
     const { result } = generated(2);
     const loaded = loadWorldArtifact(JSON.parse(JSON.stringify(result.artifact)));

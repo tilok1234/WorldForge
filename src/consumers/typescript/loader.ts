@@ -419,8 +419,10 @@ export class WorldHandle {
     return this.layerValueAt("river", x, y);
   }
 
+  /** True on any path-band cell: 1 wilderness trail, 2 in-settlement lane
+   * (behavior 57 — the values pick the band art; both walk). */
   trailAt(x: number, y: number): boolean {
-    return this.layerValueAt("path", x, y) === 1;
+    return this.layerValueAt("path", x, y) !== 0;
   }
 
   structureAt(x: number, y: number): string | null {

@@ -207,7 +207,7 @@ export function placeLandmarks(
         // mountain notch the only corridor may thread the site — painting
         // the wall over that trail severed the-eight-lands' west spur.
         // Ruins keep crumbled gaps; intact landmarks keep their walls.
-        if (structure !== 0 && !(spec.type === "ruined_city" && pathLayer[cell] === 1)) {
+        if (structure !== 0 && !(spec.type === "ruined_city" && pathLayer[cell] !== 0)) {
           structureLayer[cell] = structure;
           // A building interrupts any trail it covers (behavior 47).
           // Leaving pathLayer set under walls made the compose-time graph
@@ -397,7 +397,7 @@ function carveTrailApproach(
           reaches = true;
           break;
         }
-        if (!seen.has(next) && pathLayer[next] === 1) {
+        if (!seen.has(next) && pathLayer[next] !== 0) {
           seen.add(next);
           segment.push(next);
         } else if (hydro.isRiver[next] === 1) {
@@ -414,7 +414,7 @@ function carveTrailApproach(
               reaches = true;
               break;
             }
-            if (pathLayer[across] === 1) {
+            if (pathLayer[across] !== 0) {
               if (!seen.has(across)) {
                 seen.add(across);
                 segment.push(across);
@@ -443,7 +443,7 @@ function carveTrailApproach(
       const cell = queue[head] as number;
       const isTarget =
         corridorHere(cell) ||
-        (pathLayer[cell] === 1 &&
+        (pathLayer[cell] !== 0 &&
           !insideOwnStamp(cell) &&
           (!requireCorridor || segmentReachesCorridor(cell)));
       if (isTarget && cell !== start) {
