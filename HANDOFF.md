@@ -1,278 +1,192 @@
-# WorldForge — handoff (2026-07-28, post-merge at PC)
+# WorldForge — session handoff (2026-07-28, account switch #5)
 
-## 0. BEHAVIOR 48 zone settlement floors (2026-07-28, newest state)
+For a fresh AI session with no prior context. Read `AGENTS.md` and the
+`README.md` reading list first; this file carries session state the
+docs don't. File-based assistant memory at
+`~/.claude/projects/C--Users-headc-Documents-WorldForge/memory/` is
+machine-local and survives account switches; it cross-validates this
+file. HANDOFF.md is the tiebreaker.
 
-Zone entries gain optional `settlementFloor` (0-8, default 0 — OPT-IN
-by design so every pre-48 zone recipe and deliberately wild zone
-generates unchanged; proven: eight-lands 172389 / broken-isles 73077 /
-canonical 33893 floods all invariant). The floor phase runs right
-after the capital and BEFORE the geometric reservations (authored
-intent outranks heuristics); the remote-quarter reservation is now
-room-capped (pre-48 arithmetic always fit, so the cap is a no-op for
-floor-free recipes — WITHOUT it, floors + quarter overshot the budget
-12>8 in the demo). Territory = PURE zoneOwnerAt (exported from
-macroFields; seam wander stays climate display). routes.graph 15,
-compiler 29, resolved-config 23, behavior 48; 207 tests. Demo world
-`the-eight-holds` (eight-lands terrain, budget 8, floor 1 per zone):
-exactly 1/1/1/1/1/1/1/1, verified both consumers (183218), verdict
-PENDING. Zone-arc remaining: zone-crop preview tooling;
-multi-component routing DECISION.
+## 1. Where the project stands
 
-## 0a. BEHAVIOR 47 "trails stay open" (2026-07-28, newest state)
+Every planned arc is COMPLETE or gated on the user:
 
-The first full destination-check of the zone worlds on the PC (prompted
-by the dusk re-pin regen) exposed THREE latent sever mechanics, all in
-mountain notches where a trail is the only corridor, all invisible to
-the compose-time gate (it walks corridors without structure knowledge),
-all present under forest too (dusk exonerated — generation-relevant
-manifest tables are theme-identical): (1) plaza fountain on a village
-trail; (2) ruined-city wall stamped over a route-era trail — walls now
-BREACH there (crumbled gap), and stamps honestly clear pathLayer under
-their structure cells; (3) POI furniture astride a through-trail — may
-cover trail ENDS (the norm) but >= 2 boundary crossings refuse the spot
-(gates exempt; lodge gained alternate spots). The approach carver joins
-only corridor-verified trail segments (hopping ford-width stream gaps —
-wet worlds broke without this) with an any-trail fallback. resolve +
-export-game-pack now GATE on destination reachability through the
-PUBLIC loader — a severed world can never ship silently. Full 22-world
-library sweep green; canonical 33845 -> 33893 (+48, consumers equal, 0
-errors; approval sidecar still valid — no vocabulary change).
-settlements.plans 11, landmarks.stamps 7, decoration.pois 16; 203
-tests.
+- W0–W9 (2026-07-26), ALIVE-WORLDS arc (behaviors 9–30, density
+  doctrine), VARIETY arc (31–35: 15-world library, tiny→large size
+  presets, 5-climate library).
+- MOBILE arcs (36–46, merged 2026-07-28): game integration Phases 1–3
+  (game-pack export, authored placement, pins/ranks), terrain texture,
+  organic small maps + library refresh (ratified under 42), zone
+  composition (zones vocabulary, hard wandering seams, anchor
+  territories, zone elevation).
+- PC arcs (2026-07-28): DUSK RE-PIN (§3), behavior 47 "trails stay
+  open" (§5 gotchas — three sever fixes + the loader reachability
+  gate), behavior 48 zone settlement floors (§4).
 
-## 0b. DUSK RE-PIN executed 2026-07-28
+Versions: behavior 48, recipe compiler 29, resolved-config 23,
+artifact format 8, TileForge adapter 6, packFormat 1. **207 tests, all
+green.** Everything pushed through `0c35d7d` (+ this handoff commit).
+Standing commit+push authorization (memory) — re-confirm per policy;
+visual verdicts always user-gated.
 
-Pinned package is now `dusk-ae1eecb-seed103991` (game plan §6.1;
-designer: "use dusk for now, we can change later"). Forest fixture
-stays committed — re-pin back = lock + test-literal change. Facts:
-dusk is a NEWER upstream commit (ae1eecb): road bands 1/3 retired as
-`roadTypesLegacy` (matches our corridor doctrine; dirtpath is the one
-live band); semantic ids identical across themes, so ALL world content
-is byte-identical — canonical flood 33845 invariant, §2/§4 acceptance
-green against dusk's own reference, 202 tests green. Canonical
-baseline RE-RECORDED under the dusk identity. Game-side Phase 4
-validating importer is LIVE (validates the reference pack in 0.57 s,
-independently reproduces flood 33845); contract-as-built
-clarifications recorded in GAME_INTEGRATION_PLAN §3.3a. OPEN designer
-ruling: ruined-city dead streets author the legacy ruined-road band
-(renders fine under dusk; guide says never author new legacy runs —
-bless as archaeology or re-express as materials+rubble). Galleries
-regenerate in dusk on demand; overviews for verdicts unchanged in
-workflow.
+## 2. The world library (fixtures/recipes/, galleries outputs/gallery/)
 
-MERGE COMPLETE 2026-07-28: main fast-forwarded to the mobile branch
-(d840a4e) and pushed; 202 tests green on the PC; update-golden a no-op;
-canonical chain reproduced the container numbers exactly (flood 33845
-both consumers, 0 errors); the-broken-isles regenerated locally and
-verified (flood 73008) then APPROVED. Section 1 below is kept for the
-record but is DONE. `AGENTS.md` and the `README.md` reading list still
-apply. HANDOFF.md is the tiebreaker over machine-local assistant
-memory.
+23 recipes, all generating clean through the behavior-47 reachability
+gate. ALL APPROVED except one:
 
-## 1. Merge instructions (COMPLETED 2026-07-28 — kept for the record)
+- **PENDING VERDICT: `the-eight-holds`** — behavior-48 demo (eight
+  anchor territories, budget 8, settlementFloor 1 per zone → exactly
+  one settlement per land, spread 1/1/1/1/1/1/1/1, flood 183218).
+  Overview sent 2026-07-28.
+- Approved small archetypes (9): frontier-sparse, warm-vale,
+  highland-fastness, sunburnt-reach, weeping-marsh, drowned-shore,
+  the-old-war, the-long-winter, hearth-hollow. Tiny hollows (3):
+  fen/frost/dust (frost-hollow is DESIGNED exploration-heavy).
+  Organic 256² climates (3): dust-sea, drowned-fen, white-waste.
+  Mediums (3) + larges (2): warm-vale/the-old-war/frontier-sparse
+  -medium, warm-vale/the-old-war -large. Zone pilots: the-eight-lands
+  (8 anchor zones, hard wandering seams), the-broken-isles
+  (archipelago; NW island DELIBERATELY uninhabited — see §6 routing
+  decision).
+- Canonical `small-cold-coastal` (seed 103991): flood **33893** both
+  consumers (history: 33887 → 33890 ford guard → 34058 texture →
+  33845 ambient → 33893 behavior-47 placement rules; every step
+  flagged, consumer equality never broken). FORMAL BASELINE recorded
+  (approval sidecar keyed on recipeSha — still valid: canonical has no
+  zones, so behavior 48's vocabulary left its normalized recipe
+  untouched).
 
-Everything from the mobile session lives on ONE branch, fully pushed:
+## 3. Dusk re-pin (executed 2026-07-28)
 
-    claude/world-forge-mobile-eiqrr3
+Pinned package: `dusk-ae1eecb-seed103991` (user: "use dusk for now, we
+can change later"). Forest fixture stays committed — re-pin back = lock
++ test-literal change. Dusk is a NEWER upstream commit: road bands 1/3
+retired as `roadTypesLegacy` (matches our corridor doctrine; dirtpath
+is the one live band). Semantic ids are THEME-IDENTICAL, so world
+content is byte-identical across themes. §2/§4 acceptance green against
+dusk's own reference. **OPEN designer ruling:** ruined-city dead
+streets are authored with the legacy ruined-road band (renders fine;
+new guide says never author new legacy runs) — bless as archaeology or
+re-express as materials+rubble later.
 
-`main` already contains the game-integration-plan merge (done early in
-the session, explicitly authorized); the branch contains `main`, so the
-merge is a clean fast-forward:
+## 4. Zone vocabulary after behavior 48
 
-    git fetch origin
-    git checkout main
-    git merge --ff-only origin/claude/world-forge-mobile-eiqrr3
-    git push origin main
+`zones`: layout grid|anchors, seams blended|hard, per-entry
+temperature/moisture/elevationPermille, anchors+weights, and NEW
+`settlementFloor` (0–8, default 0, OPT-IN — every pre-48 zone recipe
+and deliberately wild zone generates unchanged; proven by invariant
+floods on eight-lands 172389 / broken-isles 73077 / canonical 33893).
+Floor phase runs right after the capital, BEFORE the geometric
+reservations (authored intent outranks heuristics); the remote-quarter
+reservation is room-capped (no-op for floor-free recipes — without it,
+floors + quarter overshot budget 12>8). Territory = PURE `zoneOwnerAt`
+(exported from macroFields; the seam wander is climate display, not
+identity).
 
-Then, because `outputs/` is gitignored and this container's galleries
-die with it:
+## 5. Gotchas (new this session — older ones in git history still bind)
 
-    npm install && npm test          # expect 202 tests, 0 failures
-    node dist/tools/update-golden.js # should be a no-op after merge
-    # regenerate whatever galleries you want to view locally, e.g.:
-    node dist/src/cli.js resolve-tileforge fixtures/recipes/small-cold-coastal.json --out outputs/gallery/small-cold-coastal
-    node dist/tools/godot-consumer.js --world outputs/gallery/small-cold-coastal
-    node consumers/typescript/traverse.mjs outputs/gallery/small-cold-coastal/world.json
-    # canonical expectation: BOTH consumers flood 33845, Godot 0 errors
+- **Behavior 47, three sever mechanics** (all: structures on trails
+  that are the only corridor through a mountain notch; all invisible to
+  the compose gate, which walks corridors without structure
+  knowledge): (1) plaza furniture (fountain/well) never on pathLayer;
+  (2) ruined-city walls BREACH where an old trail passes + stamps
+  clear pathLayer under their structure cells (a trail doesn't run
+  through a building; the gateway repaint restores the gate line);
+  (3) POI furniture may cover a trail END (the norm — spurs lead TO
+  monuments) but never a THROUGH-trail (≥2 footprint-boundary
+  crossings refuse the spot; gates exempt via pass cells; the lodge
+  has alternate spots).
+- **The approach carver** joins only trail segments that provably
+  reach a corridor — the segment flood HOPS FORD-WIDTH stream gaps
+  (≤2 river cells; wet worlds' trails continue across fords and broke
+  without this) — with an any-trail fallback pass so a gate is never
+  stranded that pre-47 would have joined. Own-stamp footprint cells
+  are excluded as targets (an enclosed courtyard's cobble otherwise
+  counts as "the network").
+- **resolve-tileforge and export-game-pack GATE on destination
+  reachability through the PUBLIC loader** (the consumers' own nudge≤8
+  + flood rule). A severed world cannot ship silently. When the gate
+  fires, debug with ASCII walkability maps + a cut-finder (pattern in
+  session log; beware: two floods larger than the map means they're
+  the same component).
+- **Reservation phases must be room-capped** — any new selection phase
+  that adds settlements must cap by remaining budget or later phases
+  overshoot (behavior 48 lesson).
+- Temporary debug instrumentation (env-guarded stderr prints) is fine
+  for hunting — REMOVE before commit (behavior 47 hunt pattern).
+- Bump rule packs SEQUENTIALLY and check the changelog comment matches
+  the table — this session's author mis-skipped twice.
+- Viewer/render ladder: ≤8192px full render; >8192 adds banded
+  resolved-preview.png; >16384 (large) preview-only (32768² rgba is
+  exactly 2^32 bytes). serve-viewer /api/worlds picker hides
+  loader-rejected relics; native check accepts render OR preview.
+- Overviews for verdicts: box-average downscale to ~1024 (scratchpad
+  script pattern: decode PNG scanline-filtered, factor-N average);
+  crops via rect extraction. Both are session-scratchpad tools —
+  recreate freely.
 
-The full verify chain ran green in the container at every behavior
-(Godot 4.6.2 official build was downloaded into the container for it),
-but re-running the canonical chain on your machine is the honest
-cross-check of the merge.
+## 6. Open items
 
-## 2. What the mobile session shipped (behaviors 37–46)
+**User-gated:**
+- the-eight-holds verdict (last open visual).
+- Multi-component routing DECISION (island worlds): ferries (session
+  recommendation) vs causeways vs per-component webs. Routing assumes
+  one landmass; inhabited detached islands are blocked on this call.
+- Ruined-road-band ruling (§3).
+- Windowed Godot playthrough; taste-polish round; fen swamp-margin
+  widening (walkability care needed).
 
-Ten behaviors, all tested, all verdict-ratified except where noted:
+**Engine-ready when wanted:**
+- Zone-crop preview tooling (per-zone verdict loop QoL) — last
+  unbuilt zone-arc line item.
 
-- **37 — settlement pins** (routes.graph 13): recipes gain a
-  rank-ordered `settlements` array of `at`/`near` constraints; pin
-  order = rank, first pin is the capital (designer-ratified). Named
-  errors, never relocation.
-- **38 — explicit ranks** (routes.graph 14): optional `rank` per entry
-  claims any budget slot, so a village can be pinned while the capital
-  stays free-competed. Rank permutation is identity for 37-style pins.
-- **39 — terrain texture** (terrain.texture 1): interior mottling
-  (mud→grass tussocks, grass→parched, dry→gravel hardpan, snow→scree)
-  + edge dithering between ground materials. Runs after all structural
-  passes, before decoration; walkability-neutral; confetti sweep.
-  Swamp widening deliberately EXCLUDED (swamp blocks movement).
-- **40 — size-scaled POI spacing** (decoration.pois 13): the flat
-  14-cell spacing starved tiny worlds to ~6 POIs; tiny now 7.
-- **41 — wilderness variety** (decoration.props 10, decoration.pois
-  14): rare species accents in every biome table; two lone-building
-  POI kinds append-only: `poi.abandoned_homestead` (grass/dry/mud),
-  `poi.lone_cottage` (grass), cap 2 each, block fully like ruins.
-- **42 — snowed-in homesteads** (decoration.pois 15): homestead
-  accepts snow.
-- **43 — zone composition, step 1** (macro.fields 7): recipes gain
-  `zones` — per-zone climate character as ADDITIVE temp/moisture
-  offsets; seam modes `blended` (12-cell box-blur gradient) and `hard`.
-  Approach C of docs/ZONE_COMPOSITION_ASSESSMENT.md (ratified).
-- **44 — wandering hard seams** (macro.fields 8): hard borders stay
-  sharp but meander (two-octave fbm warp up to 10 cells + 2-cell
-  settle blur). Verdict path: ruler-straight hard was "way too hard".
-- **45 — anchor-shaped zones** (macro.fields 9): `layout: "anchors"` —
-  per-zone anchor cell + territory weight, weighted-nearest-anchor
-  territories instead of grid squares. Grid stays the default.
-  Verdict: "last pic looks best, awesome".
-- **46 — zone elevation** (macro.fields 10): zone entries gain
-  `elevationPermille` — negative drowns a zone to sea (channels, bays,
-  islands), positive raises highland. Sea level stays world-global;
-  elevation ALWAYS blends at borders (coasts shelve); wander first so
-  coastlines meander. **VERDICT OPEN on the-broken-isles.**
+**Game integration (docs/GAME_INTEGRATION_PLAN.md):**
+- Phase 4 validating importer LIVE game-side (validates the reference
+  pack in 0.57 s, independently reproduces flood; contract-as-built
+  clarifications recorded in plan §3.3a). Rendering half deferred
+  post-Gate-1 (game side).
+- Dusk game pack exported at
+  `outputs/game-packs/small-cold-coastal-pack-dusk/` (flood 33845 at
+  export time — REGENERATE the pack before handing it over again:
+  behavior 47/48 moved canonical to 33893, so the committed pack
+  numbers are stale).
+- Phase 5 slice-zone drafting: fully unblocked (dusk pinned, importer
+  live, gate protecting exports); needs the user's creative direction.
 
-Plus, ratified along the way: hollows organic passes, the organic
-256² climate worlds, and a full library refresh (all below).
+## 7. Working agreements (unchanged core)
 
-## 3. Versions after the session
+- Loop: implement → `npm test` + `node dist/tools/update-golden.js` →
+  verify chain (godot-consumer 0 errors + TS traverse, floods EQUAL)
+  on canonical + touched worlds → overviews → SendUserFile → verdict.
+- Density doctrine: never raise dense-tier ambient/POI numbers without
+  a fresh verdict; structural density scales with map size, per-cell
+  props/POIs fall.
+- Versioning: behavior bump + touched packs; config-shape changes bump
+  resolvedConfigFormat + compiler + literal in tests/compile.test.ts
+  (currently 23).
+- APPEND-ONLY: WORLD_PALETTE, STRUCTURE_TYPES, DECOR_TYPES,
+  DECAL_TYPES, POI_TYPES. Parity: decorate BLOCKING == loader
+  BLOCKING_PROPS; loader STRUCTURE_PASS_CELLS mirrors package manifest;
+  package walkable flags are truth.
+- TileForge upstream (`C:\Users\headc\Documents\Semantic tile
+  generator design`) read-only; guard denylist in gitignored
+  worldforge.local.json. Theme exports live in its exports/ (dusk
+  consumed from there; autumn/winter/reference available).
+- Viewer: `http://127.0.0.1:8787` (launch.json "viewer"; do NOT
+  restart a server another session may own; regenerate into the same
+  dir and refresh — the header dropdown lists all worlds).
 
-behavior 46 · recipe compiler 28 · resolvedConfigFormat 22 · artifact
-format 8 · macro.fields 10 · routes.graph 14 · terrain.texture 1 ·
-decoration.props 10 · decoration.pois 15 · adapter.tileforge 6.
-202 tests, all green. Canonical baseline
-(`fixtures/recipes/small-cold-coastal.json.approval.json`) re-recorded
-at the behavior-46 identity; canonical layers are byte-identical since
-behavior 42 (flood 33845 — zone behaviors change zone-free layers only
-through version stamps).
+## 8. Commands
 
-## 4. The world library (all in fixtures/recipes/)
-
-**Approved this session** (visual verdicts on the phone viewer):
-- Three tiny climate hollows with organic passes: `fen-hollow` (20033,
-  v3), `frost-hollow` (20113, v2 — DESIGN NOTE: intended as an
-  exploration-heavy map; bias tuning toward discoveries there),
-  `dust-hollow` (20093, v2).
-- Organic 256² climate worlds: `dust-sea`, `drowned-fen`,
-  `white-waste` (richened budgets + dense + cover 550).
-- Library refresh: all 14 pre-existing worlds regenerated under the
-  organic stack with RECIPES UNTOUCHED (archetype identity preserved
-  per the density doctrine) — approved wholesale.
-- `the-eight-lands` (medium, seed 80808): the zone-composition pilot,
-  now 8 ANCHOR-SHAPED zones with hard wandering seams. Approved.
-
-- `the-broken-isles` (medium, seed 90909): archipelago pilot — two sea
-  zones carve a west channel + south bay, NW island wild/uninhabited,
-  mainland + peninsula carry all 10 near-pinned settlements and 6
-  near-pinned landmarks (flood 73008, generation clean). APPROVED
-  2026-07-28 at the PC ("i think this works tbh") after the merge
-  verification reproduced the container numbers exactly. Zone arc
-  behaviors 43-46 are now fully verdict-ratified.
-
-**Mobile viewer artifact** (pan/zoom, phone-friendly; hollows + Eight
-Lands + Broken Isles):
-https://claude.ai/code/artifact/7850ac94-e0e9-466a-8ffc-4bee23adeff3
-Rebuild script: scratchpad `build-viewer.mjs` (container-local — it
-inlines gallery renders as data URIs; recreate from any session).
-
-## 5. Open decisions and next steps
-
-**Zone arc (docs/ZONE_COMPOSITION_ASSESSMENT.md, ratified, open):**
-- Zone-scoped settlement floors: guarantee each zone ≥1 settlement
-  (generalize sector floors to zone territories).
-- Zone-crop preview tooling for the per-zone verdict loop.
-- **Multi-component routing — OPEN DECISION.** Routes and reachability
-  validators assume ONE connected landmass. Island worlds currently
-  require inhabited land to stay connected (peninsulas/isthmuses);
-  true detached islands are safe only uninhabited. Inhabited islands
-  need per-component route webs, causeways, or ferries — a designer
-  decision before an engine behavior.
-- Island authoring recipe (proven on broken-isles): generate BARE
-  (no pins) first, eyeball the landmass render, then place near-pins
-  on real land. Named errors catch every miss.
-
-**Game integration plan (docs/GAME_INTEGRATION_PLAN.md):**
-- Phase 4 (worldforge_importer addon in the game repo): post-Gate-1,
-  needs the game repo explicitly scoped writable.
-- Dusk package export from TileForge (designer-side) → theme re-pin.
-- Phase 5 slice-zone drafting: now effectively superseded-and-expanded
-  by the zone arc; reconcile the plan text when Phase 4 starts.
-
-**Parked (user-gated):** windowed Godot playthrough; taste-polish
-round; fen swamp-margin widening (needs walkability care).
-
-## 6. Standing doctrine (unchanged, still binding)
-
-- **Density doctrine:** never raise dense-tier ambient/POI numbers
-  without a fresh verdict. Structural density (settlements, roads,
-  floors) scales with map size; per-cell props/POIs fall as maps grow.
-- **Loop:** implement → `npm test` + update-golden → verify chain →
-  overviews → verdict → iterate. Verify chain on EVERY generation
-  change: godot-consumer (0 errors) + TS traverse, floods EQUAL.
-- **Versioning:** behavior bump + touched rule packs, sequential;
-  config-shape changes bump resolvedConfigFormat + compiler + the
-  literal in tests/compile.test.ts (currently 22).
-- **APPEND-ONLY:** WORLD_PALETTE, STRUCTURE_TYPES, DECOR_TYPES,
-  DECAL_TYPES, POI_TYPES. Parity contracts as before.
-- TileForge upstream stays read-only.
-
-## 7. Gotchas earned (new this session — old ones still apply)
-
-- **Swamp BLOCKS movement** (loader contract): any pass that could
-  write swamp changes walkability — texture pass forbids it.
-- **Sand law:** every sand cell must touch standing water; texture
-  never writes sand (steppe mottle uses gravel).
-- **Confetti law is 4-connected:** any texture/zone change must leave
-  no one-cell regions — texture ends with a revert sweep for both its
-  own specks and enclosed originals.
-- **Tiny fusion dodge:** 3 free settlements on 64² always fuse; a
-  rank-2 near-pin places the third safely (fen/frost/dust hollows).
-- **POI spacing is size-scaled now** (tiny 7); the flat constant was
-  why tiny maps felt like "4 spots on a map".
-- **Zone elevation + connectivity:** see §5 — pins keep civilization
-  off wild islands; generation fails loudly (named errors) when a pin
-  misses land or a settlement strands.
-- **Landmark/settlement near-pins on unseen terrain:** expect 1-2
-  iterations; the bare-world render first saves most of them.
-- **Approval file recipeSha shifts with vocabulary versions** (the
-  normalized recipe gained `zones`/`rank` fields), not only when the
-  recipe file changes — re-record the baseline after behavior bumps
-  once floods are confirmed invariant.
-- Container trick, if ever needed again: the official Godot 4.6.2
-  Linux build downloads and runs headless fine (`~/bin/godot`), so the
-  full Godot verify chain works from a phone session.
-
-## 8. The canonical world (unchanged content since behavior 42)
-
-`fixtures/recipes/small-cold-coastal.json`, seed 103991. Two cities
-(capital 240,125; second city 94,128) + 3 towns + 5 villages; eight
-trail-served landmarks; ~100+ story POIs (kinds grew with behavior 41);
-roads + shortcut trails + graded mountain trails + POI spurs; mountain
-relief with two-tile cascades + rapids; character zones; thicket
-ambience; terrain texture since 39. Both consumers flood **33845**,
-Godot 0 errors. History of the number: 33887 → 33890 (behavior-34 ford
-guard) → 34058 (behavior-39 texture prop rerolls) → 33845 (behavior-41
-ambient rerolls); every step flagged and accepted, consumer equality
-never broken.
-
-## 9. Commands
-
-    npm test                          # build + 202 tests
-    node dist/tools/update-golden.js
-    node dist/src/cli.js resolve-tileforge fixtures/recipes/<name>.json --out outputs/gallery/<name>
-    node --max-old-space-size=8192 dist/src/cli.js resolve-tileforge fixtures/recipes/<medium-or-large>.json --out outputs/gallery/<name>
-    node dist/tools/godot-consumer.js --world outputs/gallery/<name>
-    node consumers/typescript/traverse.mjs outputs/gallery/<name>/world.json
-    node dist/src/cli.js export-game-pack fixtures/recipes/<name>.json --out <dir>
-    node dist/src/cli.js approve-recipe fixtures/recipes/<name>.json --baseline
-    node dist/tools/serve-viewer.js   # local viewer :8787
-    godot --path consumers/godot
+```
+npm test                          # build + 207 tests
+node dist/tools/update-golden.js
+node dist/src/cli.js resolve-tileforge fixtures/recipes/<name>.json --out outputs/gallery/<name>
+node --max-old-space-size=8192 dist/src/cli.js resolve-tileforge fixtures/recipes/<medium-or-large>.json --out outputs/gallery/<name>
+node dist/tools/godot-consumer.js --world outputs/gallery/<name>
+node consumers/typescript/traverse.mjs outputs/gallery/<name>/world.json
+node dist/src/cli.js export-game-pack fixtures/recipes/<name>.json --out <dir>
+node dist/src/cli.js approve-recipe fixtures/recipes/<name>.json --baseline
+node dist/tools/serve-viewer.js   # viewer :8787 (if not already up)
+godot --path consumers/godot
+```
