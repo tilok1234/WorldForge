@@ -463,13 +463,26 @@ export function planSettlements(
           }
           // Stamp provisionally; a placement whose entrance cannot join the
           // street network is rolled back and the ring scan continues.
+          // Unpaved yards (behavior 53): the cobble pad under every building
+          // tiled a dense core into one solid slab — the round-5 verdict
+          // saw "no 1 tile wide roads at all" because the whole city floor
+          // was road material. Under narrowStreets, EVERY building keeps
+          // the ground it was built on — a capital seats dozens of civic
+          // lots, and paved civic pads alone rebuilt the slab. The plaza
+          // stays the one paved area; civic doors still get solid one-wide
+          // cobble approaches. Approaches cannot tunnel the unpaved pads
+          // (the carve BFS excludes structure cells) — they terminate at
+          // real lanes now instead of a neighbour's pad.
+          const pavePad = !rules.narrowStreets;
           const savedMaterial: number[] = [];
           for (let sy = 0; sy < fh; sy += 1) {
             for (let sx = 0; sx < fw; sx += 1) {
               const cell = (originY + sy) * width + originX + sx;
               savedMaterial.push(grid[cell] as number);
               structureLayer[cell] = STRUCTURE_LAYER_VALUE[type];
-              grid[cell] = COBBLE;
+              if (pavePad) {
+                grid[cell] = COBBLE;
+              }
             }
           }
           const entranceX = originX + Math.trunc(fw / 2);
@@ -701,11 +714,30 @@ function carveApproach(
   if (start === -1) {
     return false;
   }
-  if (grid[start] === COBBLE || grid[start] === PACKED_ROAD) {
-    return true;
-  }
-  if (!isOpenLand(start, grid, hydro) || structureLayer[start] !== 0) {
-    return false;
+  const startIsRoad = grid[start] === COBBLE || grid[start] === PACKED_ROAD;
+  if (mode === "solid") {
+    // Legacy contract, byte-for-byte: solid approaches trust road material
+    // and pave whatever they cross (approved worlds bake this in).
+    if (startIsRoad) {
+      return true;
+    }
+    if (!isOpenLand(start, grid, hydro) || structureLayer[start] !== 0) {
+      return false;
+    }
+  } else {
+    // Worn/none lanes verify GROUND truth (behavior 53): a doorstep that is
+    // already road material may be an isolated fragment — a route flank
+    // painted over a rock notch, or a stray worn cell — so it proves
+    // nothing by itself. Run the BFS anyway, and close ROCK to the walk
+    // (mirroring the compose ground tier): isOpenLand never excluded rock,
+    // and pre-53 the pads and solid approaches simply paved over it, which
+    // is how a cottage doorstep ended up sealed inside a mountain pocket.
+    if (structureLayer[start] !== 0) {
+      return false;
+    }
+    if (!startIsRoad && (!isOpenLand(start, grid, hydro) || grid[start] === ROCK)) {
+      return false;
+    }
   }
   const paint = (target: number): void => {
     if (mode !== "solid" && laneCells !== null) {
@@ -748,7 +780,10 @@ function carveApproach(
       if (next === -1 || previous.has(next)) {
         continue;
       }
-      const open = isOpenLand(next, grid, hydro) || grid[next] === COBBLE || grid[next] === PACKED_ROAD;
+      const open =
+        (isOpenLand(next, grid, hydro) && (mode === "solid" || grid[next] !== ROCK)) ||
+        grid[next] === COBBLE ||
+        grid[next] === PACKED_ROAD;
       if (open && structureLayer[next] === 0) {
         previous.set(next, cell);
         queue.push(next);

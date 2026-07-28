@@ -331,8 +331,41 @@ export const GENERATOR_VERSION = "0.1.0";
  *     corridors outside settlement bounds keep the 2-4-wide doctrine.
  *     Off (and for every style-free recipe) the fabric is
  *     byte-identical to behavior 51.
+ * 53: unpaved yards (settlements.plans 16; round-5 verdict "i see no 1
+ *     tile wide roads at all") — behaviors 51-52 narrowed every lane,
+ *     but the cobble PAD stamped under each building tiled a dense core
+ *     into one solid slab that swallowed them. Under narrowStreets,
+ *     EVERY building keeps the ground it was built on (a capital seats
+ *     dozens of civic lots — paved civic pads alone rebuilt the slab);
+ *     the plaza stays the one paved area, so the only
+ *     road material left is the lanes themselves: plaza, core arm
+ *     stubs, one-wide arms and necked through-roads, solid civic
+ *     approaches, and behavior 50's worn fragments. Approaches cannot
+ *     tunnel the unpaved pads (the carve BFS excludes structure cells)
+ *     and now terminate at real lanes instead of a neighbour's pad —
+ *     deep scattered houses that cannot reach a lane in budget roll
+ *     back, which reads as further organic thinning. Worn/none carves
+ *     also verify GROUND truth now: an already-paved doorstep proves
+ *     nothing (it may be an isolated route flank painted over a rock
+ *     notch — isOpenLand never excluded rock, and pre-53 the pads
+ *     simply paved over it; the first v53 eight-holds run sealed a
+ *     cottage doorstep inside a mountain pocket exactly this way), so
+ *     the BFS always runs for worn/none and ROCK is closed to its
+ *     walk, mirroring the compose ground tier. Solid approaches keep
+ *     the legacy paving contract byte-for-byte. Off (and for every
+ *     style-free recipe) the fabric is byte-identical to behavior 52.
+ * 54: trunk sharing (routes.graph 16, resolved-config 27) — the round-6
+ *     close-up showed parallel ROUTE BRAIDS: several MST spokes to the
+ *     same city dijkstra'd side-by-side lanes, every strand a protected
+ *     centerline, so the necking correctly spared a three-wide braid.
+ *     Under narrowStreets the solver discounts a step onto an
+ *     already-stamped road cell by roadReusePermille (600 — grade
+ *     included, the road already paid for it), so later spokes merge
+ *     into earlier trunks and enter settlements as one shared lane.
+ *     roadReusePermille 0 (every style-free recipe) is byte-identical
+ *     pre-54 routing.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 52;
+export const GENERATOR_BEHAVIOR_VERSION = 54;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 32;
@@ -343,8 +376,8 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 10,
   "macro.biomes": 7,
   "hydrology.water": 5,
-  "routes.graph": 15,
-  "settlements.plans": 15,
+  "routes.graph": 16,
+  "settlements.plans": 16,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 10,

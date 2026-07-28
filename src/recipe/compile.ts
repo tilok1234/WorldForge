@@ -118,6 +118,13 @@ export interface RouteRules {
   /** Shortcut trails (routes.graph v4): rough paths between near pairs. */
   readonly shortcutTrailMax: number;
   readonly shortcutTrailSpan: number;
+  /**
+   * Trunk sharing (behavior 54): permille discount on a dijkstra step onto
+   * an already-stamped road cell, so later routes merge into earlier
+   * trunks instead of braiding parallel lanes. 0 = pre-54 behavior; set
+   * from settlementStyle.narrowStreets at compile.
+   */
+  readonly roadReusePermille: number;
   /** Settlements reserved for the capital-remote map quarter (v7). */
   readonly remoteQuarterMin: number;
   /**
@@ -274,7 +281,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 26;
+  readonly resolvedConfigFormat: 27;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -554,6 +561,7 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     minDestinationSpacing: 12,
     streetWidth: 2,
     highwayWidth: 3,
+    roadReusePermille: 0,
     detourWarnRatioPermille: 1800,
     edgePenaltyRadius: 6,
     edgePenaltyCost: 40,
@@ -572,6 +580,7 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     minDestinationSpacing: 28,
     streetWidth: 2,
     highwayWidth: 3,
+    roadReusePermille: 0,
     detourWarnRatioPermille: 1800,
     edgePenaltyRadius: 12,
     edgePenaltyCost: 40,
@@ -594,6 +603,7 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     minDestinationSpacing: 40,
     streetWidth: 2,
     highwayWidth: 3,
+    roadReusePermille: 0,
     detourWarnRatioPermille: 1800,
     edgePenaltyRadius: 18,
     edgePenaltyCost: 40,
@@ -615,6 +625,7 @@ const ROUTE_RULES: { readonly [key in SizePreset]: RouteRules } = {
     minDestinationSpacing: 56,
     streetWidth: 2,
     highwayWidth: 3,
+    roadReusePermille: 0,
     detourWarnRatioPermille: 1800,
     edgePenaltyRadius: 24,
     edgePenaltyCost: 40,
@@ -763,7 +774,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 26,
+    resolvedConfigFormat: 27,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -797,6 +808,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
     routes: {
       ...ROUTE_RULES[normalized.world.sizePreset],
       shortcutTrailMax: Math.trunc(ROUTE_RULES[normalized.world.sizePreset].shortcutTrailMax * DENSITY_SCALE[normalized.world.densityPreset].shortcuts / 1000),
+      roadReusePermille: normalized.settlementStyle?.narrowStreets === true ? 600 : 0,
     },
     settlements: {
       ...SETTLEMENT_RULES[normalized.world.sizePreset],

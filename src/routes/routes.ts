@@ -887,6 +887,13 @@ function dijkstra(
       } else if (hydro.isRiver[neighbor] === 1) {
         cost += rules.networkRiverCrossCost;
       }
+      // Trunk sharing (behavior 54, narrowStreets): stepping along an
+      // already-stamped road discounts the whole step — grade included,
+      // the road already paid for it — so later spokes merge into earlier
+      // trunks instead of braiding parallel lanes into the same city.
+      if (rules.roadReusePermille > 0 && grid[neighbor] === PACKED_ROAD) {
+        cost = Math.max(1, Math.trunc((cost * (1000 - rules.roadReusePermille)) / 1000));
+      }
       const candidate = (dist[current] as number) + cost;
       if (candidate < (dist[neighbor] as number)) {
         dist[neighbor] = candidate;

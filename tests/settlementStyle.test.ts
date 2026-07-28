@@ -205,6 +205,9 @@ describe("narrow streets (behavior 51)", () => {
     });
     assert.equal(normalized.settlementStyle?.narrowStreets, true);
     assert.equal(config.settlements.narrowStreets, true);
+    // Trunk sharing (behavior 54) rides the same flag.
+    assert.equal(config.routes.roadReusePermille, 600);
+    assert.equal(compiled(BASE).config.routes.roadReusePermille, 0);
   });
 
   it("off is byte-identical to a style without the key", () => {
@@ -310,6 +313,46 @@ describe("narrow streets (behavior 51)", () => {
       if (corridorAt(x, y) && (northSouth || eastWest)) oneWide += 1;
     }
     assert.ok(oneWide > 0, "no one-wide through-road segment inside settlement bounds");
+  });
+
+  it("keeps fill-building yards unpaved so lanes read as lanes", () => {
+    const COBBLE_INDEX = PALETTE_INDEX["terrain.cobble"] as number;
+    const narrow = compiled({
+      ...BASE,
+      settlementStyle: { growthPermille: 600, narrowStreets: true },
+    });
+    const b = generateWorldDetailed(narrow.normalized, narrow.config);
+    const { width } = narrow.config.world;
+    const grid = b.composed.grid;
+    const paddedCells = (st: { cell: readonly [number, number]; footprint: readonly [number, number] }): number => {
+      let cobbled = 0;
+      for (let sy = 0; sy < st.footprint[1]; sy += 1) {
+        for (let sx = 0; sx < st.footprint[0]; sx += 1) {
+          if (grid[(st.cell[1] + sy) * width + st.cell[0] + sx] === COBBLE_INDEX) cobbled += 1;
+        }
+      }
+      return cobbled;
+    };
+    let total = 0;
+    let unpaved = 0;
+    let fullyPaved = 0;
+    for (const settlement of b.artifact.settlements) {
+      for (const structure of settlement.structures) {
+        // Fountains and wells live ON the plaza's paving by design.
+        if (structure.type === "structure.fountain" || structure.type === "structure.well") continue;
+        total += 1;
+        const cobbled = paddedCells(structure);
+        if (cobbled === 0) unpaved += 1;
+        if (cobbled === structure.footprint[0] * structure.footprint[1]) fullyPaved += 1;
+      }
+    }
+    // No pad painting means pads keep pre-stamp ground. A building may
+    // still legally SEAT on existing street or plaza paving (the tavern
+    // fronting the arm does), so "fully paved" never quite reaches zero —
+    // but it must be the rare squatter, not the slab it used to be, and
+    // most buildings must stand on plain ground.
+    assert.ok(unpaved * 2 > total, `only ${unpaved}/${total} buildings on natural ground`);
+    assert.ok(fullyPaved * 10 < total, `${fullyPaved}/${total} buildings on full pads — the slab is back`);
   });
 });
 
