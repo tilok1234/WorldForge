@@ -267,15 +267,12 @@ export function planSettlements(
           }
           skippedWet = 0;
           if (isOpenLand(lane, grid, hydro)) grid[lane] = COBBLE;
-          // Narrow streets (behavior 51): the arm keeps its second cell only
-          // through the civic core — the inner third of its own rolled
-          // length — and runs one cell wide beyond it, so the outer fabric
-          // reads as lanes between buildings instead of boulevards. With
-          // behavior 50's per-direction length rolls the narrowing point
-          // shifts arm by arm, which is what keeps it looking grown.
-          const boulevard =
-            !rules.narrowStreets ||
-            step <= plazaRadius + Math.max(2, Math.trunc(rolledArm / 3));
+          // Narrow streets (behavior 51; ONE-wide everywhere since behavior
+          // 55): under narrowStreets the arm is a single-cell lane from the
+          // plaza edge out — the round-6 verdict rejected even the two-wide
+          // civic spine. Without the style the arm keeps its classic
+          // two-cell width.
+          const boulevard = !rules.narrowStreets;
           if (boulevard && side !== -1 && isOpenLand(side, grid, hydro)) grid[side] = COBBLE;
         }
       }
@@ -497,12 +494,21 @@ export function planSettlements(
           // enclosed by neighboring structures, and the first styled
           // generation shipped exactly three of those before the compose
           // entrance check refused the world. No road ≠ no route.
+          // The street web (behavior 55): under narrowStreets every
+          // connected house gets a SOLID one-wide lane — approaches chain
+          // into each other and grow a followable street tree, which is
+          // what "1 tile wide roads inside the city" means; worn dotted
+          // fragments read as no roads at all (round-6 verdict). The
+          // round-2 directive survives at the fringe: deep houses still
+          // roll roadless and stand free on the grass.
           const laneMode: "solid" | "worn" | "none" =
             !rules.organicStreets || !fillSlot
               ? "solid"
               : depthPermille > 450 && wear.chanceAt(originX, originY, 500, 7)
                 ? "none"
-                : "worn";
+                : rules.narrowStreets
+                  ? "solid"
+                  : "worn";
           const wornPermille = laneMode === "worn" ? (depthPermille > 600 ? 250 : 450) : 0;
           const laneStart = laneCells.length;
           const connected = carveApproach(

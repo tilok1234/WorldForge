@@ -364,8 +364,22 @@ export const GENERATOR_VERSION = "0.1.0";
  *     into earlier trunks and enter settlements as one shared lane.
  *     roadReusePermille 0 (every style-free recipe) is byte-identical
  *     pre-54 routing.
+ * 55: the street web (settlements.plans 17; round-6 verdict "you still
+ *     dont use 1 tile wide roads inside cities") — what reads as "roads
+ *     inside the city" is a CONTINUOUS followable lane network, and
+ *     rounds 4-6 never produced one: the civic spine was two wide and
+ *     every ordinary house had only behavior-50 worn dot fragments,
+ *     i.e. no visible road at all. Under narrowStreets: arms run ONE
+ *     cell wide from the plaza edge out (the two-wide civic spine is
+ *     gone), and every connected house carves a SOLID one-wide lane —
+ *     approaches terminate at the nearest existing lane, so lanes chain
+ *     into streets and streets into the plaza, a grown street tree.
+ *     The round-2 organics survive at the fringe: deep houses still
+ *     roll roadless (the "none" lane mode) and stand free on the
+ *     grass; worn fragments remain the organicStreets look wherever
+ *     narrowStreets is off. Style-free recipes byte-identical.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 54;
+export const GENERATOR_BEHAVIOR_VERSION = 55;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 export const RECIPE_COMPILER_VERSION = 32;
@@ -377,7 +391,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 16,
-  "settlements.plans": 16,
+  "settlements.plans": 17,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 10,
