@@ -57,7 +57,7 @@ describe("gamepack bit packing", () => {
 });
 
 describe("gamepack walkability", () => {
-  it("matches the public loader's walkable cells and flood exactly", () => {
+  it("is the loader grid under the Phase-A structures-solid stamp", () => {
     const { result } = generatedTiny();
     const walkability = buildWalkability(result.artifact);
     const loaded = loadWorldArtifact(result.artifact as unknown);
@@ -67,17 +67,89 @@ describe("gamepack walkability", () => {
     assert.equal(walkability.width, width);
     assert.equal(walkability.height, height);
 
-    const packed = Buffer.from(walkability.grid, "base64");
-    let walkableTotal = 0;
-    for (let y = 0; y < height; y += 1) {
-      for (let x = 0; x < width; x += 1) {
-        const expected = world.walkableAt(x, y);
-        assert.equal(unpackBit(packed, y * width + x), expected, `cell ${x},${y}`);
-        if (expected) walkableTotal += 1;
+    // Independent stamp model, rebuilt from the artifact rather than the
+    // exporter's helpers: placement footprints (settlement structures and
+    // non-gate POI structures; landmarks and gates excluded) and the street
+    // mask the slit pass must honor.
+    const artifact = result.artifact;
+    const inRect = new Uint8Array(width * height);
+    const addRect = (ox: number, oy: number, w: number, h: number): void => {
+      for (let sy = 0; sy < h; sy += 1) {
+        for (let sx = 0; sx < w; sx += 1) {
+          if (ox + sx >= 0 && oy + sy >= 0 && ox + sx < width && oy + sy < height) {
+            inRect[(oy + sy) * width + ox + sx] = 1;
+          }
+        }
+      }
+    };
+    for (const settlement of artifact.settlements) {
+      for (const structure of settlement.structures) {
+        addRect(structure.cell[0], structure.cell[1], structure.footprint[0], structure.footprint[1]);
       }
     }
+    for (const poi of artifact.pois) {
+      if (
+        poi.structure !== undefined &&
+        poi.structure.type !== "structure.ruined_gate" &&
+        poi.structure.type !== "structure.fortress_gate"
+      ) {
+        addRect(poi.structure.x, poi.structure.y, poi.structure.w, poi.structure.h);
+      }
+    }
+    const inLandmark = new Uint8Array(width * height);
+    for (const landmark of artifact.landmarks) {
+      for (let sy = 0; sy < landmark.footprint[1]; sy += 1) {
+        for (let sx = 0; sx < landmark.footprint[0]; sx += 1) {
+          const x = landmark.cell[0] + sx;
+          const y = landmark.cell[1] + sy;
+          if (x >= 0 && y >= 0 && x < width && y < height) {
+            inLandmark[y * width + x] = 1;
+          }
+        }
+      }
+    }
+    const keepOpenAt = (x: number, y: number): boolean => {
+      const material = world.materialAt(x, y);
+      return (
+        material === "terrain.packed_road" ||
+        material === "terrain.cobble" ||
+        world.trailAt(x, y) ||
+        world.pierAt(x, y) !== null ||
+        world.riverTierAt(x, y) > 0 ||
+        inLandmark[y * width + x] === 1
+      );
+    };
+
+    const packed = Buffer.from(walkability.grid, "base64");
+    let walkableTotal = 0;
+    let stampedCells = 0;
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const index = y * width + x;
+        const loaderWalkable = world.walkableAt(x, y);
+        const packWalkable = unpackBit(packed, index);
+        if (loaderWalkable) walkableTotal += 1;
+
+        // Stamping only ever REMOVES walkability.
+        if (packWalkable) {
+          assert.ok(loaderWalkable, `pack walks where the loader blocks at ${x},${y}`);
+        }
+        // Placement footprints are solid, doors and pass cells included.
+        if (inRect[index] === 1) {
+          assert.equal(packWalkable, false, `placement cell ${x},${y} stayed walkable`);
+        }
+        // Streets, trails, piers, fords, and landmark interiors never seal
+        // outside placement footprints.
+        if (loaderWalkable && inRect[index] === 0 && keepOpenAt(x, y)) {
+          assert.equal(packWalkable, true, `protected cell ${x},${y} was sealed`);
+        }
+        if (loaderWalkable && !packWalkable) stampedCells += 1;
+      }
+    }
+    // The fixture actually exercises the stamp.
+    assert.ok(stampedCells > 0, "no cells stamped; fixture no longer exercises the stamp");
     assert.ok(walkability.floodCount > 0);
-    assert.ok(walkability.floodCount <= walkableTotal);
+    assert.ok(walkability.floodCount <= walkableTotal - stampedCells);
 
     // The spawn cell is walkable and the flood from it, recomputed
     // independently over the packed grid, matches the recorded count —
@@ -102,6 +174,32 @@ describe("gamepack walkability", () => {
       }
     }
     assert.equal(seen.size, walkability.floodCount);
+
+    // No-orphan arithmetic: from the same spawn, the loader-grid flood
+    // exceeds the pack flood by exactly the stamped cells it could reach —
+    // stamping consumed cells, it never severed a region beyond them.
+    const loaderSeen = new Set<number>([sy * width + sx]);
+    const loaderQueue: number[] = [sy * width + sx];
+    for (let head = 0; head < loaderQueue.length; head += 1) {
+      const index = loaderQueue[head] as number;
+      const x = index % width;
+      const y = (index - x) / width;
+      for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+        const next = ny * width + nx;
+        if (!loaderSeen.has(next) && world.walkableAt(nx, ny)) {
+          loaderSeen.add(next);
+          loaderQueue.push(next);
+        }
+      }
+    }
+    let stampedReachable = 0;
+    for (const index of loaderSeen) {
+      if (!unpackBit(packed, index)) stampedReachable += 1;
+    }
+    assert.equal(loaderSeen.size, walkability.floodCount + stampedReachable);
   });
 });
 

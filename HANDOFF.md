@@ -112,6 +112,19 @@ identity).
 - **Reservation phases must be room-capped** — any new selection phase
   that adds settlements must cap by remaining budget or later phases
   overshoot (behavior 48 lesson).
+- **Pack walkability is NO LONGER the raw loader grid** (2026-07-28,
+  plan §3.3): `buildWalkability` applies the Phase-A structures-solid
+  stamp. Naive slit sealing severs worlds — 1-wide UNPAVED gaps between
+  buildings are sometimes real corridors (tiny lost half its map to one
+  sealed village lane; canonical's mountain notches thread between mine
+  buildings; the ruined city's streets are band art over bare ground,
+  invisible to material checks). Hence: street/trail/pier/ford guard +
+  landmark-interior exemption + gate-type exemption + the connectivity
+  reconciliation loop (seal → find orphans → pocket-seal building-hugging
+  nooks ≤2 cells out / reopen sole-corridor slits / refuse anything
+  else). Consumer parity for the PACK grid is now "loader grid minus the
+  stamp", proven by tests/gamepack.test.ts; the base artifact ladder and
+  both consumer lanes are untouched (canonical 33893 invariant).
 - Temporary debug instrumentation (env-guarded stderr prints) is fine
   for hunting — REMOVE before commit (behavior 47 hunt pattern).
 - Bump rule packs SEQUENTIALLY and check the changelog comment matches
@@ -145,11 +158,20 @@ identity).
   pack in 0.57 s, independently reproduces flood; contract-as-built
   clarifications recorded in plan §3.3a). Rendering half deferred
   post-Gate-1 (game side).
-- Dusk game pack exported at
-  `outputs/game-packs/small-cold-coastal-pack-dusk/` (flood 33845 at
-  export time — REGENERATE the pack before handing it over again:
-  behavior 47/48 moved canonical to 33893, so the committed pack
-  numbers are stale).
+- Dusk game pack RE-EXPORTED 2026-07-28 at
+  `outputs/game-packs/small-cold-coastal-pack-dusk/` with the Phase-A
+  structures-solid stamp (porous-collision fix, plan §3.3): building and
+  POI footprints seal (doors/pass cells too), unpaved slits and back
+  pockets close; streets/trails/bridges/gates/landmark interiors stay
+  open via a deterministic connectivity reconciliation that reopens
+  sole-corridor seals and refuses on any orphan. Pack flood 33712 =
+  base 33893 − 181 stamped cells; spawn (240,125); byte-stable
+  (double-export verified). Game-side porosity audits read 11 walkable
+  structure tiles, not 0 — 9 bridges + 2 ruined-city breaches, both
+  legitimate (plan §3.3a). Roof-ridge occlusion = upstream TileForge
+  template ask, recorded in plan §3.3a; not a WorldForge-side change
+  (the §4 acceptance proves pixel-identity against the package
+  reference, and layer placement is the package's contract).
 - Phase 5 slice-zone drafting: fully unblocked (dusk pinned, importer
   live, gate protecting exports); needs the user's creative direction.
 

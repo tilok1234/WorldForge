@@ -130,6 +130,21 @@ must not re-derive walkability from tile art. Proposed encoding:
 - `floodCount` is the connected-walkable count from `spawnCell` — the same
   number both consumer lanes already report — so an importer can verify the
   grid in one flood fill before trusting it.
+- **Phase-A structures-solid stamp (2026-07-28, porous-collision fix):** on
+  top of the loader ladder, the pack grid seals every settlement and POI
+  structure footprint (doors and pass cells included — the game has no
+  interiors, and a 0.7-tile player brushing a facade slides into the
+  sprite), plus unpaved one-cell slits and back pockets bounded by those
+  footprints. Kept walkable by design: paved streets and trails (the
+  planner's own corridors — sealing them severs worlds), bridges and fords,
+  gate structures (`ruined_gate`/`fortress_gate` — behavior 47's "gates
+  exempt"), and landmark-compound interiors (curated open-air space). A
+  deterministic connectivity reconciliation reopens any slit seal that
+  turns out to be a sole corridor (mountain notches between mine
+  buildings) and refuses to export if stamping would orphan any region.
+  The BASE artifact and both consumer lanes are untouched — `floodCount`
+  in the pack is the stamped grid's flood and therefore smaller than the
+  loader flood on `world.json` (canonical: 33712 packed vs 33893 base).
 
 ### 3.3a Contract as built (clarifications recorded 2026-07-28, from the
 Phase-4 importer's independent validation)
@@ -144,6 +159,17 @@ Phase-4 importer's independent validation)
 - `validation-report.json` shape is `{status, errors, warnings}`; a pack
   exports only when status is `pass`, and warnings are legal content (a
   dense world reports hundreds — e.g. decoration-density notices).
+- Under the Phase-A stamp (§3.3), a game-side "no walkable cell carries a
+  structures tile" audit reads 11 legitimate cells on canonical, not 0:
+  9 bridge cells (route crossings render bridge structures and MUST walk)
+  and 2 ruined-city wall breaches (behavior 47 trail entries). An importer
+  auditing for porosity should exempt crossing cells and landmark rects.
+- Roof-ridge/chimney rows CANNOT move to `props-overhang` WorldForge-side:
+  structure layer placement is the pinned package's template contract, and
+  the §4 acceptance proves pixel-identity against the package's own
+  map-reference. Occluding players behind rooflines needs an upstream
+  TileForge template field (per-cell overhang rows) — a designer-scoped
+  TileForge task, recorded here per the compatibility procedure.
 
 ### 3.4 export-game-pack CLI (proposed)
 
