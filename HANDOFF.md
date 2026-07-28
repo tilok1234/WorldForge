@@ -1,217 +1,211 @@
-# WorldForge — session handoff (2026-07-28, account switch #5)
+# WorldForge — session handoff (2026-07-28, remote session close / switch #6)
 
 For a fresh AI session with no prior context. Read `AGENTS.md` and the
 `README.md` reading list first; this file carries session state the
-docs don't. File-based assistant memory at
-`~/.claude/projects/C--Users-headc-Documents-WorldForge/memory/` is
-machine-local and survives account switches; it cross-validates this
-file. HANDOFF.md is the tiebreaker.
+docs don't. NOTE: this session ran in a REMOTE cloud container (no
+Godot binary, no access to the machine-local assistant memory at
+`~/.claude/projects/C--Users-headc-Documents-WorldForge/memory/`).
+That memory cross-validates this file for PC sessions; HANDOFF.md is
+the tiebreaker.
+
+## 0. BRANCH — read this first
+
+Everything from this session lives on
+**`claude/worldforge-game-review-yzllne`** (pushed), NOT main. Session
+commits, in order: `8fe0aec` ferries decision, `9eb1566` ruined-road
+ruling, `4be6757` rework directive #1, `9852aab` behavior 49,
+`82d1d39` eight-holds restyle, `461bc91` rework directive #2,
+`9bd1cf3` behavior 50, `1190a4d` lane promises + two-tier entrance
+check, `ff98b3b` eight-holds regen, plus this handoff. A PC session
+should merge (or PR) this branch into main before continuing
+engineering; nothing on main moved.
 
 ## 1. Where the project stands
 
-Every planned arc is COMPLETE or gated on the user:
+- All arcs through the ZONE arc: COMPLETE and ratified (W0–W9,
+  ALIVE-WORLDS 9–30, VARIETY 31–35, MOBILE 36–46, PC arcs: dusk
+  re-pin, 47 trails-stay-open, 48 zone settlement floors).
+- **NEW: SETTLEMENT-STYLE arc (this session, behaviors 49–50)** —
+  born from the eight-holds verdict loop, two designer rework rounds:
+  - **49 — settlement organics + variety**: opt-in recipe
+    `settlementStyle` = `growthPermille` (per-settlement size roll,
+    squared; cities full / towns half / outposts never; lots +
+    approach budgets scale), `scatterPermille` (dense core thinning
+    to scattered rim; the fabric footprint EXTENDS by the same
+    fraction so the lot list redistributes outward), `variety`
+    (purpose-flavored mixes). Nine package structures newly rostered:
+    windmill, watermill, sawmill, quarry, store, warehouse,
+    guardhouse, fisher_hut, tent (all fully blocking → loader
+    pass-cell parity untouched). `dock` DEFERRED (pass cells +
+    waterline placement).
+  - **50 — lived-in streets**: `settlementStyle.organicStreets` —
+    civic specials keep solid cobble approaches; ordinary houses get
+    worn packed-earth lane fragments (~450‰ of route cells, ~250‰
+    past depth 600, doorstep always marked); ~half the fringe houses
+    (depth > 450) paint NO lane; yard gaps vary 1–2; street arms roll
+    per-direction lengths 50–130%; deep fill houses humble into
+    cottages. See §5 for the lane-promise contract this required.
 
-- W0–W9 (2026-07-26), ALIVE-WORLDS arc (behaviors 9–30, density
-  doctrine), VARIETY arc (31–35: 15-world library, tiny→large size
-  presets, 5-climate library).
-- MOBILE arcs (36–46, merged 2026-07-28): game integration Phases 1–3
-  (game-pack export, authored placement, pins/ranks), terrain texture,
-  organic small maps + library refresh (ratified under 42), zone
-  composition (zones vocabulary, hard wandering seams, anchor
-  territories, zone elevation).
-- PC arcs (2026-07-28): DUSK RE-PIN (§3), behavior 47 "trails stay
-  open" (§5 gotchas — three sever fixes + the loader reachability
-  gate), behavior 48 zone settlement floors (§4).
+Versions: behavior **50**, recipe compiler **31**, resolved-config
+**25**, artifact format 8, TileForge adapter 6, packFormat 1.
+**221 tests, all green** (14 in the new tests/settlementStyle.test.ts).
 
-Versions: behavior 48, recipe compiler 29, resolved-config 23,
-artifact format 8, TileForge adapter 6, packFormat 1. **207 tests, all
-green.** Everything pushed through `0c35d7d` (+ this handoff commit).
-Standing commit+push authorization (memory) — re-confirm per policy;
-visual verdicts always user-gated.
+Identity discipline (load-bearing, new): the normalized
+`settlementStyle` key exists ONLY when the recipe authors it — a
+style-free recipe keeps its exact pre-49 recipeSha256. A test pins
+the canonical baseline against its committed approval sidecar
+(80cff5eb…), and the golden layer diff is empty against the pre-49
+snapshot. Never "default" this key into normalization.
 
-## 2. The world library (fixtures/recipes/, galleries outputs/gallery/)
+## 2. Decisions recorded this session (all designer-ratified in chat)
 
-23 recipes, all generating clean through the behavior-47 reachability
-gate. ALL APPROVED except one:
+- **Island routing = FERRIES** ("for now"): piers on facing shores +
+  a water route the public loader treats as a legal crossing. Chosen
+  over causeways and per-island webs. Implementation queued
+  (engine-ready, §6); broken-isles NW island is the pilot.
+- **Ruined-road band = BLESSED as archaeology**, with an upstream
+  upgrade path: if a future TileForge release ships a dedicated LIVE
+  ruined-road band, re-pin and switch the ruined-city stamp
+  (behavior bump + the-old-war family re-verdict then). No-new-
+  legacy-runs doctrine holds elsewhere. Recorded in
+  docs/GAME_INTEGRATION_PLAN.md §6.1 too.
+- **TileForge upstream ask on record (user-side task):** chapel (2×3)
+  is the only church-type art in the package; a larger temple/church
+  needs a new package structure. Smallest ask, per AGENTS.md.
 
-- **PENDING VERDICT: `the-eight-holds`** — behavior-48 demo (eight
-  anchor territories, budget 8, settlementFloor 1 per zone → exactly
-  one settlement per land, spread 1/1/1/1/1/1/1/1, flood 183218).
-  Overview sent 2026-07-28.
-- Approved small archetypes (9): frontier-sparse, warm-vale,
-  highland-fastness, sunburnt-reach, weeping-marsh, drowned-shore,
-  the-old-war, the-long-winter, hearth-hollow. Tiny hollows (3):
-  fen/frost/dust (frost-hollow is DESIGNED exploration-heavy).
-  Organic 256² climates (3): dust-sea, drowned-fen, white-waste.
-  Mediums (3) + larges (2): warm-vale/the-old-war/frontier-sparse
-  -medium, warm-vale/the-old-war -large. Zone pilots: the-eight-lands
-  (8 anchor zones, hard wandering seams), the-broken-isles
-  (archipelago; NW island DELIBERATELY uninhabited — see §6 routing
-  decision).
-- Canonical `small-cold-coastal` (seed 103991): flood **33893** both
-  consumers (history: 33887 → 33890 ford guard → 34058 texture →
-  33845 ambient → 33893 behavior-47 placement rules; every step
-  flagged, consumer equality never broken). FORMAL BASELINE recorded
-  (approval sidecar keyed on recipeSha — still valid: canonical has no
-  zones, so behavior 48's vocabulary left its normalized recipe
-  untouched).
+## 3. The world library (fixtures/recipes/, galleries outputs/gallery/)
 
-## 3. Dusk re-pin (executed 2026-07-28)
+23 recipes. 22 APPROVED and byte-untouched by this session's work
+(style is opt-in; invariance proven in-suite). ONE pending:
 
-Pinned package: `dusk-ae1eecb-seed103991` (user: "use dusk for now, we
-can change later"). Forest fixture stays committed — re-pin back = lock
-+ test-literal change. Dusk is a NEWER upstream commit: road bands 1/3
-retired as `roadTypesLegacy` (matches our corridor doctrine; dirtpath
-is the one live band). Semantic ids are THEME-IDENTICAL, so world
-content is byte-identical across themes. §2/§4 acceptance green against
-dusk's own reference. **RULED 2026-07-28: blessed as archaeology,
-with an upstream upgrade path.** Ruined-city dead streets keep the
-legacy ruined-road band (renders fine; thematically relics). Doctrine
-unchanged: never author NEW legacy runs elsewhere. Upgrade path: the
-designer may add a dedicated live ruined-road band in TileForge
-(their forge, their side of the boundary); when a package ships it,
-re-pin and switch the ruined-city stamp to the new band (behavior
-bump + the-old-war family re-verdict at that point).
+- **PENDING VERDICT (round 3): `the-eight-holds`** — the behavior-48
+  demo, now also the settlement-style demo. Recipe carries the full
+  style: growth 600 / scatter 450 / variety / organicStreets. Current
+  numbers: flood **182947** through the public loader, 9/9
+  destinations reachable, spread 1/1/1/1/1/1/1/1 (one hold per
+  anchor territory), identity v50. History: 183218 (48) → 182872
+  (49) → 182947 (50), every step designer-driven. The crossing city
+  rolled radius 60 / 154 buildings; harbor city 47/105; towns 31–39;
+  waypoint outpost 15/10. Godot half of the verify chain NOT run
+  (no binary in the container) — run it at the PC with the windowed
+  playthrough.
+- Verdict sheet (adaptive per-hold crops + overview) published at:
+  https://claude.ai/code/artifact/82bb6579-05cc-4998-9cd9-55c5da917aa8
+  — regenerate via the scratchpad pattern in §5 if the link is dead.
+- Canonical `small-cold-coastal`: flood 33893, FORMAL BASELINE,
+  sidecar valid and now test-pinned (§1).
 
-## 4. Zone vocabulary after behavior 48
+## 4. settlementStyle authoring quick-reference
 
-`zones`: layout grid|anchors, seams blended|hard, per-entry
-temperature/moisture/elevationPermille, anchors+weights, and NEW
-`settlementFloor` (0–8, default 0, OPT-IN — every pre-48 zone recipe
-and deliberately wild zone generates unchanged; proven by invariant
-floods on eight-lands 172389 / broken-isles 73077 / canonical 33893).
-Floor phase runs right after the capital, BEFORE the geometric
-reservations (authored intent outranks heuristics); the remote-quarter
-reservation is room-capped (no-op for floor-free recipes — without it,
-floors + quarter overshot budget 12>8). Territory = PURE `zoneOwnerAt`
-(exported from macroFields; the seam wander is climate display, not
-identity).
+```json
+"settlementStyle": {
+  "growthPermille": 600,   // 0-1000; max extra radius, squared roll
+  "scatterPermille": 450,  // 0-900; rim thinning + footprint extension
+  "variety": true,         // purpose-flavored building mixes
+  "organicStreets": true   // worn lanes, roadless fringe, cottages
+}
+```
+
+All fields optional, all default off; absent block = pre-49 fabric
+byte-for-byte. Tune by number and re-verdict — the demo loop is
+cheap. Purpose flavors: harbor→warehouse/fisher_hut/store,
+crossing→watermill, farming→windmill, mining→quarry,
+waypoint→guardhouse/tent (outposts swap kit slots; all swap indices
+stay below tiny's 6 lots — keep it that way).
 
 ## 5. Gotchas (new this session — older ones in git history still bind)
 
-- **Behavior 47, three sever mechanics** (all: structures on trails
-  that are the only corridor through a mountain notch; all invisible to
-  the compose gate, which walks corridors without structure
-  knowledge): (1) plaza furniture (fountain/well) never on pathLayer;
-  (2) ruined-city walls BREACH where an old trail passes + stamps
-  clear pathLayer under their structure cells (a trail doesn't run
-  through a building; the gateway repaint restores the gate line);
-  (3) POI furniture may cover a trail END (the norm — spurs lead TO
-  monuments) but never a THROUGH-trail (≥2 footprint-boundary
-  crossings refuse the spot; gates exempt via pass cells; the lodge
-  has alternate spots).
-- **The approach carver** joins only trail segments that provably
-  reach a corridor — the segment flood HOPS FORD-WIDTH stream gaps
-  (≤2 river cells; wet worlds' trails continue across fords and broke
-  without this) — with an any-trail fallback pass so a gate is never
-  stranded that pre-47 would have joined. Own-stamp footprint cells
-  are excluded as targets (an enclosed courtyard's cobble otherwise
-  counts as "the network").
-- **resolve-tileforge and export-game-pack GATE on destination
-  reachability through the PUBLIC loader** (the consumers' own nudge≤8
-  + flood rule). A severed world cannot ship silently. When the gate
-  fires, debug with ASCII walkability maps + a cut-finder (pattern in
-  session log; beware: two floods larger than the map means they're
-  the same component).
-- **Reservation phases must be room-capped** — any new selection phase
-  that adds settlements must cap by remaining budget or later phases
-  overshoot (behavior 48 lesson).
-- Temporary debug instrumentation (env-guarded stderr prints) is fine
-  for hunting — REMOVE before commit (behavior 47 hunt pattern).
-- Bump rule packs SEQUENTIALLY and check the changelog comment matches
-  the table — this session's author mis-skipped twice.
-- Viewer/render ladder: ≤8192px full render; >8192 adds banded
-  resolved-preview.png; >16384 (large) preview-only (32768² rgba is
-  exactly 2^32 bytes). serve-viewer /api/worlds picker hides
-  loader-rejected relics; native check accepts render OR preview.
-- Overviews for verdicts: box-average downscale to ~1024 (scratchpad
-  script pattern: decode PNG scanline-filtered, factor-N average);
-  crops via rect extraction. Both are session-scratchpad tools —
-  recreate freely.
+- **The lane promise (behavior 50, the big one).** The W5 entrance
+  check floods CORRIDOR cells only (cobble/packed/trails/crossings/
+  fords). Worn lanes are deliberately gappy — their doorsteps read as
+  corridor islands, and the first styled generation was refused with
+  three "entrance unreachable" errors (the gate doing its job; ASCII
+  neighborhood dumps found it). The contract now: every carveApproach
+  route in worn/none mode is recorded in `laneCells` and becomes a
+  promise — later structures refuse to stamp on it (footprintFits,
+  like pathLayer), farms keep fences/crops off it, decoration keeps
+  all props off it — and the entrance check runs two tiers:
+  solid-lane entrances against the corridor flood (byte-identical to
+  pre-50), worn/none entrances against walkable GROUND. `laneMode` is
+  internal to plans, never serialized. If you add ANY new pass that
+  stamps or blocks cells, honor laneCells.
+- **Scatter must extend the footprint.** Thinning acceptance inside a
+  fixed radius LOSES the lot tail on small radii (first test run
+  caught it: mean distance went down, not up). scatter extends the
+  scan bound by its fraction; plan.radius carries the extended reach
+  so farms/POIs ring outside the fringe.
+- **Normalized-key discipline.** `settlementStyle` is conditionally
+  PRESENT in the normalized recipe (never null) — canonicalJson
+  serializes nulls, so a null field would move every recipeSha and
+  invalidate every approval sidecar. The sidecar-pin test enforces
+  this; keep the pattern for all future vocabulary.
+- **Structure roster ≠ package roster.** The dusk package ships 52
+  structures; the roster now claims 49 of them. Before assuming art
+  doesn't exist, list `mappings.structures` in the pinned manifest.
+  New types: append-only + STRUCTURE_NAME entry + footprint from the
+  manifest (the settlementStyle suite has a drift test).
+- **Verdict-sheet scratchpad pattern** (recreate freely): decode the
+  8192 preview once (PNG scanline unfilter), box-average factor-8
+  overview at 1024, per-hold crops sized `max(80, radius*2+16)` cells
+  with factor 2 or 4 keeping output ≤ ~1088px, embed as data URIs in
+  a themed HTML artifact. Scripts lived at the session scratchpad
+  (`overview.mjs`, `verdict-sheet.mjs`, `debug-seal.mjs` for ASCII
+  seal-hunting).
+- Remote containers have no `godot` binary — the TS lane + compose
+  gate + resolve gate still verify fully; record "Godot half pending
+  PC" honestly per AGENTS.md evidence rules.
 
 ## 6. Open items
 
 **User-gated:**
-- the-eight-holds verdict: **round-3 RE-VERDICT PENDING.** Behavior
-  50 (lived-in streets) SHIPPED and the demo regenerated with the
-  full style (growth 600 / scatter 450 / variety / organicStreets):
-  cobbled civic cores, worn barely-there lanes, roadless fringe
-  houses on natural ground, cottages at the edges. Flood **182947**,
-  9/9 reachable, identity v50. NEW GOTCHA on record (§5): the W5
-  entrance check floods corridors only — behavior 50 added the lane
-  promise (laneCells keep-outs in settlements/farms/decoration) and
-  the ground tier for worn/none entrances after the gate refused
-  three sealed doorsteps on the first styled run.
-  Behavior 49 SHIPPED (settlement organics + variety, opt-in
-  `settlementStyle`); demo regenerated with growth 600 / scatter 450 /
-  variety on — crossing city rolled radius 60 with 154 buildings,
-  harbor city 47/105, towns 31–39, spread still 1/1/1/1/1/1/1/1,
-  flood **182872** (9/9 reachable through the public loader; Godot
-  half of the verify chain pending a machine with the binary).
-  Verdict sheet republished with adaptive per-hold crops.
-  **TileForge upstream note (user-side task, per AGENTS.md):** chapel
-  (2×3) is the only church-type art; a larger temple/church structure
-  would need a new package structure — smallest ask recorded here.
-- Windowed Godot playthrough; taste-polish round; fen swamp-margin
-  widening (walkability care needed).
+- **the-eight-holds round-3 verdict** (the only open visual). Knobs
+  are numbers; iterate freely.
+- Windowed Godot playthrough (+ run godot-consumer on the new demo);
+  taste-polish round; fen swamp-margin widening (walkability care).
 
 **Engine-ready when wanted:**
-- **Ferry routing (DECIDED 2026-07-28: ferries, "for now")** — piers
-  on facing shores joined by a water route the loader treats as a
-  legal crossing; unblocks inhabited detached islands (broken-isles
-  NW island is the pilot case). Causeways/per-island webs rejected;
-  "for now" = revisit allowed after Phase 5 shows game needs. New
-  behavior + loader/consumer parity work when scheduled.
-- Zone-crop preview tooling (per-zone verdict loop QoL) — last
-  unbuilt zone-arc line item.
+- **Ferry routing** (decision §2): new behavior — piers on facing
+  shores + water route + loader/consumer parity; unblocks inhabited
+  detached islands (broken-isles NW pilot).
+- Zone-crop preview tooling as a committed tool (the scratchpad
+  verdict sheet in §5 does this ad hoc; productize if the per-zone
+  verdict loop continues).
+- Extending settlementStyle to more library worlds (designer taste
+  call + re-verdicts; all opt-in per recipe).
 
 **Game integration (docs/GAME_INTEGRATION_PLAN.md):**
-- Phase 4 validating importer LIVE game-side (validates the reference
-  pack in 0.57 s, independently reproduces flood; contract-as-built
-  clarifications recorded in plan §3.3a). Rendering half deferred
-  post-Gate-1 (game side).
-- Dusk game pack exported at
-  `outputs/game-packs/small-cold-coastal-pack-dusk/` (flood 33845 at
-  export time — REGENERATE the pack before handing it over again:
-  behavior 47/48 moved canonical to 33893, so the committed pack
-  numbers are stale).
-- Phase 5 slice-zone drafting: fully unblocked (dusk pinned, importer
-  live, gate protecting exports); needs the user's creative direction.
+- Phase 4 importer LIVE game-side; rendering half post-Gate-1.
+- Committed dusk game pack is STALE (exported at flood 33845; canon
+  moved to 33893 pre-session) — regenerate before any handover.
+- **Game-side ledger #15 flag (upstream ask TO us):** north
+  roof-ridge rows bake into the solid structures layer; the exit is a
+  pack rev moving roofs to props-overhang. Not yet scheduled.
+- Phase 5 slice-zone drafting: fully unblocked, awaiting the
+  designer's creative direction — likely the next big arc, and the
+  settlement-style vocabulary was built to serve it.
 
 ## 7. Working agreements (unchanged core)
 
-- Loop: implement → `npm test` + `node dist/tools/update-golden.js` →
-  verify chain (godot-consumer 0 errors + TS traverse, floods EQUAL)
-  on canonical + touched worlds → overviews → SendUserFile → verdict.
-- Density doctrine: never raise dense-tier ambient/POI numbers without
-  a fresh verdict; structural density scales with map size, per-cell
-  props/POIs fall.
-- Versioning: behavior bump + touched packs; config-shape changes bump
-  resolvedConfigFormat + compiler + literal in tests/compile.test.ts
-  (currently 23).
-- APPEND-ONLY: WORLD_PALETTE, STRUCTURE_TYPES, DECOR_TYPES,
-  DECAL_TYPES, POI_TYPES. Parity: decorate BLOCKING == loader
-  BLOCKING_PROPS; loader STRUCTURE_PASS_CELLS mirrors package manifest;
-  package walkable flags are truth.
-- TileForge upstream (`C:\Users\headc\Documents\Semantic tile
-  generator design`) read-only; guard denylist in gitignored
-  worldforge.local.json. Theme exports live in its exports/ (dusk
-  consumed from there; autumn/winter/reference available).
-- Viewer: `http://127.0.0.1:8787` (launch.json "viewer"; do NOT
-  restart a server another session may own; regenerate into the same
-  dir and refresh — the header dropdown lists all worlds).
+- Loop: implement → `npm test` + `node dist/tools/update-golden.js`
+  → verify chain (TS traverse + godot-consumer where possible,
+  floods EQUAL) on canonical + touched worlds → overviews →
+  SendUserFile/artifact → verdict. One approved decision = one
+  commit, pushed immediately.
+- Density doctrine, APPEND-ONLY lists, parity rules, TileForge
+  read-only boundary, viewer etiquette: all as before (see git
+  history of this file).
+- Designer style: informal, values momentum + honest pushback +
+  concrete recommendations; visual verdicts always theirs.
 
 ## 8. Commands
 
 ```
-npm test                          # build + 207 tests
+npm test                          # build + 221 tests
 node dist/tools/update-golden.js
-node dist/src/cli.js resolve-tileforge fixtures/recipes/<name>.json --out outputs/gallery/<name>
-node --max-old-space-size=8192 dist/src/cli.js resolve-tileforge fixtures/recipes/<medium-or-large>.json --out outputs/gallery/<name>
-node dist/tools/godot-consumer.js --world outputs/gallery/<name>
+node --max-old-space-size=8192 dist/src/cli.js resolve-tileforge fixtures/recipes/the-eight-holds.json --out outputs/gallery/the-eight-holds
+node dist/tools/godot-consumer.js --world outputs/gallery/<name>   # PC only
 node consumers/typescript/traverse.mjs outputs/gallery/<name>/world.json
 node dist/src/cli.js export-game-pack fixtures/recipes/<name>.json --out <dir>
-node dist/src/cli.js approve-recipe fixtures/recipes/<name>.json --baseline
-node dist/tools/serve-viewer.js   # viewer :8787 (if not already up)
-godot --path consumers/godot
+node dist/src/cli.js approve-recipe fixtures/recipes/<name>.json [--baseline]
+node dist/tools/serve-viewer.js   # viewer :8787 (PC)
 ```
