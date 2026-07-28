@@ -53,7 +53,7 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   humble into cottages. See §5 for the lane promise + two-tier
   entrance check this required.
 
-Versions: behavior **55**, recipe compiler **33**, resolved-config
+Versions: behavior **56**, recipe compiler **33**, resolved-config
 **27**, artifact format 8, TileForge adapter 6, packFormat 1.
 **226 tests, all green on this machine** (19 in
 tests/settlementStyle.test.ts). Everything pushed through the merge +
@@ -65,7 +65,7 @@ per policy; visual verdicts always user-gated.
 23 recipes, all generating clean through the behavior-47 reachability
 gate. ALL APPROVED except one:
 
-- **PENDING VERDICT (round 7): `the-eight-holds`** — now the
+- **PENDING VERDICT (round 8 A/B): `the-eight-holds`** — now the
   settlement-style showcase (eight anchor territories, budget 8,
   settlementFloor 1 per zone, style growth 600 / scatter 450 /
   variety / organicStreets / narrowStreets): cobbled civic cores, worn barely-there
@@ -83,8 +83,14 @@ gate. ALL APPROVED except one:
   followable street tree; fringe houses still roll roadless; worn
   fragments remain the organicStreets-only look). Verified on this
   machine: 9/9 reachable, TS traverse 182817, Godot verify_world 0
-  errors. KNOWN EMERGENT: dense-core lanes fuse into a paved town
-  heart (houses 1-2 apart) — designer knob pending if unwanted. Round-6 sheet adds a 16px/cell city close-up
+  errors. v56 LINE ROADS (183065): the round-7 screenshot settled that the
+  miss was the RENDERER — cobble blob-rendering reads 2-3 wide however
+  few cells; the one-tile look is the PATH BAND. Under narrowStreets
+  all in-settlement roads draw as band lines over natural ground
+  (arms, ring, house lanes, in-bounds through-route via
+  corridorCenterPrev); plaza stays paved; band cells ride pathLayer so
+  every trail protection applies natively; dense-core fusion gone.
+  A/B sent (A=v55 cobble lanes, B=v56 band lines); B live in viewer. Round-6 sheet adds a 16px/cell city close-up
   — at map zoom dusk MUD reads like cobble; check the close-up before
   judging paving. Regenerated at
   outputs/gallery/the-eight-holds (viewer-ready); the remote session's
