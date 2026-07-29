@@ -1,21 +1,23 @@
-# WorldForge — session handoff (2026-07-29, scenery loop mid-arc, round 17 out)
+# WorldForge — session handoff (2026-07-29, scenery loop mid-arc, round 17 ratified)
 
-> **RESUME HERE.** The scenery-composition loop is the active arc.
-> Batch 5 = **MANOR GARDENS, behavior 65, commit `719d167`, round 17
-> SENT — verdict pending.** Rounds 12-16 all RULED positive (docks,
-> dressing, walls, harbor row, farm pair — round 16 "very good").
-> After the round-17 verdict: the **batch-6 pick** from
-> docs/SCENERY_COMPOSITIONS.md (remaining leaders: logging camp,
-> battlefield blood, the waterfront set — boardwalk / seawall /
-> lighthouse point / shipwreck cove — windmill hill, orchard,
+> **RESUME HERE.** The scenery-composition loop is the active arc and
+> the board is CLEAN: **round 17 (manor gardens, behavior 65, commit
+> `719d167`) RULED "looks good"** — SIX straight positive rounds
+> (12-17: docks, dressing, walls, harbor row, farm pair, gardens).
+> Nothing awaits a verdict. The next move is the **batch-6 pick**
+> from docs/SCENERY_COMPOSITIONS.md (remaining leaders: logging
+> camp, battlefield blood, the waterfront set — boardwalk / seawall
+> / lighthouse point / shipwreck cove — windmill hill, orchard,
 > guard post, processional way) — or the designer's parallel
 > pack-assessment notes merged into catalog §3/§4, still
-> outstanding. NOTE: farming settlements only spawn inland with ≥45%
-> grass — canonical, eight-holds, and small warm-vale have NONE; the
-> farm worlds are warm-vale-large (8), the-broken-isles (7),
-> dust-sea, the-old-war-medium/-large, weeping-marsh,
+> outstanding. The bright-teal hedge art passed without comment;
+> the optional softer-hedge repaint stays a TileForge-side upstream
+> ask if it ever grates. NOTE: farming settlements only spawn inland
+> with ≥45% grass — canonical, eight-holds, and small warm-vale have
+> NONE; the farm worlds are warm-vale-large (8), the-broken-isles
+> (7), dust-sea, the-old-war-medium/-large, weeping-marsh,
 > the-eight-lands. Nothing is half-implemented; every behavior
-> through 65 is committed, pushed, and tested.
+> through 65 is committed, pushed, and tested (234 green).
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
@@ -245,8 +247,12 @@ gate. ALL APPROVED except one:
   retires. Eight-holds round 17 flood 182737 (−102: four walled
   gardens across its two cities), 9/9, Godot 0; canonical 33795
   invariant; pack 34641 byte-stable. The dusk hedge art is BRIGHT
-  teal — pops against both grass tints; tone call is the designer's.
-  VERDICT PENDING.
+  teal — pops against both grass tints; round 17 passed it without
+  comment. ROUND 17 RULED "looks good". NOTE: the eight-holds now
+  carries SIX consecutive positive verdicts (12-17) and still no
+  formal approve-recipe baseline — deliberate: the scenery loop
+  keeps changing its recipeSha. Record the baseline only when the
+  designer calls the world DONE.
 - Approved small archetypes (9): frontier-sparse, warm-vale,
   highland-fastness, sunburnt-reach, weeping-marsh, drowned-shore,
   the-old-war, the-long-winter, hearth-hollow. Tiny hollows (3):
@@ -365,14 +371,14 @@ discipline (§5 identity rule).
 ## 6. Open items
 
 **User-gated:**
-- **ROUND-17 VERDICT (manor gardens, behavior 65)** — the resume
-  point. After it: the **batch-6 pick** from
-  docs/SCENERY_COMPOSITIONS.md — remaining leaders: logging camp,
-  battlefield blood decal, the waterfront set (boardwalk / seawall /
-  lighthouse point / shipwreck cove), windmill hill, orchard, guard
-  post, processional way. The designer's own parallel
-  pack-assessment pass is also outstanding — it merges into catalog
-  §3/§4.
+- **BATCH-6 PICK** — the resume point (round 17 ruled positive,
+  nothing pending). From docs/SCENERY_COMPOSITIONS.md — remaining
+  leaders: logging camp, battlefield blood decal, the waterfront set
+  (boardwalk / seawall / lighthouse point / shipwreck cove),
+  windmill hill, orchard, guard post, processional way. Props roster
+  is down to five unused pieces (cookfire, abandonedwagon, leafpile,
+  palm, rubblepile). The designer's own parallel pack-assessment
+  pass is also outstanding — it merges into catalog §3/§4.
 - ~~Slit-seal vs flat-green readability collision~~ **RESOLVED by the
   WYSIWYG ruling (2026-07-29, §2):** the designer ruled for flat-green
   — every ground-rendering cell reopened; the sprite-overdraw bug the
