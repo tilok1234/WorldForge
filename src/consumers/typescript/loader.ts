@@ -150,6 +150,9 @@ const STRUCTURE_PASS_CELLS: Readonly<Record<string, readonly number[]>> = {
   "structure.ruin_temple": [3, 4],
   "structure.portal": [1, 4],
   "structure.world_tree": [13],
+  // Behavior 60: the harbor dock's deck walks; only the top-right post
+  // (cell 2) blocks. Mirrors the pinned package pass array.
+  "structure.dock": [0, 1, 3, 4, 5],
 };
 
 /** Prop species that block movement; unlisted species never block. */

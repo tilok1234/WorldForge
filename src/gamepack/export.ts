@@ -102,11 +102,16 @@ export interface PlacementRect {
 }
 
 /**
- * Gate structures are corridor infrastructure, not buildings: their pass
- * cells carry a THROUGH-trail (behavior 47's "gates exempt" doctrine — the
- * ruined city's front door). Sealing one walls off everything behind it.
+ * Pass structures keep their walkable cells in packs: gates are corridor
+ * infrastructure (behavior 47's "gates exempt" — sealing one walls off
+ * everything behind it), and the harbor dock's deck is a designed walkway
+ * like a pier (behavior 60) — sealing it would strand the waterline.
  */
-const PACK_GATE_TYPES = new Set<string>(["structure.ruined_gate", "structure.fortress_gate"]);
+const PACK_GATE_TYPES = new Set<string>([
+  "structure.ruined_gate",
+  "structure.fortress_gate",
+  "structure.dock",
+]);
 
 /**
  * The placements that stamp solid at pack level: settlement structures and
@@ -120,6 +125,7 @@ export function collectStructureRects(artifact: WorldArtifact): PlacementRect[] 
   const rects: PlacementRect[] = [];
   for (const settlement of artifact.settlements) {
     for (const structure of settlement.structures) {
+      if (PACK_GATE_TYPES.has(structure.type)) continue;
       rects.push({
         x: structure.cell[0],
         y: structure.cell[1],

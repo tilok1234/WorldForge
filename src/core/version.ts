@@ -444,8 +444,20 @@ export const GENERATOR_VERSION = "0.1.0";
  *     (houses, fences, and crops stay out), and exclude ambient
  *     scatter — their dressing is deliberate. Style-free recipes and
  *     urbanBlocks-free styles stay byte-identical.
+ * 60: harbor docks (settlements.plans 22; the behavior-49 deferral,
+ *     un-deferred by the designer's "docs at the water") — the package
+ *     dock (3x2, pass cells [0,1,3,4,5]: a walkable deck, only the
+ *     top-right post blocks) joins the roster. Under variety, harbor
+ *     settlements seat docks on the waterline: deck row over the
+ *     shallows, shore row on land, doorstep carving a solid lane like
+ *     any civic piece (double budget, rolls back and scans on when a
+ *     site cannot connect). Cities seat two, towns and outposts one.
+ *     The pack stamp exempts the deck like a gate (a designed walkway;
+ *     sealing it would strand the waterline), so game porosity audits
+ *     gain deck cells on harbor worlds. Variety-free recipes stay
+ *     byte-identical.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 59;
+export const GENERATOR_BEHAVIOR_VERSION = 60;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -460,7 +472,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 17,
-  "settlements.plans": 21,
+  "settlements.plans": 22,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 11,

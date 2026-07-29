@@ -87,6 +87,9 @@ describe("gamepack walkability", () => {
     };
     for (const settlement of artifact.settlements) {
       for (const structure of settlement.structures) {
+        // Pass structures (gates, the harbor dock's deck) keep their
+        // walkable cells in packs — mirror the exporter's exemption.
+        if (structure.type === "structure.dock") continue;
         addRect(structure.cell[0], structure.cell[1], structure.footprint[0], structure.footprint[1]);
       }
     }

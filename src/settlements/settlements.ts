@@ -11,7 +11,7 @@
 
 import type { ResolvedWorldConfig } from "../recipe/compile.js";
 import type { HydrologyResult } from "../hydrology/hydrology.js";
-import { WATER_NONE } from "../hydrology/hydrology.js";
+import { WATER_NONE, WATER_SHALLOW } from "../hydrology/hydrology.js";
 import type { MacroFields } from "../fields/macroFields.js";
 import type { RoutesResult } from "../routes/routes.js";
 import { PALETTE_INDEX } from "../regions/biomes.js";
@@ -382,6 +382,90 @@ export function planSettlements(
     // streets, lanes, water, and each other, and simply drop when no
     // ground fits — a cramped hold stays a plain hold.
     const placed: PlacedStructure[] = [];
+    // Harbor docks (behavior 60 — the behavior-49 deferral, un-deferred by
+    // the designer's "docks at the water"): under variety, harbor
+    // settlements seat docks on their waterline. The dock lies with its
+    // top row's deck over the shallows and its bottom row on the shore;
+    // the doorstep sits on land below and carves a lane like any civic
+    // piece. The deck walks (package pass cells [0,1,3,4,5]); only the
+    // top-right post blocks. A site that cannot fit or connect simply
+    // scans on — a harbor without dockable shore stays a plain harbor.
+    if (rules.variety && purpose === "harbor") {
+      const dockBudget = kind === "city" ? 2 : 1;
+      const dockSpots: Array<readonly [number, number]> = [];
+      for (let ring = 2; ring <= radius && dockSpots.length < dockBudget; ring += 1) {
+        for (let dy = -ring; dy <= ring && dockSpots.length < dockBudget; dy += 1) {
+          for (let dx = -ring; dx <= ring && dockSpots.length < dockBudget; dx += 1) {
+            if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
+            const ox = anchorX + dx;
+            const oy = anchorY + dy;
+            let fits = true;
+            for (let sx = 0; sx < 3 && fits; sx += 1) {
+              const top = cellAt(ox + sx, oy, width, height);
+              const bottom = cellAt(ox + sx, oy + 1, width, height);
+              if (top === -1 || bottom === -1) {
+                fits = false;
+                break;
+              }
+              if (hydro.waterKind[top] === WATER_NONE || structureLayer[top] !== 0) {
+                fits = false;
+                break;
+              }
+              if (
+                !isOpenLand(bottom, grid, hydro) ||
+                structureLayer[bottom] !== 0 ||
+                routes.pathLayer[bottom] !== 0 ||
+                laneSet.has(bottom)
+              ) {
+                fits = false;
+                break;
+              }
+            }
+            const doorstep = cellAt(ox + 1, oy + 2, width, height);
+            if (!fits || doorstep === -1 || !isOpenLand(doorstep, grid, hydro) || structureLayer[doorstep] !== 0) {
+              continue;
+            }
+            if (dockSpots.some(([px, py]) => Math.abs(px - ox) + Math.abs(py - oy) < 6)) {
+              continue;
+            }
+            // Stamp the six cells (deck over water included) and verify the
+            // doorstep lane; roll back and keep scanning on failure.
+            for (let sy = 0; sy < 2; sy += 1) {
+              for (let sx = 0; sx < 3; sx += 1) {
+                structureLayer[(oy + sy) * width + ox + sx] = STRUCTURE_LAYER_VALUE["structure.dock"];
+              }
+            }
+            const laneStart = laneCells.length;
+            const connected = carveApproach(
+              // Lane budget scales with the settlement RADIUS, not the house
+              // budget: the pier is by definition at the rim, and the BFS pop
+              // cap (maxLength*8) must cover an open-field frontier that far
+              // out — approachBudget*2 exhausted 40 cells short of the shore.
+              ox + 1, oy + 2, grid, structureLayer, hydro, Math.max(approachBudget * 2, radius * 4), width, height,
+              "solid", 0, wear, laneCells,
+              rules.narrowStreets ? routes.pathLayer : null,
+            );
+            if (!connected) {
+              for (let sy = 0; sy < 2; sy += 1) {
+                for (let sx = 0; sx < 3; sx += 1) {
+                  structureLayer[(oy + sy) * width + ox + sx] = 0;
+                }
+              }
+              laneCells.length = laneStart;
+              continue;
+            }
+            for (let recorded = laneStart; recorded < laneCells.length; recorded += 1) {
+              laneSet.add(laneCells[recorded] as number);
+            }
+            placed.push({
+              type: "structure.dock", x: ox, y: oy, width: 3, height: 2,
+              entranceX: ox + 1, entranceY: oy + 2, laneMode: "solid",
+            });
+            dockSpots.push([ox, oy]);
+          }
+        }
+      }
+    }
     let churchPlaced = false;
     if (rules.urbanBlocks && kind !== "outpost") {
       const specs: ReadonlyArray<{ kind: SettlementQuarter["kind"]; w: number; h: number }> =
@@ -524,6 +608,7 @@ export function planSettlements(
         }
       }
     }
+
 
     // Structures spiral outward from the plaza in deterministic ring order.
     // The city and towns lead with civic specials then a channel-rolled fill

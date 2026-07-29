@@ -5,6 +5,7 @@ import { validateRecipe } from "../src/recipe/validate.js";
 import { normalizeRecipe, recipeIdentity } from "../src/recipe/normalize.js";
 import { compileRecipe } from "../src/recipe/compile.js";
 import { generateWorldDetailed } from "../src/generation/generate.js";
+import { loadWorldArtifact } from "../src/consumers/typescript/loader.js";
 import { buildStructureSequence } from "../src/settlements/settlements.js";
 import { STRUCTURE_FOOTPRINTS, STRUCTURE_TYPES } from "../src/settlements/structures.js";
 import { STRUCTURE_NAME } from "../src/adapters/tileforge/resolve.js";
@@ -459,6 +460,44 @@ describe("settlement variety (behavior 49)", () => {
     const grown = buildStructureSequence("city", "waypoint", rules, 500, roller, 10, 10);
     assert.equal(base.sequence.length, rules.cityLots);
     assert.equal(grown.sequence.length, rules.cityLots + Math.trunc((rules.cityLots * 2 * 500) / 1000));
+  });
+
+  it("harbor docks seat on the waterline under variety (behavior 60)", () => {
+    const { normalized, config } = compiled({
+      recipeFormat: 1,
+      seed: 2,
+      world: { sizePreset: "tiny", climatePreset: "temperate" },
+      budgets: { settlementCount: 3, primaryRouteCount: 1, landmarkCount: 0 },
+      settlementStyle: { variety: true },
+    });
+    const result = generateWorldDetailed(normalized, config);
+    const docks = result.artifact.settlements.flatMap((s) =>
+      s.structures.filter((st) => st.type === "structure.dock"),
+    );
+    assert.ok(docks.length > 0, "no docks placed on the dock fixture seed");
+    const loaded = loadWorldArtifact(JSON.parse(JSON.stringify(result.artifact)));
+    assert.ok(loaded.ok);
+    const world = loaded.world;
+    for (const dock of docks) {
+      const [ox, oy] = dock.cell;
+      // Deck row floats on the shallows; shore row on land.
+      for (let sx = 0; sx < 3; sx += 1) {
+        assert.equal(
+          result.composed.hydro.waterKind[oy * config.world.width + ox + sx] !== 0,
+          true,
+          `deck cell ${ox + sx},${oy} is not water`,
+        );
+      }
+      // The deck walks; the top-right post blocks (package pass cells).
+      assert.equal(world.walkableAt(ox, oy), true, "deck 0 blocked");
+      assert.equal(world.walkableAt(ox + 1, oy), true, "deck 1 blocked");
+      assert.equal(world.walkableAt(ox + 2, oy), false, "post walks");
+      assert.equal(world.walkableAt(ox, oy + 1), true, "shore deck 3 blocked");
+      assert.equal(world.walkableAt(ox + 1, oy + 1), true, "shore deck 4 blocked");
+      assert.equal(world.walkableAt(ox + 2, oy + 1), true, "shore deck 5 blocked");
+      // Doorstep on walkable land below the entrance.
+      assert.equal(world.walkableAt(dock.entrance[0], dock.entrance[1]), true, "doorstep blocked");
+    }
   });
 
   it("every rostered structure with a footprint resolves in the pinned package", () => {
