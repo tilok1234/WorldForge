@@ -154,6 +154,16 @@ const PROP_NAME: { readonly [key: string]: string } = {
   "prop.beehive": "beehive",
   "prop.cactus": "cactus",
   "prop.flower_bed": "flowerbed",
+  // Lived-in dressing (behavior 61).
+  "prop.lamp": "lamp",
+  "prop.barrels": "barrels",
+  "prop.bench": "bench",
+  "prop.noticeboard": "noticeboard",
+  "prop.table_chairs": "tablechairs",
+  "prop.anvil": "anvil",
+  "prop.workbench": "workbench",
+  "prop.laundry_line": "laundryline",
+  "prop.baskets": "baskets",
 };
 
 /** WorldForge crop keys -> package crop names. */

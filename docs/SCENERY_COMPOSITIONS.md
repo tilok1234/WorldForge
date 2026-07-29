@@ -92,15 +92,17 @@ Ordered roughly by (visual payoff / effort). ✓ = shipped already.
 
 ### Settlement life (QUARTER or dressing; the biggest gap)
 
-1. **Smithy yard** — `smithy` + `anvil` + `workbench` + `toolrack` +
-   `firewood` + `trough`. The smithy exists but stands bare; this is
-   the composition that makes it read as a WORKSHOP.
-2. **Tavern terrace** — `tavern` + `tablechairs` + `barrels` +
-   `lamp`; `laundryline` strung behind. Same story: the tavern reads
-   as a house until there are tables outside.
-3. **Market upgrade** — existing market quarter + `baskets` +
-   `noticeboard` + `bench`; a lamp at the corner. Cheap, pure
-   furniture-table addition to b59.
+1. ✓ **Smithy yard** (behavior 61) — anvil, workbench, tool rack, and
+   firewood on the smithy's free perimeter cells, walked clockwise
+   from past the entrance (doorways stay clear). PLACEMENT DOCTRINE:
+   default-on wherever a smithy stands — completing an existing
+   building, like plaza furniture.
+2. ✓ **Tavern terrace** (behavior 61) — two table sets, barrels, a
+   lamp, and a laundry line on the tavern perimeter, same ring rule.
+   Default-on.
+3. ✓ **Market upgrade** (behavior 61) — noticeboard, bench, and
+   baskets on the market square's frame corners (middle stays clear
+   for the stall row). Rides urbanBlocks with the rest of b59.
 4. **Manicured plaza / manor garden** — `topiary` + `planterurn` +
    `sundial` + `hedge` fence + `flowerbed`. Hedge is a whole unused
    FENCE family; manor + garden = instant wealth signal.
@@ -108,9 +110,11 @@ Ordered roughly by (visual payoff / effort). ✓ = shipped already.
    farmhouses. One new prop in the pen-planner tables.
 6. **Vineyard** — `grapes` crop rows + plain `fence` + a farmhouse.
    An entire unused crop; warm-climate farm variant.
-7. **Street lamps** — `lamp` along city lane bands at intervals.
-   Trivial dressing pass, big dusk-theme payoff (it's a DUSK pack —
-   lamps are the theme's own light source).
+7. ✓ **Street lamps** (behavior 61) — lamps seated BESIDE city-lane
+   band cells (never on them), spaced, cities 10 / towns 4 / outposts
+   dark. PLACEMENT DOCTRINE: pathLayer CITY_LANE only, so wilderness
+   trails never lamp and style-free worlds are untouched; plaza-edge
+   lamps and a broader "everywhere" ruling stay OPEN (§4).
 8. ✓ Church + graveyard, market + stalls + well, greens (b59).
 
 ### City edge (the parked lever, now with named art)

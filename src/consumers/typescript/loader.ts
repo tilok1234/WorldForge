@@ -172,6 +172,10 @@ const BLOCKING_PROPS = new Set<string>([
   "prop.chopping_block", "prop.hay_bales", "prop.trough", "prop.wreck",
   "prop.giant_shroom", "prop.corrupted_tree", "prop.beehive", "prop.cactus",
   "prop.flower_bed",
+  // Lived-in furniture (behavior 61): all block in the package.
+  "prop.lamp", "prop.barrels", "prop.bench", "prop.noticeboard",
+  "prop.table_chairs", "prop.anvil", "prop.workbench", "prop.laundry_line",
+  "prop.baskets",
 ]);
 
 /** Corridor materials whose street grid streams must not sever. */

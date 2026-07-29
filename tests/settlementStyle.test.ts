@@ -327,6 +327,69 @@ describe("narrow streets (behavior 51)", () => {
     assert.equal(generateWorldDetailed(plain.normalized, plain.config).composed.quarters.length, 0);
   });
 
+  it("dresses lived-in settlements: yards, market extras, lamped lanes (behavior 61)", () => {
+    const urban = compiled({
+      ...BASE,
+      settlementStyle: { growthPermille: 600, narrowStreets: true, urbanBlocks: true },
+    });
+    const b = generateWorldDetailed(urban.normalized, urban.config);
+    const { width } = urban.config.world;
+    const propLayer = b.composed.decoration.propLayer;
+    const world = loadWorldArtifact(b.artifact as unknown);
+    assert.ok(world.ok);
+    const propAt = (x: number, y: number): string | null => world.world.propAt(x, y);
+
+    // Working yards: an anvil stands on a smithy's perimeter, tables on a
+    // tavern's — the trade spills outside (when a free cell exists; every
+    // fixture settlement rolls both civic specials, so demand > 0).
+    const yardHit = (type: string, wanted: readonly string[]): boolean =>
+      b.artifact.settlements.some((s) =>
+        s.structures.some((st) => {
+          if (st.type !== type) return false;
+          for (let dy = -1; dy <= st.footprint[1]; dy += 1) {
+            for (let dx = -1; dx <= st.footprint[0]; dx += 1) {
+              const p = propAt(st.cell[0] + dx, st.cell[1] + dy);
+              if (p !== null && wanted.includes(p)) return true;
+            }
+          }
+          return false;
+        }),
+      );
+    assert.ok(yardHit("structure.smithy", ["prop.anvil", "prop.workbench"]), "no smithy yard dressed");
+    assert.ok(yardHit("structure.tavern", ["prop.table_chairs", "prop.barrels"]), "no tavern terrace dressed");
+
+    // Market extras sit on the square's frame corners.
+    const market = b.composed.quarters.find((q) => q.kind === "market");
+    assert.ok(market !== undefined, "no market quarter to dress");
+    let extras = 0;
+    for (let sy = 0; sy < market.h; sy += 1) {
+      for (let sx = 0; sx < market.w; sx += 1) {
+        const p = propAt(market.x + sx, market.y + sy);
+        if (p === "prop.noticeboard" || p === "prop.bench" || p === "prop.baskets") extras += 1;
+      }
+    }
+    assert.ok(extras > 0, "market square has no civic extras");
+
+    // Street lamps: at least one lamp seats BESIDE a city-lane band cell
+    // (never on it), proving the lane pass ran — tavern lamps do not count
+    // because this one must touch pathLayer value 2.
+    const pathLayer = b.composed.routesResult.pathLayer;
+    let laneLamps = 0;
+    for (let index = 0; index < propLayer.length; index += 1) {
+      const x = index % width;
+      const y = (index - x) / width;
+      if (propAt(x, y) !== "prop.lamp") continue;
+      assert.notEqual(pathLayer[index], 2, `lamp ON a lane band at ${x},${y}`);
+      const besideLane =
+        (x > 0 && pathLayer[index - 1] === 2) ||
+        (pathLayer[index + 1] === 2) ||
+        (index - width >= 0 && pathLayer[index - width] === 2) ||
+        (index + width < propLayer.length && pathLayer[index + width] === 2);
+      if (besideLane) laneLamps += 1;
+    }
+    assert.ok(laneLamps > 0, "no street lamps beside city lanes");
+  });
+
   it("necks through-roads to the centerline inside settlement bounds", () => {
     const COBBLE_INDEX = PALETTE_INDEX["terrain.cobble"] as number;
     const PACKED_INDEX = PALETTE_INDEX["terrain.packed_road"] as number;

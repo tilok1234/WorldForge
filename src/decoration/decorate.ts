@@ -18,7 +18,7 @@ import { floorDiv } from "../core/coords.js";
 import { PALETTE_INDEX, WORLD_PALETTE } from "../regions/biomes.js";
 import { WATER_NONE, type HydrologyResult } from "../hydrology/hydrology.js";
 import type { RoutesResult } from "../routes/routes.js";
-import type { SettlementQuarter } from "../settlements/settlements.js";
+import { CITY_LANE, type SettlementPlan, type SettlementQuarter } from "../settlements/settlements.js";
 import type { ResolvedWorldConfig } from "../recipe/compile.js";
 import type { FarmResult } from "../settlements/farms.js";
 
@@ -92,6 +92,17 @@ export const DECOR_TYPES = [
   "prop.beehive",
   "prop.cactus",
   "prop.flower_bed",
+  // Lived-in dressing (behavior 61): street and yard furniture — the
+  // settlement-life layer the pack assessment found unused.
+  "prop.lamp",
+  "prop.barrels",
+  "prop.bench",
+  "prop.noticeboard",
+  "prop.table_chairs",
+  "prop.anvil",
+  "prop.workbench",
+  "prop.laundry_line",
+  "prop.baskets",
 ] as const;
 
 /** Semantic ground-decal keys, stage 1. Layer stores index + 1 (0 = none). */
@@ -132,6 +143,10 @@ const BLOCKING = new Set<string>([
   "prop.chopping_block", "prop.hay_bales", "prop.trough", "prop.wreck",
   "prop.giant_shroom", "prop.corrupted_tree", "prop.beehive", "prop.cactus",
   "prop.flower_bed",
+  // Lived-in furniture (behavior 61): all block in the package.
+  "prop.lamp", "prop.barrels", "prop.bench", "prop.noticeboard",
+  "prop.table_chairs", "prop.anvil", "prop.workbench", "prop.laundry_line",
+  "prop.baskets",
 ]);
 
 /** Two-part canopy species (§2.10): skip when a structure sits above. */
@@ -317,6 +332,7 @@ export function decorateWorld(
   streetFordCells: readonly number[],
   laneCells: readonly number[] = [],
   quarters: readonly SettlementQuarter[] = [],
+  settlements: readonly SettlementPlan[] = [],
 ): DecorationResult {
   const { width, height } = config.world;
   const cellCount = width * height;
@@ -839,6 +855,9 @@ export function decorateWorld(
     const loneGrave = typeOf("prop.lone_grave");
     const flowerBed = typeOf("prop.flower_bed");
     const birch = typeOf("prop.birch");
+    const noticeboard = typeOf("prop.noticeboard");
+    const bench = typeOf("prop.bench");
+    const baskets = typeOf("prop.baskets");
     for (const quarter of quarters) {
       if (quarter.kind === "church") {
         // Yard rows below the chapel (rows 0-2 are the chapel band).
@@ -862,6 +881,124 @@ export function decorateWorld(
           propLayer[cell] = index === 0 ? birch : flowerBed;
           propCount += 1;
         });
+      } else if (quarter.kind === "market") {
+        // Market extras (behavior 61): the square keeps its clear middle
+        // for the stall row; the FRAME gets the town's civic clutter — a
+        // noticeboard by one corner, a bench across from it, baskets by
+        // the stalls. Corners only, so lanes through the frame stay open.
+        const pieces: ReadonlyArray<readonly [number, number, number]> = [
+          [1, 1, noticeboard],
+          [quarter.w - 2, 1, bench],
+          [1, quarter.h - 2, baskets],
+        ];
+        // Quarter cells are ambient-protected wholesale; deliberate quarter
+        // dressing bypasses that (as the graveyard rows do) — only real
+        // occupancy blocks a piece.
+        for (const [sx, sy, piece] of pieces) {
+          const cell = (quarter.y + sy) * width + quarter.x + sx;
+          if (structureLayer[cell] !== 0 || propLayer[cell] !== 0) continue;
+          propLayer[cell] = piece;
+          propCount += 1;
+        }
+      }
+    }
+  }
+
+  // Lived-in dressing (behavior 61, from the pack assessment: the unused
+  // content is almost entirely the settlement-life layer). Two passes, all
+  // deterministic offsets off already-rolled geometry — no channels:
+  //
+  // 1. WORKING YARDS: a smithy or tavern reads as a house until its trade
+  //    spills outside. Each gets a short furniture list assigned to free
+  //    perimeter cells, walked clockwise from the cell after the entrance
+  //    corner so the front door area stays clear (entrance neighbours are
+  //    protected cells anyway) and the pieces cluster to the sides/back.
+  // 2. STREET LAMPS: dusk is the theme — lanes get light. City-lane band
+  //    cells (pathLayer CITY_LANE, so style-free worlds are untouched)
+  //    within the settlement radius are walked in scan order; every Nth
+  //    band cell tries to seat a lamp on an adjacent open ground cell,
+  //    manhattan-spaced so rows read as placed, not scattered. Outposts
+  //    stay dark; wilderness trails (pathLayer 1) are never lamped.
+  {
+    const yardGuard = (cell: number): boolean =>
+      structureLayer[cell] === 0 &&
+      propLayer[cell] === 0 &&
+      protectedCells[cell] === 0 &&
+      hydro.waterKind[cell] === WATER_NONE &&
+      hydro.isRiver[cell] === 0 &&
+      farms.pierLayer[cell] === 0 &&
+      paletteKey(grid[cell] as number) !== "terrain.rock";
+    const typeOf = (name: (typeof DECOR_TYPES)[number]): number => {
+      const index = DECOR_TYPES.indexOf(name);
+      return index === -1 ? 0 : index + 1;
+    };
+    const YARD_PIECES: Readonly<Record<string, readonly (typeof DECOR_TYPES)[number][]>> = {
+      "structure.smithy": ["prop.anvil", "prop.workbench", "prop.tool_rack", "prop.firewood"],
+      "structure.tavern": ["prop.table_chairs", "prop.table_chairs", "prop.barrels", "prop.lamp", "prop.laundry_line"],
+    };
+    const lamp = typeOf("prop.lamp");
+    for (const settlement of settlements) {
+      for (const structure of settlement.structures) {
+        const pieces = YARD_PIECES[structure.type];
+        if (pieces === undefined) continue;
+        // Perimeter ring, clockwise from the top-left corner cell; rotate
+        // the start to just past the entrance so pieces fill sides/back
+        // first and the doorway approach stays furniture-free.
+        const ring: Array<readonly [number, number]> = [];
+        for (let sx = -1; sx <= structure.width; sx += 1) ring.push([structure.x + sx, structure.y - 1]);
+        for (let sy = 0; sy < structure.height; sy += 1) ring.push([structure.x + structure.width, structure.y + sy]);
+        for (let sx = structure.width; sx >= -1; sx -= 1) ring.push([structure.x + sx, structure.y + structure.height]);
+        for (let sy = structure.height - 1; sy >= 0; sy -= 1) ring.push([structure.x - 1, structure.y + sy]);
+        const startAt = ring.findIndex(([cx, cy]) => cx === structure.entranceX && cy === structure.entranceY);
+        const rotated = startAt === -1 ? ring : [...ring.slice(startAt + 1), ...ring.slice(0, startAt + 1)];
+        let pieceIndex = 0;
+        for (const [cx, cy] of rotated) {
+          if (pieceIndex >= pieces.length) break;
+          if (cx < 0 || cy < 0 || cx >= width || cy >= height) continue;
+          if (Math.abs(cx - structure.entranceX) + Math.abs(cy - structure.entranceY) < 2) continue;
+          const cell = cy * width + cx;
+          if (!yardGuard(cell)) continue;
+          propLayer[cell] = typeOf(pieces[pieceIndex] as (typeof DECOR_TYPES)[number]);
+          propCount += 1;
+          pieceIndex += 1;
+        }
+      }
+
+      if (settlement.kind === "outpost") continue;
+      const lampBudget = settlement.kind === "city" ? 10 : 4;
+      const stride = settlement.kind === "city" ? 9 : 13;
+      const seated: Array<readonly [number, number]> = [];
+      let bandSeen = 0;
+      const r = settlement.radius;
+      for (let y = Math.max(0, settlement.anchorY - r); y <= Math.min(height - 1, settlement.anchorY + r) && seated.length < lampBudget; y += 1) {
+        for (let x = Math.max(0, settlement.anchorX - r); x <= Math.min(width - 1, settlement.anchorX + r) && seated.length < lampBudget; x += 1) {
+          const cell = y * width + x;
+          if (routesResult.pathLayer[cell] !== CITY_LANE) continue;
+          bandSeen += 1;
+          if (bandSeen % stride !== 0) continue;
+          let spaced = true;
+          for (const [lx, ly] of seated) {
+            if (Math.abs(lx - x) + Math.abs(ly - y) < 7) {
+              spaced = false;
+              break;
+            }
+          }
+          if (!spaced) continue;
+          // Seat beside the lane, never on it: fixed side order keeps the
+          // choice deterministic and rows consistent.
+          for (const [dx, dy] of [[0, -1], [-1, 0], [0, 1], [1, 0]] as const) {
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+            const side = ny * width + nx;
+            if (routesResult.pathLayer[side] !== 0) continue;
+            if (!yardGuard(side)) continue;
+            propLayer[side] = lamp;
+            propCount += 1;
+            seated.push([nx, ny]);
+            break;
+          }
+        }
       }
     }
   }

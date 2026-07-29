@@ -468,7 +468,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   for (const plan of landmarkPlans) {
     entranceCells.push(plan.entranceY * width + plan.entranceX);
   }
-  const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config, farms, streetFordCells, laneCells, quarters);
+  const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config, farms, streetFordCells, laneCells, quarters, settlementPlans);
 
   // Points of interest stamp after ambient decoration and overwrite it:
   // deliberate discoveries beat scattered flavor.

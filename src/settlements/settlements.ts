@@ -123,8 +123,9 @@ const GRASS = PALETTE_INDEX["terrain.grass"];
 const ROCK = PALETTE_INDEX["terrain.rock"];
 const DEEP = PALETTE_INDEX["water.deep"];
 /** Path-layer value for in-settlement lanes (behavior 57): renders as the
- * heavier "road" band while wilderness trails (1) keep dirtpath. */
-const CITY_LANE = 2;
+ * heavier "road" band while wilderness trails (1) keep dirtpath. Exported
+ * for the lamp pass (behavior 61) — lamps light lanes, never trails. */
+export const CITY_LANE = 2;
 const SHALLOW = PALETTE_INDEX["water.shallow"];
 
 export interface PlacedStructure {

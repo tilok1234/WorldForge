@@ -456,8 +456,23 @@ export const GENERATOR_VERSION = "0.1.0";
  *     sealing it would strand the waterline), so game porosity audits
  *     gain deck cells on harbor worlds. Variety-free recipes stay
  *     byte-identical.
+ * 61: lived-in dressing (decoration.props 12; batch 1 of the pack
+ *     assessment — the unused content was the settlement-life layer).
+ *     Nine furniture species roster in (lamp, barrels, bench,
+ *     noticeboard, table_chairs, anvil, workbench, laundry_line,
+ *     baskets; all block, mirroring the package). Working yards:
+ *     smithies seat anvil/workbench/tool_rack/firewood and taverns
+ *     seat tables/barrels/lamp/laundry_line on free perimeter cells,
+ *     walked clockwise from past the entrance so doorways stay clear.
+ *     Market quarters gain a noticeboard, bench, and baskets on their
+ *     frame corners. City-lane bands (pathLayer CITY_LANE only — never
+ *     wilderness trails) seat spaced street lamps, cities 10 / towns 4
+ *     / outposts none. All offsets deterministic off already-rolled
+ *     geometry; no new channels. Every world with a smithy, tavern, or
+ *     styled city redresses (flagged flood shifts expected; canonical
+ *     re-measured).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 60;
+export const GENERATOR_BEHAVIOR_VERSION = 61;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -475,7 +490,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "settlements.plans": 22,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
-  "decoration.props": 11,
+  "decoration.props": 12,
   "decoration.pois": 16,
   "density.presets": 1,
   "authoring.overrides": 1,
