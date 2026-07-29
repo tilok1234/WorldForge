@@ -1,16 +1,14 @@
 # WorldForge — session handoff (2026-07-29, scenery loop mid-arc, round 15 out)
 
 > **RESUME HERE.** The scenery-composition loop is the active arc.
-> Batch 3 = **HARBOR ROW, behavior 63, commit `68d66c7`, round 15
-> SENT — verdict pending** (batch-3 pick was made in-session: harbor
-> row won). Rounds 12/13/14 (docks, dressing, walls) all RULED
-> positive. After the round-15 verdict, the next move is the
-> **batch-4 pick** from docs/SCENERY_COMPOSITIONS.md (remaining
-> leaders: chicken run / vineyard, logging camp, battlefield blood,
-> manor garden) — or the designer's own parallel pack-assessment
-> notes merged into catalog §3/§4, still outstanding. Nothing is
-> half-implemented; every behavior through 63 is committed, pushed,
-> and tested.
+> Batch 3 = **HARBOR ROW, behavior 63, commit `68d66c7` — round 15
+> RULED "it looks very good"** (2026-07-29). Four consecutive
+> positive rounds (12-15). The next move is the **batch-4 pick**
+> from docs/SCENERY_COMPOSITIONS.md (remaining leaders: chicken run
+> / vineyard, logging camp, battlefield blood, manor garden) — or
+> the designer's own parallel pack-assessment notes merged into
+> catalog §3/§4, still outstanding. Nothing is half-implemented;
+> every behavior through 63 is committed, pushed, and tested.
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
@@ -220,7 +218,7 @@ gate. ALL APPROVED except one:
   the harbor city's 3-cell pier is stone jetty now. Round 15 flood
   **182839** (−5 = the new blocking shore clutter), 9/9, Godot 0.
   New test pins the seed-2 fixture (city dock dressed + wood AND
-  jetty piers in one world). VERDICT PENDING.
+  jetty piers in one world). ROUND 15 RULED "it looks very good".
 - Approved small archetypes (9): frontier-sparse, warm-vale,
   highland-fastness, sunburnt-reach, weeping-marsh, drowned-shore,
   the-old-war, the-long-winter, hearth-hollow. Tiny hollows (3):
@@ -339,8 +337,8 @@ discipline (§5 identity rule).
 ## 6. Open items
 
 **User-gated:**
-- **ROUND-15 VERDICT (harbor row, behavior 63)** — the resume point.
-  After it: the **batch-4 pick** from docs/SCENERY_COMPOSITIONS.md —
+- **BATCH-4 PICK** — the resume point (round 15 ruled positive).
+  From docs/SCENERY_COMPOSITIONS.md —
   remaining leaders: chicken run / vineyard (farm extensions; grapes
   crop is unused art), logging camp, battlefield blood decal, manor
   garden (hedge + topiary + sundial). The designer's own parallel
