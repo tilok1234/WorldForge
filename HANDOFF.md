@@ -117,7 +117,20 @@ gate. ALL APPROVED except one:
   market+church+2 greens, towns market+church. Furniture verifies its
   lane (double budget) and rolls back; an unconnectable square
   UNCLAIMS (no dead patches). Round 11 flood 183185. OPEN LEVER: city
-  WALLS + gates (package wall families; b47 machinery ready). Round-6 sheet adds a 16px/cell city close-up
+  WALLS + gates (package wall families; b47 machinery ready).
+- TWO-WIDE RULE (2026-07-29, game-side video finding): pack-level seal
+  of 1-wide staggered passages in settlement interiors (settlement
+  structure footprints dilated 2; BUILT-geometry pinch triggers —
+  props narrow widths but never trigger, tree-weaving is the forest;
+  keepOpen + reconciliation-reopened sole corridors exempt; hard
+  audit gate in the exporter + regression test in
+  tests/gamepack.test.ts). Pack flood 34556 -> 34433 (123 slalom
+  cells sealed); base 33893 untouched, no baseline re-record;
+  porosity audit still exactly 11. Pack-lane change per plan §3.3 —
+  NO generator behavior bump. Dusk pack re-exported; the game re-runs
+  its intake battery; acceptance = the designer walks the (94,128)
+  city street from the video without a dead stop. Sealed gaps are
+  blocked-ground dressing candidates when that art lands. Round-6 sheet adds a 16px/cell city close-up
   — at map zoom dusk MUD reads like cobble; check the close-up before
   judging paving. Regenerated at
   outputs/gallery/the-eight-holds (viewer-ready); the remote session's
