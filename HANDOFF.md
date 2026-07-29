@@ -1,15 +1,16 @@
-# WorldForge — session handoff (2026-07-29, account switch #7, scenery loop mid-arc)
+# WorldForge — session handoff (2026-07-29, scenery loop mid-arc, round 15 out)
 
-> **RESUME HERE.** The scenery-composition loop is the active arc and
-> it is MID-STRIDE: rounds 12/13/14 (docks, lived-in dressing, city
-> walls) all RULED positive — the last words were "looks much better
-> now!" on the walls. The next move is the designer's **batch-3 pick**
-> from docs/SCENERY_COMPOSITIONS.md (leading candidates: harbor row
-> around the b60 docks, chicken run / vineyard, logging camp,
-> battlefield blood decal) — or their own parallel pack-assessment
-> notes merged into catalog §3/§4, which they said they would do.
-> Nothing is half-implemented; every behavior through 62 is committed,
-> pushed, tested, and verdict-ratified.
+> **RESUME HERE.** The scenery-composition loop is the active arc.
+> Batch 3 = **HARBOR ROW, behavior 63, commit `68d66c7`, round 15
+> SENT — verdict pending** (batch-3 pick was made in-session: harbor
+> row won). Rounds 12/13/14 (docks, dressing, walls) all RULED
+> positive. After the round-15 verdict, the next move is the
+> **batch-4 pick** from docs/SCENERY_COMPOSITIONS.md (remaining
+> leaders: chicken run / vineyard, logging camp, battlefield blood,
+> manor garden) — or the designer's own parallel pack-assessment
+> notes merged into catalog §3/§4, still outstanding. Nothing is
+> half-implemented; every behavior through 63 is committed, pushed,
+> and tested.
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
@@ -72,11 +73,11 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   humble into cottages. See §5 for the lane promise + two-tier
   entrance check this required.
 
-Versions: behavior **62** (city walls), recipe compiler **35**,
+Versions: behavior **63** (harbor row), recipe compiler **35**,
 resolved-config **29**, artifact format 8, TileForge adapter 7,
-packFormat 1, settlements.plans 23, decoration.props 12. **231 tests,
-all green on this machine** (23 in tests/settlementStyle.test.ts).
-Everything pushed through commit `4197571`. Standing commit+push
+packFormat 1, settlements.plans 24, decoration.props 13. **232 tests,
+all green on this machine** (24 in tests/settlementStyle.test.ts).
+Everything pushed through commit `68d66c7`. Standing commit+push
 authorization (memory) — re-confirm per policy; visual verdicts always
 user-gated. THE SCENERY LOOP IS THE ACTIVE ARC: the pack assessment +
 composition catalog live at docs/SCENERY_COMPOSITIONS.md (28 ideas,
@@ -212,6 +213,14 @@ gate. ALL APPROVED except one:
   approve-recipe baseline — deliberate: the scenery loop keeps
   changing its recipeSha (b62 opted it into cityWalls). Record the
   baseline only when the designer calls the world DONE.
+- HARBOR ROW (behavior 63, round 15, commit `68d66c7`; batch 3 —
+  picked in-session over chicken run/vineyard/logging camp/
+  battlefield): both eight-holds docks dressed (fishingboat moored
+  beside each deck, bollards + crates/fishnets on the shore rows);
+  the harbor city's 3-cell pier is stone jetty now. Round 15 flood
+  **182839** (−5 = the new blocking shore clutter), 9/9, Godot 0.
+  New test pins the seed-2 fixture (city dock dressed + wood AND
+  jetty piers in one world). VERDICT PENDING.
 - Approved small archetypes (9): frontier-sparse, warm-vale,
   highland-fastness, sunburnt-reach, weeping-marsh, drowned-shore,
   the-old-war, the-long-winter, hearth-hollow. Tiny hollows (3):
@@ -330,13 +339,11 @@ discipline (§5 identity rule).
 ## 6. Open items
 
 **User-gated:**
-- **BATCH-3 PICK for the scenery loop** (the resume point): rounds
-  12-14 all ruled positive, nothing awaits a verdict. The designer
-  chooses the next composition batch from
-  docs/SCENERY_COMPOSITIONS.md — leading candidates: harbor row
-  (fishingboat/bollard/crates/jetty around the b60 docks), chicken
-  run / vineyard (farm extensions; grapes crop is unused art),
-  logging camp, battlefield blood decal. Their own parallel
+- **ROUND-15 VERDICT (harbor row, behavior 63)** — the resume point.
+  After it: the **batch-4 pick** from docs/SCENERY_COMPOSITIONS.md —
+  remaining leaders: chicken run / vineyard (farm extensions; grapes
+  crop is unused art), logging camp, battlefield blood decal, manor
+  garden (hedge + topiary + sundial). The designer's own parallel
   pack-assessment pass is also outstanding — it merges into catalog
   §3/§4.
 - ~~Slit-seal vs flat-green readability collision~~ **RESOLVED by the
@@ -369,8 +376,9 @@ discipline (§5 identity rule).
   pack in 0.57 s, independently reproduces the flood; contract-as-built
   clarifications in plan §3.3a). Rendering half deferred post-Gate-1.
 - Dusk game pack at `outputs/game-packs/small-cold-coastal-pack-dusk/`
-  RE-EXPORTED 2026-07-29 under the behavior-61 + WYSIWYG identity —
-  READY FOR HANDOVER to `assets/worldforge-packs/`. WYSIWYG semantics
+  RE-EXPORTED 2026-07-29 under the behavior-63 identity (flood 34641
+  unchanged; canonical's city-harbor pier renders stone jetty now,
+  art-only) — READY FOR HANDOVER to `assets/worldforge-packs/`. WYSIWYG semantics
   (plan §3.3): art-outline stamp (footprints minus pass cells; house
   doors solid), level-0 moss carpet walks, NOTHING else seals — slits,
   pockets, and the two-wide seals all reopened. Pack flood **34641**
