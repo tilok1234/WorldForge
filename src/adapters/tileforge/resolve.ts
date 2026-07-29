@@ -82,6 +82,7 @@ const STRUCTURE_NAME: { readonly [key: string]: string } = {
   "structure.fisher_hut": "fisherhut",
   "structure.tent": "tent",
   "structure.dock": "dock",
+  "structure.city_gate": "gate",
 };
 
 /** WorldForge semantic prop keys -> package prop species names. */

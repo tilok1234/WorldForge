@@ -98,7 +98,8 @@
     "variety": true,
     "organicStreets": true,
     "narrowStreets": true,
-    "urbanBlocks": true
+    "urbanBlocks": true,
+    "cityWalls": true
   },
   "landmarks": [
     {

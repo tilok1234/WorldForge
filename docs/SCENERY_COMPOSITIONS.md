@@ -119,11 +119,18 @@ Ordered roughly by (visual payoff / effort). ✓ = shipped already.
 
 ### City edge (the parked lever, now with named art)
 
-9. **City walls + gates** — `wall` family circuit + pristine `gate`
-   (pass arch) at the street arms, `gate_drawbridge` where the
-   circuit crosses water. All the art is UNUSED today; behavior-47
-   gate machinery already knows how to keep arches open. The single
-   biggest "city" statement left.
+9. ✓ **City walls + gates** (behavior 62) — stone `wall` circuit +
+   the pristine `gate` gatehouse (arch pass [1,4]) on north/south
+   through-streets. PLACEMENT DOCTRINE: opt-in
+   `settlementStyle.cityWalls`, CITIES only; the radius is chosen to
+   MAXIMIZE fittable gatehouses ("the wall stands where its gates
+   can") with streets crossing at least three sides; every street
+   crossing is an opening (b47 outranks the wall); water, rivers, and
+   rock break the circuit (open waterfront); scatter houses beyond it
+   are suburbs outside the walls. East/west crossings stay plain
+   openings — the package has no vertical gate art (UPSTREAM ASK:
+   east/west gatehouse variant; `gate_drawbridge` also still unused,
+   wants a wall-over-water case).
 10. **Guard post** — `guardhouse` + `banner` + `brazier` +
     `archerytarget` at gates/bridge ends. Furniture only.
 

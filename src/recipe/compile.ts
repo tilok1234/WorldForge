@@ -182,6 +182,8 @@ export interface SettlementRules {
   readonly narrowStreets: boolean;
   /** Urban blocks (behavior 58, resolved-config 28). */
   readonly urbanBlocks: boolean;
+  /** City walls (behavior 62, resolved-config 29). */
+  readonly cityWalls: boolean;
 }
 
 export interface LandmarkSpec {
@@ -283,7 +285,7 @@ export interface TileForgeDependency {
 }
 
 export interface ResolvedWorldConfig {
-  readonly resolvedConfigFormat: 28;
+  readonly resolvedConfigFormat: 29;
   readonly recipeCompilerVersion: number;
   readonly generatorBehaviorVersion: number;
   readonly rulePackVersions: { readonly [name: string]: number };
@@ -661,7 +663,7 @@ const DENSITY_SCALE: {
 const SETTLEMENT_RULES: {
   readonly [key in SizePreset]: Omit<
     SettlementRules,
-    "growthPermille" | "scatterPermille" | "variety" | "organicStreets" | "narrowStreets" | "urbanBlocks"
+    "growthPermille" | "scatterPermille" | "variety" | "organicStreets" | "narrowStreets" | "urbanBlocks" | "cityWalls"
   >;
 } = {
   tiny: {
@@ -776,7 +778,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
   const climate = CLIMATE_RULES[normalized.world.climatePreset];
   const octaves = OCTAVE_RULES[normalized.world.sizePreset];
   return {
-    resolvedConfigFormat: 28,
+    resolvedConfigFormat: 29,
     recipeCompilerVersion: RECIPE_COMPILER_VERSION,
     generatorBehaviorVersion: GENERATOR_BEHAVIOR_VERSION,
     rulePackVersions: RULE_PACK_VERSIONS,
@@ -820,6 +822,7 @@ export function compileRecipe(normalized: NormalizedWorldRecipe): ResolvedWorldC
       organicStreets: normalized.settlementStyle?.organicStreets ?? false,
       narrowStreets: normalized.settlementStyle?.narrowStreets ?? false,
       urbanBlocks: normalized.settlementStyle?.urbanBlocks ?? false,
+      cityWalls: normalized.settlementStyle?.cityWalls ?? false,
     },
     landmarkSpecs: Array.from({ length: normalized.budgets.landmarkCount }, (_, slot) => {
       const spec = normalized.landmarks[slot];

@@ -243,6 +243,14 @@ export interface SettlementStyleRequest {
    * with its stall row, a church close with its graveyard, grassy greens.
    */
   readonly urbanBlocks?: boolean;
+  /**
+   * City walls (behavior 62): cities raise a stone wall circuit around
+   * their built core with gatehouses where the streets cross it. The
+   * waterfront stays open (walls break at water), and structures beyond
+   * the circuit stand as suburbs outside the walls. Towns and outposts
+   * never wall.
+   */
+  readonly cityWalls?: boolean;
 }
 
 export interface NormalizedSettlementStyle {
@@ -252,6 +260,7 @@ export interface NormalizedSettlementStyle {
   readonly organicStreets: boolean;
   readonly narrowStreets: boolean;
   readonly urbanBlocks: boolean;
+  readonly cityWalls: boolean;
 }
 
 /** An inline authored stamp: stampFormat 1, type "recipe.<name>". */

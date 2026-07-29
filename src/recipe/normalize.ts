@@ -71,6 +71,7 @@ export function normalizeRecipe(recipe: WorldRecipe): NormalizedWorldRecipe {
             organicStreets: recipe.settlementStyle.organicStreets ?? false,
             narrowStreets: recipe.settlementStyle.narrowStreets ?? false,
             urbanBlocks: recipe.settlementStyle.urbanBlocks ?? false,
+            cityWalls: recipe.settlementStyle.cityWalls ?? false,
           },
         }),
     zones:

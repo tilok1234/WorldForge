@@ -153,6 +153,9 @@ export const STRUCTURE_PASS_CELLS: Readonly<Record<string, readonly number[]>> =
   // Behavior 60: the harbor dock's deck walks; only the top-right post
   // (cell 2) blocks. Mirrors the pinned package pass array.
   "structure.dock": [0, 1, 3, 4, 5],
+  // Behavior 62: the city gatehouse's arch — the middle column walks,
+  // the flanking towers block. Mirrors the package gate pass array.
+  "structure.city_gate": [1, 4],
 };
 
 /** Prop species that block movement; unlisted species never block. */

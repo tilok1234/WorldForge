@@ -835,6 +835,163 @@ export function planSettlements(
       errors.push(`settlement ${rank} (${kind}) could not place its required ${required}`);
     }
 
+    // City walls (behavior 62, opt-in style flag; CITIES only — towns and
+    // outposts stay open). The circuit is the chebyshev ring at the built
+    // core's extent: far enough out that the fabric it grew is inside,
+    // clamped so the scatter rim stands as suburbs outside the walls.
+    // Deterministic pure geometry — no channels.
+    //
+    // The wall NEVER closes a corridor: every ring cell that carries a
+    // street (lane band, recorded lane, trail, road material) is an
+    // opening, and the behavior-47 laws stay the outrank. North/south
+    // openings seat the package's 3x2 gatehouse (structure.city_gate,
+    // arch pass column [1,4]) centered on the crossing when its footprint
+    // fits; east/west crossings and unfittable gates stay plain openings
+    // (the package has no vertical gate art). Water and rivers break the
+    // circuit too — the waterfront stays open for the docks.
+    if (rules.cityWalls && kind === "city") {
+      let extent = 0;
+      for (const structure of placed) {
+        for (const [cx, cy] of [
+          [structure.x, structure.y],
+          [structure.x + structure.width - 1, structure.y + structure.height - 1],
+        ] as const) {
+          const d = Math.max(Math.abs(cx - anchorX), Math.abs(cy - anchorY));
+          if (d > extent) extent = d;
+        }
+      }
+      const wallValue = STRUCTURE_LAYER_VALUE["structure.fortress_wall"] as number;
+      const isCorridor = (cell: number): boolean =>
+        routes.pathLayer[cell] !== 0 ||
+        laneSet.has(cell) ||
+        grid[cell] === COBBLE ||
+        grid[cell] === PACKED_ROAD;
+      // The wall stands where its GATES can. For every candidate radius,
+      // count the gatehouses that would actually fit on through-streets
+      // of the north and south runs; keep the radius with the most (tie
+      // goes to the larger circuit), requiring streets to cross at least
+      // three of four sides so the ring hugs the web instead of sealing
+      // empty country (the first cut used the structure extent and laid a
+      // sealed ring beyond the last lane — a wall with no doors). Scatter
+      // houses beyond the pick stand as suburbs outside the walls.
+      const sidesCrossed = (r: number): number => {
+        let n = 0, s = 0, e = 0, w = 0;
+        for (let d = -r + 1; d < r; d += 1) {
+          const probe = (x: number, y: number): boolean => {
+            if (x < 1 || y < 1 || x >= width - 1 || y >= height - 1) return false;
+            return isCorridor(y * width + x);
+          };
+          if (probe(anchorX + d, anchorY - r)) n = 1;
+          if (probe(anchorX + d, anchorY + r)) s = 1;
+          if (probe(anchorX - r, anchorY + d)) w = 1;
+          if (probe(anchorX + r, anchorY + d)) e = 1;
+        }
+        return n + s + e + w;
+      };
+      // Gatehouse candidates on a radius' north/south runs: the arch must
+      // sit ON a corridor cell whose street continues on BOTH sides of the
+      // line (a 3-wide window absorbs the organic jogs of 1-wide bands;
+      // lanes riding the wall row for a stretch fail and stay plain
+      // openings), and the 3x2 footprint must clear structures and water —
+      // one-off origin shifts rescue crossings whose neighbours are built
+      // up. Deterministic scan order throughout.
+      const collectGates = (r: number): Array<readonly [number, number]> => {
+        const origins: Array<readonly [number, number]> = [];
+        for (const side of [-1, 1] as const) {
+          const gy = anchorY + side * r;
+          if (gy < 2 || gy >= height - 2) continue;
+          for (let dx = -r + 1; dx < r; dx += 1) {
+            const gx = anchorX + dx;
+            if (gx < 2 || gx >= width - 2) continue;
+            if (!isCorridor(gy * width + gx)) continue;
+            const throughStreet = (rowY: number): boolean => {
+              for (let wx = gx - 1; wx <= gx + 1; wx += 1) {
+                if (isCorridor(rowY * width + wx)) return true;
+              }
+              return false;
+            };
+            if (!throughStreet(gy - 1) || !throughStreet(gy + 1)) continue;
+            const originY = side === -1 ? gy : gy - 1;
+            let fitOrigin: number | null = null;
+            for (const originX of [gx - 1, gx - 2, gx]) {
+              if (originX < 0 || originY < 0 || originX + 3 > width || originY + 2 > height) continue;
+              if (!isCorridor(gy * width + originX + 1)) continue;
+              let fits = true;
+              for (let sy = 0; sy < 2 && fits; sy += 1) {
+                for (let sx = 0; sx < 3 && fits; sx += 1) {
+                  const fCell = (originY + sy) * width + originX + sx;
+                  const isArch = sx === 1;
+                  if (structureLayer[fCell] !== 0) fits = false;
+                  else if (hydro.waterKind[fCell] !== WATER_NONE || hydro.isRiver[fCell] !== 0) fits = false;
+                  else if (!isArch && isCorridor(fCell)) fits = false;
+                }
+              }
+              if (fits) {
+                fitOrigin = originX;
+                break;
+              }
+            }
+            if (fitOrigin === null) continue;
+            const tooNear = origins.some(([px, py]) => Math.abs(px - fitOrigin) + Math.abs(py - originY) < 6);
+            if (tooNear) continue;
+            origins.push([fitOrigin, originY]);
+          }
+        }
+        return origins;
+      };
+      const outermost = Math.min(baseRadius + 2, extent + 2);
+      let wallR = outermost;
+      let gateOrigins: Array<readonly [number, number]> = [];
+      for (let r = outermost; r >= 12; r -= 1) {
+        if (sidesCrossed(r) < 3) continue;
+        const candidates = collectGates(r);
+        if (candidates.length > gateOrigins.length) {
+          wallR = r;
+          gateOrigins = candidates;
+        }
+      }
+      const wallCells: number[] = [];
+      for (let dy = -wallR; dy <= wallR; dy += 1) {
+        for (let dx = -wallR; dx <= wallR; dx += 1) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== wallR) continue;
+          const x = anchorX + dx;
+          const y = anchorY + dy;
+          if (x < 1 || y < 1 || x >= width - 1 || y >= height - 1) continue;
+          const cell = y * width + x;
+          if (isCorridor(cell)) continue;
+          if (structureLayer[cell] !== 0) continue;
+          if (hydro.waterKind[cell] !== WATER_NONE || hydro.isRiver[cell] !== 0) continue;
+          if (grid[cell] === ROCK) continue;
+          wallCells.push(cell);
+        }
+      }
+      const gateFootprint = new Set<number>();
+      for (const [originX, originY] of gateOrigins) {
+        for (let sy = 0; sy < 2; sy += 1) {
+          for (let sx = 0; sx < 3; sx += 1) {
+            gateFootprint.add((originY + sy) * width + originX + sx);
+          }
+        }
+      }
+      for (const cell of wallCells) {
+        if (gateFootprint.has(cell)) continue;
+        structureLayer[cell] = wallValue;
+      }
+      for (const [originX, originY] of gateOrigins) {
+        for (let sy = 0; sy < 2; sy += 1) {
+          for (let sx = 0; sx < 3; sx += 1) {
+            if (sx === 1) continue;
+            structureLayer[(originY + sy) * width + originX + sx] =
+              STRUCTURE_LAYER_VALUE["structure.city_gate"] as number;
+          }
+        }
+        placed.push({
+          type: "structure.city_gate", x: originX, y: originY, width: 3, height: 2,
+          entranceX: originX + 1, entranceY: originY + 1, laneMode: "none",
+        });
+      }
+    }
+
     plans.push({ id: rank, kind, anchorX, anchorY, purpose, radius, structures: placed });
   }
   return plans;

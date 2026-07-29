@@ -40,6 +40,7 @@ describe("settlement style vocabulary (behavior 49)", () => {
       organicStreets: false,
       narrowStreets: false,
       urbanBlocks: false,
+      cityWalls: false,
     });
     assert.equal(config.settlements.growthPermille, 600);
     assert.equal(config.settlements.scatterPermille, 0);
@@ -55,6 +56,7 @@ describe("settlement style vocabulary (behavior 49)", () => {
       { variety: "yes" },
       { narrowStreets: "yes" },
       { urbanBlocks: "yes" },
+      { cityWalls: "yes" },
     ]) {
       const validation = validateRecipe({ ...BASE, settlementStyle: style });
       assert.ok(!validation.ok, `expected rejection: ${JSON.stringify(style)}`);
@@ -325,6 +327,102 @@ describe("narrow streets (behavior 51)", () => {
     // The flag off places nothing.
     const plain = compiled({ ...BASE, settlementStyle: { growthPermille: 600 } });
     assert.equal(generateWorldDetailed(plain.normalized, plain.config).composed.quarters.length, 0);
+  });
+
+  it("walls the city with gatehouses on through-streets (behavior 62)", () => {
+    const walled = compiled({
+      ...BASE,
+      settlementStyle: { growthPermille: 600, narrowStreets: true, cityWalls: true },
+    });
+    const b = generateWorldDetailed(walled.normalized, walled.config);
+    const { width } = walled.config.world;
+    const wallValue = STRUCTURE_TYPES.indexOf("structure.fortress_wall") + 1;
+    const city = b.artifact.settlements.find((s) => s.kind === "city");
+    assert.ok(city !== undefined, "fixture lost its city");
+
+    // A circuit exists: wall cells stand on the city's chebyshev ring.
+    let wallCells = 0;
+    let ringR = 0;
+    for (let dy = -60; dy <= 60; dy += 1) {
+      for (let dx = -60; dx <= 60; dx += 1) {
+        const x: number = (city.anchor[0] as number) + dx;
+        const y: number = (city.anchor[1] as number) + dy;
+        if (x < 0 || y < 0 || x >= width || y >= walled.config.world.height) continue;
+        if (b.composed.structureLayer[y * width + x] !== wallValue) continue;
+        wallCells += 1;
+        const d = Math.max(Math.abs(dx), Math.abs(dy));
+        if (ringR === 0) ringR = d;
+        assert.equal(d, ringR, `wall cell off the ring at ${x},${y}`);
+      }
+    }
+    assert.ok(wallCells > 0, "cityWalls placed no wall cells");
+
+    // Wall cells never sit on corridors, water, or other structures —
+    // and towns never wall (city-only doctrine).
+    const world = loadWorldArtifact(b.artifact as unknown);
+    assert.ok(world.ok);
+    for (const s of b.artifact.settlements.filter((x) => x.kind !== "city")) {
+      for (let dy = -30; dy <= 30; dy += 1) {
+        for (let dx = -30; dx <= 30; dx += 1) {
+          const x = s.anchor[0] + dx;
+          const y = s.anchor[1] + dy;
+          if (x < 0 || y < 0 || x >= width || y >= walled.config.world.height) continue;
+          if (Math.max(Math.abs(x - city.anchor[0]), Math.abs(y - city.anchor[1])) <= ringR) continue;
+          assert.notEqual(
+            b.composed.structureLayer[y * width + x],
+            wallValue,
+            `non-city wall cell at ${x},${y}`,
+          );
+        }
+      }
+    }
+
+    // Any placed gatehouse keeps its arch column walkable (pass cells
+    // [1,4]) and its towers solid.
+    for (const gate of city.structures.filter((st) => st.type === "structure.city_gate")) {
+      const [gx, gy] = gate.cell;
+      assert.ok(world.world.walkableAt(gx + 1, gy), `gate arch blocked at ${gx + 1},${gy}`);
+      assert.ok(world.world.walkableAt(gx + 1, gy + 1), `gate arch blocked at ${gx + 1},${gy + 1}`);
+    }
+
+    // The behavior-47 laws hold: every destination stays reachable from
+    // the first (the compose gate would have thrown; assert directly for
+    // the walled world anyway).
+    const reach = ((): number => {
+      const height = walled.config.world.height;
+      const [sx, sy] = b.artifact.destinations[0]!.cell;
+      const seen = new Uint8Array(width * height);
+      const queue = [sy * width + sx];
+      seen[queue[0] as number] = 1;
+      while (queue.length > 0) {
+        const cell = queue.pop() as number;
+        const cx = cell % width;
+        const cy = (cell - cx) / width;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const nx = cx + dx;
+          const ny = cy + dy;
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+          const next = ny * width + nx;
+          if (seen[next] === 0 && world.world.walkableAt(nx, ny)) {
+            seen[next] = 1;
+            queue.push(next);
+          }
+        }
+      }
+      return b.artifact.destinations.filter((d) => seen[d.cell[1] * width + d.cell[0]] === 1).length;
+    })();
+    assert.equal(reach, b.artifact.destinations.length, "a wall severed a destination");
+
+    // Flag off = byte-identical fabric.
+    const off = compiled({ ...BASE, settlementStyle: { growthPermille: 600, narrowStreets: true } });
+    const plain = generateWorldDetailed(off.normalized, off.config);
+    const withOff = compiled({
+      ...BASE,
+      settlementStyle: { growthPermille: 600, narrowStreets: true, cityWalls: false },
+    });
+    const offB = generateWorldDetailed(withOff.normalized, withOff.config);
+    assert.deepEqual(offB.artifact.settlements, plain.artifact.settlements);
+    assert.deepEqual(offB.composed.structureLayer, plain.composed.structureLayer);
   });
 
   it("dresses lived-in settlements: yards, market extras, lamped lanes (behavior 61)", () => {

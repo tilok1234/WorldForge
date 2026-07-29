@@ -59,6 +59,7 @@ export const STRUCTURE_TYPES = [
   // pass cells [0,1,3,4,5]; only the top-right post blocks) placed on the
   // waterline: bottom row on shore, top row over shallow water.
   "structure.dock",
+  "structure.city_gate",
 ] as const;
 
 export type StructureType = (typeof STRUCTURE_TYPES)[number];
@@ -116,4 +117,5 @@ export const STRUCTURE_FOOTPRINTS: { readonly [key in StructureType]?: readonly 
   "structure.fisher_hut": [2, 2],
   "structure.tent": [2, 2],
   "structure.dock": [3, 2],
+  "structure.city_gate": [3, 2],
 };

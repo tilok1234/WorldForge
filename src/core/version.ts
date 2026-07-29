@@ -471,14 +471,26 @@ export const GENERATOR_VERSION = "0.1.0";
  *     geometry; no new channels. Every world with a smithy, tavern, or
  *     styled city redresses (flagged flood shifts expected; canonical
  *     re-measured).
+ * 62: city walls (settlements.plans 23, compiler 35, resolved-config 29;
+ *     opt-in settlementStyle.cityWalls) — cities raise a stone wall
+ *     circuit at the built core's extent: fortress_wall cells on the
+ *     chebyshev ring (the adapter's wall network renders them), broken
+ *     at water and rivers (the waterfront stays open), never stamping
+ *     over structures or props it cannot clear. Where streets cross the
+ *     line, north/south walls seat a CITY GATE (new structure.city_gate,
+ *     the package's pristine 3x2 gatehouse, arch pass cells [1,4]) and
+ *     east/west walls leave clean two-wide openings (no vertical gate
+ *     art in the package). Every lane, trail, and road crossing opens —
+ *     the behavior-47 no-sever laws outrank the wall. Towns and outposts
+ *     never wall; flag off = byte-identical.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 61;
+export const GENERATOR_BEHAVIOR_VERSION = 62;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
 // exactly the sequential-bump slip the handoff warns about); 34 is behavior
 // 58's urbanBlocks.
-export const RECIPE_COMPILER_VERSION = 34;
+export const RECIPE_COMPILER_VERSION = 35;
 
 /** Versions of the named rule packs consumed by the recipe compiler. */
 export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
@@ -487,7 +499,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 17,
-  "settlements.plans": 22,
+  "settlements.plans": 23,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 12,
