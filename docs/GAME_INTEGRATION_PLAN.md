@@ -158,6 +158,21 @@ must not re-derive walkability from tile art. Proposed encoding:
   rings), and the aprons also reconnect 366 previously-unreachable
   walkable wilderness cells — pack flood 33712 -> 34556 (base 33893
   unchanged; the pack flood may now EXCEED the base loader flood).
+- **The two-wide rule (2026-07-29, designer video verdict "pixel-perfect
+  slalom with hard stops"):** inside settlement interiors (settlement
+  structure footprints dilated by two), a walkable plain-ground passage
+  pinched by BUILT geometry (structures, fences, pack seals — props
+  narrow the width test but do not trigger; tree-weaving is the forest)
+  must belong to a fully-open 2x2 block or it seals, cascaded to
+  fixpoint. Exempt: keepOpen cells (streets, trails and lane bands,
+  piers, fords, moss carpet, landmark interiors) and
+  connectivity-reopened sole corridors (behavior-47 territory — the
+  no-disconnect constraint outranks the width rule). A hard audit gate
+  refuses any export with a surviving non-exempt one-wide passage.
+  Canonical: 123 slalom cells sealed, pack flood 34556 -> 34433, base
+  33893 untouched (no baseline re-record needed), the porosity audit's
+  11-cell count unchanged. Sealed gaps are candidates for blocked-ground
+  dressing when that art lands (sibling of the road-band ask).
 
 ### 3.3a Contract as built (clarifications recorded 2026-07-28, from the
 Phase-4 importer's independent validation)

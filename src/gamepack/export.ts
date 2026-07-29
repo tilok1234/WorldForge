@@ -212,6 +212,91 @@ export function stampStructuresSolid(
 }
 
 /**
+ * The two-wide rule (plan §3.3; designer video verdict "walking past
+ * houses is a pixel-perfect slalom with hard stops"): inside settlement
+ * bounds, a walkable plain-ground passage between solid stamps is either
+ * at least two cells wide along its usable length or fully sealed — no
+ * one-wide staggered teases, ever. A cell passes when it belongs to at
+ * least one fully walkable 2x2 block; failures seal and the sweep repeats
+ * to fixpoint, so a narrowing cascade closes a thread completely instead
+ * of leaving shorter teases. keepOpen cells (streets, trails and lane
+ * bands, piers, fords, moss carpet, landmark interiors) are exempt — they
+ * are designed passages with their own rules — and still count toward
+ * their neighbours' widths. Mutates bits; returns sealed cells in scan
+ * order (deterministic).
+ */
+export function findNarrowThreadCells(
+  bits: Readonly<Uint8Array>,
+  width: number,
+  height: number,
+  bounds: Readonly<Uint8Array>,
+  keepOpen: Readonly<Uint8Array>,
+  stampSolid: Readonly<Uint8Array>,
+): number[] {
+  const wide = (x: number, y: number): boolean => {
+    for (let ay = y - 1; ay <= y; ay += 1) {
+      for (let ax = x - 1; ax <= x; ax += 1) {
+        if (ax < 0 || ay < 0 || ax + 1 >= width || ay + 1 >= height) continue;
+        if (
+          bits[ay * width + ax] === 1 &&
+          bits[ay * width + ax + 1] === 1 &&
+          bits[(ay + 1) * width + ax] === 1 &&
+          bits[(ay + 1) * width + ax + 1] === 1
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+  const narrow: number[] = [];
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = y * width + x;
+      if (bounds[index] !== 1 || bits[index] !== 1 || keepOpen[index] === 1) continue;
+      if (wide(x, y)) continue;
+      // The rule targets gaps between solid STAMPS. A passage pinched by
+      // terrain alone — a mountain notch, a shoreline squeeze — is
+      // behavior-47 territory and keeps its own rules.
+      let stampPinched = false;
+      if (x > 0 && stampSolid[index - 1] === 1) stampPinched = true;
+      if (x < width - 1 && stampSolid[index + 1] === 1) stampPinched = true;
+      if (y > 0 && stampSolid[index - width] === 1) stampPinched = true;
+      if (y < height - 1 && stampSolid[index + width] === 1) stampPinched = true;
+      if (stampPinched) {
+        narrow.push(index);
+      }
+    }
+  }
+  return narrow;
+}
+
+/** Seal every stamp-pinched narrow cell, cascading to fixpoint. Sealed
+ * cells narrow their neighbours in the width test but do NOT become pinch
+ * triggers themselves — otherwise one legitimate seal beside a house
+ * crawls cell by cell through a tree maze and eats the forest. */
+export function sealNarrowThreads(
+  bits: Uint8Array,
+  width: number,
+  height: number,
+  bounds: Readonly<Uint8Array>,
+  keepOpen: Readonly<Uint8Array>,
+  stampSolid: Readonly<Uint8Array>,
+): number[] {
+  const sealed: number[] = [];
+  for (;;) {
+    const narrow = findNarrowThreadCells(bits, width, height, bounds, keepOpen, stampSolid);
+    if (narrow.length === 0) {
+      return sealed;
+    }
+    for (const index of narrow) {
+      bits[index] = 0;
+      sealed.push(index);
+    }
+  }
+}
+
+/**
  * Cells the slit and back-pocket passes must never seal: paved corridor
  * materials (the planner's streets), trail cells, pier decks, walkable
  * water (a river cell is walkable only because it fords or bridges a
@@ -340,6 +425,64 @@ export function buildWalkability(
     keepOpen,
   );
 
+  // The two-wide rule applies inside settlement INTERIORS — the built
+  // fabric, not the whole radius box: cells within two of a SETTLEMENT
+  // structure footprint. Wilderness POI clusters (a homestead among the
+  // trees) and shoreline threads across the box's margin are behavior-47
+  // territory, not streets — weaving between trees is the forest.
+  const settlementBounds = new Uint8Array(width * height);
+  for (const settlement of artifact.settlements) {
+    for (const structure of settlement.structures) {
+      for (let sy = 0; sy < structure.footprint[1]; sy += 1) {
+        for (let sx = 0; sx < structure.footprint[0]; sx += 1) {
+          const x = structure.cell[0] + sx;
+          const y = structure.cell[1] + sy;
+          if (x >= 0 && y >= 0 && x < width && y < height) {
+            settlementBounds[y * width + x] = 1;
+          }
+        }
+      }
+    }
+  }
+  for (let ring = 0; ring < 2; ring += 1) {
+    const grown = settlementBounds.slice();
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const index = y * width + x;
+        if (
+          settlementBounds[index] === 1 ||
+          (x > 0 && settlementBounds[index - 1] === 1) ||
+          (x < width - 1 && settlementBounds[index + 1] === 1) ||
+          (y > 0 && settlementBounds[index - width] === 1) ||
+          (y < height - 1 && settlementBounds[index + width] === 1)
+        ) {
+          grown[index] = 1;
+        }
+      }
+    }
+    settlementBounds.set(grown);
+  }
+  // Pinch triggers: solids that make a gap read as BUILT geometry — the
+  // structure mask, painted structures, fences, and every cell the pack
+  // itself sealed. Props deliberately do NOT trigger (they still narrow
+  // passages in the width test): a thread weaving between trees is the
+  // forest, and a house-tree gap still triggers from the house side.
+  const stampSolid = new Uint8Array(width * height);
+  for (let index = 0; index < width * height; index += 1) {
+    if (mask[index] === 1) stampSolid[index] = 1;
+  }
+  for (const index of [...rectStamped, ...slitStamped]) stampSolid[index] = 1;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = y * width + x;
+      if (bits[index] === 1 || stampSolid[index] === 1) continue;
+      if (world.structureAt(x, y) !== null || world.fenceAt(x, y) !== null) {
+        stampSolid[index] = 1;
+      }
+    }
+  }
+  const threadSealed = sealNarrowThreads(bits, width, height, settlementBounds, keepOpen, stampSolid);
+
   // Spawn: the first destination, nudged to the nearest walkable cell — the
   // same rule the traversal harness uses (consumers/typescript/traverse.mjs),
   // searched on the STAMPED grid so the spawn survives its own pack.
@@ -403,7 +546,12 @@ export function buildWalkability(
     near.set(grown);
   }
 
-  const slitSealed = new Set<number>(slitStamped);
+  const slitSealed = new Set<number>([...slitStamped, ...threadSealed]);
+  // Cells connectivity forces back open are behavior-47 territory by
+  // construction: the sole corridor to a street, lane, trail, or doorstep.
+  // The two-wide audit exempts them — the constraint that sealing must
+  // never disconnect outranks the width rule, and the report names them.
+  const reopened = new Set<number>();
   const pocketSealed: number[] = [];
   let flood = floodFrom(width, height, (index) => bits[index] === 1, spawnIndex);
   for (;;) {
@@ -471,6 +619,7 @@ export function buildWalkability(
           if (slitSealed.has(next)) {
             slitSealed.delete(next);
             bits[next] = 1;
+            reopened.add(next);
             changed += 1;
           }
         }
@@ -499,6 +648,25 @@ export function buildWalkability(
       `structure stamping orphaned ${orphaned} walkable cells beyond the ` +
         `${stampedReachable} it removed; refusing to export a severed world`,
     );
+  }
+
+  // The two-wide audit (hard gate, so the rule never regresses): after
+  // reconciliation, no in-bounds plain-ground passage may survive narrower
+  // than two cells. A connectivity reopen that would recreate a one-wide
+  // tease surfaces here as a refusal instead of shipping.
+  {
+    const survivors = findNarrowThreadCells(bits, width, height, settlementBounds, keepOpen, stampSolid).filter(
+      (index) => !reopened.has(index),
+    );
+    if (survivors.length > 0) {
+      const samples = survivors
+        .slice(0, 5)
+        .map((index) => `(${index % width}, ${(index - (index % width)) / width})`)
+        .join(", ");
+      throw new Error(
+        `two-wide rule violated at ${survivors.length} cells (e.g. ${samples}); refusing to export`,
+      );
+    }
   }
 
   const packed = packBits(bits);

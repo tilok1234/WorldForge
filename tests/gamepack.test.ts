@@ -15,6 +15,7 @@ import { loadWorldArtifact } from "../src/consumers/typescript/loader.js";
 import { resolveToTileForge } from "../src/adapters/tileforge/resolve.js";
 import {
   buildWalkability,
+  findNarrowThreadCells,
   packBits,
   unpackBit,
 } from "../src/gamepack/export.js";
@@ -228,6 +229,76 @@ describe("gamepack walkability", () => {
       if (!unpackBit(packed, index)) stampedReachable += 1;
     }
     assert.equal(baseSeen.size, walkability.floodCount + stampedReachable);
+
+    // The two-wide audit, re-proven from pack bytes alone: inside every
+    // settlement's bounds, no non-exempt walkable passage is narrower
+    // than two cells (the designer's slalom rule; plan §3.3).
+    const packBitsView = new Uint8Array(width * height);
+    for (let index = 0; index < width * height; index += 1) {
+      packBitsView[index] = unpackBit(packed, index) ? 1 : 0;
+    }
+    // Interior bounds: SETTLEMENT structure footprints dilated by two (the
+    // exporter's definition of "settlement interior"; POI structures in
+    // the wilderness stay out).
+    const bounds = new Uint8Array(width * height);
+    for (const settlement of artifact.settlements) {
+      for (const structure of settlement.structures) {
+        for (let sy = 0; sy < structure.footprint[1]; sy += 1) {
+          for (let sx = 0; sx < structure.footprint[0]; sx += 1) {
+            const x = structure.cell[0] + sx;
+            const y = structure.cell[1] + sy;
+            if (x >= 0 && y >= 0 && x < width && y < height) bounds[y * width + x] = 1;
+          }
+        }
+      }
+    }
+    for (let ring = 0; ring < 2; ring += 1) {
+      const grown = bounds.slice();
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const index = y * width + x;
+          if (
+            bounds[index] === 1 ||
+            (x > 0 && bounds[index - 1] === 1) ||
+            (x < width - 1 && bounds[index + 1] === 1) ||
+            (y > 0 && bounds[index - width] === 1) ||
+            (y < height - 1 && bounds[index + width] === 1)
+          ) {
+            grown[index] = 1;
+          }
+        }
+      }
+      bounds.set(grown);
+    }
+    const keepOpenBits = new Uint8Array(width * height);
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        if (keepOpenAt(x, y)) keepOpenBits[y * width + x] = 1;
+      }
+    }
+    // Stamp-solid model mirrors the exporter: placements, fences, blocking
+    // props on open ground, and the pack's own seals (any base-walkable
+    // cell the pack made solid).
+    const stampSolidBits = new Uint8Array(width * height);
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const index = y * width + x;
+        if (packBitsView[index] === 1) continue;
+        if (inRect[index] === 1 || (world.walkableAt(x, y) || mossWalksAt(x, y))) {
+          stampSolidBits[index] = 1;
+          continue;
+        }
+        if (world.structureAt(x, y) !== null || world.fenceAt(x, y) !== null) {
+          stampSolidBits[index] = 1;
+        }
+      }
+    }
+    const survivors = findNarrowThreadCells(packBitsView, width, height, bounds, keepOpenBits, stampSolidBits);
+    assert.deepEqual(
+      survivors.map((index) => `(${index % width},${Math.trunc(index / width)})`),
+      [],
+      "one-wide passages survived inside settlement bounds",
+    );
   });
 });
 
