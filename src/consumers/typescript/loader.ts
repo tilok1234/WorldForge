@@ -138,7 +138,7 @@ const BLOCKED_MATERIALS = new Set<string>([
  * Painted single-cell structures (the fortress gate) have no footprint
  * record and default to cellIndex 0.
  */
-const STRUCTURE_PASS_CELLS: Readonly<Record<string, readonly number[]>> = {
+export const STRUCTURE_PASS_CELLS: Readonly<Record<string, readonly number[]>> = {
   "structure.fortress_gate": [0],
   "structure.cave_mouth": [0, 1],
   "structure.mine_shaft": [2, 3],

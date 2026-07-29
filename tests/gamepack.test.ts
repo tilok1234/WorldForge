@@ -11,14 +11,9 @@ import { normalizeRecipe } from "../src/recipe/normalize.js";
 import { compileRecipe } from "../src/recipe/compile.js";
 import { generateWorldDetailed } from "../src/generation/generate.js";
 import { validateArtifact } from "../src/validation/validateArtifact.js";
-import { loadWorldArtifact } from "../src/consumers/typescript/loader.js";
+import { loadWorldArtifact, STRUCTURE_PASS_CELLS } from "../src/consumers/typescript/loader.js";
 import { resolveToTileForge } from "../src/adapters/tileforge/resolve.js";
-import {
-  buildWalkability,
-  findNarrowThreadCells,
-  packBits,
-  unpackBit,
-} from "../src/gamepack/export.js";
+import { buildWalkability, packBits, unpackBit } from "../src/gamepack/export.js";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const CLI = join(ROOT, "dist", "src", "cli.js");
@@ -60,7 +55,7 @@ describe("gamepack bit packing", () => {
 });
 
 describe("gamepack walkability", () => {
-  it("is the loader grid under the moss ruling and the Phase-A stamp", () => {
+  it("is exactly WYSIWYG: ladder + moss ruling + art-outline stamp, nothing else", () => {
     const { result, mapData } = generatedTiny();
     const walkability = buildWalkability(result.artifact, mapData);
     const loaded = loadWorldArtifact(result.artifact as unknown);
@@ -70,62 +65,41 @@ describe("gamepack walkability", () => {
     assert.equal(walkability.width, width);
     assert.equal(walkability.height, height);
 
-    // Independent stamp model, rebuilt from the artifact rather than the
-    // exporter's helpers: placement footprints (settlement structures and
-    // non-gate POI structures; landmarks and gates excluded) and the street
-    // mask the slit pass must honor.
+    // Independent art-outline model, rebuilt from the artifact records
+    // rather than the exporter's helpers: every placement footprint minus
+    // the type's declared pass cells (the loader's public roster — gate
+    // arches, cave mouths, den and crypt doors, the dock's deck). House
+    // types declare no pass cells, so doors stamp solid with the walls.
+    // Landmarks never stamp (open-air compounds, behavior 47).
     const artifact = result.artifact;
-    const inRect = new Uint8Array(width * height);
-    const addRect = (ox: number, oy: number, w: number, h: number): void => {
+    const solidArt = new Uint8Array(width * height);
+    const addRect = (type: string, ox: number, oy: number, w: number, h: number): void => {
+      const pass = STRUCTURE_PASS_CELLS[type];
       for (let sy = 0; sy < h; sy += 1) {
         for (let sx = 0; sx < w; sx += 1) {
+          if (pass !== undefined && pass.includes(sy * w + sx)) continue;
           if (ox + sx >= 0 && oy + sy >= 0 && ox + sx < width && oy + sy < height) {
-            inRect[(oy + sy) * width + ox + sx] = 1;
+            solidArt[(oy + sy) * width + ox + sx] = 1;
           }
         }
       }
     };
     for (const settlement of artifact.settlements) {
       for (const structure of settlement.structures) {
-        // Pass structures (gates, the harbor dock's deck) keep their
-        // walkable cells in packs — mirror the exporter's exemption.
-        if (structure.type === "structure.dock") continue;
-        addRect(structure.cell[0], structure.cell[1], structure.footprint[0], structure.footprint[1]);
+        addRect(
+          structure.type,
+          structure.cell[0],
+          structure.cell[1],
+          structure.footprint[0],
+          structure.footprint[1],
+        );
       }
     }
     for (const poi of artifact.pois) {
-      if (
-        poi.structure !== undefined &&
-        poi.structure.type !== "structure.ruined_gate" &&
-        poi.structure.type !== "structure.fortress_gate"
-      ) {
-        addRect(poi.structure.x, poi.structure.y, poi.structure.w, poi.structure.h);
+      if (poi.structure !== undefined) {
+        addRect(poi.structure.type, poi.structure.x, poi.structure.y, poi.structure.w, poi.structure.h);
       }
     }
-    const inLandmark = new Uint8Array(width * height);
-    for (const landmark of artifact.landmarks) {
-      for (let sy = 0; sy < landmark.footprint[1]; sy += 1) {
-        for (let sx = 0; sx < landmark.footprint[0]; sx += 1) {
-          const x = landmark.cell[0] + sx;
-          const y = landmark.cell[1] + sy;
-          if (x >= 0 && y >= 0 && x < width && y < height) {
-            inLandmark[y * width + x] = 1;
-          }
-        }
-      }
-    }
-    const keepOpenAt = (x: number, y: number): boolean => {
-      const material = world.materialAt(x, y);
-      return (
-        material === "terrain.packed_road" ||
-        material === "terrain.cobble" ||
-        world.trailAt(x, y) ||
-        world.pierAt(x, y) !== null ||
-        world.riverTierAt(x, y) > 0 ||
-        world.mossAt(x, y) ||
-        inLandmark[y * width + x] === 1
-      );
-    };
     // The moss ruling, independently restated: bare carpet on level-0 rock
     // (the adapter's flat apron) walks; raised or covered moss stays solid.
     const mossWalksAt = (x: number, y: number): boolean =>
@@ -137,54 +111,85 @@ describe("gamepack walkability", () => {
       world.fenceAt(x, y) === null &&
       world.riverTierAt(x, y) === 0;
 
+    // The WYSIWYG equality, cell for cell in BOTH directions (designer
+    // ruling 2026-07-29): the pack walks exactly where the ladder or the
+    // moss ruling walks and no art stamps — no slit seals, no thread
+    // seals, no pocket seals, no exceptions. What you see is where you
+    // can walk.
     const packed = Buffer.from(walkability.grid, "base64");
-    let walkableTotal = 0;
     let stampedCells = 0;
     let mossWalkCells = 0;
     let mossSolidCells = 0;
+    let oneWideGaps = 0;
+    let passOpenings = 0;
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const index = y * width + x;
         const baseWalkable = world.walkableAt(x, y) || mossWalksAt(x, y);
+        const expected = baseWalkable && solidArt[index] === 0;
         const packWalkable = unpackBit(packed, index);
-        if (baseWalkable) walkableTotal += 1;
-
-        // Stamping only ever REMOVES walkability from the moss-adjusted base.
-        if (packWalkable) {
-          assert.ok(baseWalkable, `pack walks where the base blocks at ${x},${y}`);
-        }
-        // Placement footprints are solid, doors and pass cells included.
-        if (inRect[index] === 1) {
-          assert.equal(packWalkable, false, `placement cell ${x},${y} stayed walkable`);
-        }
-        // Level-0 bare moss carpet walks (outside placement footprints).
-        if (mossWalksAt(x, y) && inRect[index] === 0) {
-          assert.equal(packWalkable, true, `flat moss carpet at ${x},${y} does not walk`);
-          mossWalkCells += 1;
-        }
-        // Raised or covered moss stays exactly as the loader has it.
-        if (world.mossAt(x, y) && !mossWalksAt(x, y) && !world.walkableAt(x, y)) {
-          assert.equal(packWalkable, false, `raised/covered moss at ${x},${y} walks`);
-          mossSolidCells += 1;
-        }
-        // Streets, trails, piers, fords, moss, and landmark interiors never
-        // seal outside placement footprints.
-        if (baseWalkable && inRect[index] === 0 && keepOpenAt(x, y)) {
-          assert.equal(packWalkable, true, `protected cell ${x},${y} was sealed`);
-        }
+        assert.equal(
+          packWalkable,
+          expected,
+          `pack ${packWalkable ? "walks" : "blocks"} against the WYSIWYG model at ${x},${y}`,
+        );
         if (baseWalkable && !packWalkable) stampedCells += 1;
+        if (mossWalksAt(x, y) && solidArt[index] === 0) mossWalkCells += 1;
+        if (world.mossAt(x, y) && !mossWalksAt(x, y) && !world.walkableAt(x, y)) mossSolidCells += 1;
+        // The acceptance geometry: a one-wide ground strip between two art
+        // stamps (the grass gap between houses) is LEGAL walking ground.
+        const pinchedEastWest =
+          x > 0 && x < width - 1 && solidArt[index - 1] === 1 && solidArt[index + 1] === 1;
+        const pinchedNorthSouth =
+          y > 0 && y < height - 1 && solidArt[index - width] === 1 && solidArt[index + width] === 1;
+        if (packWalkable && (pinchedEastWest || pinchedNorthSouth)) oneWideGaps += 1;
+        // Reopened dungeon doors: pass-cell openings inside stamped
+        // footprints that the ladder walks are open in the pack.
+        if (packWalkable && !mossWalksAt(x, y)) {
+          const structure = world.structureAt(x, y);
+          if (structure !== null && STRUCTURE_PASS_CELLS[structure] !== undefined) {
+            passOpenings += 1;
+          }
+        }
       }
     }
-    // The fixture actually exercises the stamp and both moss outcomes.
-    assert.ok(stampedCells > 0, "no cells stamped; fixture no longer exercises the stamp");
+    // The fixture exercises every clause: solid houses, both moss
+    // outcomes, the reopened one-wide gaps (the start town's grass
+    // slits), and at least one pass-cell opening (a dungeon or gate
+    // mouth). stampedCells may legitimately be zero — where the painted
+    // structure layer covers a full footprint the ladder already blocks
+    // it, and the stamp only backstops unpainted footprint cells.
+    let houseCellsSolid = 0;
+    for (const settlement of artifact.settlements) {
+      for (const structure of settlement.structures) {
+        if (STRUCTURE_PASS_CELLS[structure.type] !== undefined) continue;
+        for (let fy = 0; fy < structure.footprint[1]; fy += 1) {
+          for (let fx = 0; fx < structure.footprint[0]; fx += 1) {
+            const x = structure.cell[0] + fx;
+            const y = structure.cell[1] + fy;
+            if (x < 0 || y < 0 || x >= width || y >= height) continue;
+            assert.equal(
+              unpackBit(packed, y * width + x),
+              false,
+              `house cell ${x},${y} walks (doors and walls are art-solid)`,
+            );
+            houseCellsSolid += 1;
+          }
+        }
+      }
+    }
+    assert.ok(houseCellsSolid > 0, "fixture has no house footprints to prove solid");
+    assert.ok(stampedCells >= 0);
     assert.ok(mossWalkCells > 0, "fixture has no walking moss carpet");
     assert.ok(mossSolidCells > 0, "fixture has no raised/covered moss");
-    assert.ok(walkability.floodCount > 0);
-    assert.ok(walkability.floodCount <= walkableTotal - stampedCells);
+    assert.ok(oneWideGaps > 0, "fixture has no one-wide inter-house gaps to keep open");
+    assert.ok(passOpenings > 0, "fixture has no walkable pass-cell openings");
 
     // The spawn cell is walkable and the flood from it, recomputed
     // independently over the packed grid, matches the recorded count —
-    // the traverse-harness rule, re-proven from pack bytes alone.
+    // the traverse-harness rule, re-proven from pack bytes alone. Ground
+    // pockets cut off by door stamps stay walkable but outside the flood
+    // (unreachable islands, not seals).
     const [sx, sy] = walkability.spawnCell;
     assert.ok(unpackBit(packed, sy * width + sx));
     const seen = new Set<number>([sy * width + sx]);
@@ -205,103 +210,6 @@ describe("gamepack walkability", () => {
       }
     }
     assert.equal(seen.size, walkability.floodCount);
-
-    // No-orphan arithmetic: from the same spawn, the moss-adjusted base
-    // flood exceeds the pack flood by exactly the stamped cells it could
-    // reach — stamping consumed cells, it never severed a region beyond
-    // them.
-    const baseSeen = new Set<number>([sy * width + sx]);
-    const baseQueue: number[] = [sy * width + sx];
-    for (let head = 0; head < baseQueue.length; head += 1) {
-      const index = baseQueue[head] as number;
-      const x = index % width;
-      const y = (index - x) / width;
-      for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
-        const nx = x + dx;
-        const ny = y + dy;
-        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
-        const next = ny * width + nx;
-        if (!baseSeen.has(next) && (world.walkableAt(nx, ny) || mossWalksAt(nx, ny))) {
-          baseSeen.add(next);
-          baseQueue.push(next);
-        }
-      }
-    }
-    let stampedReachable = 0;
-    for (const index of baseSeen) {
-      if (!unpackBit(packed, index)) stampedReachable += 1;
-    }
-    assert.equal(baseSeen.size, walkability.floodCount + stampedReachable);
-
-    // The two-wide audit, re-proven from pack bytes alone: inside every
-    // settlement's bounds, no non-exempt walkable passage is narrower
-    // than two cells (the designer's slalom rule; plan §3.3).
-    const packBitsView = new Uint8Array(width * height);
-    for (let index = 0; index < width * height; index += 1) {
-      packBitsView[index] = unpackBit(packed, index) ? 1 : 0;
-    }
-    // Interior bounds: SETTLEMENT structure footprints dilated by two (the
-    // exporter's definition of "settlement interior"; POI structures in
-    // the wilderness stay out).
-    const bounds = new Uint8Array(width * height);
-    for (const settlement of artifact.settlements) {
-      for (const structure of settlement.structures) {
-        for (let sy = 0; sy < structure.footprint[1]; sy += 1) {
-          for (let sx = 0; sx < structure.footprint[0]; sx += 1) {
-            const x = structure.cell[0] + sx;
-            const y = structure.cell[1] + sy;
-            if (x >= 0 && y >= 0 && x < width && y < height) bounds[y * width + x] = 1;
-          }
-        }
-      }
-    }
-    for (let ring = 0; ring < 2; ring += 1) {
-      const grown = bounds.slice();
-      for (let y = 0; y < height; y += 1) {
-        for (let x = 0; x < width; x += 1) {
-          const index = y * width + x;
-          if (
-            bounds[index] === 1 ||
-            (x > 0 && bounds[index - 1] === 1) ||
-            (x < width - 1 && bounds[index + 1] === 1) ||
-            (y > 0 && bounds[index - width] === 1) ||
-            (y < height - 1 && bounds[index + width] === 1)
-          ) {
-            grown[index] = 1;
-          }
-        }
-      }
-      bounds.set(grown);
-    }
-    const keepOpenBits = new Uint8Array(width * height);
-    for (let y = 0; y < height; y += 1) {
-      for (let x = 0; x < width; x += 1) {
-        if (keepOpenAt(x, y)) keepOpenBits[y * width + x] = 1;
-      }
-    }
-    // Stamp-solid model mirrors the exporter: placements, fences, blocking
-    // props on open ground, and the pack's own seals (any base-walkable
-    // cell the pack made solid).
-    const stampSolidBits = new Uint8Array(width * height);
-    for (let y = 0; y < height; y += 1) {
-      for (let x = 0; x < width; x += 1) {
-        const index = y * width + x;
-        if (packBitsView[index] === 1) continue;
-        if (inRect[index] === 1 || (world.walkableAt(x, y) || mossWalksAt(x, y))) {
-          stampSolidBits[index] = 1;
-          continue;
-        }
-        if (world.structureAt(x, y) !== null || world.fenceAt(x, y) !== null) {
-          stampSolidBits[index] = 1;
-        }
-      }
-    }
-    const survivors = findNarrowThreadCells(packBitsView, width, height, bounds, keepOpenBits, stampSolidBits);
-    assert.deepEqual(
-      survivors.map((index) => `(${index % width},${Math.trunc(index / width)})`),
-      [],
-      "one-wide passages survived inside settlement bounds",
-    );
   });
 });
 

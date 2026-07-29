@@ -5,7 +5,7 @@
  * importer can trust: the engine-neutral artifact, the TileForge-resolved
  * layers, a precomputed walkability bitgrid — the PUBLIC loader ladder
  * (parity-proven by construction) with the pack-level semantics on top
- * (the moss-walks ruling and the Phase-A structures-solid stamp; see
+ * (the moss-walks ruling and the WYSIWYG art-outline stamp; see
  * buildWalkability and stampStructuresSolid) — a minimap, and a
  * byte-stable manifest naming
  * every file's hash plus the base artifact and adapter identities (the
@@ -21,7 +21,7 @@ import { canonicalJson } from "../core/canonicalJson.js";
 import { sha256HexBytes } from "../core/identity.js";
 import { TILEFORGE_ADAPTER_VERSION } from "../core/version.js";
 import { encodePng } from "../render/png.js";
-import { loadWorldArtifact } from "../consumers/typescript/loader.js";
+import { loadWorldArtifact, STRUCTURE_PASS_CELLS } from "../consumers/typescript/loader.js";
 import type { WorldArtifact } from "../generation/generate.js";
 import type { NormalizedWorldRecipe } from "../recipe/schema.js";
 import type { ValidationReport } from "../validation/validateArtifact.js";
@@ -95,6 +95,7 @@ function floodFrom(
 
 /** An atomic structure placement's footprint, in world cells. */
 export interface PlacementRect {
+  readonly type: string;
   readonly x: number;
   readonly y: number;
   readonly w: number;
@@ -102,31 +103,22 @@ export interface PlacementRect {
 }
 
 /**
- * Pass structures keep their walkable cells in packs: gates are corridor
- * infrastructure (behavior 47's "gates exempt" — sealing one walls off
- * everything behind it), and the harbor dock's deck is a designed walkway
- * like a pier (behavior 60) — sealing it would strand the waterline.
- */
-const PACK_GATE_TYPES = new Set<string>([
-  "structure.ruined_gate",
-  "structure.fortress_gate",
-  "structure.dock",
-]);
-
-/**
- * The placements that stamp solid at pack level: settlement structures and
- * structure-bearing POIs, gates excepted. Landmark stamps are deliberately
- * EXCLUDED — they are open-air compounds whose gates, wall breaches, and
- * interior lanes are validated-reachable playable space (behavior 47 exists
- * to keep them open); sealing them would orphan their interiors. Bridges
- * never appear here (route crossings are not placements) and stay walkable.
+ * The placements whose ART outline stamps solid at pack level: settlement
+ * structures and structure-bearing POIs, every type — a placement's pass
+ * cells (the loader's STRUCTURE_PASS_CELLS: gate arches, cave mouths, den
+ * and crypt doors, the dock's deck) are skipped at stamp time instead of
+ * whole types being skipped, so collision equals the drawn opening exactly.
+ * Landmark stamps are deliberately EXCLUDED — they are open-air compounds
+ * whose gates, wall breaches, and interior lanes are validated-reachable
+ * playable space (behavior 47 exists to keep them open). Bridges never
+ * appear here (route crossings are not placements) and stay walkable.
  */
 export function collectStructureRects(artifact: WorldArtifact): PlacementRect[] {
   const rects: PlacementRect[] = [];
   for (const settlement of artifact.settlements) {
     for (const structure of settlement.structures) {
-      if (PACK_GATE_TYPES.has(structure.type)) continue;
       rects.push({
+        type: structure.type,
         x: structure.cell[0],
         y: structure.cell[1],
         w: structure.footprint[0],
@@ -135,55 +127,51 @@ export function collectStructureRects(artifact: WorldArtifact): PlacementRect[] 
     }
   }
   for (const poi of artifact.pois) {
-    if (poi.structure !== undefined && !PACK_GATE_TYPES.has(poi.structure.type)) {
-      rects.push({ x: poi.structure.x, y: poi.structure.y, w: poi.structure.w, h: poi.structure.h });
+    if (poi.structure !== undefined) {
+      rects.push({
+        type: poi.structure.type,
+        x: poi.structure.x,
+        y: poi.structure.y,
+        w: poi.structure.w,
+        h: poi.structure.h,
+      });
     }
   }
   return rects;
 }
 
 /**
- * Phase-A structures-solid stamping (docs/GAME_INTEGRATION_PLAN.md §3.3):
- * the consuming game has no interiors, so a building's collision must equal
- * its art. Two deterministic passes over the loader-derived grid:
+ * WYSIWYG structure stamping (docs/GAME_INTEGRATION_PLAN.md §3.3, designer
+ * ruling 2026-07-29, screenshot-confirmed): a building's collision equals
+ * its ART OUTLINE — every footprint cell stamps non-walkable EXCEPT the
+ * type's declared pass cells, where the art itself draws an opening or a
+ * walkway (gate arches, cave mouths, den and crypt doors, the stone
+ * circle's gaps, the dock's deck). House types declare no pass cells, so
+ * houses are exactly as solid as they look, doors included.
  *
- * 1. Every cell of every placement footprint goes non-walkable — doors and
- *    pass cells included (cave mouths, dens, the stone circle's gaps): a
- *    0.7-tile player brushing a facade otherwise slides into the sprite.
- * 2. UNPAVED one-cell slits bounded on opposite orthogonal sides by
- *    placement cells close too: the grass/snow columns between terrace
- *    neighbours and the bare lanes behind building rows read as building
- *    interior at gameplay zoom and snag the player. `keepOpen` cells are
- *    EXEMPT — streets (the settlement planner paves the lanes it means as
- *    streets, cobble and packed road, with doors opening onto them),
- *    trails and fords (behavior 47 keeps them open), and every cell
- *    inside a landmark footprint (curated compound interiors whose lanes
- *    are ruined-road band art over bare ground — paving the street mask
- *    cannot see). Sealing those severs real corridors: the tiny fixture's
- *    village loses half the map to one sealed lane, and the canonical
- *    ruined city loses its street grid.
- *
- * Mutates `bits`; returns the flipped cell indexes per pass (row-major
- * ascending — pass order is scan order, so output is deterministic by
- * construction) plus the footprint mask, which the caller's connectivity
- * reconciliation needs. Slit seals are provisional: the caller may reopen
- * one that turns out to be a mountain notch or another sole corridor.
+ * Nothing beyond the art seals. The slit and thread campaigns of the
+ * porosity era are REVERTED by the same ruling: a one-wide grass strip
+ * between two houses renders as ground, so it is legal walking ground —
+ * the player-sprite overdraw that motivated sealing is fixed game-side by
+ * y-sorted structure rendering. Mutates `bits`; returns the flipped cell
+ * indexes in row-major scan order (deterministic by construction) plus the
+ * stamped-solid mask (footprint cells minus pass cells).
  */
 export function stampStructuresSolid(
   bits: Uint8Array,
   width: number,
   height: number,
   rects: readonly PlacementRect[],
-  keepOpen: Readonly<Uint8Array>,
 ): {
   readonly rectStamped: number[];
-  readonly slitStamped: number[];
   readonly mask: Uint8Array;
 } {
   const mask = new Uint8Array(width * height);
   for (const rect of rects) {
+    const pass = STRUCTURE_PASS_CELLS[rect.type];
     for (let sy = 0; sy < rect.h; sy += 1) {
       for (let sx = 0; sx < rect.w; sx += 1) {
+        if (pass !== undefined && pass.includes(sy * rect.w + sx)) continue;
         const x = rect.x + sx;
         const y = rect.y + sy;
         if (x >= 0 && y >= 0 && x < width && y < height) {
@@ -199,175 +187,39 @@ export function stampStructuresSolid(
       rectStamped.push(index);
     }
   }
-  const slitStamped: number[] = [];
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const index = y * width + x;
-      if (bits[index] !== 1 || mask[index] === 1 || keepOpen[index] === 1) continue;
-      const eastWest =
-        x > 0 && x < width - 1 && mask[index - 1] === 1 && mask[index + 1] === 1;
-      const northSouth =
-        y > 0 && y < height - 1 && mask[index - width] === 1 && mask[index + width] === 1;
-      if (eastWest || northSouth) {
-        bits[index] = 0;
-        slitStamped.push(index);
-      }
-    }
-  }
-  return { rectStamped, slitStamped, mask };
+  return { rectStamped, mask };
 }
 
 /**
- * The two-wide rule (plan §3.3; designer video verdict "walking past
- * houses is a pixel-perfect slalom with hard stops"): inside settlement
- * bounds, a walkable plain-ground passage between solid stamps is either
- * at least two cells wide along its usable length or fully sealed — no
- * one-wide staggered teases, ever. A cell passes when it belongs to at
- * least one fully walkable 2x2 block; failures seal and the sweep repeats
- * to fixpoint, so a narrowing cascade closes a thread completely instead
- * of leaving shorter teases. keepOpen cells (streets, trails and lane
- * bands, piers, fords, moss carpet, landmark interiors) are exempt — they
- * are designed passages with their own rules — and still count toward
- * their neighbours' widths. Mutates bits; returns sealed cells in scan
- * order (deterministic).
+ * Named WYSIWYG exceptions: cells where the shipped pack may deliberately
+ * disagree with the what-you-see rule. Every entry is a RECORDED designer
+ * decision with its ruling date — never a silent seal. Empty today, and the
+ * goal is that it stays empty: the whole seal arc ended with the ruling
+ * that what you see is where you can walk.
  */
-export function findNarrowThreadCells(
-  bits: Readonly<Uint8Array>,
-  width: number,
-  height: number,
-  bounds: Readonly<Uint8Array>,
-  keepOpen: Readonly<Uint8Array>,
-  stampSolid: Readonly<Uint8Array>,
-): number[] {
-  const wide = (x: number, y: number): boolean => {
-    for (let ay = y - 1; ay <= y; ay += 1) {
-      for (let ax = x - 1; ax <= x; ax += 1) {
-        if (ax < 0 || ay < 0 || ax + 1 >= width || ay + 1 >= height) continue;
-        if (
-          bits[ay * width + ax] === 1 &&
-          bits[ay * width + ax + 1] === 1 &&
-          bits[(ay + 1) * width + ax] === 1 &&
-          bits[(ay + 1) * width + ax + 1] === 1
-        ) {
-          return true;
-        }
-      }
-    }
-    return false;
-  };
-  const narrow: number[] = [];
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const index = y * width + x;
-      if (bounds[index] !== 1 || bits[index] !== 1 || keepOpen[index] === 1) continue;
-      if (wide(x, y)) continue;
-      // The rule targets gaps between solid STAMPS. A passage pinched by
-      // terrain alone — a mountain notch, a shoreline squeeze — is
-      // behavior-47 territory and keeps its own rules.
-      let stampPinched = false;
-      if (x > 0 && stampSolid[index - 1] === 1) stampPinched = true;
-      if (x < width - 1 && stampSolid[index + 1] === 1) stampPinched = true;
-      if (y > 0 && stampSolid[index - width] === 1) stampPinched = true;
-      if (y < height - 1 && stampSolid[index + width] === 1) stampPinched = true;
-      if (stampPinched) {
-        narrow.push(index);
-      }
-    }
-  }
-  return narrow;
-}
-
-/** Seal every stamp-pinched narrow cell, cascading to fixpoint. Sealed
- * cells narrow their neighbours in the width test but do NOT become pinch
- * triggers themselves — otherwise one legitimate seal beside a house
- * crawls cell by cell through a tree maze and eats the forest. */
-export function sealNarrowThreads(
-  bits: Uint8Array,
-  width: number,
-  height: number,
-  bounds: Readonly<Uint8Array>,
-  keepOpen: Readonly<Uint8Array>,
-  stampSolid: Readonly<Uint8Array>,
-): number[] {
-  const sealed: number[] = [];
-  for (;;) {
-    const narrow = findNarrowThreadCells(bits, width, height, bounds, keepOpen, stampSolid);
-    if (narrow.length === 0) {
-      return sealed;
-    }
-    for (const index of narrow) {
-      bits[index] = 0;
-      sealed.push(index);
-    }
-  }
-}
-
-/**
- * Cells the slit and back-pocket passes must never seal: paved corridor
- * materials (the planner's streets), trail cells, pier decks, walkable
- * water (a river cell is walkable only because it fords or bridges a
- * corridor), moss carpet (readable ground cover — where the moss ruling
- * makes it walkable it must STAY walkable), and landmark-footprint
- * interiors (curated compounds — their lanes are band art over bare
- * ground, invisible to material paving). Mirrors the loader's corridor
- * vocabulary plus the landmark records.
- */
-export function buildKeepOpenMask(
-  world: {
-    readonly dimensions: { readonly width: number; readonly height: number };
-    materialAt(x: number, y: number): string;
-    trailAt(x: number, y: number): boolean;
-    pierAt(x: number, y: number): string | null;
-    riverTierAt(x: number, y: number): number;
-    mossAt(x: number, y: number): boolean;
-  },
-  landmarks: ReadonlyArray<{
-    readonly cell: readonly [number, number];
-    readonly footprint: readonly [number, number];
-  }>,
-): Uint8Array {
-  const { width, height } = world.dimensions;
-  const keepOpen = new Uint8Array(width * height);
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const material = world.materialAt(x, y);
-      if (
-        material === "terrain.packed_road" ||
-        material === "terrain.cobble" ||
-        world.trailAt(x, y) ||
-        world.pierAt(x, y) !== null ||
-        world.riverTierAt(x, y) > 0 ||
-        world.mossAt(x, y)
-      ) {
-        keepOpen[y * width + x] = 1;
-      }
-    }
-  }
-  for (const landmark of landmarks) {
-    for (let sy = 0; sy < landmark.footprint[1]; sy += 1) {
-      for (let sx = 0; sx < landmark.footprint[0]; sx += 1) {
-        const x = landmark.cell[0] + sx;
-        const y = landmark.cell[1] + sy;
-        if (x >= 0 && y >= 0 && x < width && y < height) {
-          keepOpen[y * width + x] = 1;
-        }
-      }
-    }
-  }
-  return keepOpen;
-}
+export const WYSIWYG_EXCEPTIONS: ReadonlyArray<{
+  readonly cell: readonly [number, number];
+  readonly ruling: string;
+}> = [];
 
 /**
  * Derive the walkability grid from the artifact through the PUBLIC loader —
  * the same ladder the parity fixture proves cell-identical to the resolved
  * §3 ladder — then apply the pack-level semantics on top: the moss-walks
- * ruling and the Phase-A structures-solid stamp (see stampStructuresSolid).
- * The packed encoding is verified by re-flooding from the packed bytes. A
- * flood mismatch is a hard failure (plan §3.4, refusal 2), and so is
- * stamping that orphans any walkable region beyond the stamped cells
- * themselves: the flood may shrink by exactly the stamped cells that were
- * reachable, nothing more. A bigger drop means a street or pocket lost its
- * only corridor, and a severed world cannot ship silently.
+ * ruling and the WYSIWYG art-outline stamp (see stampStructuresSolid).
+ * The packed encoding is verified by re-flooding from the packed bytes; a
+ * flood mismatch is a hard failure (plan §3.4, refusal 2).
+ *
+ * The WYSIWYG gate (designer ruling 2026-07-29) audits the result in both
+ * directions against an independent per-cell recomputation: no walkable
+ * cell may render as non-ground (walkable = the ladder's ground semantics,
+ * a declared pass-cell opening, or ruled moss carpet), and no cell that
+ * renders as plain ground may be solid (the only solids on ground are art
+ * footprints). Cells stamping ground solid must appear in
+ * WYSIWYG_EXCEPTIONS with a recorded ruling; anything else refuses the
+ * export. Cut-off ground pockets (a courtyard behind a now-solid door) are
+ * NOT sealed or refused — they render as ground, so they stay walkable,
+ * merely unreachable, exactly like any off-shore island.
  *
  * Moss-walks ruling (2026-07-28, designer-verified in play): flat foliage
  * that blocks movement is an unreadable promise, so bare moss carpet on
@@ -375,8 +227,8 @@ export function buildKeepOpenMask(
  * where a rock mass meets open land with no rendered cliff face — is
  * walkable in the pack. Moss stays solid where anything raised sits on or
  * under it: up the terraced peaks (level >= 1, behind cliff faces), under
- * a blocking prop (trees, boulders), under a structure tile (keeps the
- * porosity audit's 11-cell count exact), or on stream water.
+ * a blocking prop (trees, boulders), under a structure tile, or on stream
+ * water.
  */
 export function buildWalkability(
   artifact: WorldArtifact,
@@ -421,73 +273,7 @@ export function buildWalkability(
     }
   }
 
-  const baseBits = bits.slice();
-  const keepOpen = buildKeepOpenMask(world, artifact.landmarks);
-  const { rectStamped, slitStamped, mask } = stampStructuresSolid(
-    bits,
-    width,
-    height,
-    collectStructureRects(artifact),
-    keepOpen,
-  );
-
-  // The two-wide rule applies inside settlement INTERIORS — the built
-  // fabric, not the whole radius box: cells within two of a SETTLEMENT
-  // structure footprint. Wilderness POI clusters (a homestead among the
-  // trees) and shoreline threads across the box's margin are behavior-47
-  // territory, not streets — weaving between trees is the forest.
-  const settlementBounds = new Uint8Array(width * height);
-  for (const settlement of artifact.settlements) {
-    for (const structure of settlement.structures) {
-      for (let sy = 0; sy < structure.footprint[1]; sy += 1) {
-        for (let sx = 0; sx < structure.footprint[0]; sx += 1) {
-          const x = structure.cell[0] + sx;
-          const y = structure.cell[1] + sy;
-          if (x >= 0 && y >= 0 && x < width && y < height) {
-            settlementBounds[y * width + x] = 1;
-          }
-        }
-      }
-    }
-  }
-  for (let ring = 0; ring < 2; ring += 1) {
-    const grown = settlementBounds.slice();
-    for (let y = 0; y < height; y += 1) {
-      for (let x = 0; x < width; x += 1) {
-        const index = y * width + x;
-        if (
-          settlementBounds[index] === 1 ||
-          (x > 0 && settlementBounds[index - 1] === 1) ||
-          (x < width - 1 && settlementBounds[index + 1] === 1) ||
-          (y > 0 && settlementBounds[index - width] === 1) ||
-          (y < height - 1 && settlementBounds[index + width] === 1)
-        ) {
-          grown[index] = 1;
-        }
-      }
-    }
-    settlementBounds.set(grown);
-  }
-  // Pinch triggers: solids that make a gap read as BUILT geometry — the
-  // structure mask, painted structures, fences, and every cell the pack
-  // itself sealed. Props deliberately do NOT trigger (they still narrow
-  // passages in the width test): a thread weaving between trees is the
-  // forest, and a house-tree gap still triggers from the house side.
-  const stampSolid = new Uint8Array(width * height);
-  for (let index = 0; index < width * height; index += 1) {
-    if (mask[index] === 1) stampSolid[index] = 1;
-  }
-  for (const index of [...rectStamped, ...slitStamped]) stampSolid[index] = 1;
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const index = y * width + x;
-      if (bits[index] === 1 || stampSolid[index] === 1) continue;
-      if (world.structureAt(x, y) !== null || world.fenceAt(x, y) !== null) {
-        stampSolid[index] = 1;
-      }
-    }
-  }
-  const threadSealed = sealNarrowThreads(bits, width, height, settlementBounds, keepOpen, stampSolid);
+  const { mask } = stampStructuresSolid(bits, width, height, collectStructureRects(artifact));
 
   // Spawn: the first destination, nudged to the nearest walkable cell — the
   // same rule the traversal harness uses (consumers/typescript/traverse.mjs),
@@ -512,165 +298,50 @@ export function buildWalkability(
     throw new Error(`no walkable cell within 8 of destination ${start.id}; refusing`);
   }
   const spawnIndex = spawn[1] * width + spawn[0];
+  const flood = floodFrom(width, height, (index) => bits[index] === 1, spawnIndex);
 
-  const baseFlood = floodFrom(width, height, (index) => baseBits[index] === 1, spawnIndex);
-
-  // Connectivity reconciliation: sealing may cut regions off the spawn
-  // component. Each cut-off region is judged whole, per round:
-  //
-  // - Every cell unpaved, off-landmark, and within two cells of a placement
-  //   -> the region is the building block's own back geometry (the lane
-  //   behind a terrace, the nook behind the den that plugs it): SEAL it
-  //   with the rest.
-  // - Anything else (a street, a landmark lane, open ground) -> a real
-  //   corridor was severed. The doorway seals reopen: every provisional
-  //   slit seal orthogonally adjacent to the region is undone — the
-  //   mountain notch between two mine buildings stays open even though the
-  //   same geometry between two cottages seals. Footprint seals are never
-  //   undone ("doors too"); if a region still cannot reconnect, refuse.
-  //
-  // Rounds are set-based (all regions judged, then all changes applied), so
-  // the result is order-free and deterministic. The loop terminates: every
-  // round either resolves all orphans or strictly shrinks the sealed set.
-  const near = mask.slice();
-  for (let ring = 0; ring < 2; ring += 1) {
-    const grown = near.slice();
-    for (let y = 0; y < height; y += 1) {
+  // The WYSIWYG gate (hard, both directions): recompute the expected bit
+  // for every cell from first principles — the public ladder's verdict, the
+  // moss-carpet ruling, and the art-outline mask — and refuse the export on
+  // any disagreement. Direction one, no walkable cell renders as non-ground:
+  // bits may only be 1 where the recomputation walks. Direction two, no
+  // plain-ground render is solid: bits may only be 0 where the art stamps
+  // or the ladder itself blocks; a cell sealed for any OTHER reason must be
+  // a named entry in WYSIWYG_EXCEPTIONS. This is the regression tripwire
+  // for the whole seal arc — any future campaign that flips cells beyond
+  // the art outline fires it immediately.
+  {
+    const exceptions = new Set<number>(
+      WYSIWYG_EXCEPTIONS.map((entry) => entry.cell[1] * width + entry.cell[0]),
+    );
+    const mismatches: number[] = [];
+    for (let y = 0; y < height && mismatches.length < 6; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const index = y * width + x;
-        if (
-          near[index] === 1 ||
-          (x > 0 && near[index - 1] === 1) ||
-          (x < width - 1 && near[index + 1] === 1) ||
-          (y > 0 && near[index - width] === 1) ||
-          (y < height - 1 && near[index + width] === 1)
-        ) {
-          grown[index] = 1;
+        const mossCarpet =
+          world.mossAt(x, y) &&
+          world.materialAt(x, y) === "terrain.rock" &&
+          (mapData.elev[index] as number) === 0 &&
+          world.structureAt(x, y) === null &&
+          world.propAt(x, y) === null &&
+          world.fenceAt(x, y) === null &&
+          world.riverTierAt(x, y) === 0;
+        const expected =
+          (world.walkableAt(x, y) || mossCarpet) && mask[index] !== 1 ? 1 : 0;
+        if ((bits[index] as number) !== expected && !exceptions.has(index)) {
+          mismatches.push(index);
+          if (mismatches.length >= 6) break;
         }
       }
     }
-    near.set(grown);
-  }
-
-  const slitSealed = new Set<number>([...slitStamped, ...threadSealed]);
-  // Cells connectivity forces back open are behavior-47 territory by
-  // construction: the sole corridor to a street, lane, trail, or doorstep.
-  // The two-wide audit exempts them — the constraint that sealing must
-  // never disconnect outranks the width rule, and the report names them.
-  const reopened = new Set<number>();
-  const pocketSealed: number[] = [];
-  let flood = floodFrom(width, height, (index) => bits[index] === 1, spawnIndex);
-  for (;;) {
-    const orphanRegion = new Int32Array(width * height).fill(-1);
-    const regionSealable: boolean[] = [];
-    const regionCells: number[][] = [];
-    for (let index = 0; index < width * height; index += 1) {
-      if (
-        bits[index] !== 1 ||
-        baseFlood.seen[index] !== 1 ||
-        flood.seen[index] === 1 ||
-        orphanRegion[index] !== -1
-      ) {
-        continue;
-      }
-      const region = regionCells.length;
-      const cells: number[] = [index];
-      orphanRegion[index] = region;
-      let sealable = true;
-      for (let head = 0; head < cells.length; head += 1) {
-        const cell = cells[head] as number;
-        if (near[cell] !== 1 || keepOpen[cell] === 1) sealable = false;
-        const x = cell % width;
-        const y = (cell - x) / width;
-        for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
-          const nx = x + dx;
-          const ny = y + dy;
-          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
-          const next = ny * width + nx;
-          if (
-            bits[next] === 1 &&
-            baseFlood.seen[next] === 1 &&
-            flood.seen[next] === 0 &&
-            orphanRegion[next] === -1
-          ) {
-            orphanRegion[next] = region;
-            cells.push(next);
-          }
-        }
-      }
-      regionCells.push(cells);
-      regionSealable.push(sealable);
-    }
-    if (regionCells.length === 0) break;
-
-    let changed = 0;
-    for (let region = 0; region < regionCells.length; region += 1) {
-      const cells = regionCells[region] as number[];
-      if (regionSealable[region] === true) {
-        for (const cell of cells) {
-          bits[cell] = 0;
-          pocketSealed.push(cell);
-          changed += 1;
-        }
-        continue;
-      }
-      for (const cell of cells) {
-        const x = cell % width;
-        const y = (cell - x) / width;
-        for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
-          const nx = x + dx;
-          const ny = y + dy;
-          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
-          const next = ny * width + nx;
-          if (slitSealed.has(next)) {
-            slitSealed.delete(next);
-            bits[next] = 1;
-            reopened.add(next);
-            changed += 1;
-          }
-        }
-      }
-    }
-    if (changed === 0) {
-      const stuck = regionCells.findIndex((_, region) => regionSealable[region] !== true);
-      const sample = (regionCells[stuck === -1 ? 0 : stuck] as number[])[0] as number;
-      throw new Error(
-        `structure stamping cut cells off the spawn component at ` +
-          `(${sample % width}, ${(sample - (sample % width)) / width}) with no slit ` +
-          `seal to reopen; refusing to export a severed world`,
-      );
-    }
-    flood = floodFrom(width, height, (index) => bits[index] === 1, spawnIndex);
-  }
-
-  const stamped = [...rectStamped, ...slitSealed, ...pocketSealed];
-  let stampedReachable = 0;
-  for (const index of stamped) {
-    if (baseFlood.seen[index] === 1) stampedReachable += 1;
-  }
-  const orphaned = baseFlood.count - flood.count - stampedReachable;
-  if (orphaned !== 0) {
-    throw new Error(
-      `structure stamping orphaned ${orphaned} walkable cells beyond the ` +
-        `${stampedReachable} it removed; refusing to export a severed world`,
-    );
-  }
-
-  // The two-wide audit (hard gate, so the rule never regresses): after
-  // reconciliation, no in-bounds plain-ground passage may survive narrower
-  // than two cells. A connectivity reopen that would recreate a one-wide
-  // tease surfaces here as a refusal instead of shipping.
-  {
-    const survivors = findNarrowThreadCells(bits, width, height, settlementBounds, keepOpen, stampSolid).filter(
-      (index) => !reopened.has(index),
-    );
-    if (survivors.length > 0) {
-      const samples = survivors
-        .slice(0, 5)
+    if (mismatches.length > 0) {
+      const samples = mismatches
         .map((index) => `(${index % width}, ${(index - (index % width)) / width})`)
         .join(", ");
       throw new Error(
-        `two-wide rule violated at ${survivors.length} cells (e.g. ${samples}); refusing to export`,
+        `WYSIWYG gate: walkability disagrees with the rendered ground at ${samples}` +
+          ` and possibly more; a cell that renders as ground must walk and a` +
+          ` walkable cell must render as ground — refusing to export`,
       );
     }
   }

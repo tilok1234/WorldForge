@@ -130,49 +130,38 @@ must not re-derive walkability from tile art. Proposed encoding:
 - `floodCount` is the connected-walkable count from `spawnCell` — the same
   number both consumer lanes already report — so an importer can verify the
   grid in one flood fill before trusting it.
-- **Phase-A structures-solid stamp (2026-07-28, porous-collision fix):** on
-  top of the loader ladder, the pack grid seals every settlement and POI
-  structure footprint (doors and pass cells included — the game has no
-  interiors, and a 0.7-tile player brushing a facade slides into the
-  sprite), plus unpaved one-cell slits and back pockets bounded by those
-  footprints. Kept walkable by design: paved streets and trails (the
-  planner's own corridors — sealing them severs worlds), bridges and fords,
-  gate structures (`ruined_gate`/`fortress_gate` — behavior 47's "gates
-  exempt"), and landmark-compound interiors (curated open-air space). A
-  deterministic connectivity reconciliation reopens any slit seal that
-  turns out to be a sole corridor (mountain notches between mine
-  buildings) and refuses to export if stamping would orphan any region.
-  The BASE artifact and both consumer lanes are untouched — `floodCount`
-  in the pack is the stamped grid's flood and therefore smaller than the
-  loader flood on `world.json` (canonical: 33712 packed vs 33893 base).
+- **WYSIWYG walkability (2026-07-29, designer ruling,
+  screenshot-confirmed — SUPERSEDES the seal campaigns):** every cell that
+  renders as plain ground (grass, cobble, dirt, moss carpet, path bands)
+  is WALKABLE, and every walkable cell renders as ground or a designed
+  walkway. On top of the loader ladder the pack applies exactly two
+  adjustments: the moss-walks ruling below, and the art-outline stamp — a
+  structure footprint seals MINUS the type's declared pass cells (the
+  loader's `STRUCTURE_PASS_CELLS`: gate arches, cave mouths, den/crypt
+  doors, mine shafts, the stone circle's gaps, the harbor dock's deck).
+  House types declare no pass cells, so houses are exactly as solid as
+  they look, doors included (the a1304b9 core survives). Nothing else
+  seals: the porosity-era slit/back-pocket seals and the two-wide rule
+  (123 canonical seals) are REVERTED — one-wide grass strips between
+  houses are legal walking ground (cities weave-through, RotMG-style).
+  The player-sprite overdraw that motivated sealing is fixed game-side by
+  y-sorted structure rendering. Ground pockets cut off by door stamps
+  stay walkable but unreachable (islands, not seals) — no connectivity
+  reconciliation exists anymore. A hard WYSIWYG gate refuses any export
+  where walkability disagrees with the rendered ground in either
+  direction; deliberate disagreements must be entries in
+  `WYSIWYG_EXCEPTIONS` (each one a recorded designer ruling — the list
+  ships EMPTY). Canonical: pack flood 34433 -> 34739, base 33893
+  untouched, both consumer lanes untouched.
 - **Moss-walks ruling (2026-07-28, designer-verified in play):** flat
   foliage that blocks is an unreadable promise, so bare moss carpet on
   LEVEL-0 rock (the adapter's cliff quantization: the flat apron where a
   rock mass meets open land, no rendered cliff face) is walkable in the
   pack grid. Moss stays solid up the terraced peaks (level >= 1, behind
   cliff faces — re-checkable later), under blocking props (trees,
-  boulders), under structure tiles (the porosity audit's 11-cell count
-  is unchanged), and on stream water. Moss also joins the keep-open set
-  so the slit pass never re-seals a carpet. Canonical: 626 carpet cells
-  walk (478 join the main region, 148 stay enclave pockets inside rock
-  rings), and the aprons also reconnect 366 previously-unreachable
-  walkable wilderness cells — pack flood 33712 -> 34556 (base 33893
-  unchanged; the pack flood may now EXCEED the base loader flood).
-- **The two-wide rule (2026-07-29, designer video verdict "pixel-perfect
-  slalom with hard stops"):** inside settlement interiors (settlement
-  structure footprints dilated by two), a walkable plain-ground passage
-  pinched by BUILT geometry (structures, fences, pack seals — props
-  narrow the width test but do not trigger; tree-weaving is the forest)
-  must belong to a fully-open 2x2 block or it seals, cascaded to
-  fixpoint. Exempt: keepOpen cells (streets, trails and lane bands,
-  piers, fords, moss carpet, landmark interiors) and
-  connectivity-reopened sole corridors (behavior-47 territory — the
-  no-disconnect constraint outranks the width rule). A hard audit gate
-  refuses any export with a surviving non-exempt one-wide passage.
-  Canonical: 123 slalom cells sealed, pack flood 34556 -> 34433, base
-  33893 untouched (no baseline re-record needed), the porosity audit's
-  11-cell count unchanged. Sealed gaps are candidates for blocked-ground
-  dressing when that art lands (sibling of the road-band ask).
+  boulders), under structure tiles, and on stream water. Canonical: 626
+  carpet cells walk, and the aprons also reconnect previously-unreachable
+  walkable wilderness (the pack flood may EXCEED the base loader flood).
 
 ### 3.3a Contract as built (clarifications recorded 2026-07-28, from the
 Phase-4 importer's independent validation)
@@ -187,11 +176,15 @@ Phase-4 importer's independent validation)
 - `validation-report.json` shape is `{status, errors, warnings}`; a pack
   exports only when status is `pass`, and warnings are legal content (a
   dense world reports hundreds — e.g. decoration-density notices).
-- Under the Phase-A stamp (§3.3), a game-side "no walkable cell carries a
-  structures tile" audit reads 11 legitimate cells on canonical, not 0:
-  9 bridge cells (route crossings render bridge structures and MUST walk)
-  and 2 ruined-city wall breaches (behavior 47 trail entries). An importer
-  auditing for porosity should exempt crossing cells and landmark rects.
+- Under WYSIWYG walkability (§3.3), a game-side "no walkable cell carries
+  a structures tile" audit reads MORE than the seal-era 11 on canonical:
+  the 9 bridge cells and 2 ruined-city wall breaches remain, plus every
+  pass-cell opening of a POI structure (canonical: 36 cells by the
+  artifact structure layer — cave mouths, mine shafts, dens, crypts,
+  gates, the stone circle, the giant skeleton, the ruin temple, the world
+  tree). An importer auditing for porosity should exempt crossing cells,
+  landmark rects, and the loader's `STRUCTURE_PASS_CELLS` — those
+  openings are the art's own doors and walkways, not porosity.
 - Roof-ridge/chimney rows CANNOT move to `props-overhang` WorldForge-side:
   structure layer placement is the pinned package's template contract, and
   the §4 acceptance proves pixel-identity against the package's own
