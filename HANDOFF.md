@@ -61,13 +61,18 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   humble into cottages. See §5 for the lane promise + two-tier
   entrance check this required.
 
-Versions: behavior **60** (harbor docks), recipe compiler **34**,
+Versions: behavior **61** (lived-in dressing), recipe compiler **34**,
 resolved-config **28**, artifact format 8, TileForge adapter 7,
-packFormat 1, settlements.plans 22. **229 tests, all green on this
-machine** (20 in tests/settlementStyle.test.ts). Everything pushed
-through commit `91d1fa9` (WYSIWYG walkability). Standing commit+push
+packFormat 1, settlements.plans 22, decoration.props 12. **230 tests,
+all green on this machine** (21 in tests/settlementStyle.test.ts).
+Everything pushed through commit `db9e113`. Standing commit+push
 authorization (memory) — re-confirm per policy; visual verdicts always
-user-gated.
+user-gated. THE SCENERY LOOP IS THE ACTIVE ARC: the pack assessment +
+composition catalog live at docs/SCENERY_COMPOSITIONS.md (28 ideas,
+per-composition placement doctrine recorded as each ships); the
+designer is doing a parallel pass and merges into §3/§4. Batch 2
+candidates: city walls + gates (the loaded lever), harbor row,
+chicken run / vineyard.
 
 ## 2. The world library (fixtures/recipes/, galleries outputs/gallery/)
 
@@ -157,9 +162,22 @@ gate. ALL APPROVED except one:
   RE-BASELINE (canonical: 36 walkable structure-layer cells, all
   pass openings, plus their 9 bridges + 2 breaches). Acceptance =
   the designer walks the screenshot grass strip between the two
-  houses, straight down, no stops. Eight-holds regenerated at
-  outputs/gallery/the-eight-holds (viewer-ready). AWAITING THE
-  DESIGNER (round 12).
+  houses, straight down, no stops. ROUND 12 RULED "yep very nice"
+  (docks ratified); the loop moved on to scenery compositions.
+- LIVED-IN DRESSING (behavior 61, round 13, commit `db9e113`; batch 1
+  of docs/SCENERY_COMPOSITIONS.md): nine furniture species roster in
+  (lamp/barrels/bench/noticeboard/table_chairs/anvil/workbench/
+  laundry_line/baskets, all blocking). Smithy + tavern YARDS dress
+  their perimeters (clockwise ring from past the entrance, doorway
+  kept clear; default-on), market quarters gain frame-corner extras
+  (rides urbanBlocks), city-lane bands seat spaced LAMPS (CITY_LANE
+  only — trails never lamp, style-free untouched; cities 10 / towns 4
+  / outposts dark). All offsets deterministic, no new channels.
+  Canonical 33893 -> 33795 (flagged, -98 furniture cells); eight-holds
+  round 13 flood 182939, 9/9, Godot 0 errors, 66 lamps; dusk pack
+  re-exported flood 34641. The dusk LOOK lands: glowing lamp rows in
+  the snow. Regenerated at outputs/gallery/the-eight-holds
+  (viewer-ready). AWAITING THE DESIGNER (round 13).
 - Approved small archetypes (9): frontier-sparse, warm-vale,
   highland-fastness, sunburnt-reach, weeping-marsh, drowned-shore,
   the-old-war, the-long-winter, hearth-hollow. Tiny hollows (3):
@@ -311,16 +329,18 @@ discipline (§5 identity rule).
   pack in 0.57 s, independently reproduces the flood; contract-as-built
   clarifications in plan §3.3a). Rendering half deferred post-Gate-1.
 - Dusk game pack at `outputs/game-packs/small-cold-coastal-pack-dusk/`
-  RE-EXPORTED 2026-07-29 under the behavior-60 + WYSIWYG identity —
+  RE-EXPORTED 2026-07-29 under the behavior-61 + WYSIWYG identity —
   READY FOR HANDOVER to `assets/worldforge-packs/`. WYSIWYG semantics
   (plan §3.3): art-outline stamp (footprints minus pass cells; house
   doors solid), level-0 moss carpet walks, NOTHING else seals — slits,
-  pockets, and the two-wide seals all reopened. Pack flood **34739**
-  (base 33893, spawn (240,125)); porosity audits re-baseline per plan
-  §3.3a (canonical: 36 walkable structure-layer cells = pass-cell
-  openings; bridges/breaches under their own classification). The
-  game re-runs its intake battery; acceptance = the designer walks
-  the screenshot grass strip between the two houses.
+  pockets, and the two-wide seals all reopened. Pack flood **34641**
+  (base 33795 at b61; the WYSIWYG-only flood was 34739 before the
+  lived-in furniture claimed 98 ground cells; spawn (240,125));
+  porosity audits re-baseline per plan §3.3a (canonical: 36 walkable
+  structure-layer cells = pass-cell openings; bridges/breaches under
+  their own classification). The game re-runs its intake battery;
+  acceptance = the designer walks the screenshot grass strip between
+  the two houses.
 - Phase 5 slice-zone drafting: fully unblocked; needs the user's
   creative direction.
 
