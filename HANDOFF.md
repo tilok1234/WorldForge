@@ -1,14 +1,20 @@
-# WorldForge — session handoff (2026-07-29, scenery loop mid-arc, round 15 out)
+# WorldForge — session handoff (2026-07-29, scenery loop mid-arc, round 16 out)
 
 > **RESUME HERE.** The scenery-composition loop is the active arc.
-> Batch 3 = **HARBOR ROW, behavior 63, commit `68d66c7` — round 15
-> RULED "it looks very good"** (2026-07-29). Four consecutive
-> positive rounds (12-15). The next move is the **batch-4 pick**
-> from docs/SCENERY_COMPOSITIONS.md (remaining leaders: chicken run
-> / vineyard, logging camp, battlefield blood, manor garden) — or
-> the designer's own parallel pack-assessment notes merged into
-> catalog §3/§4, still outstanding. Nothing is half-implemented;
-> every behavior through 63 is committed, pushed, and tested.
+> Batch 4 = **CHICKEN RUN + VINEYARD, behavior 64, commit `7503b5a`,
+> round 16 SENT — verdict pending.** Batch 3 (harbor row, b63) RULED
+> "it looks very good"; rounds 12-15 all positive. After the
+> round-16 verdict: the **batch-5 pick** from
+> docs/SCENERY_COMPOSITIONS.md (remaining leaders: manor garden,
+> logging camp, battlefield blood, the waterfront set — boardwalk /
+> seawall / lighthouse point / shipwreck cove — windmill hill,
+> orchard) — or the designer's parallel pack-assessment notes merged
+> into catalog §3/§4, still outstanding. NOTE: farming settlements
+> only spawn inland with ≥45% grass — canonical, eight-holds, and
+> small warm-vale have NONE; the farm worlds are warm-vale-large (8),
+> the-broken-isles (7), dust-sea, the-old-war-medium/-large,
+> weeping-marsh, the-eight-lands. Nothing is half-implemented; every
+> behavior through 64 is committed, pushed, and tested.
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
@@ -71,11 +77,12 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   humble into cottages. See §5 for the lane promise + two-tier
   entrance check this required.
 
-Versions: behavior **63** (harbor row), recipe compiler **35**,
-resolved-config **29**, artifact format 8, TileForge adapter 7,
-packFormat 1, settlements.plans 24, decoration.props 13. **232 tests,
-all green on this machine** (24 in tests/settlementStyle.test.ts).
-Everything pushed through commit `68d66c7`. Standing commit+push
+Versions: behavior **64** (chicken run + vineyard), recipe compiler
+**35**, resolved-config **29**, artifact format 8, TileForge adapter 7,
+packFormat 1, settlements.plans 25, decoration.props 14. **233 tests,
+all green on this machine** (24 in tests/settlementStyle.test.ts; the
+b64 pen/grapes test rides tests/settlements.test.ts on a synthetic
+plain). Everything pushed through commit `7503b5a`. Standing commit+push
 authorization (memory) — re-confirm per policy; visual verdicts always
 user-gated. THE SCENERY LOOP IS THE ACTIVE ARC: the pack assessment +
 composition catalog live at docs/SCENERY_COMPOSITIONS.md (28 ideas,
@@ -219,6 +226,15 @@ gate. ALL APPROVED except one:
   **182839** (−5 = the new blocking shore clutter), 9/9, Godot 0.
   New test pins the seed-2 fixture (city dock dressed + wood AND
   jetty piers in one world). ROUND 15 RULED "it looks very good".
+- CHICKEN RUN + VINEYARD (behavior 64, round 16, commit `7503b5a`;
+  batch 4): farming settlements pen a 3x2 chicken run (coop + trough,
+  gate faces the farm; strict fit — weeping-marsh's cramped farm goes
+  without, by design); grapes join the crop roll at temperature
+  offset >= +40 and ring in plain wood. Showcases: dust-sea farmstead
+  (vineyard + run + pumpkin plot in one frame, full 32px render),
+  warm-vale-large (8 runs, 79 grape cells, floods 646392 equal, Godot
+  0). Canonical AND eight-holds byte-invariant (no farming
+  settlements — see the RESUME note). VERDICT PENDING.
 - Approved small archetypes (9): frontier-sparse, warm-vale,
   highland-fastness, sunburnt-reach, weeping-marsh, drowned-shore,
   the-old-war, the-long-winter, hearth-hollow. Tiny hollows (3):
@@ -337,13 +353,14 @@ discipline (§5 identity rule).
 ## 6. Open items
 
 **User-gated:**
-- **BATCH-4 PICK** — the resume point (round 15 ruled positive).
-  From docs/SCENERY_COMPOSITIONS.md —
-  remaining leaders: chicken run / vineyard (farm extensions; grapes
-  crop is unused art), logging camp, battlefield blood decal, manor
-  garden (hedge + topiary + sundial). The designer's own parallel
-  pack-assessment pass is also outstanding — it merges into catalog
-  §3/§4.
+- **ROUND-16 VERDICT (chicken run + vineyard, behavior 64)** — the
+  resume point. After it: the **batch-5 pick** from
+  docs/SCENERY_COMPOSITIONS.md — remaining leaders: manor garden
+  (hedge + topiary + sundial), logging camp, battlefield blood
+  decal, the waterfront set (boardwalk / seawall / lighthouse point
+  / shipwreck cove), windmill hill, orchard. The designer's own
+  parallel pack-assessment pass is also outstanding — it merges into
+  catalog §3/§4.
 - ~~Slit-seal vs flat-green readability collision~~ **RESOLVED by the
   WYSIWYG ruling (2026-07-29, §2):** the designer ruled for flat-green
   — every ground-rendering cell reopened; the sprite-overdraw bug the
