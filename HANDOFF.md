@@ -1,4 +1,15 @@
-# WorldForge — session handoff (updated 2026-07-29: docks + WYSIWYG walkability)
+# WorldForge — session handoff (2026-07-29, account switch #7, scenery loop mid-arc)
+
+> **RESUME HERE.** The scenery-composition loop is the active arc and
+> it is MID-STRIDE: rounds 12/13/14 (docks, lived-in dressing, city
+> walls) all RULED positive — the last words were "looks much better
+> now!" on the walls. The next move is the designer's **batch-3 pick**
+> from docs/SCENERY_COMPOSITIONS.md (leading candidates: harbor row
+> around the b60 docks, chicken run / vineyard, logging camp,
+> battlefield blood decal) — or their own parallel pack-assessment
+> notes merged into catalog §3/§4, which they said they would do.
+> Nothing is half-implemented; every behavior through 62 is committed,
+> pushed, tested, and verdict-ratified.
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
@@ -194,7 +205,13 @@ gate. ALL APPROVED except one:
   3-wide window); score radii BY fittable gates. Round 14 flood
   182844, 9/9, Godot 0; harbor city N+S gates, crossing city S gate.
   Regenerated at outputs/gallery/the-eight-holds (viewer-ready).
-  AWAITING THE DESIGNER (round 14).
+  ROUND 14 RULED "looks much better now!" — walls ratified; the
+  crossing city's more fragmentary wall (lake breaks, house-plugged
+  ring cells) passed without comment. NOTE: the eight-holds has now
+  taken THREE consecutive positive verdicts (12/13/14) but no formal
+  approve-recipe baseline — deliberate: the scenery loop keeps
+  changing its recipeSha (b62 opted it into cityWalls). Record the
+  baseline only when the designer calls the world DONE.
 - Approved small archetypes (9): frontier-sparse, warm-vale,
   highland-fastness, sunburnt-reach, weeping-marsh, drowned-shore,
   the-old-war, the-long-winter, hearth-hollow. Tiny hollows (3):
@@ -313,9 +330,15 @@ discipline (§5 identity rule).
 ## 6. Open items
 
 **User-gated:**
-- **the-eight-holds round-12 verdict** (§2) — the settlement-style +
-  docks showcase is regenerated, verified on both consumers, and
-  viewer-ready. The one open visual.
+- **BATCH-3 PICK for the scenery loop** (the resume point): rounds
+  12-14 all ruled positive, nothing awaits a verdict. The designer
+  chooses the next composition batch from
+  docs/SCENERY_COMPOSITIONS.md — leading candidates: harbor row
+  (fishingboat/bollard/crates/jetty around the b60 docks), chicken
+  run / vineyard (farm extensions; grapes crop is unused art),
+  logging camp, battlefield blood decal. Their own parallel
+  pack-assessment pass is also outstanding — it merges into catalog
+  §3/§4.
 - ~~Slit-seal vs flat-green readability collision~~ **RESOLVED by the
   WYSIWYG ruling (2026-07-29, §2):** the designer ruled for flat-green
   — every ground-rendering cell reopened; the sprite-overdraw bug the
