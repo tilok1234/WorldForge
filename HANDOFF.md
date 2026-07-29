@@ -1,4 +1,4 @@
-# WorldForge — session handoff (2026-07-28, account switch #6, MERGED)
+# WorldForge — session handoff (updated 2026-07-29: docks + WYSIWYG walkability)
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
@@ -36,10 +36,11 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   organic small maps + library refresh (ratified under 42), zone
   composition (zones vocabulary, hard wandering seams, anchor
   territories, zone elevation).
-- PC arcs (2026-07-28): DUSK RE-PIN (§3), behavior 47 "trails stay
+- PC arcs (2026-07-28/29): DUSK RE-PIN (§3), behavior 47 "trails stay
   open" (§5 — three sever fixes + the loader reachability gate),
-  behavior 48 zone settlement floors (§4), PACK LANE `a1304b9` Phase-A
-  structures-solid stamp + `cbf11a9` moss-walks ruling (§5/§6 — pack
+  behavior 48 zone settlement floors (§4), PACK LANE — `a1304b9`
+  Phase-A stamp + `cbf11a9` moss-walks ruling, both now folded into
+  the 2026-07-29 WYSIWYG ruling `91d1fa9` (§2/§5/§6 — pack
   walkability semantics; base artifact untouched).
 - SETTLEMENT-STYLE arc (2026-07-28, remote session, merged `ae924e3`):
   behavior 49 settlement organics + variety — opt-in recipe
@@ -60,12 +61,13 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   humble into cottages. See §5 for the lane promise + two-tier
   entrance check this required.
 
-Versions: behavior **59**, recipe compiler **34**, resolved-config
-**28**, artifact format 8, TileForge adapter 7, packFormat 1.
-**228 tests, all green on this machine** (19 in
-tests/settlementStyle.test.ts). Everything pushed through the merge +
-this handoff. Standing commit+push authorization (memory) — re-confirm
-per policy; visual verdicts always user-gated.
+Versions: behavior **60** (harbor docks), recipe compiler **34**,
+resolved-config **28**, artifact format 8, TileForge adapter 7,
+packFormat 1, settlements.plans 22. **229 tests, all green on this
+machine** (20 in tests/settlementStyle.test.ts). Everything pushed
+through commit `91d1fa9` (WYSIWYG walkability). Standing commit+push
+authorization (memory) — re-confirm per policy; visual verdicts always
+user-gated.
 
 ## 2. The world library (fixtures/recipes/, galleries outputs/gallery/)
 
@@ -116,25 +118,48 @@ gate. ALL APPROVED except one:
   sequence chapel stands down; greens w/ birch + flower beds). Cities
   market+church+2 greens, towns market+church. Furniture verifies its
   lane (double budget) and rolls back; an unconnectable square
-  UNCLAIMS (no dead patches). Round 11 flood 183185. OPEN LEVER: city
-  WALLS + gates (package wall families; b47 machinery ready).
-- TWO-WIDE RULE (2026-07-29, game-side video finding): pack-level seal
-  of 1-wide staggered passages in settlement interiors (settlement
-  structure footprints dilated 2; BUILT-geometry pinch triggers —
-  props narrow widths but never trigger, tree-weaving is the forest;
-  keepOpen + reconciliation-reopened sole corridors exempt; hard
-  audit gate in the exporter + regression test in
-  tests/gamepack.test.ts). Pack flood 34556 -> 34433 (123 slalom
-  cells sealed); base 33893 untouched, no baseline re-record;
-  porosity audit still exactly 11. Pack-lane change per plan §3.3 —
-  NO generator behavior bump. Dusk pack re-exported; the game re-runs
-  its intake battery; acceptance = the designer walks the (94,128)
-  city street from the video without a dead stop. Sealed gaps are
-  blocked-ground dressing candidates when that art lands. Round-6 sheet adds a 16px/cell city close-up
-  — at map zoom dusk MUD reads like cobble; check the close-up before
-  judging paving. Regenerated at
-  outputs/gallery/the-eight-holds (viewer-ready); the remote session's
-  verdict sheet used adaptive per-hold crops. AWAITING THE DESIGNER.
+  UNCLAIMS (no dead patches). Round 11 flood 183185. v60 HARBOR DOCKS
+  (round 12, commit `9d5e858`, the behavior-49 deferral un-deferred):
+  harbor settlements place waterfront docks — 3x2 boathouse (dusk
+  "dock" family, hoist on the roof), deck row over ANY water kind
+  (shallow band is often one cell), shore row fronting a carved lane;
+  cities budget 2, towns 1, manhattan >= 6 spacing, full rollback when
+  the lane cannot connect. Placement runs BEFORE the quarters (squares
+  must not claim the waterline) and the lane budget is
+  max(approachBudget*2, radius*4) — the flat budget exhausted 40 cells
+  short of the shore and placed ZERO docks on the first cut (the BFS
+  pop cap maxLength*8 must cover the rim). structure.dock: pass cells
+  [0,1,3,4,5] (top-right hoist post blocks), STRUCTURE_TYPES append,
+  adapter name "dock", settlements.plans 22. Eight-holds round 12
+  flood **183201**, two docks at (467,224)/(451,211), 9/9, Godot
+  tileset 0 errors; canonical 33893 invariant (variety-free = no
+  docks). OPEN LEVER: city WALLS + gates (package wall families; b47
+  machinery ready).
+- WYSIWYG WALKABILITY (2026-07-29, designer ruling,
+  screenshot-confirmed; commit `91d1fa9` — SUPERSEDES the two-wide
+  rule AND the slit-seal campaigns): every cell rendering as plain
+  ground (grass, cobble, dirt, moss carpet, path bands) WALKS in the
+  pack; every walkable cell renders as ground or a designed walkway.
+  KEPT: the a1304b9 art-outline core — footprints stamp solid MINUS
+  the type's pass cells (loader STRUCTURE_PASS_CELLS, now exported);
+  houses have no pass cells so doors stay solid. REVERTED: slit +
+  back-pocket seals, connectivity reconciliation, the two-wide rule
+  and its audit (123 canonical seals reopened; sealed POI entrances —
+  cave mouths, dens, crypts, mine shafts — have doors again). Cut-off
+  ground pockets stay walkable-but-unreachable (islands, not seals).
+  NEW hard gate: pack bits must equal the WYSIWYG recompute BOTH
+  directions; deliberate deviations live in WYSIWYG_EXCEPTIONS (each
+  entry a recorded designer ruling; ships EMPTY). Context: the sprite
+  overdraw that motivated sealing is fixed game-side via y-sorted
+  rendering — not our problem anymore. Dusk pack flood 34433 ->
+  **34739**, spawn (240,125); 481 one-wide inter-house strips walk
+  (474 reachable, 7 courtyard islands); game porosity audits
+  RE-BASELINE (canonical: 36 walkable structure-layer cells, all
+  pass openings, plus their 9 bridges + 2 breaches). Acceptance =
+  the designer walks the screenshot grass strip between the two
+  houses, straight down, no stops. Eight-holds regenerated at
+  outputs/gallery/the-eight-holds (viewer-ready). AWAITING THE
+  DESIGNER (round 12).
 - Approved small archetypes (9): frontier-sparse, warm-vale,
   highland-fastness, sunburnt-reach, weeping-marsh, drowned-shore,
   the-old-war, the-long-winter, hearth-hollow. Tiny hollows (3):
@@ -203,17 +228,17 @@ discipline (§5 identity rule).
   corridor-only flood reads them as islands; the first styled
   generation refused exactly three such doorsteps before the tier
   existed — no road never means no route).
-- **Pack walkability is NO LONGER the raw loader grid** (plan §3.3):
-  `buildWalkability` = loader ladder + moss-walks ruling + Phase-A
-  structures-solid stamp. Naive slit sealing severs worlds — 1-wide
-  UNPAVED gaps between buildings are sometimes real corridors (tiny
-  lost half its map to one sealed village lane; canonical's mountain
-  notches thread between mine buildings; the ruined city's streets
-  are band art over bare ground, invisible to material checks).
-  Hence: street/trail/pier/ford/moss guard + landmark-interior
-  exemption + gate-type exemption + the connectivity reconciliation
-  loop (seal → find orphans → pocket-seal building-hugging nooks ≤2
-  cells out / reopen sole-corridor slits / refuse anything else).
+- **Pack walkability is NO LONGER the raw loader grid** (plan §3.3,
+  WYSIWYG era): `buildWalkability` = loader ladder + moss-walks
+  ruling + art-outline stamp (footprints minus pass cells), and
+  NOTHING else — the slit/pocket/thread seal machinery and its
+  connectivity reconciliation are GONE (2026-07-29 ruling; the
+  history of why sealing kept severing worlds lives in git and plan
+  §3.3). The WYSIWYG gate refuses any export where pack bits diverge
+  from that recompute in either direction; add a deliberate deviation
+  ONLY as a WYSIWYG_EXCEPTIONS entry carrying its designer ruling.
+  Do NOT reintroduce seal campaigns — that whole arc ended with
+  "what you see is where you can walk."
   Pack parity = "loader grid + moss − stamp", proven by
   tests/gamepack.test.ts; base ladder and both consumer lanes
   untouched (canonical 33893 invariant).
@@ -253,23 +278,21 @@ discipline (§5 identity rule).
 ## 6. Open items
 
 **User-gated:**
-- **the-eight-holds round-3 verdict** (§2) — the settlement-style
-  showcase is regenerated, verified on both consumers, and
+- **the-eight-holds round-12 verdict** (§2) — the settlement-style +
+  docks showcase is regenerated, verified on both consumers, and
   viewer-ready. The one open visual.
-- **Slit-seal vs flat-green readability COLLISION** (needs a designer
-  ruling): the annotated inter-house gaps in the start town (region
-  208-248 x 126-148) contain ZERO moss — they are the 13 grass-like
-  slit cells the Phase-A stamp sealed, i.e. the porous-collision fix
-  and "flat green must walk" want opposite things on those exact
-  cells. Options: keep seals (current state) / reopen flat-green
-  slits (one-line keep-open change, sprite bug returns) / TileForge
-  blocked-ground dressing art (fixes both, upstream task).
+- ~~Slit-seal vs flat-green readability collision~~ **RESOLVED by the
+  WYSIWYG ruling (2026-07-29, §2):** the designer ruled for flat-green
+  — every ground-rendering cell reopened; the sprite-overdraw bug the
+  seals worked around is fixed game-side by y-sorted rendering.
 - **TileForge upstream asks (user-side, per AGENTS.md), recorded:**
   chapel (2×3) is the only church-type art — larger temple/church
   needs a new package structure; roof-ridge/chimney occlusion needs a
   per-cell overhang-row template field (plan §3.3a); optional live
-  ruined-road band (§3 upgrade path); dock structure with pass cells
-  (behavior-49 deferral).
+  ruined-road band (§3 upgrade path); improved road-band art
+  (designer-planned; plain re-pin when it ships); OPTIONAL open-plank
+  pier variant for the dock (behavior 60 ships the boathouse art —
+  reads fine, but the designer may want a walk-out pier later).
 - Windowed Godot playthrough; taste-polish round; fen swamp-margin
   widening (walkability care needed).
 
@@ -288,14 +311,16 @@ discipline (§5 identity rule).
   pack in 0.57 s, independently reproduces the flood; contract-as-built
   clarifications in plan §3.3a). Rendering half deferred post-Gate-1.
 - Dusk game pack at `outputs/game-packs/small-cold-coastal-pack-dusk/`
-  RE-EXPORTED post-merge under the v50 identity — READY FOR HANDOVER
-  to `assets/worldforge-packs/`. Phase-A stamp + moss ruling
-  (plan §3.3): footprints seal doors-too, unpaved slits/pockets
-  close, level-0 moss carpet walks (626 cells; 148 enclaves; +366
-  reconnected wilderness cells). Pack flood **34556** (base 33893);
-  porosity audits read 11 walkable structure tiles, not 0 (9 bridges
-  + 2 ruined-city breaches — legitimate, plan §3.3a); byte-stable
-  double export re-proven post-merge.
+  RE-EXPORTED 2026-07-29 under the behavior-60 + WYSIWYG identity —
+  READY FOR HANDOVER to `assets/worldforge-packs/`. WYSIWYG semantics
+  (plan §3.3): art-outline stamp (footprints minus pass cells; house
+  doors solid), level-0 moss carpet walks, NOTHING else seals — slits,
+  pockets, and the two-wide seals all reopened. Pack flood **34739**
+  (base 33893, spawn (240,125)); porosity audits re-baseline per plan
+  §3.3a (canonical: 36 walkable structure-layer cells = pass-cell
+  openings; bridges/breaches under their own classification). The
+  game re-runs its intake battery; acceptance = the designer walks
+  the screenshot grass strip between the two houses.
 - Phase 5 slice-zone drafting: fully unblocked; needs the user's
   creative direction.
 
