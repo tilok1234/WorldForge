@@ -16,18 +16,37 @@ import type { ResolvedWorldConfig } from "../recipe/compile.js";
 import type { SettlementPlan } from "./settlements.js";
 
 /** Crop layer: 0 = none, else cropTypeIndex * 16 + stage (stage 1-4). */
-export const CROP_TYPES = ["crop.wheat", "crop.pumpkin", "crop.corn"] as const;
+// Grapes (behavior 64) only join the roll in warm country — see
+// GRAPES_MIN_TEMPERATURE below; colder worlds keep the pre-64 pool and
+// their exact rolls.
+export const CROP_TYPES = ["crop.wheat", "crop.pumpkin", "crop.corn", "crop.grapes"] as const;
 /** Fence layer: 0 = none, else 1-based index into FENCE_TYPES. */
-export const FENCE_TYPES = ["fence.pen", "fence.iron"] as const;
+// fence.wood (behavior 64): the plain wooden fence vineyards ring.
+export const FENCE_TYPES = ["fence.pen", "fence.iron", "fence.wood"] as const;
+
+/**
+ * Vineyards want sun: the world's temperature offset (climate base +
+ * author bias) must reach warm-vale's +40 before grapes join the crop
+ * roll. Neutral temperate and colder worlds roll the pre-64 pool
+ * byte-identically.
+ */
+const GRAPES_MIN_TEMPERATURE = 40;
 /** Pier layer: 0 = none, else 1-based index into PIER_TYPES. */
 // Harbor row (behavior 63): city harbors build in stone — the package's
 // jetty family; towns and outposts keep the wooden pier.
 export const PIER_TYPES = ["pier.pier", "pier.jetty"] as const;
 
+/** A placed chicken run (behavior 64): decoration seats the furniture. */
+export interface PenPlan {
+  readonly coop: readonly [number, number];
+  readonly trough: readonly [number, number];
+}
+
 export interface FarmResult {
   readonly cropLayer: Uint8Array;
   readonly fenceLayer: Uint8Array;
   readonly pierLayer: Uint8Array;
+  readonly pens: readonly PenPlan[];
   readonly cropCells: number;
   readonly fenceCells: number;
   readonly pierCells: number;
@@ -52,11 +71,18 @@ export function planFarmsAndPiers(
   const cropLayer = new Uint8Array(cellCount);
   const fenceLayer = new Uint8Array(cellCount);
   const pierLayer = new Uint8Array(cellCount);
+  const pens: PenPlan[] = [];
   let cropCells = 0;
   let fenceCells = 0;
   let pierCells = 0;
   const farms = channel(config.seed, "settlements.farms");
   const harbor = channel(config.seed, "settlements.harbor");
+  // Warm worlds roll grapes too; everyone else keeps the pre-64 pool (and
+  // with it their exact pre-64 rolls — the pool size feeds the channel).
+  const cropPool =
+    config.climate.baseTemperaturePermille + config.climate.temperatureBiasPermille >= GRAPES_MIN_TEMPERATURE
+      ? CROP_TYPES.length
+      : CROP_TYPES.length - 1;
 
   // Worn/unpainted approach lanes (behavior 50) are corridor promises like
   // pathLayer: no crops or fences on somebody's way to their door.
@@ -91,8 +117,11 @@ export function planFarmsAndPiers(
             if (!plotFits(originX, originY, plotW, plotH, width, height, usable, fenceLayer)) {
               continue;
             }
-            const cropType = 1 + farms.intAt(originX, originY, 0, CROP_TYPES.length, 2);
+            const cropType = 1 + farms.intAt(originX, originY, 0, cropPool, 2);
             const stage = 2 + farms.intAt(originX, originY, 0, 2, 3); // young or mature
+            // A grape plot is a VINEYARD (behavior 64): it rings itself in
+            // plain wood, not livestock pen fencing.
+            const fenceType = cropType === CROP_TYPES.length ? 3 : 1;
             for (let sy = 0; sy < plotH; sy += 1) {
               for (let sx = 0; sx < plotW; sx += 1) {
                 const cell = (originY + sy) * width + originX + sx;
@@ -110,7 +139,7 @@ export function planFarmsAndPiers(
                 if (sy === gateSide && sx >= gateStart && sx <= gateStart + 1) continue;
                 const cell = cellAt(originX + sx, originY + sy, width, height);
                 if (cell !== -1 && fenceLayer[cell] === 0 && usable(cell) && cropLayer[cell] === 0) {
-                  fenceLayer[cell] = 1;
+                  fenceLayer[cell] = fenceType;
                   fenceCells += 1;
                 }
               }
@@ -119,12 +148,56 @@ export function planFarmsAndPiers(
               for (const sx of [-1, plotW]) {
                 const cell = cellAt(originX + sx, originY + sy, width, height);
                 if (cell !== -1 && fenceLayer[cell] === 0 && usable(cell) && cropLayer[cell] === 0) {
-                  fenceLayer[cell] = 1;
+                  fenceLayer[cell] = fenceType;
                   fenceCells += 1;
                 }
               }
             }
             plots += 1;
+          }
+        }
+      }
+      // Chicken run (behavior 64): one small pen beside the farmstead —
+      // a 3x2 yard ringed in pen fence with a single gate facing the
+      // farm; the coop stands in the corner farthest from the gate and
+      // the trough waits inside by it (decoration seats both props off
+      // the pens list). Strict fit: the whole 5x4 footprint must be
+      // usable, so the ring stamps without per-cell fallbacks.
+      let penPlaced = false;
+      for (let ring = 2; ring <= plan.radius + 4 && !penPlaced; ring += 1) {
+        for (let dy = -ring; dy <= ring && !penPlaced; dy += 1) {
+          for (let dx = -ring; dx <= ring && !penPlaced; dx += 1) {
+            if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
+            const originX = nearX + dx;
+            const originY = nearY + dy;
+            let fits = true;
+            for (let sy = -1; sy <= 2 && fits; sy += 1) {
+              for (let sx = -1; sx <= 3 && fits; sx += 1) {
+                const cell = cellAt(originX + sx, originY + sy, width, height);
+                if (cell === -1 || !usable(cell) || fenceLayer[cell] !== 0 || cropLayer[cell] !== 0) {
+                  fits = false;
+                }
+              }
+            }
+            if (!fits) continue;
+            const gateSide = nearY <= originY ? -1 : 2; // face the farm
+            for (let sy = -1; sy <= 2; sy += 1) {
+              for (let sx = -1; sx <= 3; sx += 1) {
+                const onRing = sy === -1 || sy === 2 || sx === -1 || sx === 3;
+                if (!onRing) continue;
+                if (sy === gateSide && sx === 1) continue; // the gate
+                const cell = cellAt(originX + sx, originY + sy, width, height);
+                if (cell !== -1) {
+                  fenceLayer[cell] = 1;
+                  fenceCells += 1;
+                }
+              }
+            }
+            pens.push({
+              coop: [originX + 2, gateSide === -1 ? originY + 1 : originY],
+              trough: [originX + 1, gateSide === -1 ? originY : originY + 1],
+            });
+            penPlaced = true;
           }
         }
       }
@@ -159,7 +232,7 @@ export function planFarmsAndPiers(
     }
   }
 
-  return { cropLayer, fenceLayer, pierLayer, cropCells, fenceCells, pierCells };
+  return { cropLayer, fenceLayer, pierLayer, pens, cropCells, fenceCells, pierCells };
 }
 
 function plotFits(

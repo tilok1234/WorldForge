@@ -497,8 +497,21 @@ export const GENERATOR_VERSION = "0.1.0";
  *     default-on wherever a dock stands (b61 doctrine: completing an
  *     existing building); style-free worlds have no docks, so their
  *     only possible shift is a city-harbor jetty.
+ * 64: chicken run + vineyard (settlements.plans 25, decoration.props 14;
+ *     batch 4 of the pack assessment — the farm-extension pair). Every
+ *     farming settlement raises ONE chicken run beside its farmstead: a
+ *     3x2 yard ringed in pen fence with a single gate facing the farm,
+ *     the new prop.coop (blocks) in the corner farthest from the gate
+ *     and a trough inside by it; strict 5x4 fit, first ring spot wins,
+ *     cramped farms simply go without. Vineyards: crop.grapes joins the
+ *     plot roll ONLY where the world's temperature offset (climate base
+ *     + author bias) reaches +40 (warm-vale country) — a grape plot
+ *     rings itself in the plain fence.wood family instead of pen
+ *     fencing. Cold and neutral worlds keep the pre-64 pool size, so
+ *     their rolls are byte-identical; warm worlds re-roll plot crops
+ *     (art-only). Worlds without farming settlements are untouched.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 63;
+export const GENERATOR_BEHAVIOR_VERSION = 64;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -513,10 +526,10 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 17,
-  "settlements.plans": 24,
+  "settlements.plans": 25,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
-  "decoration.props": 13,
+  "decoration.props": 14,
   "decoration.pois": 16,
   "density.presets": 1,
   "authoring.overrides": 1,

@@ -8,6 +8,7 @@ import { generateWorldDetailed } from "../src/generation/generate.js";
 import { validateArtifact } from "../src/validation/validateArtifact.js";
 import { PALETTE_INDEX, WORLD_PALETTE } from "../src/regions/biomes.js";
 import { WATER_NONE } from "../src/hydrology/hydrology.js";
+import { planFarmsAndPiers } from "../src/settlements/farms.js";
 
 function worldFor(seed: number, landmarks?: unknown) {
   const validation = validateRecipe({
@@ -246,5 +247,86 @@ describe("relational vocabulary", () => {
       }
     }
     assert.ok(structureCells > 0, "structure layer present in chunks");
+  });
+
+  it("chicken runs pen every farm and vineyards need the sun (behavior 64)", () => {
+    // Synthetic all-grass plain: planFarmsAndPiers is pure, so a fake
+    // farming plan exercises the pen and the grapes gate without hunting
+    // for a tiny seed that rolls an inland farm.
+    const compiledFor = (warm: boolean) => {
+      const validation = validateRecipe({
+        recipeFormat: 1,
+        seed: 1,
+        world: { sizePreset: "tiny", climatePreset: "temperate" },
+        budgets: { settlementCount: 1, primaryRouteCount: 1, landmarkCount: 0 },
+        ...(warm ? { biases: { temperaturePermille: 40 } } : {}),
+      });
+      assert.ok(validation.ok);
+      return compileRecipe(normalizeRecipe(validation.recipe));
+    };
+    const planOn = (config: ReturnType<typeof compileRecipe>) => {
+      const { width, height } = config.world;
+      const cells = width * height;
+      const grid = new Array(cells).fill(PALETTE_INDEX["terrain.grass"]);
+      const hydro = {
+        waterKind: new Uint8Array(cells),
+        isRiver: new Uint8Array(cells),
+      } as unknown as Parameters<typeof planFarmsAndPiers>[2];
+      const cx = Math.trunc(width / 2);
+      const cy = Math.trunc(height / 2);
+      const plan = {
+        id: 0,
+        kind: "town",
+        anchorX: cx,
+        anchorY: cy,
+        purpose: "farming",
+        radius: 10,
+        structures: [
+          { type: "structure.farmhouse", x: cx, y: cy, width: 2, height: 2, entranceX: cx, entranceY: cy + 2 },
+        ],
+      } as unknown as Parameters<typeof planFarmsAndPiers>[4][number];
+      return planFarmsAndPiers(grid, new Uint8Array(cells), hydro, new Uint8Array(cells), [plan], config, []);
+    };
+
+    const warm = planOn(compiledFor(true));
+    const cold = planOn(compiledFor(false));
+    const cropsOf = (result: typeof warm) => {
+      const kinds = new Set<number>();
+      for (const value of result.cropLayer) if (value !== 0) kinds.add(value >> 4);
+      return kinds;
+    };
+    const fencesOf = (result: typeof warm) => {
+      const kinds = new Set<number>();
+      for (const value of result.fenceLayer) if (value !== 0) kinds.add(value);
+      return kinds;
+    };
+
+    // Seed 1 rolls a vineyard when warm: grapes plot + plain wood ring.
+    assert.ok(cropsOf(warm).has(4), "warm world rolled no grapes");
+    assert.ok(fencesOf(warm).has(3), "vineyard did not ring in fence.wood");
+    // The same seed without the warm bias must keep the pre-64 pool.
+    assert.ok(!cropsOf(cold).has(4), "cold world rolled grapes");
+    assert.ok(!fencesOf(cold).has(3), "cold world placed wood fencing");
+
+    // The chicken run is climate-free: one pen either way, its coop and
+    // trough inside a pen-fence ring with a gate.
+    for (const result of [warm, cold]) {
+      assert.equal(result.pens.length, 1, "expected one pen per farming settlement");
+      const pen = result.pens[0] as (typeof result.pens)[number];
+      const { width } = compiledFor(true).world;
+      for (const [px, py] of [pen.coop, pen.trough]) {
+        const cell = py * width + px;
+        assert.equal(result.fenceLayer[cell], 0, "furniture on the fence ring");
+        assert.equal(result.cropLayer[cell], 0, "furniture on crops");
+      }
+      let ringFence = 0;
+      for (let dy = -3; dy <= 3; dy += 1) {
+        for (let dx = -3; dx <= 3; dx += 1) {
+          const cell = (pen.coop[1] + dy) * width + pen.coop[0] + dx;
+          if (result.fenceLayer[cell] === 1) ringFence += 1;
+        }
+      }
+      assert.ok(ringFence >= 10, `pen ring too sparse (${ringFence} fence cells)`);
+    }
   });
 });

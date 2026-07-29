@@ -168,6 +168,8 @@ const PROP_NAME: { readonly [key: string]: string } = {
   // Harbor row (behavior 63).
   "prop.fishingboat": "fishingboat",
   "prop.bollard": "bollard",
+  // Chicken run (behavior 64).
+  "prop.coop": "coop",
 };
 
 /** WorldForge crop keys -> package crop names. */
@@ -175,12 +177,16 @@ const CROP_NAME: { readonly [key: string]: string } = {
   "crop.wheat": "wheat",
   "crop.pumpkin": "pumpkin",
   "crop.corn": "corn",
+  // Vineyard (behavior 64).
+  "crop.grapes": "grapes",
 };
 
 /** WorldForge fence/pier keys -> package family keys. */
 const FENCE_NAME: { readonly [key: string]: string } = {
   "fence.pen": "penfence",
   "fence.iron": "ironfence",
+  // Vineyard (behavior 64): the plain wooden fence family.
+  "fence.wood": "fence",
 };
 const PIER_NAME: { readonly [key: string]: string } = {
   "pier.pier": "pier",

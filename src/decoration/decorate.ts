@@ -107,6 +107,8 @@ export const DECOR_TYPES = [
   // and the mooring posts the b60 boathouses were waiting for.
   "prop.fishingboat",
   "prop.bollard",
+  // Chicken run (behavior 64): the coop that anchors the farm pen.
+  "prop.coop",
 ] as const;
 
 /** Semantic ground-decal keys, stage 1. Layer stores index + 1 (0 = none). */
@@ -154,6 +156,8 @@ const BLOCKING = new Set<string>([
   // Harbor row (behavior 63): both block (the boat sits on water, where
   // blocking is moot, but the package flags it solid all the same).
   "prop.fishingboat", "prop.bollard",
+  // Chicken run (behavior 64): the coop blocks like every outbuilding.
+  "prop.coop",
 ]);
 
 /** Two-part canopy species (§2.10): skip when a structure sits above. */
@@ -678,6 +682,22 @@ export function decorateWorld(
           propLayer[buoy] = typeIndex.get("prop.buoy") as number;
           propCount += 1;
         }
+      }
+    }
+  }
+
+  // Chicken runs (behavior 64): the farm planner fenced the pens and
+  // handed us the furniture spots — coop in the far corner, trough by
+  // the gate. Interior cells by construction; guard anyway.
+  for (const pen of farms.pens) {
+    for (const [key, [px, py]] of [
+      ["prop.coop", pen.coop],
+      ["prop.trough", pen.trough],
+    ] as const) {
+      const cell = cellIn(px, py, width, height);
+      if (cell !== -1 && propLayer[cell] === 0 && structureLayer[cell] === 0) {
+        propLayer[cell] = typeIndex.get(key) as number;
+        propCount += 1;
       }
     }
   }

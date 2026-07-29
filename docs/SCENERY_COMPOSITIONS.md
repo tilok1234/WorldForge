@@ -25,11 +25,11 @@ Everything is rostered EXCEPT:
 
 ### Props (88 in package, 68 rostered)
 
-**UNUSED (20 at writing; 9 rostered by behavior 61, 2 more by 63):**
+**UNUSED (20 at writing; 9 rostered by b61, 2 by b63, 1 by b64):**
 `lamp` ✓, `barrels` ✓, `bench` ✓, `noticeboard` ✓, `tablechairs` ✓,
 `cookfire`, `laundryline` ✓, `anvil` ✓, `workbench` ✓, `baskets` ✓,
-`coop`, `topiary`, `planterurn`, `sundial`, `bollard` ✓ (b63),
-`fishingboat` ✓ (b63), `abandonedwagon`, `leafpile`, `palm`,
+`coop` ✓ (b64), `topiary`, `planterurn`, `sundial`, `bollard` ✓
+(b63), `fishingboat` ✓ (b63), `abandonedwagon`, `leafpile`, `palm`,
 `rubblepile`.
 
 Note the shape of that list: it is almost entirely the LIVED-IN layer —
@@ -54,8 +54,8 @@ pass — but the art is sitting there.
 - Walls used: `wall` (landmark fortresses), `palisade` (bandit camps),
   `ruinedwall` (ruined city). **UNUSED: `seawall`, `cavewall`,
   `dungeonwall`.**
-- Fences used: `penfence`, `ironfence`. **UNUSED: `fence` (plain
-  wood), `hedge`.**
+- Fences used: `penfence`, `ironfence`, `fence` (plain wood, b64
+  vineyards). **UNUSED: `hedge`.**
 - Piers used: `pier`, `jetty` (b63 city harbors). **UNUSED:
   `boardwalk`.**
 
@@ -68,9 +68,10 @@ apron. **UNUSED: `blood`, `steppingstones`, `frost`, `geyser`.**
 
 ### Crops (4) and other
 
-Crops used: wheat, pumpkin, corn. **UNUSED: `grapes`.** Crop stages
-(planted→harvested) exist and are used. Ramps used; **`stairs`
-UNUSED.** Road/path/ruined-road bands: all three in service.
+Crops used: wheat, pumpkin, corn, grapes (b64 warm-world vineyards).
+Crop stages (planted→harvested) exist and are used. Ramps used;
+**`stairs` UNUSED.** Road/path/ruined-road bands: all three in
+service.
 
 ## 2. The composition patterns we already own
 
@@ -109,10 +110,21 @@ Ordered roughly by (visual payoff / effort). ✓ = shipped already.
 4. **Manicured plaza / manor garden** — `topiary` + `planterurn` +
    `sundial` + `hedge` fence + `flowerbed`. Hedge is a whole unused
    FENCE family; manor + garden = instant wealth signal.
-5. **Chicken run** — `coop` + `penfence` + `trough` beside
-   farmhouses. One new prop in the pen-planner tables.
-6. **Vineyard** — `grapes` crop rows + plain `fence` + a farmhouse.
-   An entire unused crop; warm-climate farm variant.
+5. ✓ **Chicken run** (behavior 64, batch 4) — every farming
+   settlement raises ONE 3x2 pen beside its farmstead: pen-fence
+   ring, single gate facing the farm, `coop` in the far corner,
+   `trough` inside by the gate. PLACEMENT DOCTRINE: strict 5x4 fit
+   scanned outward from the farmstead, first spot wins; a cramped
+   farm (weeping-marsh) simply goes without. Climate-free.
+6. ✓ **Vineyard** (behavior 64, batch 4) — `grapes` joins the plot
+   crop roll ONLY where the world's temperature offset (climate base
+   + author bias) reaches +40 — warm-vale country and warmer. A
+   grape plot rings itself in the plain wood `fence` family instead
+   of livestock pen fencing. PLACEMENT DOCTRINE: colder worlds keep
+   the pre-64 pool SIZE so their rolls stay byte-identical; warm
+   worlds re-roll plot crops (art-only). Both unused fence families
+   are now in service (wood here, hedge still open for the manor
+   garden).
 7. ✓ **Street lamps** (behavior 61) — lamps seated BESIDE city-lane
    band cells (never on them), spaced, cities 10 / towns 4 / outposts
    dark. PLACEMENT DOCTRINE: pathLayer CITY_LANE only, so wilderness

@@ -181,6 +181,8 @@ const BLOCKING_PROPS = new Set<string>([
   "prop.baskets",
   // Harbor row (behavior 63): dockside clutter blocks like the rest.
   "prop.fishingboat", "prop.bollard",
+  // Chicken run (behavior 64).
+  "prop.coop",
 ]);
 
 /** Corridor materials whose street grid streams must not sever. */
