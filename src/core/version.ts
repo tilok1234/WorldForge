@@ -510,8 +510,20 @@ export const GENERATOR_VERSION = "0.1.0";
  *     fencing. Cold and neutral worlds keep the pre-64 pool size, so
  *     their rolls are byte-identical; warm worlds re-roll plot crops
  *     (art-only). Worlds without farming settlements are untouched.
+ * 65: manor gardens (settlements.plans 26, decoration.props 15; batch 5
+ *     of the pack assessment) — city garden greens (urbanBlocks
+ *     quarters) wall themselves in the clipped fence.hedge family and
+ *     dress FORMAL: topiary on the four inside corners, a sundial at
+ *     the center, flower beds on the mid insides of roomy squares (the
+ *     b59 birch-and-beds look retires). Streets, lanes, and standing
+ *     occupancy break the hedge ring exactly as they break the city
+ *     wall — behavior-47 no-sever laws outrank it. A green nothing
+ *     crosses carves a mid-side gate toward open ground and planter
+ *     urns flank it inside (farms records the gate; decoration seats
+ *     the urns). All three new props block, mirroring the package.
+ *     Style-free and quarter-free worlds are byte-identical.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 64;
+export const GENERATOR_BEHAVIOR_VERSION = 65;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -526,10 +538,10 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 17,
-  "settlements.plans": 25,
+  "settlements.plans": 26,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
-  "decoration.props": 14,
+  "decoration.props": 15,
   "decoration.pois": 16,
   "density.presets": 1,
   "authoring.overrides": 1,

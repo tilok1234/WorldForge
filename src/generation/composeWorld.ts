@@ -441,7 +441,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
 
   // Farm plots and harbor piers (stage 3) are settlement infrastructure:
   // planned after every traversal-critical pass, before decoration.
-  const farms = planFarmsAndPiers(grid, structureLayer, hydro, routesResult.pathLayer, settlementPlans, config, laneCells);
+  const farms = planFarmsAndPiers(grid, structureLayer, hydro, routesResult.pathLayer, settlementPlans, config, laneCells, quarters);
 
   // Terrain texture (behavior 39): cosmetic-material mottle + edge dither.
   // After everything structural (nothing can move) and before decoration

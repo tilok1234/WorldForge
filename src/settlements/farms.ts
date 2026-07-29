@@ -13,7 +13,7 @@ import { channel } from "../core/channels.js";
 import { PALETTE_INDEX } from "../regions/biomes.js";
 import { WATER_NONE, type HydrologyResult } from "../hydrology/hydrology.js";
 import type { ResolvedWorldConfig } from "../recipe/compile.js";
-import type { SettlementPlan } from "./settlements.js";
+import type { SettlementPlan, SettlementQuarter } from "./settlements.js";
 
 /** Crop layer: 0 = none, else cropTypeIndex * 16 + stage (stage 1-4). */
 // Grapes (behavior 64) only join the roll in warm country — see
@@ -22,7 +22,8 @@ import type { SettlementPlan } from "./settlements.js";
 export const CROP_TYPES = ["crop.wheat", "crop.pumpkin", "crop.corn", "crop.grapes"] as const;
 /** Fence layer: 0 = none, else 1-based index into FENCE_TYPES. */
 // fence.wood (behavior 64): the plain wooden fence vineyards ring.
-export const FENCE_TYPES = ["fence.pen", "fence.iron", "fence.wood"] as const;
+// fence.hedge (behavior 65): the clipped hedge walling city garden greens.
+export const FENCE_TYPES = ["fence.pen", "fence.iron", "fence.wood", "fence.hedge"] as const;
 
 /**
  * Vineyards want sun: the world's temperature offset (climate base +
@@ -42,11 +43,21 @@ export interface PenPlan {
   readonly trough: readonly [number, number];
 }
 
+/**
+ * A hedged garden green (behavior 65). Recorded only when the hedge ring
+ * had to carve its own gate — the urns flank that gate on the inside;
+ * street-crossed greens keep their crossings as plain openings.
+ */
+export interface GardenPlan {
+  readonly urns: readonly (readonly [number, number])[];
+}
+
 export interface FarmResult {
   readonly cropLayer: Uint8Array;
   readonly fenceLayer: Uint8Array;
   readonly pierLayer: Uint8Array;
   readonly pens: readonly PenPlan[];
+  readonly gardens: readonly GardenPlan[];
   readonly cropCells: number;
   readonly fenceCells: number;
   readonly pierCells: number;
@@ -65,6 +76,7 @@ export function planFarmsAndPiers(
   settlementPlans: readonly SettlementPlan[],
   config: ResolvedWorldConfig,
   laneCells: readonly number[] = [],
+  quarters: readonly SettlementQuarter[] = [],
 ): FarmResult {
   const { width, height } = config.world;
   const cellCount = width * height;
@@ -72,6 +84,7 @@ export function planFarmsAndPiers(
   const fenceLayer = new Uint8Array(cellCount);
   const pierLayer = new Uint8Array(cellCount);
   const pens: PenPlan[] = [];
+  const gardens: GardenPlan[] = [];
   let cropCells = 0;
   let fenceCells = 0;
   let pierCells = 0;
@@ -232,7 +245,88 @@ export function planFarmsAndPiers(
     }
   }
 
-  return { cropLayer, fenceLayer, pierLayer, pens, cropCells, fenceCells, pierCells };
+  // Garden greens (behavior 65): city green quarters wall themselves in
+  // clipped hedge. Streets, lanes, and anything already standing break
+  // the ring exactly like the city wall does — the behavior-47 no-sever
+  // laws outrank the hedge. A green nothing crosses carves its own gate
+  // (mid-side, first side whose outside neighbor is open ground) and
+  // reports the gate's inside flanks so decoration can seat the planter
+  // urns there.
+  const HEDGE = 4;
+  for (const quarter of quarters) {
+    if (quarter.kind !== "green") continue;
+    const openings: Array<readonly [number, number]> = [];
+    let stamped = 0;
+    for (let sy = 0; sy < quarter.h; sy += 1) {
+      for (let sx = 0; sx < quarter.w; sx += 1) {
+        const onFrame = sy === 0 || sy === quarter.h - 1 || sx === 0 || sx === quarter.w - 1;
+        if (!onFrame) continue;
+        const cell = cellAt(quarter.x + sx, quarter.y + sy, width, height);
+        if (cell === -1) continue;
+        if (pathLayer[cell] !== 0 || laneSet.has(cell)) {
+          openings.push([sx, sy]);
+          continue;
+        }
+        if (
+          structureLayer[cell] !== 0 ||
+          fenceLayer[cell] !== 0 ||
+          cropLayer[cell] !== 0 ||
+          hydro.waterKind[cell] !== WATER_NONE ||
+          hydro.isRiver[cell] !== 0 ||
+          (grid[cell] !== GRASS && grid[cell] !== DRY_GRASS)
+        ) {
+          continue;
+        }
+        fenceLayer[cell] = HEDGE;
+        fenceCells += 1;
+        stamped += 1;
+      }
+    }
+    if (stamped === 0 || openings.length > 0) continue;
+    // Fully walled: carve a gate. Sides in fixed order (S, N, E, W); the
+    // first whose mid frame cell holds our hedge and whose outside
+    // neighbor is open walkable ground wins.
+    const midX = quarter.x + Math.trunc(quarter.w / 2);
+    const midY = quarter.y + Math.trunc(quarter.h / 2);
+    const sides: ReadonlyArray<readonly [number, number, number, number]> = [
+      [midX, quarter.y + quarter.h - 1, 0, 1],
+      [midX, quarter.y, 0, -1],
+      [quarter.x + quarter.w - 1, midY, 1, 0],
+      [quarter.x, midY, -1, 0],
+    ];
+    for (const [gx, gy, ox, oy] of sides) {
+      const gate = cellAt(gx, gy, width, height);
+      const outside = cellAt(gx + ox, gy + oy, width, height);
+      if (gate === -1 || outside === -1) continue;
+      if (fenceLayer[gate] !== HEDGE) continue;
+      if (
+        structureLayer[outside] !== 0 ||
+        fenceLayer[outside] !== 0 ||
+        hydro.waterKind[outside] !== WATER_NONE ||
+        hydro.isRiver[outside] !== 0
+      ) {
+        continue;
+      }
+      fenceLayer[gate] = 0;
+      fenceCells -= 1;
+      // Urns flank the gate on the garden side, perpendicular to the way in.
+      const inX = gx - ox;
+      const inY = gy - oy;
+      const urns: Array<readonly [number, number]> = [];
+      for (const [px, py] of [
+        [inX + oy, inY + ox],
+        [inX - oy, inY - ox],
+      ] as const) {
+        if (px > quarter.x && px < quarter.x + quarter.w - 1 && py > quarter.y && py < quarter.y + quarter.h - 1) {
+          urns.push([px, py]);
+        }
+      }
+      gardens.push({ urns });
+      break;
+    }
+  }
+
+  return { cropLayer, fenceLayer, pierLayer, pens, gardens, cropCells, fenceCells, pierCells };
 }
 
 function plotFits(

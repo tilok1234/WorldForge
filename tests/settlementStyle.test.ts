@@ -331,6 +331,68 @@ describe("narrow streets (behavior 51)", () => {
     assert.equal(generateWorldDetailed(plain.normalized, plain.config).composed.quarters.length, 0);
   });
 
+  it("garden greens wall in hedge and dress formal (behavior 65)", () => {
+    const urban = compiled({
+      ...BASE,
+      settlementStyle: { growthPermille: 600, narrowStreets: true, urbanBlocks: true },
+    });
+    const b = generateWorldDetailed(urban.normalized, urban.config);
+    const { width } = urban.config.world;
+    const greens = b.composed.quarters.filter((q) => q.kind === "green");
+    assert.ok(greens.length > 0, "fixture lost its greens");
+    const HEDGE = 4;
+    const fences = b.composed.farms.fenceLayer;
+    const props = b.composed.decoration.propLayer;
+    const topiary = DECOR_TYPES.indexOf("prop.topiary") + 1;
+    const sundial = DECOR_TYPES.indexOf("prop.sundial") + 1;
+    const loaded = loadWorldArtifact(JSON.parse(JSON.stringify(b.artifact)));
+    assert.ok(loaded.ok);
+    for (const green of greens) {
+      let hedges = 0;
+      let openWayIn = 0;
+      for (let sy = 0; sy < green.h; sy += 1) {
+        for (let sx = 0; sx < green.w; sx += 1) {
+          const onFrame = sy === 0 || sy === green.h - 1 || sx === 0 || sx === green.w - 1;
+          if (!onFrame) continue;
+          const cell = (green.y + sy) * width + green.x + sx;
+          if (fences[cell] === HEDGE) {
+            hedges += 1;
+            // Hedges block in the loader ladder like every fence family.
+            assert.equal(loaded.world.walkableAt(green.x + sx, green.y + sy), false, "hedge walks");
+            continue;
+          }
+          // An opening (street, lane, or carved gate): the garden must be
+          // enterable through it — the cell just inside stays prop-free.
+          const inX = sx === 0 ? sx + 1 : sx === green.w - 1 ? sx - 1 : sx;
+          const inY = sy === 0 ? sy + 1 : sy === green.h - 1 ? sy - 1 : sy;
+          const inside = (green.y + inY) * width + green.x + inX;
+          if (fences[cell] === 0 && b.composed.structureLayer[cell] === 0 && props[inside] === 0) {
+            openWayIn += 1;
+          }
+        }
+      }
+      assert.ok(hedges > 0, "green has no hedge wall");
+      assert.ok(openWayIn > 0, "hedged green has no clear way in");
+      // The formal set: four corner topiary, one sundial at the center.
+      let corners = 0;
+      for (const [sx, sy] of [
+        [1, 1],
+        [green.w - 2, 1],
+        [1, green.h - 2],
+        [green.w - 2, green.h - 2],
+      ] as const) {
+        if (props[(green.y + sy) * width + green.x + sx] === topiary) corners += 1;
+      }
+      assert.equal(corners, 4, "garden corners missing topiary");
+      const center = (green.y + Math.trunc(green.h / 2)) * width + green.x + Math.trunc(green.w / 2);
+      assert.equal(props[center], sundial, "garden center missing its sundial");
+    }
+    // Style-free worlds grow no hedges anywhere.
+    const plain = compiled({ ...BASE, settlementStyle: { growthPermille: 600 } });
+    const plainFences = generateWorldDetailed(plain.normalized, plain.config).composed.farms.fenceLayer;
+    for (const value of plainFences) assert.notEqual(value, HEDGE);
+  });
+
   it("walls the city with gatehouses on through-streets (behavior 62)", () => {
     const walled = compiled({
       ...BASE,

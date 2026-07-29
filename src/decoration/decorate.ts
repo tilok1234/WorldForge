@@ -109,6 +109,10 @@ export const DECOR_TYPES = [
   "prop.bollard",
   // Chicken run (behavior 64): the coop that anchors the farm pen.
   "prop.coop",
+  // Manor garden (behavior 65): the formal set for hedge-walled greens.
+  "prop.topiary",
+  "prop.planter_urn",
+  "prop.sundial",
 ] as const;
 
 /** Semantic ground-decal keys, stage 1. Layer stores index + 1 (0 = none). */
@@ -158,6 +162,8 @@ const BLOCKING = new Set<string>([
   "prop.fishingboat", "prop.bollard",
   // Chicken run (behavior 64): the coop blocks like every outbuilding.
   "prop.coop",
+  // Manor garden (behavior 65): all three block, mirroring the package.
+  "prop.topiary", "prop.planter_urn", "prop.sundial",
 ]);
 
 /** Two-part canopy species (§2.10): skip when a structure sits above. */
@@ -881,10 +887,12 @@ export function decorateWorld(
     const gravestones = typeOf("prop.gravestones");
     const loneGrave = typeOf("prop.lone_grave");
     const flowerBed = typeOf("prop.flower_bed");
-    const birch = typeOf("prop.birch");
     const noticeboard = typeOf("prop.noticeboard");
     const bench = typeOf("prop.bench");
     const baskets = typeOf("prop.baskets");
+    const topiary = typeOf("prop.topiary");
+    const sundial = typeOf("prop.sundial");
+    const planterUrn = typeOf("prop.planter_urn");
     for (const quarter of quarters) {
       if (quarter.kind === "church") {
         // Yard rows below the chapel (rows 0-2 are the chapel band).
@@ -897,17 +905,37 @@ export function decorateWorld(
           }
         }
       } else if (quarter.kind === "green") {
-        const corners: ReadonlyArray<readonly [number, number]> = [
-          [1, 1],
-          [quarter.w - 2, quarter.h - 2],
-          [quarter.w - 2, 1],
+        // Manor garden (behavior 65): the hedge-walled green is a FORMAL
+        // garden now — clipped topiary on the inside corners, a sundial
+        // at the center, flower beds on the north/south mid insides when
+        // the square is roomy. The old birch-and-beds look retires with
+        // the hedge (behavior 65 walls every city green).
+        const pieces: Array<readonly [number, number, number]> = [
+          [1, 1, topiary],
+          [quarter.w - 2, 1, topiary],
+          [1, quarter.h - 2, topiary],
+          [quarter.w - 2, quarter.h - 2, topiary],
+          [Math.trunc(quarter.w / 2), Math.trunc(quarter.h / 2), sundial],
         ];
-        corners.forEach(([sx, sy], index) => {
+        if (quarter.w >= 6 && quarter.h >= 6) {
+          // Mid-side beds only where the frame BEHIND them carries hedge —
+          // a bed in front of a gate or street opening would block the way
+          // into the garden it decorates.
+          const midX = Math.trunc(quarter.w / 2);
+          for (const [sy, frameY] of [
+            [1, 0],
+            [quarter.h - 2, quarter.h - 1],
+          ] as const) {
+            const frame = (quarter.y + frameY) * width + quarter.x + midX;
+            if (farms.fenceLayer[frame] !== 0) pieces.push([midX, sy, flowerBed]);
+          }
+        }
+        for (const [sx, sy, piece] of pieces) {
           const cell = (quarter.y + sy) * width + quarter.x + sx;
-          if (structureLayer[cell] !== 0 || propLayer[cell] !== 0) return;
-          propLayer[cell] = index === 0 ? birch : flowerBed;
+          if (structureLayer[cell] !== 0 || propLayer[cell] !== 0 || farms.fenceLayer[cell] !== 0) continue;
+          propLayer[cell] = piece;
           propCount += 1;
-        });
+        }
       } else if (quarter.kind === "market") {
         // Market extras (behavior 61): the square keeps its clear middle
         // for the stall row; the FRAME gets the town's civic clutter — a
@@ -927,6 +955,16 @@ export function decorateWorld(
           propLayer[cell] = piece;
           propCount += 1;
         }
+      }
+    }
+    // Garden gates (behavior 65): where a hedge ring had to carve its own
+    // way in, planter urns flank the gate on the garden side.
+    for (const garden of farms.gardens) {
+      for (const [ux, uy] of garden.urns) {
+        const cell = uy * width + ux;
+        if (structureLayer[cell] !== 0 || propLayer[cell] !== 0 || farms.fenceLayer[cell] !== 0) continue;
+        propLayer[cell] = planterUrn;
+        propCount += 1;
       }
     }
   }

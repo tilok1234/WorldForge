@@ -183,6 +183,8 @@ const BLOCKING_PROPS = new Set<string>([
   "prop.fishingboat", "prop.bollard",
   // Chicken run (behavior 64).
   "prop.coop",
+  // Manor garden (behavior 65).
+  "prop.topiary", "prop.planter_urn", "prop.sundial",
 ]);
 
 /** Corridor materials whose street grid streams must not sever. */

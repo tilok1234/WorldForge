@@ -170,6 +170,10 @@ const PROP_NAME: { readonly [key: string]: string } = {
   "prop.bollard": "bollard",
   // Chicken run (behavior 64).
   "prop.coop": "coop",
+  // Manor garden (behavior 65).
+  "prop.topiary": "topiary",
+  "prop.planter_urn": "planterurn",
+  "prop.sundial": "sundial",
 };
 
 /** WorldForge crop keys -> package crop names. */
@@ -187,6 +191,8 @@ const FENCE_NAME: { readonly [key: string]: string } = {
   "fence.iron": "ironfence",
   // Vineyard (behavior 64): the plain wooden fence family.
   "fence.wood": "fence",
+  // Manor garden (behavior 65): the clipped hedge.
+  "fence.hedge": "hedge",
 };
 const PIER_NAME: { readonly [key: string]: string } = {
   "pier.pier": "pier",

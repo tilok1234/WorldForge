@@ -55865,16 +55865,17 @@
   "fenceTypes": [
     "fence.pen",
     "fence.iron",
-    "fence.wood"
+    "fence.wood",
+    "fence.hedge"
   ],
   "formatVersion": 8,
   "generator": {
-    "generationIdentitySha256": "eabe1b1559818316271675e88c4139c8bf4d5d2b94f5f9ee6ddcf032c14502c8",
-    "generatorBehaviorVersion": 64,
+    "generationIdentitySha256": "dfaefae80988563d2a9b06daceab40933afcb3b20fb1a6c50e57fa8433cec1d9",
+    "generatorBehaviorVersion": 65,
     "name": "worldforge",
     "recipeCompilerVersion": 35,
     "recipeSha256": "0b52b6b8d5fab1eef7aa28632d8de2c155e755acec12f4979293e6cff845d36d",
-    "resolvedConfigSha256": "9bce9e1fbc10b43481f005ed9b57dd3c8a1b52a32ed600ddd4781ea18851654f",
+    "resolvedConfigSha256": "940dae57e73cb22e09e8e24e3961ff69f1a497e09fa08d663cd120e5fdd48dc9",
     "seed": 1,
     "version": "0.1.0"
   },
@@ -56112,7 +56113,10 @@
     "prop.baskets",
     "prop.fishingboat",
     "prop.bollard",
-    "prop.coop"
+    "prop.coop",
+    "prop.topiary",
+    "prop.planter_urn",
+    "prop.sundial"
   ],
   "regions": [
     {

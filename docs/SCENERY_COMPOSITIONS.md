@@ -25,12 +25,13 @@ Everything is rostered EXCEPT:
 
 ### Props (88 in package, 68 rostered)
 
-**UNUSED (20 at writing; 9 rostered by b61, 2 by b63, 1 by b64):**
-`lamp` ✓, `barrels` ✓, `bench` ✓, `noticeboard` ✓, `tablechairs` ✓,
-`cookfire`, `laundryline` ✓, `anvil` ✓, `workbench` ✓, `baskets` ✓,
-`coop` ✓ (b64), `topiary`, `planterurn`, `sundial`, `bollard` ✓
-(b63), `fishingboat` ✓ (b63), `abandonedwagon`, `leafpile`, `palm`,
-`rubblepile`.
+**UNUSED (20 at writing; 9 rostered by b61, 2 by b63, 1 by b64, 3 by
+b65):** `lamp` ✓, `barrels` ✓, `bench` ✓, `noticeboard` ✓,
+`tablechairs` ✓, `cookfire`, `laundryline` ✓, `anvil` ✓, `workbench`
+✓, `baskets` ✓, `coop` ✓ (b64), `topiary` ✓ (b65), `planterurn` ✓
+(b65), `sundial` ✓ (b65), `bollard` ✓ (b63), `fishingboat` ✓ (b63),
+`abandonedwagon`, `leafpile`, `palm`, `rubblepile`. Remaining:
+cookfire, abandonedwagon, leafpile, palm, rubblepile.
 
 Note the shape of that list: it is almost entirely the LIVED-IN layer —
 street furniture, workshop interiors, dockside clutter, formal-garden
@@ -55,7 +56,8 @@ pass — but the art is sitting there.
   `ruinedwall` (ruined city). **UNUSED: `seawall`, `cavewall`,
   `dungeonwall`.**
 - Fences used: `penfence`, `ironfence`, `fence` (plain wood, b64
-  vineyards). **UNUSED: `hedge`.**
+  vineyards), `hedge` (b65 garden greens). **All four fence
+  families are now in service.**
 - Piers used: `pier`, `jetty` (b63 city harbors). **UNUSED:
   `boardwalk`.**
 
@@ -107,9 +109,18 @@ Ordered roughly by (visual payoff / effort). ✓ = shipped already.
 3. ✓ **Market upgrade** (behavior 61) — noticeboard, bench, and
    baskets on the market square's frame corners (middle stays clear
    for the stall row). Rides urbanBlocks with the rest of b59.
-4. **Manicured plaza / manor garden** — `topiary` + `planterurn` +
-   `sundial` + `hedge` fence + `flowerbed`. Hedge is a whole unused
-   FENCE family; manor + garden = instant wealth signal.
+4. ✓ **Manor garden** (behavior 65, batch 5) — city garden greens
+   (urbanBlocks quarters) wall themselves in the clipped `hedge`
+   fence family and dress formal: `topiary` on the four inside
+   corners, a `sundial` at the center, `flowerbed` pairs on roomy
+   squares, `planterurn` flanking a carved gate. PLACEMENT DOCTRINE:
+   streets/lanes/occupancy break the hedge ring exactly as they
+   break the city wall (b47 outranks); a green nothing crosses
+   carves a mid-side gate toward open ground — and mid-side beds
+   only seat where the frame behind them holds hedge, so nothing
+   ever blocks a way in. The b59 birch-and-beds look retires; the
+   whole formal set blocks, mirroring the package. Cities only by
+   construction (only cities reserve greens).
 5. ✓ **Chicken run** (behavior 64, batch 4) — every farming
    settlement raises ONE 3x2 pen beside its farmstead: pen-fence
    ring, single gate facing the farm, `coop` in the far corner,
