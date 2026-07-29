@@ -26,6 +26,12 @@
 > `Wildshot_adventure_final_planning/docs/16-ECOSYSTEM_MAP.md`.
 > Read your repo's row before working here.
 
+> **SYNC-LOG HOOK (doc 18, ACCEPTED 2026-07-30).** At session end, with
+> the handoff update, append a line to planning `tools/sync_log.json`
+> for every cross-repo event this session caused (pack delivered or
+> intaken, ask opened/resolved, incident, pin change). No event, no
+> entry. Protocol: planning `docs/18-AGENT_SYNC_PROTOCOL.md`.
+
 For a fresh AI session with no prior context. Read `AGENTS.md` and the
 `README.md` reading list first; this file carries session state the
 docs don't. File-based assistant memory at
