@@ -55867,12 +55867,12 @@
   ],
   "formatVersion": 8,
   "generator": {
-    "generationIdentitySha256": "0d2c3a74934ba6f4aa26727b37658cc98643299fd2a6aa9c40bd6652233c8756",
-    "generatorBehaviorVersion": 62,
+    "generationIdentitySha256": "d48beeb0e9001f88b1d6933e928a07c1294cb6633b7a3f5c097c67ef3fcb3e1c",
+    "generatorBehaviorVersion": 63,
     "name": "worldforge",
     "recipeCompilerVersion": 35,
     "recipeSha256": "0b52b6b8d5fab1eef7aa28632d8de2c155e755acec12f4979293e6cff845d36d",
-    "resolvedConfigSha256": "1e793028970e8a3f1b00d6776c1de4116c95d734c3a0804b40a7b6ab4bdc61c4",
+    "resolvedConfigSha256": "7a78e45b10f6da284e25b869f53d65892c41bae01ad77a70fd330ab0681aa694",
     "seed": 1,
     "version": "0.1.0"
   },
@@ -55887,7 +55887,8 @@
   },
   "landmarks": [],
   "pierTypes": [
-    "pier.pier"
+    "pier.pier",
+    "pier.jetty"
   ],
   "pois": [
     {
@@ -56106,7 +56107,9 @@
     "prop.anvil",
     "prop.workbench",
     "prop.laundry_line",
-    "prop.baskets"
+    "prop.baskets",
+    "prop.fishingboat",
+    "prop.bollard"
   ],
   "regions": [
     {

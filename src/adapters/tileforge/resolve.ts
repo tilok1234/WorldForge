@@ -165,6 +165,9 @@ const PROP_NAME: { readonly [key: string]: string } = {
   "prop.workbench": "workbench",
   "prop.laundry_line": "laundryline",
   "prop.baskets": "baskets",
+  // Harbor row (behavior 63).
+  "prop.fishingboat": "fishingboat",
+  "prop.bollard": "bollard",
 };
 
 /** WorldForge crop keys -> package crop names. */
@@ -179,7 +182,11 @@ const FENCE_NAME: { readonly [key: string]: string } = {
   "fence.pen": "penfence",
   "fence.iron": "ironfence",
 };
-const PIER_NAME: { readonly [key: string]: string } = { "pier.pier": "pier" };
+const PIER_NAME: { readonly [key: string]: string } = {
+  "pier.pier": "pier",
+  // Harbor row (behavior 63): the stone pier city harbors build.
+  "pier.jetty": "jetty",
+};
 
 /** WorldForge semantic decal keys -> package decal family keys. */
 const DECAL_NAME: { readonly [key: string]: string } = {

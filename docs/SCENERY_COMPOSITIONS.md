@@ -25,10 +25,12 @@ Everything is rostered EXCEPT:
 
 ### Props (88 in package, 68 rostered)
 
-**UNUSED (20):** `lamp`, `barrels`, `bench`, `noticeboard`,
-`tablechairs`, `cookfire`, `laundryline`, `anvil`, `workbench`,
-`baskets`, `coop`, `topiary`, `planterurn`, `sundial`, `bollard`,
-`fishingboat`, `abandonedwagon`, `leafpile`, `palm`, `rubblepile`.
+**UNUSED (20 at writing; 9 rostered by behavior 61, 2 more by 63):**
+`lamp` ✓, `barrels` ✓, `bench` ✓, `noticeboard` ✓, `tablechairs` ✓,
+`cookfire`, `laundryline` ✓, `anvil` ✓, `workbench` ✓, `baskets` ✓,
+`coop`, `topiary`, `planterurn`, `sundial`, `bollard` ✓ (b63),
+`fishingboat` ✓ (b63), `abandonedwagon`, `leafpile`, `palm`,
+`rubblepile`.
 
 Note the shape of that list: it is almost entirely the LIVED-IN layer —
 street furniture, workshop interiors, dockside clutter, formal-garden
@@ -54,7 +56,8 @@ pass — but the art is sitting there.
   `dungeonwall`.**
 - Fences used: `penfence`, `ironfence`. **UNUSED: `fence` (plain
   wood), `hedge`.**
-- Piers used: `pier`. **UNUSED: `boardwalk`, `jetty` (stone).**
+- Piers used: `pier`, `jetty` (b63 city harbors). **UNUSED:
+  `boardwalk`.**
 
 ### Decals (23, 19 reachable)
 
@@ -136,9 +139,21 @@ Ordered roughly by (visual payoff / effort). ✓ = shipped already.
 
 ### Waterfront (WATERLINE pattern, docks proved it)
 
-11. **Harbor row** — dock ✓ + `fishingboat` moored + `bollard` +
-    `crates`/`fishnets` on the shore row + `jetty` (stone pier) for
-    city harbors vs wooden `pier` for villages.
+11. ✓ **Harbor row** (behavior 63, batch 3) — every b60 boathouse gets
+    a `fishingboat` moored on open water against the deck row (first
+    free water cell: west flank, east flank, then the three north
+    cells), a `bollard` pair on the shore cells flanking the
+    boathouse, and `crates`/`fishnets` on the shore row via the b61
+    perimeter ring walk (water ring cells fail the guard, so pieces
+    settle on the land side). City harbors upgrade their straight
+    pier to the stone `jetty` family; towns and outposts keep wood
+    (`PIER_TYPES` appended, walkability identical, art-only).
+    PLACEMENT DOCTRINE: default-on wherever a dock stands — like the
+    smithy yard, this completes an existing building; lanes and
+    entrance halos stay clear via the standard guards; pier-tip
+    clutter (rowboat/fishnets/buoy) is older machinery and unchanged.
+    Both new props BLOCK, mirroring the package. Style-free worlds
+    have no docks, so their only shift is the city-pier jetty.
 12. **Boardwalk shore** — `boardwalk` pier family along swamp/fen
     settlement waterlines instead of plank piers.
 13. **Seawall front** — `seawall` along city coast edges (pairs with

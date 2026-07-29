@@ -20,7 +20,9 @@ export const CROP_TYPES = ["crop.wheat", "crop.pumpkin", "crop.corn"] as const;
 /** Fence layer: 0 = none, else 1-based index into FENCE_TYPES. */
 export const FENCE_TYPES = ["fence.pen", "fence.iron"] as const;
 /** Pier layer: 0 = none, else 1-based index into PIER_TYPES. */
-export const PIER_TYPES = ["pier.pier"] as const;
+// Harbor row (behavior 63): city harbors build in stone — the package's
+// jetty family; towns and outposts keep the wooden pier.
+export const PIER_TYPES = ["pier.pier", "pier.jetty"] as const;
 
 export interface FarmResult {
   readonly cropLayer: Uint8Array;
@@ -129,7 +131,9 @@ export function planFarmsAndPiers(
     }
 
     if (plan.purpose === "harbor") {
-      // One straight pier from the nearest shore cell into open water.
+      // One straight pier from the nearest shore cell into open water. City
+      // harbors lay theirs in stone (behavior 63 jetty); lesser holds in wood.
+      const pierType = plan.kind === "city" ? 2 : 1;
       const shore = findShore(plan.anchorX, plan.anchorY, plan.radius + 6, grid, hydro, width, height);
       if (shore !== null) {
         const [shoreCell, dx, dy] = shore;
@@ -140,7 +144,7 @@ export function planFarmsAndPiers(
         for (let step = 1; step <= length; step += 1) {
           const cell = cellAt(shoreX + dx * step, shoreY + dy * step, width, height);
           if (cell === -1 || hydro.waterKind[cell] === WATER_NONE) break;
-          pierLayer[cell] = 1;
+          pierLayer[cell] = pierType;
           pierCells += 1;
           placed += 1;
         }

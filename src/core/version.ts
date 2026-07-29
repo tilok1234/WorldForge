@@ -483,8 +483,22 @@ export const GENERATOR_VERSION = "0.1.0";
  *     art in the package). Every lane, trail, and road crossing opens —
  *     the behavior-47 no-sever laws outrank the wall. Towns and outposts
  *     never wall; flag off = byte-identical.
+ * 63: harbor row (decoration.props 13, settlements.plans 24; batch 3 of
+ *     the pack assessment) — the b60 boathouses get their working
+ *     waterfront: a fishingboat moored on open water against the deck
+ *     row (first free water cell, north then flanks), a bollard pair on
+ *     the shore cells flanking the boathouse, and crates + fishnets on
+ *     the shore row via the b61 perimeter ring walk (water cells fail
+ *     the guard, so pieces land on the land side; lanes and entrance
+ *     halos stay clear as ever). Both new props block, mirroring the
+ *     package. City harbors upgrade their straight pier to the stone
+ *     JETTY family (PIER_TYPES appends pier.jetty; towns and outposts
+ *     keep wood) — same walkable network, art-only. Dock dressing is
+ *     default-on wherever a dock stands (b61 doctrine: completing an
+ *     existing building); style-free worlds have no docks, so their
+ *     only possible shift is a city-harbor jetty.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 62;
+export const GENERATOR_BEHAVIOR_VERSION = 63;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -499,10 +513,10 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 17,
-  "settlements.plans": 23,
+  "settlements.plans": 24,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
-  "decoration.props": 12,
+  "decoration.props": 13,
   "decoration.pois": 16,
   "density.presets": 1,
   "authoring.overrides": 1,

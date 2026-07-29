@@ -179,6 +179,8 @@ const BLOCKING_PROPS = new Set<string>([
   "prop.lamp", "prop.barrels", "prop.bench", "prop.noticeboard",
   "prop.table_chairs", "prop.anvil", "prop.workbench", "prop.laundry_line",
   "prop.baskets",
+  // Harbor row (behavior 63): dockside clutter blocks like the rest.
+  "prop.fishingboat", "prop.bollard",
 ]);
 
 /** Corridor materials whose street grid streams must not sever. */

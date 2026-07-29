@@ -7,6 +7,8 @@ import { compileRecipe } from "../src/recipe/compile.js";
 import { generateWorldDetailed } from "../src/generation/generate.js";
 import { loadWorldArtifact } from "../src/consumers/typescript/loader.js";
 import { buildStructureSequence } from "../src/settlements/settlements.js";
+import { PIER_TYPES } from "../src/settlements/farms.js";
+import { DECOR_TYPES } from "../src/decoration/decorate.js";
 import { STRUCTURE_FOOTPRINTS, STRUCTURE_TYPES } from "../src/settlements/structures.js";
 import { STRUCTURE_NAME } from "../src/adapters/tileforge/resolve.js";
 import { loadPinnedManifest } from "../src/adapters/tileforge/manifest.js";
@@ -658,6 +660,83 @@ describe("settlement variety (behavior 49)", () => {
       assert.equal(world.walkableAt(ox + 2, oy + 1), true, "shore deck 5 blocked");
       // Doorstep on walkable land below the entrance.
       assert.equal(world.walkableAt(dock.entrance[0], dock.entrance[1]), true, "doorstep blocked");
+    }
+  });
+
+  it("harbor row dresses docks and city piers build in stone (behavior 63)", () => {
+    const { normalized, config } = compiled({
+      recipeFormat: 1,
+      seed: 2,
+      world: { sizePreset: "tiny", climatePreset: "temperate" },
+      budgets: { settlementCount: 3, primaryRouteCount: 1, landmarkCount: 0 },
+      settlementStyle: { variety: true },
+    });
+    const result = generateWorldDetailed(normalized, config);
+    const { width } = config.world;
+    const docks = result.artifact.settlements.flatMap((s) =>
+      s.structures.filter((st) => st.type === "structure.dock"),
+    );
+    assert.ok(docks.length > 0, "no docks on the fixture seed");
+    const props = result.composed.decoration.propLayer;
+    const boat = DECOR_TYPES.indexOf("prop.fishingboat") + 1;
+    const bollard = DECOR_TYPES.indexOf("prop.bollard") + 1;
+    const crates = DECOR_TYPES.indexOf("prop.crates") + 1;
+    const fishnets = DECOR_TYPES.indexOf("prop.fishnets") + 1;
+    const loaded = loadWorldArtifact(JSON.parse(JSON.stringify(result.artifact)));
+    assert.ok(loaded.ok);
+    const world = loaded.world;
+    const touchesDock = (x: number, y: number): boolean =>
+      docks.some(
+        (d) =>
+          x >= d.cell[0] - 1 && x <= d.cell[0] + 3 &&
+          y >= d.cell[1] - 1 && y <= d.cell[1] + 2,
+      );
+    let boats = 0;
+    let posts = 0;
+    let shoreClutter = 0;
+    for (let y = 0; y < config.world.height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const value = props[y * width + x];
+        if (value === boat) {
+          boats += 1;
+          // Moored on open water against the boathouse, never on land.
+          assert.notEqual(result.composed.hydro.waterKind[y * width + x], 0, "boat on land");
+          assert.ok(touchesDock(x, y), "boat adrift from every dock");
+          assert.equal(world.walkableAt(x, y), false, "boat cell walks");
+        } else if (value === bollard) {
+          posts += 1;
+          assert.equal(result.composed.hydro.waterKind[y * width + x], 0, "bollard in water");
+          assert.ok(touchesDock(x, y), "bollard away from every dock");
+          assert.equal(world.walkableAt(x, y), false, "bollard cell walks");
+        } else if ((value === crates || value === fishnets) && touchesDock(x, y)) {
+          shoreClutter += 1;
+        }
+      }
+    }
+    assert.ok(boats > 0, "no fishingboat moored");
+    assert.ok(posts > 0, "no bollards seated");
+    assert.ok(shoreClutter > 0, "no crates or fishnets on the shore row");
+    // City harbors lay stone jetties; the town keeps its wooden pier. The
+    // fixture has one of each, so both PIER_TYPES values must be present.
+    assert.deepEqual([...PIER_TYPES], ["pier.pier", "pier.jetty"]);
+    const pierValues = new Set<number>();
+    const piers = result.composed.farms.pierLayer;
+    for (let index = 0; index < piers.length; index += 1) {
+      if (piers[index] !== 0) pierValues.add(piers[index] as number);
+    }
+    assert.deepEqual([...pierValues].sort(), [1, 2], "expected wood and jetty piers");
+    const cityHarbor = result.artifact.settlements.find((s) => s.kind === "city" && s.purpose === "harbor");
+    assert.ok(cityHarbor !== undefined, "fixture lost its city harbor");
+    for (let index = 0; index < piers.length; index += 1) {
+      if (piers[index] !== 2) continue;
+      const px = index % width;
+      const py = (index - px) / width;
+      const toCity = Math.abs(px - cityHarbor.anchor[0]) + Math.abs(py - cityHarbor.anchor[1]);
+      for (const other of result.artifact.settlements) {
+        if (other.id === cityHarbor.id || other.purpose !== "harbor") continue;
+        const toOther = Math.abs(px - other.anchor[0]) + Math.abs(py - other.anchor[1]);
+        assert.ok(toCity < toOther, `jetty cell ${px},${py} nearer a lesser harbor`);
+      }
     }
   });
 

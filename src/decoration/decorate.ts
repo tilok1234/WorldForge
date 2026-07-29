@@ -103,6 +103,10 @@ export const DECOR_TYPES = [
   "prop.workbench",
   "prop.laundry_line",
   "prop.baskets",
+  // Harbor row (behavior 63): dockside working clutter — the moored boat
+  // and the mooring posts the b60 boathouses were waiting for.
+  "prop.fishingboat",
+  "prop.bollard",
 ] as const;
 
 /** Semantic ground-decal keys, stage 1. Layer stores index + 1 (0 = none). */
@@ -147,6 +151,9 @@ const BLOCKING = new Set<string>([
   "prop.lamp", "prop.barrels", "prop.bench", "prop.noticeboard",
   "prop.table_chairs", "prop.anvil", "prop.workbench", "prop.laundry_line",
   "prop.baskets",
+  // Harbor row (behavior 63): both block (the boat sits on water, where
+  // blocking is moot, but the package flags it solid all the same).
+  "prop.fishingboat", "prop.bollard",
 ]);
 
 /** Two-part canopy species (§2.10): skip when a structure sits above. */
@@ -935,10 +942,50 @@ export function decorateWorld(
     const YARD_PIECES: Readonly<Record<string, readonly (typeof DECOR_TYPES)[number][]>> = {
       "structure.smithy": ["prop.anvil", "prop.workbench", "prop.tool_rack", "prop.firewood"],
       "structure.tavern": ["prop.table_chairs", "prop.table_chairs", "prop.barrels", "prop.lamp", "prop.laundry_line"],
+      // Harbor row (behavior 63): the catch crated on the shore row. Water
+      // ring cells fail the guard, so the walk lands these on the land side.
+      "structure.dock": ["prop.crates", "prop.fishnets"],
     };
     const lamp = typeOf("prop.lamp");
     for (const settlement of settlements) {
       for (const structure of settlement.structures) {
+        // Harbor row (behavior 63), before the generic ring walk claims the
+        // flanks: a working boat moored on open water against the deck row,
+        // and a bollard pair on the shore cells flanking the boathouse —
+        // fixed spots first, ring clutter fills what remains.
+        if (structure.type === "structure.dock") {
+          const moorSpots: ReadonlyArray<readonly [number, number]> = [
+            [structure.x - 1, structure.y],
+            [structure.x + structure.width, structure.y],
+            [structure.x, structure.y - 1],
+            [structure.x + 1, structure.y - 1],
+            [structure.x + 2, structure.y - 1],
+          ];
+          for (const [mx, my] of moorSpots) {
+            if (mx < 0 || my < 0 || mx >= width || my >= height) continue;
+            const moor = my * width + mx;
+            if (
+              hydro.waterKind[moor] === WATER_NONE ||
+              structureLayer[moor] !== 0 ||
+              propLayer[moor] !== 0 ||
+              farms.pierLayer[moor] !== 0 ||
+              fordCells[moor] !== 0
+            ) {
+              continue;
+            }
+            propLayer[moor] = typeOf("prop.fishingboat");
+            propCount += 1;
+            break;
+          }
+          for (const bx of [structure.x - 1, structure.x + structure.width]) {
+            const by = structure.y + 1;
+            if (bx < 0 || by < 0 || bx >= width || by >= height) continue;
+            const post = by * width + bx;
+            if (!yardGuard(post)) continue;
+            propLayer[post] = typeOf("prop.bollard");
+            propCount += 1;
+          }
+        }
         const pieces = YARD_PIECES[structure.type];
         if (pieces === undefined) continue;
         // Perimeter ring, clockwise from the top-left corner cell; rotate
