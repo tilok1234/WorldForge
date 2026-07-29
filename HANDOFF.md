@@ -61,18 +61,19 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   humble into cottages. See §5 for the lane promise + two-tier
   entrance check this required.
 
-Versions: behavior **61** (lived-in dressing), recipe compiler **34**,
-resolved-config **28**, artifact format 8, TileForge adapter 7,
-packFormat 1, settlements.plans 22, decoration.props 12. **230 tests,
-all green on this machine** (21 in tests/settlementStyle.test.ts).
-Everything pushed through commit `db9e113`. Standing commit+push
+Versions: behavior **62** (city walls), recipe compiler **35**,
+resolved-config **29**, artifact format 8, TileForge adapter 7,
+packFormat 1, settlements.plans 23, decoration.props 12. **231 tests,
+all green on this machine** (23 in tests/settlementStyle.test.ts).
+Everything pushed through commit `4197571`. Standing commit+push
 authorization (memory) — re-confirm per policy; visual verdicts always
 user-gated. THE SCENERY LOOP IS THE ACTIVE ARC: the pack assessment +
 composition catalog live at docs/SCENERY_COMPOSITIONS.md (28 ideas,
-per-composition placement doctrine recorded as each ships); the
-designer is doing a parallel pass and merges into §3/§4. Batch 2
-candidates: city walls + gates (the loaded lever), harbor row,
-chicken run / vineyard.
+per-composition placement doctrine recorded as each ships; batches 1
+and 2 = behaviors 61-62 SHIPPED); the designer is doing a parallel
+pass and merges into §3/§4. Batch 3 candidates: harbor row (boats/
+bollards/crates at the b60 docks), chicken run / vineyard, logging
+camp / battlefield-with-blood.
 
 ## 2. The world library (fixtures/recipes/, galleries outputs/gallery/)
 
@@ -176,8 +177,24 @@ gate. ALL APPROVED except one:
   Canonical 33893 -> 33795 (flagged, -98 furniture cells); eight-holds
   round 13 flood 182939, 9/9, Godot 0 errors, 66 lamps; dusk pack
   re-exported flood 34641. The dusk LOOK lands: glowing lamp rows in
-  the snow. Regenerated at outputs/gallery/the-eight-holds
-  (viewer-ready). AWAITING THE DESIGNER (round 13).
+  the snow. ROUND 13 RULED "looks better now".
+- CITY WALLS (behavior 62, round 14, commit `4197571`; batch 2):
+  opt-in settlementStyle.cityWalls (compiler 35, resolved-config 29,
+  settlements.plans 23; eight-holds opts IN). Cities ring their
+  street web with fortress_wall cells; NEW structure.city_gate (the
+  package's pristine 3x2 gatehouse, arch pass [1,4], adapter name
+  "gate") seats on N/S through-streets. Radius chosen to MAXIMIZE
+  fittable gatehouses (>=3 sides street-crossed); every street
+  crossing is an opening (b47 outranks); water/river/rock break the
+  circuit; scatter houses outside = suburbs. E/W crossings stay
+  plain openings — NO vertical gate art in the package (upstream ask
+  recorded in the catalog). PLACEMENT LESSONS (4 iterations): extent
+  ring = sealed wall with no doors; centered-only gates = zero in
+  dense fabric; exact-column through-checks miss organic jogs (use a
+  3-wide window); score radii BY fittable gates. Round 14 flood
+  182844, 9/9, Godot 0; harbor city N+S gates, crossing city S gate.
+  Regenerated at outputs/gallery/the-eight-holds (viewer-ready).
+  AWAITING THE DESIGNER (round 14).
 - Approved small archetypes (9): frontier-sparse, warm-vale,
   highland-fastness, sunburnt-reach, weeping-marsh, drowned-shore,
   the-old-war, the-long-winter, hearth-hollow. Tiny hollows (3):
