@@ -1,8 +1,9 @@
 # WorldForge — session handoff (2026-07-30, scenery loop mid-arc, round 21 out)
 
 > **RESUME HERE.** The scenery-composition loop is the active arc:
-> **round 21 (logging camp, behavior 69, commit `a11942b`) is
-> SENT and AWAITS THE VERDICT** — batch 8, proceeding on round 20's
+> **round 21 (logging camp, behavior 69, commit `a11942b`) RULED
+> POSITIVE ("beautiful approved", 2026-07-30) — batch 9 = SHIPWRECK
+> COVE proceeds** — batch 8, proceeding on round 20's
 > ruling ("ye that looks better aproved"; rounds 12-18 + 20 positive,
 > 19 absorbed as the b68 entrance principle). NEW POI
 > poi.logging_camp (decoration.pois 18): where forest meets the
