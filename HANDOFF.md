@@ -4,9 +4,22 @@
 > actual world map that i will use for now for wildshot adventures";
 > agreed: iterate to DONE in verdict rounds -> approve-recipe baseline
 > -> export -> auto-published release -> game intake by tag).
-> **Round W2 (draft 2 THE SMALL EDITION, recipe
-> fixtures/recipes/wildshot-overworld.json, commit `94da8f9`) is SENT
-> and AWAITS THE VERDICT.** W1 (512² draft, `af3735b`, kept in git as
+> **Round W3 RULED: layout C CHOSEN ("c is a very good oine",
+> 2026-07-30) — THE WORLD IS seed 2008,** locked in
+> fixtures/recipes/wildshot-overworld.json and verified in the
+> gallery/viewer slot (9/9 reachable, flood 45082, Godot 0): harbor
+> capital [109,182] on the south bay, snowline crossing city
+> [210,53] (plaza stream into the lake — the showcase), towns
+> [18,13]/[65,217]/[143,195], outpost [180,159]; landmarks
+> ruined_city [59,6], world_tree [91,8], lighthouse [178,195]. W2
+> history: the small edition drew "brand new generated world layout"
+> — pins dropped, 35 seeds probed organically (~80% gate-refused;
+> pins had been steering settlements onto good ground), candidates
+> 777/2015/2008 offered, C picked. DETAIL-PASS AGENDA (agent-flagged
+> for next rounds): ruined_city + world_tree crowd the north edge
+> again (32 apart — pin them apart), NO farming settlement rolled
+> (pin one or nudge moisture), then iterate to DONE -> baseline ->
+> export -> auto-release -> game intake. W1 (512² draft, `af3735b`, kept in git as
 > the bigger-world-later reference) drew two designer redirects:
 > "route points too close, could be better spread" and "this world is
 > way to big for the game atm" — so the overworld is SMALL 256² now,
