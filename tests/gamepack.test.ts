@@ -219,9 +219,18 @@ describe("export-game-pack CLI", () => {
     const dirB = mkdtempSync(join(tmpdir(), "wf-pack-b-"));
     cleanups.push(dirA, dirB);
     for (const dir of [dirA, dirB]) {
-      const run = spawnSync(process.execPath, [CLI, "export-game-pack", TINY_RECIPE, "--out", dir], {
-        encoding: "utf8",
-      });
+      // --allow-dirty: the publish gate (doc 18 §4) would otherwise refuse
+      // whenever the dev tree has uncommitted work; gate logic has its own
+      // tests in tests/publish.test.ts. --no-release: on a CLEAN tree the
+      // gate passes and the exporter would otherwise really call gh — a test
+      // run must never publish. Neither flag changes pack bytes.
+      const run = spawnSync(
+        process.execPath,
+        [CLI, "export-game-pack", TINY_RECIPE, "--out", dir, "--allow-dirty", "--no-release"],
+        {
+          encoding: "utf8",
+        },
+      );
       assert.equal(run.status, 0, run.stderr);
     }
 

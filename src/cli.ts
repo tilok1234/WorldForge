@@ -27,7 +27,7 @@ import { validateArtifact } from "./validation/validateArtifact.js";
 import { writeWorldOutputs } from "./artifact/write.js";
 import { renderMacroSet } from "./render/macroRender.js";
 import { buildContactSheet } from "./render/contactSheet.js";
-import { canonicalSha256 } from "./core/identity.js";
+import { canonicalSha256, sha256HexBytes } from "./core/identity.js";
 import {
   importTileForgePackage,
   verifyTileForgePackage,
@@ -52,7 +52,15 @@ import {
 } from "./adapters/tileforge/verifyResolution.js";
 import { emitResolvedTmj } from "./adapters/tileforge/emitTmj.js";
 import type { TmjDocument } from "./adapters/tileforge/tmj.js";
-import { buildGamePack } from "./gamepack/export.js";
+import { buildGamePack, GAME_PACK_FORMAT } from "./gamepack/export.js";
+import { buildStoredZip } from "./gamepack/zip.js";
+import {
+  checkPublishable,
+  packArtifactId,
+  packAssetName,
+  packName,
+  publishPackRelease,
+} from "./gamepack/publish.js";
 import { loadWorldArtifact } from "./consumers/typescript/loader.js";
 
 /**
@@ -221,12 +229,18 @@ const USAGE = `worldforge <command>
   approve-recipe <file> [--baseline] [--note <text>] [--date <iso>]
                                record the user's approval state beside the
                                recipe (<file>.approval.json)
-  export-game-pack <file> --out <dir>
+  export-game-pack <file> --out <dir> [--allow-dirty] [--no-release]
                                pack a validated world into the frozen game
                                consumer layout (docs/GAME_INTEGRATION_PLAN.md
                                §3): artifact + resolved layers + walkability
                                bitgrid + minimap + hashed manifest; refuses
-                               on any validation failure
+                               on any validation failure. Publish gate
+                               (planning doc 18 §4): refuses a dirty tree or
+                               unpushed HEAD (--allow-dirty = loud dev-only
+                               escape, disables the release); a successful
+                               gated export then uploads the pack zip as
+                               GitHub release <world>-pack-<theme>@b<NN>
+                               (--no-release skips the upload)
 `;
 
 main(process.argv.slice(2));
@@ -757,9 +771,35 @@ function buildSliceManifest(result: GenerationResult, resolved: ResolvedWorld): 
  * written; the pack lands complete or not at all.
  */
 function runExportGamePack(argv: readonly string[]): number {
-  const parsed = parseFileAndOut(argv, "export-game-pack");
+  const allowDirty = argv.includes("--allow-dirty");
+  const noRelease = argv.includes("--no-release");
+  const parsed = parseFileAndOut(
+    argv.filter((arg) => arg !== "--allow-dirty" && arg !== "--no-release"),
+    "export-game-pack",
+  );
   if (typeof parsed === "number") {
     return parsed;
+  }
+  // Publish gate (planning doc 18 §4, accepted 2026-07-30): a delivered pack
+  // must be reproducible from a pushed commit, so the exporter refuses a
+  // dirty tree or an unpushed HEAD before any generation work starts.
+  const gate = checkPublishable(WORLDFORGE_ROOT);
+  if (!gate.ok) {
+    if (!allowDirty) {
+      process.stderr.write(
+        [
+          "publish gate REFUSED (planning doc 18 §4): a pack must be reproducible from a pushed commit.",
+          ...gate.reasons.map((reason) => `  ${reason}`),
+          "fix: commit and push, then re-export.",
+          "dev-only escape: --allow-dirty (loud, and the release upload is disabled).",
+        ].join("\n") + "\n",
+      );
+      return 1;
+    }
+    process.stderr.write(
+      "publish gate BYPASSED (--allow-dirty): DEV EXPORT ONLY — this pack is not reproducible" +
+        " from a pushed commit and will NOT be uploaded as a release.\n",
+    );
   }
   const loaded = loadRecipe(parsed.file);
   if (typeof loaded === "number") {
@@ -835,7 +875,69 @@ function runExportGamePack(argv: readonly string[]): number {
       ...pack.files.map((file) => `wrote ${join(parsed.outDir, file.path)}`),
     ].join("\n") + "\n",
   );
-  return 0;
+
+  // Release transport (planning doc 18 §4.4): a gated export uploads the
+  // pack as a deterministic zip on a GitHub release tagged with the artifact
+  // id, notes carrying the source commit and content hashes. The pack files
+  // above are already on disk either way; a failed upload exits non-zero so
+  // the miss is loud, never silent.
+  if (noRelease) {
+    process.stdout.write("release upload: skipped (--no-release)\n");
+    return 0;
+  }
+  if (!gate.ok) {
+    process.stdout.write("release upload: skipped (--allow-dirty dev export)\n");
+    return 0;
+  }
+  const identity = {
+    worldName,
+    theme: lock.theme,
+    behaviorVersion: result.artifact.generator.generatorBehaviorVersion,
+  };
+  const manifestFile = pack.files.find((file) => file.path === "manifest.json");
+  if (manifestFile === undefined) {
+    process.stderr.write("release upload FAILED: pack has no manifest.json\n");
+    return 1;
+  }
+  const zipBytes = buildStoredZip(
+    pack.files.map((file) => ({ path: `${packName(identity)}/${file.path}`, bytes: file.bytes })),
+  );
+  const releaseDir = join(WORLDFORGE_ROOT, "outputs", "releases");
+  mkdirSync(releaseDir, { recursive: true });
+  const zipPath = join(releaseDir, packAssetName(identity));
+  writeFileSync(zipPath, zipBytes);
+  const outcome = publishPackRelease(
+    {
+      identity,
+      sourceCommit: gate.headCommit,
+      packFormat: GAME_PACK_FORMAT,
+      tileforgeAdapterVersion: TILEFORGE_ADAPTER_VERSION,
+      tileforgePackageId: (pack.manifest["tileforge"] as { packageId: string }).packageId,
+      baseArtifactSha256: pack.manifest["baseArtifactSha256"] as string,
+      manifestSha256: sha256HexBytes(manifestFile.bytes),
+      zipSha256: sha256HexBytes(zipBytes),
+      fileCount: pack.files.length,
+      floodCount: pack.walkability.floodCount,
+      spawnCell: pack.walkability.spawnCell,
+    },
+    zipPath,
+    WORLDFORGE_ROOT,
+  );
+  if (outcome.status === "created") {
+    process.stdout.write(
+      `release: published ${packArtifactId(identity)} (${zipBytes.length} bytes, zip sha256 ` +
+        `${sha256HexBytes(zipBytes)})\n  ${outcome.url}\n`,
+    );
+    return 0;
+  }
+  if (outcome.status === "verified-existing") {
+    process.stdout.write(
+      `release: ${packArtifactId(identity)} already published — manifestSha256 verified identical\n`,
+    );
+    return 0;
+  }
+  process.stderr.write(`release upload FAILED (pack files are written): ${outcome.message}\n`);
+  return 1;
 }
 
 function runVerifyResolution(file: string | undefined): number {

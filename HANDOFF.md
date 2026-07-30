@@ -17,7 +17,12 @@
 > NONE; the farm worlds are warm-vale-large (8), the-broken-isles
 > (7), dust-sea, the-old-war-medium/-large, weeping-marsh,
 > the-eight-lands. Nothing is half-implemented; every behavior
-> through 65 is committed, pushed, and tested (234 green).
+> through 65 is committed, pushed, and tested (242 green).
+> DOC 18 ABSORBED (2026-07-30): export-game-pack now runs behind the
+> publish gate (dirty tree / unpushed HEAD = refusal, exercised live)
+> and a clean gated export auto-publishes the pack zip as a GitHub
+> release tagged with the artifact id. Prior packs are GRANDFATHERED —
+> the first release tag lands at the next real export.
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
@@ -85,10 +90,29 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   street arms roll per-direction lengths 50–130%, deep fill houses
   humble into cottages. See §5 for the lane promise + two-tier
   entrance check this required.
+- DOC 18 PUBLISH LANE (2026-07-30, planning ruling ratified same day):
+  the §4 delivery duties are implemented. `src/gamepack/publish.ts` —
+  the gate (`git status --porcelain` empty AND `git branch -r
+  --contains HEAD` non-empty; any git failure refuses, never a silent
+  pass), release identity (`<world>-pack-<theme>@b<NN>`, matching the
+  sync-log artifact-id convention), notes with parseable
+  sourceCommit/sha256 lines, and an idempotent NON-OVERWRITING gh
+  publish (existing tag + identical manifestSha256 = verified-existing;
+  existing tag + different bytes = hard refusal). `src/gamepack/zip.ts`
+  — deterministic store-only zip (sorted entries, fixed 1980 DOS
+  timestamps, canonical-bytes pin in tests). CLI: gate runs BEFORE any
+  generation; `--allow-dirty` is a loud dev-only bypass that DISABLES
+  the release; `--no-release` skips upload (tests pass BOTH so a clean
+  tree never publishes from `npm test`). VERIFIED PREMISE (§4.2): the
+  pack manifest embeds content hashes everywhere but deliberately NO
+  sourceCommit (byte-stable re-export doctrine); the commit binds via
+  the release tag target + notes instead — deviation reported honestly
+  in sync-log sl-0015. Dirty-tree refusal exercised for real; gh
+  keyring verified (tilok1234, repo scope). No release minted yet.
 
 Versions: behavior **65** (manor gardens), recipe compiler **35**,
 resolved-config **29**, artifact format 8, TileForge adapter 7,
-packFormat 1, settlements.plans 26, decoration.props 15. **234 tests,
+packFormat 1, settlements.plans 26, decoration.props 15. **242 tests,
 all green on this machine** (25 in tests/settlementStyle.test.ts; the
 b64 pen/grapes test rides tests/settlements.test.ts on a synthetic
 plain). Everything pushed through commit `719d167`. Standing commit+push
@@ -417,7 +441,10 @@ discipline (§5 identity rule).
 - Dusk game pack at `outputs/game-packs/small-cold-coastal-pack-dusk/`
   RE-EXPORTED 2026-07-29 under the behavior-63 identity (flood 34641
   unchanged; canonical's city-harbor pier renders stone jetty now,
-  art-only) — READY FOR HANDOVER to `assets/worldforge-packs/`. WYSIWYG semantics
+  art-only) — READY FOR HANDOVER to `assets/worldforge-packs/`.
+  (GRANDFATHERED per doc 18 §4.4 — hand over as-is, NO retroactive
+  release for this or any prior pack; the release lane starts with the
+  NEXT export.) WYSIWYG semantics
   (plan §3.3): art-outline stamp (footprints minus pass cells; house
   doors solid), level-0 moss carpet walks, NOTHING else seals — slits,
   pockets, and the two-wide seals all reopened. Pack flood **34641**
@@ -458,13 +485,15 @@ discipline (§5 identity rule).
 ## 8. Commands
 
 ```
-npm test                          # build + 226 tests
+npm test                          # build + 242 tests
 node dist/tools/update-golden.js
 node dist/src/cli.js resolve-tileforge fixtures/recipes/<name>.json --out outputs/gallery/<name>
 node --max-old-space-size=8192 dist/src/cli.js resolve-tileforge fixtures/recipes/<medium-or-large>.json --out outputs/gallery/<name>
 node dist/tools/godot-consumer.js --world outputs/gallery/<name>
 node consumers/typescript/traverse.mjs outputs/gallery/<name>/world.json
 node dist/src/cli.js export-game-pack fixtures/recipes/<name>.json --out <dir>
+                                  # doc 18 publish-gated: clean PUSHED tree required, then
+                                  # auto-publishes the GitHub release (dev: --allow-dirty --no-release)
 node dist/src/cli.js approve-recipe fixtures/recipes/<name>.json --baseline
 node dist/tools/serve-viewer.js   # viewer :8787 (if not already up)
 godot --path consumers/godot

@@ -6,6 +6,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["dist/tools/serve-viewer.js"],
       "port": 8787
+    },
+    {
+      "name": "viewer-b",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["dist/tools/serve-viewer.js", "--port", "8788"],
+      "port": 8788
     }
   ]
 }
