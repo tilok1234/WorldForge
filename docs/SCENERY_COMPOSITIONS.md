@@ -157,8 +157,18 @@ Ordered roughly by (visual payoff / effort). ✓ = shipped already.
    openings — the package has no vertical gate art (UPSTREAM ASK:
    east/west gatehouse variant; `gate_drawbridge` also still unused,
    wants a wall-over-water case).
-10. **Guard post** — `guardhouse` + `banner` + `brazier` +
-    `archerytarget` at gates/bridge ends. Furniture only.
+10. ✓ **Guard post — gates half** (behavior 66, batch 6) — each b62
+    gatehouse seats a garrison trio at fixed deterministic spots: a
+    `brazier` pair just inside the walls flanking the through-street
+    (the lit city door), ONE `banner` over the approach (west tower
+    first, east fallback), an `archerytarget` in the tower nook
+    against the inner wall. PLACEMENT DOCTRINE: default-on wherever a
+    city gate stands (b61 completion doctrine); every seat is
+    pathLayer-checked and yard-guarded, so occupied or protected
+    spots are SKIPPED, never hunted — a dense crossing-city gate
+    legitimately reads banner-only. OPEN LEVERS: bridge-end posts
+    (wilderness ambient density wants its own verdict) and the seated
+    `guardhouse` structure itself.
 
 ### Waterfront (WATERLINE pattern, docks proved it)
 

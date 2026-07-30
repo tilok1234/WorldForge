@@ -1,16 +1,23 @@
-# WorldForge — session handoff (2026-07-29, scenery loop mid-arc, round 17 ratified)
+# WorldForge — session handoff (2026-07-30, scenery loop mid-arc, round 18 out)
 
-> **RESUME HERE.** The scenery-composition loop is the active arc and
-> the board is CLEAN: **round 17 (manor gardens, behavior 65, commit
-> `719d167`) RULED "looks good"** — SIX straight positive rounds
-> (12-17: docks, dressing, walls, harbor row, farm pair, gardens).
-> Nothing awaits a verdict. The next move is the **batch-6 pick**
-> from docs/SCENERY_COMPOSITIONS.md (remaining leaders: logging
-> camp, battlefield blood, the waterfront set — boardwalk / seawall
-> / lighthouse point / shipwreck cove — windmill hill, orchard,
-> guard post, processional way) — or the designer's parallel
-> pack-assessment notes merged into catalog §3/§4, still
-> outstanding. The bright-teal hedge art passed without comment;
+> **RESUME HERE.** The scenery-composition loop is the active arc:
+> **round 18 (gate guard posts, behavior 66, commit `1dc16a2`) is
+> SENT and AWAITS THE VERDICT** — the batch-6 pick was delegated
+> ("whichever you prefer") and guard post won: each b62 gatehouse
+> seats a garrison trio (brazier pair inside flanking the street, one
+> banner over the approach, archery target in the tower nook), every
+> seat guard-checked, occupied spots skipped never hunted. Eight-holds
+> flood 182737 -> **182730** (−7 = the seated garrison: harbor gates 3
+> pieces each, the dense crossing gate legitimately banner-only), 9/9,
+> Godot 0, canonical 33795 INVARIANT (rides city_gate existence; no
+> pack re-export — the b65 release stays the blessed delivery). Rounds
+> 12-17 all ruled positive before it. After the verdict: batch-7 from
+> docs/SCENERY_COMPOSITIONS.md (remaining leaders: logging camp,
+> battlefield blood [tone question §4 open], the waterfront set —
+> boardwalk / seawall / lighthouse point / shipwreck cove — windmill
+> hill, orchard, processional way; bridge-end guard posts recorded as
+> an open lever) — or the designer's parallel pack-assessment notes
+> merged into catalog §3/§4, still outstanding. The bright-teal hedge art passed without comment;
 > the optional softer-hedge repaint stays a TileForge-side upstream
 > ask if it ever grates. NOTE: farming settlements only spawn inland
 > with ≥45% grass — canonical, eight-holds, and small warm-vale have
@@ -122,9 +129,10 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   (designer 2026-07-30): blessed as the sl-0004 delivery transport
   (see pointer block).
 
-Versions: behavior **65** (manor gardens), recipe compiler **35**,
+Versions: behavior **66** (gate guard posts), recipe compiler **35**,
 resolved-config **29**, artifact format 8, TileForge adapter 7,
-packFormat 1, settlements.plans 26, decoration.props 15. **242 tests,
+packFormat 1, settlements.plans 26, decoration.props 15 (b66 adds no
+types — all three garrison props were already rostered). **243 tests,
 all green on this machine** (25 in tests/settlementStyle.test.ts; the
 b64 pen/grapes test rides tests/settlements.test.ts on a synthetic
 plain). Everything pushed through commit `719d167`. Standing commit+push
@@ -295,6 +303,21 @@ gate. ALL APPROVED except one:
   formal approve-recipe baseline — deliberate: the scenery loop
   keeps changing its recipeSha. Record the baseline only when the
   designer calls the world DONE.
+- GATE GUARD POSTS (behavior 66, round 18, commit `1dc16a2`; batch 6,
+  pick delegated to the session): every b62 gatehouse dresses its
+  garrison — brazier pair just inside flanking the through-street,
+  ONE banner over the approach (west tower first, east fallback),
+  archery target in the tower nook. All seats pathLayer-checked +
+  yard-guarded (lanes/entrance halos ride protectedCells); occupied
+  spots SKIPPED, never hunted. Eight-holds round 18 flood **182730**
+  (−7 = 3+3+1 seated: harbor gates full trio minus one refused
+  brazier each, the crossing gate banner-only inside its dense street
+  web — verified cell-by-cell, every refusal a guard), 9/9, Godot 0;
+  canonical 33795 INVARIANT (rides city_gate existence; style-free
+  untouched by construction). New test pins small seed-24 (two gates,
+  full trio on both). No pack re-export — pack content untouched; the
+  b65 release stays the blessed delivery. OPEN LEVERS: bridge-end
+  posts, the seated guardhouse structure.
 - Approved small archetypes (9): frontier-sparse, warm-vale,
   highland-fastness, sunburnt-reach, weeping-marsh, drowned-shore,
   the-old-war, the-long-winter, hearth-hollow. Tiny hollows (3):
