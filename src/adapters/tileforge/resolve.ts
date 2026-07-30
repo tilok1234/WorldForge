@@ -145,6 +145,7 @@ const PROP_NAME: { readonly [key: string]: string } = {
   "prop.cart": "cart",
   "prop.chest": "chest",
   "prop.archery_target": "archerytarget",
+  "prop.cookfire": "cookfire",
   "prop.chopping_block": "choppingblock",
   "prop.hay_bales": "haybales",
   "prop.trough": "trough",

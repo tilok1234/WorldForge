@@ -577,8 +577,23 @@ export const GENERATOR_VERSION = "0.1.0";
  *     trail arrives AT the entrance. Worlds with trail-side
  *     graveyards re-route (flagged flood shifts); style-free
  *     identity untouched.
+ * 69: logging camp (decoration.pois 18, decoration.props 16; batch 8 of
+ *     the pack assessment — the first wilderness set piece of the
+ *     scenery loop). A new worked-site POI where forest meets the
+ *     town's reach (grass, >= 8 trees within 4, settlement gap 10-30):
+ *     the b49 sawmill stamps in the wilderness for the first time,
+ *     with a chopping block by the door, two log piles of stacked
+ *     timber, a hauling cart, and the crew's COOKFIRE — the last camp
+ *     prop the package shipped that nothing ever placed (roster append,
+ *     blocks like campfire). The CUT EDGE tells the story: up to four
+ *     standing trees within the yard's reach convert to stumps in scan
+ *     order, so the site reads as work in progress. Cap 3, general
+ *     pool, seated LATE in the candidate chain so ratified POI mixes
+ *     barely shift; worked site = earns a b21 spur path. Every
+ *     forested world redistributes a few POI slots (flagged flood
+ *     shifts expected; canonical re-measured).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 68;
+export const GENERATOR_BEHAVIOR_VERSION = 69;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -596,8 +611,8 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "settlements.plans": 28,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
-  "decoration.props": 15,
-  "decoration.pois": 17,
+  "decoration.props": 16,
+  "decoration.pois": 18,
   "density.presets": 1,
   "authoring.overrides": 1,
   "adapter.tileforge": 7,

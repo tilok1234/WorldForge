@@ -185,6 +185,8 @@ const BLOCKING_PROPS = new Set<string>([
   "prop.coop",
   // Manor garden (behavior 65).
   "prop.topiary", "prop.planter_urn", "prop.sundial",
+  // Logging camp (behavior 69): the crew's hearth blocks like campfire.
+  "prop.cookfire",
 ]);
 
 /** Corridor materials whose street grid streams must not sever. */

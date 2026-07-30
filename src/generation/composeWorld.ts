@@ -491,6 +491,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
       "poi.prospector_camp",
       "poi.ruin",
       "poi.trapper_camp",
+      "poi.logging_camp",
     ]);
     const cobbleValue = PALETTE_INDEX["terrain.cobble"];
     const roadValue = PALETTE_INDEX["terrain.packed_road"];

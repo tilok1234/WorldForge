@@ -99,6 +99,8 @@ describe("points of interest, phase A", () => {
       "structure.house_abandoned": [],
       "structure.cottage": [],
       "structure.hermit_hut": [],
+      // Logging camp (behavior 69): the sawmill blocks fully (b49 roster).
+      "structure.sawmill": [],
     };
     let checkedStructures = 0;
     for (let seed = 1; seed <= 8 && checkedStructures < 3; seed += 1) {
@@ -125,6 +127,45 @@ describe("points of interest, phase A", () => {
       }
     }
     assert.ok(checkedStructures > 0, "structure POIs occur across seeds");
+  });
+
+  it("stages the lumber crew: sawmill, kit, and the cut edge (behavior 69)", () => {
+    let sawCamp = false;
+    for (let seed = 1; seed <= 12 && !sawCamp; seed += 1) {
+      const { composed, config } = composedFor(seed);
+      const camp = composed.pois.find((poi) => poi.type === "poi.logging_camp");
+      if (camp === undefined) continue;
+      sawCamp = true;
+      assert.ok(
+        camp.structure !== undefined && camp.structure.type === "structure.sawmill",
+        "logging camp without its sawmill",
+      );
+      const { width, height } = config.world;
+      const at = (key: string): number => DECOR_TYPES.indexOf(key as never) + 1;
+      let cookfires = 0;
+      let logPiles = 0;
+      let blocks = 0;
+      let stumps = 0;
+      for (let dy = -5; dy <= 5; dy += 1) {
+        for (let dx = -5; dx <= 5; dx += 1) {
+          const x = camp.x + dx;
+          const y = camp.y + dy;
+          if (x < 0 || y < 0 || x >= width || y >= height) continue;
+          const value = composed.decoration.propLayer[y * width + x] as number;
+          if (value === at("prop.cookfire")) cookfires += 1;
+          if (value === at("prop.log_pile")) logPiles += 1;
+          if (value === at("prop.chopping_block")) blocks += 1;
+          if (value === at("prop.stump")) stumps += 1;
+        }
+      }
+      assert.ok(cookfires >= 1, "camp cookfire missing");
+      assert.ok(logPiles >= 2, "stacked timber missing");
+      assert.ok(blocks >= 1, "chopping block missing");
+      // treesNear >= 8 at placement and the footprint clears at most 6,
+      // so the cut edge always fells at least two.
+      assert.ok(stumps >= 2, "the cut edge left no stumps");
+    }
+    assert.ok(sawCamp, "no tiny seed 1-12 stages a logging camp");
   });
 
   it("carries pois through the artifact and the public loader", () => {

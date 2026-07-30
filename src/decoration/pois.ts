@@ -63,6 +63,8 @@ export const POI_TYPES = [
   // Append-only (behavior 41): lone buildings in the wilderness.
   "poi.abandoned_homestead",
   "poi.lone_cottage",
+  // Append-only (behavior 69): the lumber crew at the forest edge.
+  "poi.logging_camp",
 ] as const;
 export type PoiType = (typeof POI_TYPES)[number];
 
@@ -266,6 +268,7 @@ export function planPois(
     "poi.steam_vents": 2,
     "poi.abandoned_homestead": 2,
     "poi.lone_cottage": 2,
+    "poi.logging_camp": 3,
   };
   // Far-reach quota (decoration.pois v4): rock- and snow-bound kinds get a
   // reserved slice of the budget. Rock edges are ~2% of cells, so without a
@@ -1028,6 +1031,53 @@ export function planPois(
         putProp(x + 3, y + 3, "prop.brazier");
         putDecal(x, y + 4, "decal.rune_circle");
         record("poi.stone_circle", x, y, stamp);
+        continue;
+      }
+    }
+
+    // Logging camp (behavior 69, batch 8 of the pack assessment): where
+    // the forest meets the town's reach, the lumber crew works — the
+    // sawmill (rostered since b49, staged in the wilderness for the
+    // first time), a chopping block by the door, the timber stacked in
+    // log piles, the crew's cookfire (the package prop that waited
+    // unrostered since v1), a cart for the haul. And the CUT EDGE: up
+    // to four standing trees in the yard's reach become stumps, scan
+    // order, so the site reads as work in progress, not set dressing.
+    // The variant band is the UPPER half on purpose: crypt (<250), ruin
+    // (<200), and graveyard (<400) all roll low bands, so a >= 500
+    // candidate was never theirs — the camp claims only rolls the
+    // ratified kinds would have passed over, and their mixes hold.
+    // Worked site: earns a spur path (SPUR_KINDS).
+    if (
+      material === grass &&
+      !capped("poi.logging_camp") &&
+      settlementGap >= MIN_SETTLEMENT_DISTANCE &&
+      settlementGap <= 30 &&
+      treesNear(x, y, 4) >= 8 &&
+      variant >= 500
+    ) {
+      const stamp = stampStructure("structure.sawmill", x, y);
+      if (stamp !== null) {
+        putProp(x - 1, y + 1, "prop.chopping_block");
+        putProp(x + 3, y, "prop.log_pile");
+        putProp(x + 3, y + 2, "prop.log_pile");
+        putProp(x - 1, y - 1, "prop.cookfire");
+        putProp(x + 1, y + 2, "prop.cart");
+        const stump = prop("prop.stump");
+        const treeValues = new Set(
+          ["prop.oak", "prop.birch", "prop.pine", "prop.willow"].map((key) => prop(key)),
+        );
+        let felled = 0;
+        for (let dy = -4; dy <= 4 && felled < 4; dy += 1) {
+          for (let dx = -4; dx <= 4 && felled < 4; dx += 1) {
+            const index = cellAt(x + dx, y + dy);
+            if (index !== -1 && treeValues.has(decoration.propLayer[index] as number)) {
+              decoration.propLayer[index] = stump;
+              felled += 1;
+            }
+          }
+        }
+        record("poi.logging_camp", x, y, stamp);
         continue;
       }
     }

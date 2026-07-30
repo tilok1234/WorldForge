@@ -113,6 +113,9 @@ export const DECOR_TYPES = [
   "prop.topiary",
   "prop.planter_urn",
   "prop.sundial",
+  // Logging camp (behavior 69): the crew's cookfire — the last of the
+  // package's camp props to enter the roster.
+  "prop.cookfire",
 ] as const;
 
 /** Semantic ground-decal keys, stage 1. Layer stores index + 1 (0 = none). */
@@ -164,6 +167,8 @@ const BLOCKING = new Set<string>([
   "prop.coop",
   // Manor garden (behavior 65): all three block, mirroring the package.
   "prop.topiary", "prop.planter_urn", "prop.sundial",
+  // Logging camp (behavior 69): blocks like campfire.
+  "prop.cookfire",
 ]);
 
 /** Two-part canopy species (§2.10): skip when a structure sits above. */

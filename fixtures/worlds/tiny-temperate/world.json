@@ -55870,12 +55870,12 @@
   ],
   "formatVersion": 8,
   "generator": {
-    "generationIdentitySha256": "ae07530c4b6e144112a5e8181706b32620e3fe5358dc46db51f10904d7bdd48d",
-    "generatorBehaviorVersion": 68,
+    "generationIdentitySha256": "949fe067967fac8c79153b61909b6c20dc48e5be6daac31c71ee7a2695245723",
+    "generatorBehaviorVersion": 69,
     "name": "worldforge",
     "recipeCompilerVersion": 35,
     "recipeSha256": "0b52b6b8d5fab1eef7aa28632d8de2c155e755acec12f4979293e6cff845d36d",
-    "resolvedConfigSha256": "a72708d88fc1f77509e01caafc5004706018ae612c1c46870d21f31d551344be",
+    "resolvedConfigSha256": "05c442733a20c847653e0780d31f1beb72ca88a7a159368688f7289c85bdd954",
     "seed": 1,
     "version": "0.1.0"
   },
@@ -56116,7 +56116,8 @@
     "prop.coop",
     "prop.topiary",
     "prop.planter_urn",
-    "prop.sundial"
+    "prop.sundial",
+    "prop.cookfire"
   ],
   "regions": [
     {
