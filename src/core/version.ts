@@ -629,8 +629,24 @@ export const GENERATOR_VERSION = "0.1.0";
  *     re-rolls on the handful of graded cells. Tops stay blocked and
  *     ramps stay unplaced: the tops+ramps intent is a designer-pending
  *     contract arc, deliberately NOT this.
+ * 72: country roads ride the band (routes.graph 18; follows the
+ *     road-layer restoration ruling — the road band is first-class
+ *     again). Outside settlement bounds the b52 corridors kept their
+ *     two-three wide packed-road material: the same blob-rendered slab
+ *     look the b56 ruling banished from cities. Under narrowStreets the
+ *     country stretches now neck to their centerline and draw as the
+ *     road band over restored ground (flanks restored from the
+ *     painter's records), so EVERY road in a styled world — city lane,
+ *     country highway, wilderness trail — is a one-tile band line.
+ *     Restored centerline ground grades rock (b71 machinery), water
+ *     centerline cells are crossings and stay untouched, and existing
+ *     trail bands are never overwritten. Style-free worlds keep their
+ *     classic material corridors byte-identically (canonical
+ *     untouched). Flood shifts where restored flanks were rock
+ *     (walkable pavement -> honest terrain); reachability rides the
+ *     banded centerline and the gates re-verify.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 71;
+export const GENERATOR_BEHAVIOR_VERSION = 72;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -644,7 +660,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 10,
   "macro.biomes": 7,
   "hydrology.water": 5,
-  "routes.graph": 17,
+  "routes.graph": 18,
   "settlements.plans": 29,
   "landmarks.stamps": 8,
   "terrain.texture": 1,

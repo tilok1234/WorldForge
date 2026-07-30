@@ -514,6 +514,39 @@ describe("narrow streets (behavior 51)", () => {
     assert.equal(violations, 0, `${violations} walkable band cells on ungraded rock`);
   });
 
+  it("country roads ride the band under narrowStreets (behavior 72)", () => {
+    // Post-restoration ruling: outside settlement bounds the corridors kept
+    // two-three wide packed-road material — the slab look the b56 ruling
+    // banished from cities. Now every corridor centerline cell is a band
+    // cell (road band, or an existing trail band) or a water crossing, and
+    // no packed-road material survives on the centerline at all.
+    const recipe = JSON.parse(readFileSync("fixtures/recipes/wildshot-overworld.json", "utf8"));
+    const validation = validateRecipe(recipe);
+    assert.ok(validation.ok);
+    const normalized = normalizeRecipe(validation.recipe);
+    const config = compileRecipe(normalized);
+    const b = generateWorldDetailed(normalized, config);
+    // The compose gate must stay clean: the first cut of this behavior
+    // severed both north landmarks by restoring their junction flanks to
+    // bare ground — the CLI caught it, this test did not. Now it does.
+    assert.deepEqual(b.composed.routesResult.errors, [], "route network severed");
+    assert.deepEqual(b.composed.hydro.topologyErrors, [], "hydrology gate");
+    const packedRoad = PALETTE_INDEX["terrain.packed_road"];
+    const path = b.composed.routesResult.pathLayer;
+    let stillRoad = 0;
+    let unbandedLand = 0;
+    for (const cell of b.composed.routesResult.corridorCenterline) {
+      if (b.composed.grid[cell] === packedRoad) stillRoad += 1;
+      const isWater =
+        b.composed.hydro.waterKind[cell] !== 0 || b.composed.hydro.isRiver[cell] === 1;
+      if (!isWater && path[cell] === 0 && b.composed.grid[cell] !== packedRoad) {
+        unbandedLand += 1;
+      }
+    }
+    assert.equal(stillRoad, 0, `${stillRoad} centerline cells still packed road`);
+    assert.equal(unbandedLand, 0, `${unbandedLand} centerline land cells carry no band`);
+  });
+
   it("posts guards at the city gates: braziers, banner, drill target (behavior 66)", () => {
     // Pinned fixture: small seed-24 — the probe showcase whose walled city
     // seats TWO gatehouses with the full garrison on both. (No tiny seed in

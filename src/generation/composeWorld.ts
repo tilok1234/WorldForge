@@ -24,7 +24,7 @@ import {
   type PaletteKey,
   type RegionSummary,
 } from "../regions/biomes.js";
-import { buildRoutes, verifyRouteConnectivity, type RoutesResult } from "../routes/routes.js";
+import { buildRoutes, gradeRockCell, verifyRouteConnectivity, type RoutesResult } from "../routes/routes.js";
 import { planSettlements, type SettlementPlan, type SettlementQuarter } from "../settlements/settlements.js";
 import { placeLandmarks, type LandmarkPlan } from "../settlements/landmarks.js";
 
@@ -258,6 +258,72 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   const quarters: SettlementQuarter[] = [];
   const settlementPlans = planSettlements(grid, structureLayer, fields, hydro, routesResult, config, planErrors, laneCells, quarters);
   const landmarkPlans = placeLandmarks(grid, structureLayer, routesResult.pathLayer, fields, hydro, routesResult, config, planErrors);
+
+  // Country roads ride the band (behavior 72, style-gated on narrowStreets;
+  // follows the road-layer restoration ruling that made the road band
+  // first-class again). Outside settlement bounds the b52 corridors kept
+  // their two-three wide packed-road material — the same blob-rendered slab
+  // look the b56 ruling banished from cities ("wide reads as solid
+  // clutter"; the band IS the one-tile look). Under narrowStreets the
+  // country stretches now neck to their centerline and draw as the road
+  // band over restored ground, flanks restored from the painter's records —
+  // so every road in a styled world (city lane, country highway,
+  // wilderness trail) is a band line. Style-free worlds keep their classic
+  // material corridors byte-identically. Restored centerline ground may be
+  // the rock the corridor once paved over: the b71 grading applies, so the
+  // band never rides rock material and the cliff relief stays off
+  // traversal. Water centerline cells are crossings and stay untouched.
+  if (config.settlements.narrowStreets) {
+    const ROAD_BAND = 2; // pathLayer vocabulary (b57): 2 = the road band
+    const pathLayer = routesResult.pathLayer;
+    const packedRoad = PALETTE_INDEX["terrain.packed_road"];
+    const rockIndex = PALETTE_INDEX["terrain.rock"];
+    for (const cell of routesResult.corridorCenterline) {
+      if (grid[cell] !== packedRoad) continue; // in-bounds cells already gave ground back
+      // Overlapping routes never record centerPrev (the cell was already
+      // pavement when the second route arrived) — the flank record has the
+      // original ground then, the same fallback the b56 in-bounds
+      // give-back uses.
+      const prev =
+        routesResult.corridorCenterPrev.get(cell) ?? routesResult.corridorFlankPrev.get(cell);
+      if (prev === undefined) continue;
+      grid[cell] = prev;
+      if (pathLayer[cell] === 0) {
+        pathLayer[cell] = ROAD_BAND;
+      }
+      if (grid[cell] === rockIndex) {
+        gradeRockCell(cell, grid, width, height);
+      }
+    }
+    for (const [cell, prev] of routesResult.corridorFlankPrev) {
+      if (grid[cell] !== packedRoad) continue;
+      if (routesResult.corridorCenterline.has(cell)) continue;
+      grid[cell] = prev;
+      // A flank that a trail joins is a JUNCTION, not shoulder: landmark
+      // approaches and spurs targeted any corridor-material cell, flanks
+      // included — restoring one to bare ground would strand the trail a
+      // cell short of the centerline band (the compose gate caught the
+      // two north landmarks exactly this way on the first cut). Such
+      // flanks become band cells so the join keeps walking.
+      const x = cell % width;
+      let joins = false;
+      for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+        const nx = x + dx;
+        const ny = Math.trunc(cell / width) + dy;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+        if (pathLayer[ny * width + nx] === 1) {
+          joins = true;
+          break;
+        }
+      }
+      if (joins && pathLayer[cell] === 0) {
+        pathLayer[cell] = ROAD_BAND;
+        if (grid[cell] === rockIndex) {
+          gradeRockCell(cell, grid, width, height);
+        }
+      }
+    }
+  }
 
   // Absorb one-cell regions introduced by overlays and road carving. Road
   // cells are protected: traversal-critical corridors are never rewritten,
