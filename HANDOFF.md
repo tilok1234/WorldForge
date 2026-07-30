@@ -46,7 +46,8 @@
 > scenery loop resumable (battlefield still tone-gated on §4); (5)
 > planning sync_log has uncommitted on-disk appends (sl-0027, 0030,
 > 0034, 0035) — planning commits its own file; world_filler sl-0026
-> paste PARKED (never with WF). Viewer may still run on :8787.
+> paste PARKED (never with WF). The viewer server was STOPPED at
+> session close (relaunch: preview/launch.json "viewer", :8787).
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
