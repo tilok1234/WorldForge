@@ -522,8 +522,24 @@ export const GENERATOR_VERSION = "0.1.0";
  *     urns flank it inside (farms records the gate; decoration seats
  *     the urns). All three new props block, mirroring the package.
  *     Style-free and quarter-free worlds are byte-identical.
+ * 66: gate guard posts (batch 6 of the pack assessment — completing the
+ *     b62 gatehouse, b61 doctrine: default-on where a city gate stands).
+ *     Each placed gatehouse seats a garrison trio at fixed deterministic
+ *     spots: a brazier pair just inside the walls flanking the
+ *     through-street (the dusk lit-entrance payoff at the city door),
+ *     ONE banner on the approach side greeting arrivals (west tower
+ *     first, east as fallback), and an archery target in the tower nook
+ *     against the inner wall (the guards' drill corner). Every seat is
+ *     pathLayer-checked and yard-guarded — nothing ever stands on a
+ *     street, lane, or trail (behavior 47 outranks) and occupied spots
+ *     are skipped, never hunted. No new props, channels, or config keys:
+ *     the dressing rides structure.city_gate existence, so only
+ *     settlementStyle.cityWalls cities shift and style-free worlds stay
+ *     byte-identical. Bridge-end posts and a seated guardhouse remain
+ *     recorded catalog levers (wilderness ambient density wants its own
+ *     verdict).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 65;
+export const GENERATOR_BEHAVIOR_VERSION = 66;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —

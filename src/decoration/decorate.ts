@@ -1044,6 +1044,43 @@ export function decorateWorld(
             propCount += 1;
           }
         }
+        // Guard post (behavior 66, batch 6 of the pack assessment): the b62
+        // gatehouse gets its garrison. Fixed deterministic spots like the
+        // dock's — a brazier pair just inside the walls flanking the
+        // through-street (the dusk lit-entrance payoff at the city door),
+        // ONE banner on the approach side greeting arrivals, and an archery
+        // target in the tower nook against the inner wall (the guards'
+        // drill corner). Every seat is pathLayer-checked and yard-guarded:
+        // nothing stands on a street, lane, or trail (behavior 47 outranks)
+        // and an occupied spot is skipped, never hunted. city_gate exists
+        // only under settlementStyle.cityWalls, so style-free worlds are
+        // byte-identical by construction. Bridge-end posts stay a recorded
+        // catalog lever (wilderness ambient density needs its own verdict).
+        if (structure.type === "structure.city_gate") {
+          // Gates are always north/south (the package has no vertical gate
+          // art); the city interior is wherever the anchor lies.
+          const inward = settlement.anchorY > structure.y + 1 ? 1 : -1;
+          const cityRow = inward === 1 ? structure.y + 2 : structure.y - 1;
+          const approachRow = inward === 1 ? structure.y - 1 : structure.y + 2;
+          const nookRow = inward === 1 ? structure.y + 1 : structure.y;
+          const seat = (sx: number, sy: number, prop: (typeof DECOR_TYPES)[number]): boolean => {
+            if (sx < 0 || sy < 0 || sx >= width || sy >= height) return false;
+            const cell = sy * width + sx;
+            if (routesResult.pathLayer[cell] !== 0) return false;
+            if (!yardGuard(cell)) return false;
+            propLayer[cell] = typeOf(prop);
+            propCount += 1;
+            return true;
+          };
+          seat(structure.x, cityRow, "prop.brazier");
+          seat(structure.x + 2, cityRow, "prop.brazier");
+          if (!seat(structure.x, approachRow, "prop.banner")) {
+            seat(structure.x + 2, approachRow, "prop.banner");
+          }
+          if (!seat(structure.x - 1, nookRow, "prop.archery_target")) {
+            seat(structure.x + 3, nookRow, "prop.archery_target");
+          }
+        }
         const pieces = YARD_PIECES[structure.type];
         if (pieces === undefined) continue;
         // Perimeter ring, clockwise from the top-left corner cell; rotate

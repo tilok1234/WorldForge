@@ -489,6 +489,70 @@ describe("narrow streets (behavior 51)", () => {
     assert.deepEqual(offB.composed.structureLayer, plain.composed.structureLayer);
   });
 
+  it("posts guards at the city gates: braziers, banner, drill target (behavior 66)", () => {
+    // Pinned fixture: small seed-24 — the probe showcase whose walled city
+    // seats TWO gatehouses with the full garrison on both. (No tiny seed in
+    // 1-40 places a gate at all; gates need real through-streets.)
+    const walled = compiled({
+      ...BASE,
+      seed: 24,
+      world: { sizePreset: "small", climatePreset: "temperate" },
+      settlementStyle: { growthPermille: 600, narrowStreets: true, cityWalls: true },
+    });
+    const b = generateWorldDetailed(walled.normalized, walled.config);
+    const world = loadWorldArtifact(b.artifact as unknown);
+    assert.ok(world.ok);
+    const city = b.artifact.settlements.find((s) => s.kind === "city");
+    assert.ok(city !== undefined, "fixture lost its city");
+    const gates = city.structures.filter((st) => st.type === "structure.city_gate");
+    assert.equal(gates.length, 2, "seed-24 fixture lost a gatehouse");
+
+    // Fixed garrison spots, recomputed independently of the implementation:
+    // brazier pair on the city side flanking the through-street, one banner
+    // on the approach side, an archery target in a tower nook. Seed-24
+    // seats every piece on both gates — pinned exactly so any guard or
+    // offset drift trips here first.
+    let braziers = 0;
+    let banners = 0;
+    let targets = 0;
+    const path = b.composed.routesResult.pathLayer;
+    const { width, height } = walled.config.world;
+    for (const gate of gates) {
+      const [gx, gy] = gate.cell as readonly [number, number];
+      const inward = (city.anchor[1] as number) > gy + 1 ? 1 : -1;
+      const cityRow = inward === 1 ? gy + 2 : gy - 1;
+      const approachRow = inward === 1 ? gy - 1 : gy + 2;
+      const nookRow = inward === 1 ? gy + 1 : gy;
+      for (const px of [gx, gx + 2]) {
+        if (world.world.propAt(px, cityRow) === "prop.brazier") braziers += 1;
+        if (world.world.propAt(px, approachRow) === "prop.banner") banners += 1;
+      }
+      for (const px of [gx - 1, gx + 3]) {
+        if (world.world.propAt(px, nookRow) === "prop.archery_target") targets += 1;
+      }
+      // The garrison never blocks the door: the arch column stays walkable.
+      assert.ok(world.world.walkableAt(gx + 1, gy), "gate arch blocked");
+      assert.ok(world.world.walkableAt(gx + 1, gy + 1), "gate arch blocked");
+      // The b47 outrank, asserted around each gate: no garrison species on
+      // any path cell (street band, lane, trail) in the gate neighborhood.
+      // Scoped local — a global scan would trip on legal POI furniture
+      // (bandit banners may cover a trail END far away, by b47 law).
+      for (let y = Math.max(0, gy - 3); y <= Math.min(height - 1, gy + 4); y += 1) {
+        for (let x = Math.max(0, gx - 3); x <= Math.min(width - 1, gx + 5); x += 1) {
+          if (path[y * width + x] === 0) continue;
+          const prop = world.world.propAt(x, y);
+          assert.ok(
+            prop !== "prop.brazier" && prop !== "prop.banner" && prop !== "prop.archery_target",
+            `garrison prop on a path cell at ${x},${y}`,
+          );
+        }
+      }
+    }
+    assert.equal(braziers, 4, "seed-24 brazier pair drifted");
+    assert.equal(banners, 2, "seed-24 banner drifted");
+    assert.equal(targets, 2, "seed-24 drill target drifted");
+  });
+
   it("dresses lived-in settlements: yards, market extras, lamped lanes (behavior 61)", () => {
     const urban = compiled({
       ...BASE,
