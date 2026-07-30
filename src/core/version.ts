@@ -610,8 +610,27 @@ export const GENERATOR_VERSION = "0.1.0";
  *     and settle landside or skip, the b63 harbor-row way. The fishing
  *     spot keeps every non-sand shore it ever had. Sandy-coast worlds
  *     redistribute a few POI slots (flagged floods).
+ * 71: city streets grade rock (settlements.plans 29, landmarks.stamps 8;
+ *     the sl-0030 cliff diagnosis, scoped by planning ask sl-0032 — the
+ *     carver grading ONLY, no walkability-contract change). The b56
+ *     street-web writers (through-route necking, arms, ring, house-lane
+ *     bands) and the landmark approach carver all wrote walkable band
+ *     cells without grading rock, so a city seated at a snowline carved
+ *     streets INSIDE the adapter's terraced cliff relief — b70 shipped
+ *     108 lane cells at terrace level >= 1 climbing the snow city's own
+ *     cliffs (wilderness trails always graded; routes.graph v4 is the
+ *     reference behavior, gradeRockCell now exported and shared). Every
+ *     band write now grades: the street leaves gravel (or an adopted
+ *     neighbor material) behind, the relief re-forms around a level-0
+ *     canyon, and the "walkable cells stay level 0 — a cliff can never
+ *     cross traversal" invariant holds world-wide. Walkability itself is
+ *     UNCHANGED (band cells walked before and after; grading swaps only
+ *     the material under them) — floods stay put modulo moss/decoration
+ *     re-rolls on the handful of graded cells. Tops stay blocked and
+ *     ramps stay unplaced: the tops+ramps intent is a designer-pending
+ *     contract arc, deliberately NOT this.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 70;
+export const GENERATOR_BEHAVIOR_VERSION = 71;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -626,8 +645,8 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 17,
-  "settlements.plans": 28,
-  "landmarks.stamps": 7,
+  "settlements.plans": 29,
+  "landmarks.stamps": 8,
   "terrain.texture": 1,
   "decoration.props": 16,
   "decoration.pois": 19,

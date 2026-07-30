@@ -489,6 +489,31 @@ describe("narrow streets (behavior 51)", () => {
     assert.deepEqual(offB.composed.structureLayer, plain.composed.structureLayer);
   });
 
+  it("no walkable band cell rides rock material anywhere (behavior 71)", () => {
+    // The sl-0030 regression, scoped by planning ask sl-0032: b70's
+    // snowline city carved 108 CITY_LANE cells at terrace level >= 1
+    // because the street-web carvers never graded rock (wilderness trails
+    // always did). Grading leaves gravel or an adopted neighbor material
+    // under every band cell — and rock material is the cliff relief's only
+    // substrate, so band-off-rock IS the "walkable cells stay level 0"
+    // invariant, checked without the adapter. Asserted on the real shipped
+    // world (seed 2008), covering every band writer at once: wilderness
+    // trails, city lanes, house-lane bands, landmark approaches.
+    const recipe = JSON.parse(readFileSync("fixtures/recipes/wildshot-overworld.json", "utf8"));
+    const validation = validateRecipe(recipe);
+    assert.ok(validation.ok);
+    const normalized = normalizeRecipe(validation.recipe);
+    const config = compileRecipe(normalized);
+    const b = generateWorldDetailed(normalized, config);
+    const rock = PALETTE_INDEX["terrain.rock"];
+    const path = b.composed.routesResult.pathLayer;
+    let violations = 0;
+    for (let index = 0; index < b.composed.grid.length; index += 1) {
+      if (path[index] !== 0 && b.composed.grid[index] === rock) violations += 1;
+    }
+    assert.equal(violations, 0, `${violations} walkable band cells on ungraded rock`);
+  });
+
   it("posts guards at the city gates: braziers, banner, drill target (behavior 66)", () => {
     // Pinned fixture: small seed-24 — the probe showcase whose walled city
     // seats TWO gatehouses with the full garrison on both. (No tiny seed in

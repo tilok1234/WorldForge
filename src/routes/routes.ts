@@ -65,9 +65,12 @@ function remoteCorner(fromCell: number, width: number): readonly [number, number
  * Grade a rock cell a trail crosses (routes.graph v4). A lone rock cell
  * between open land adopts a walkable neighbor's material so it merges with
  * that region (no one-cell confetti); longer rock crossings become a
- * connected gravel line.
+ * connected gravel line. Exported since behavior 71: the city street-web
+ * and landmark approach carvers grade the same way — every walkable band
+ * cell leaves rock material behind, which is what keeps the adapter's
+ * cliff relief off traversal ("walkable cells stay level 0").
  */
-function gradeRockCell(cell: number, grid: number[], width: number, height: number): void {
+export function gradeRockCell(cell: number, grid: number[], width: number, height: number): void {
   const x = cell % width;
   const y = (cell - x) / width;
   const adoptable = new Set([GRASS, DRY_GRASS, SNOW, MUD, GRAVEL]);

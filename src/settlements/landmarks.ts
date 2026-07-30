@@ -16,6 +16,7 @@ import type { HydrologyResult } from "../hydrology/hydrology.js";
 import { WATER_NONE } from "../hydrology/hydrology.js";
 import type { MacroFields } from "../fields/macroFields.js";
 import type { RoutesResult } from "../routes/routes.js";
+import { gradeRockCell } from "../routes/routes.js";
 import { PALETTE_INDEX, WORLD_PALETTE, type PaletteKey } from "../regions/biomes.js";
 import { STRUCTURE_LAYER_VALUE, type StructureType } from "./structures.js";
 
@@ -23,6 +24,7 @@ const ROOT = fileURLToPath(new URL("../../..", import.meta.url));
 const COBBLE = PALETTE_INDEX["terrain.cobble"];
 const PACKED_ROAD = PALETTE_INDEX["terrain.packed_road"];
 const GRAVEL = PALETTE_INDEX["terrain.gravel"];
+const ROCK_INDEX = PALETTE_INDEX["terrain.rock"];
 
 interface Stamp {
   readonly type: string;
@@ -348,7 +350,9 @@ function substrateProblem(
 function carveTrailApproach(
   startX: number,
   startY: number,
-  grid: readonly number[],
+  // Mutable since behavior 71: the carve grades rock cells it crosses,
+  // exactly like the wilderness trail carvers (routes.graph v4).
+  grid: number[],
   structureLayer: Uint8Array,
   pathLayer: Uint8Array,
   hydro: HydrologyResult,
@@ -452,6 +456,13 @@ function carveTrailApproach(
           if (pathLayer[cursor] === 0 && hydro.waterKind[cursor] === WATER_NONE && hydro.isRiver[cursor] === 0) {
             pathLayer[cursor] = 1;
             carved.push(cursor);
+            // Behavior 71: approaches grade rock like every other trail —
+            // the BFS filters only water and structures, so it can cross
+            // rock, and a walkable trail on rock material would sit inside
+            // the adapter's cliff relief.
+            if (grid[cursor] === ROCK_INDEX) {
+              gradeRockCell(cursor, grid, width, height);
+            }
           }
           cursor = previous.get(cursor) as number;
         }

@@ -14,6 +14,7 @@ import type { HydrologyResult } from "../hydrology/hydrology.js";
 import { WATER_NONE, WATER_SHALLOW } from "../hydrology/hydrology.js";
 import type { MacroFields } from "../fields/macroFields.js";
 import type { RoutesResult } from "../routes/routes.js";
+import { gradeRockCell } from "../routes/routes.js";
 import { PALETTE_INDEX } from "../regions/biomes.js";
 import { channel, type Channel } from "../core/channels.js";
 import {
@@ -245,6 +246,14 @@ export function planSettlements(
             if (prev !== undefined) {
               grid[cell] = prev;
               routes.pathLayer[cell] = CITY_LANE;
+              // City lanes grade rock like wilderness trails do (behavior
+              // 71): the restored ground may be the rock the corridor once
+              // paved over, and a walkable band on rock material puts the
+              // street inside the adapter's cliff relief — the b70 snow
+              // city climbed its own terraces this way.
+              if (grid[cell] === ROCK) {
+                gradeRockCell(cell, grid, width, height);
+              }
             }
             continue;
           }
@@ -306,6 +315,10 @@ export function planSettlements(
           if (isOpenLand(lane, grid, hydro)) {
             if (rules.narrowStreets) {
               routes.pathLayer[lane] = CITY_LANE;
+              // Behavior 71: arms grade rock (isOpenLand admits it).
+              if (grid[lane] === ROCK) {
+                gradeRockCell(lane, grid, width, height);
+              }
             } else {
               grid[lane] = COBBLE;
             }
@@ -332,6 +345,10 @@ export function planSettlements(
           if (cell !== -1 && isOpenLand(cell, grid, hydro)) {
             if (rules.narrowStreets) {
               routes.pathLayer[cell] = CITY_LANE;
+              // Behavior 71: the ring grades rock too.
+              if (grid[cell] === ROCK) {
+                gradeRockCell(cell, grid, width, height);
+              }
             } else {
               grid[cell] = COBBLE;
             }
@@ -1206,6 +1223,12 @@ function carveApproach(
     if (mode === "none") return;
     if (bandLanes !== null) {
       bandLanes[target] = CITY_LANE;
+      // Behavior 71: house lanes grade rock (solid mode paves whatever it
+      // crosses, and a band over rock material would put the lane inside
+      // the adapter's cliff relief).
+      if (grid[target] === ROCK) {
+        gradeRockCell(target, grid, width, height);
+      }
       return;
     }
     if (mode === "solid" || wear === null) {
@@ -1239,6 +1262,9 @@ function carveApproach(
       if (mode !== "none") {
         if (bandLanes !== null) {
           bandLanes[start] = CITY_LANE;
+          if (grid[start] === ROCK) {
+            gradeRockCell(start, grid, width, height);
+          }
         } else {
           grid[start] = mode === "solid" || wear === null ? COBBLE : PACKED_ROAD;
         }
