@@ -1,5 +1,23 @@
 # WorldForge — session handoff (2026-07-30 session close, world shipped + cliff diagnosis in)
 
+> **B72 BUILT, VERDICT PENDING (2026-07-30, "roads are restored now
+> please fix the worlds roads").** Investigated first: the worlds'
+> roads were NEVER broken — the pinned package kept all road art, the
+> roadTypesLegacy flag is read by nothing, TF's restoration was
+> app-side with no new cut ("atlas kept"). The real read of the ask:
+> COUNTRY roads still render as 2-3 wide packed-road slabs (the same
+> look b56 banished from cities; the b57 corridor doctrine kept them
+> material because the band was retired upstream — now un-retired).
+> Behavior 72 (routes.graph 18, commit above): under narrowStreets,
+> country corridors neck to centerline and draw as the ROAD BAND over
+> restored ground; junction flanks that trails join become band cells
+> (first cut severed both north landmarks — compose gate caught it,
+> the b72 test now asserts gate cleanliness); rock grades (b71);
+> style-free worlds byte-identical (canonical 33783 verified).
+> Wildshot 9/9, flood 45099, Godot 0, 249 tests. Before/after sent —
+> ON APPROVAL: re-export -> release @b72 -> delivery line (planning
+> re-issues intake); until then the b71 intake stands.
+>
 > **B71 SHIPPED (2026-07-30, planning ask sl-0032 GO).** The cliff
 > fix is live: every street/approach carver grades rock (gradeRockCell
 > shared from routes.ts; six write sites — through-route necking,
