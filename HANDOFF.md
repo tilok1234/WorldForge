@@ -1,24 +1,29 @@
-# WorldForge — session handoff (2026-07-30, scenery loop mid-arc, round 18 out)
+# WorldForge — session handoff (2026-07-30, scenery loop mid-arc, round 19 out)
 
 > **RESUME HERE.** The scenery-composition loop is the active arc:
-> **round 18 (gate guard posts, behavior 66, commit `1dc16a2`) RULED
-> POSITIVE ("and yeah this is starting to get good! approved",
-> 2026-07-30) — SEVEN straight positive rounds (12-18); batch 7 =
-> ORCHARD proceeds** — the batch-6 pick was delegated
-> ("whichever you prefer") and guard post won: each b62 gatehouse
-> seats a garrison trio (brazier pair inside flanking the street, one
-> banner over the approach, archery target in the tower nook), every
-> seat guard-checked, occupied spots skipped never hunted. Eight-holds
-> flood 182737 -> **182730** (−7 = the seated garrison: harbor gates 3
-> pieces each, the dense crossing gate legitimately banner-only), 9/9,
-> Godot 0, canonical 33795 INVARIANT (rides city_gate existence; no
-> pack re-export — the b65 release stays the blessed delivery). Rounds
-> 12-17 all ruled positive before it. After the verdict: batch-7 from
-> docs/SCENERY_COMPOSITIONS.md (remaining leaders: logging camp,
-> battlefield blood [tone question §4 open], the waterfront set —
-> boardwalk / seawall / lighthouse point / shipwreck cove — windmill
-> hill, orchard, processional way; bridge-end guard posts recorded as
-> an open lever) — or the designer's parallel pack-assessment notes
+> **round 19 (orchards, behavior 67, commit `72c5ef0`) is SENT and
+> AWAITS THE VERDICT** — batch 7, proceeding on round 18's ruling
+> ("and yeah this is starting to get good! approved" = SEVEN straight
+> positive rounds, 12-18; the guard-post garrison is ratified). Every
+> farming settlement with lane access plants ONE fenced stand: six
+> fruit trees in spaced rows, wood ring with a two-cell gate facing
+> the farm, beehive far corner, baskets inside the gate. Two first-cut
+> failures are BUILT IN as guarantees: the gate apron must touch the
+> lane network (a woods-hole stand got sealed shut by ambient forest —
+> 27 walkable interior cells, 0 reachable) and the envelope + apron
+> are PROTECTED ground (a character zone chewed four planted trees —
+> zones override ambient outright). Placement honest: dust-sea 1/1,
+> broken-isles 4/7, warm-vale-large 3/8, weeping-marsh 0/1 (cramped,
+> goes without); every placed stand verified complete, stray-free,
+> interior-reachable. Floods: dust-sea 51009, warm-vale-large 646317
+> (−75 vs b64), canonical 33795 + eight-holds 182730 INVARIANT (no
+> farms; no pack re-export — the b65 release stays the delivery).
+> After the verdict: batch-8 from docs/SCENERY_COMPOSITIONS.md
+> (remaining leaders: logging camp, battlefield blood [tone question
+> §4 open], the waterfront set — boardwalk / seawall / lighthouse
+> point / shipwreck cove — windmill hill, processional way; open
+> levers: bridge-end guard posts, E/W orchard gates for denser farm
+> coverage) — or the designer's parallel pack-assessment notes
 > merged into catalog §3/§4, still outstanding. The bright-teal hedge art passed without comment;
 > the optional softer-hedge repaint stays a TileForge-side upstream
 > ask if it ever grates. NOTE: farming settlements only spawn inland
@@ -26,7 +31,7 @@
 > NONE; the farm worlds are warm-vale-large (8), the-broken-isles
 > (7), dust-sea, the-old-war-medium/-large, weeping-marsh,
 > the-eight-lands. Nothing is half-implemented; every behavior
-> through 65 is committed, pushed, and tested (242 green).
+> through 67 is committed, pushed, and tested (244 green).
 > DOC 18 ABSORBED (2026-07-30): export-game-pack now runs behind the
 > publish gate (dirty tree / unpushed HEAD = refusal, exercised live)
 > and a clean gated export auto-publishes the pack zip as a GitHub
@@ -131,11 +136,11 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   (designer 2026-07-30): blessed as the sl-0004 delivery transport
   (see pointer block).
 
-Versions: behavior **66** (gate guard posts), recipe compiler **35**,
+Versions: behavior **67** (orchards), recipe compiler **35**,
 resolved-config **29**, artifact format 8, TileForge adapter 7,
-packFormat 1, settlements.plans 26, decoration.props 15 (b66 adds no
-types — all three garrison props were already rostered). **243 tests,
-all green on this machine** (25 in tests/settlementStyle.test.ts; the
+packFormat 1, settlements.plans 27, decoration.props 15 (b66/b67 add
+no prop types — everything was already rostered). **244 tests, all
+green on this machine** (25 in tests/settlementStyle.test.ts; the
 b64 pen/grapes test rides tests/settlements.test.ts on a synthetic
 plain). Everything pushed through commit `719d167`. Standing commit+push
 authorization (memory) — re-confirm per policy; visual verdicts always
@@ -324,6 +329,25 @@ gate. ALL APPROVED except one:
   the SEVENTH straight positive round. Same exchange set a standing
   communication habit: every session report ends with a brief TL;DR
   (recorded in assistant memory).
+- ORCHARDS (behavior 67, round 19, commit `72c5ef0`; batch 7,
+  settlements.plans 27): the farm-extension lane again — one fenced
+  six-tree stand per lane-accessible farming settlement (fence.wood
+  ring, two-cell gate facing the farm, beehive + baskets; farms plans
+  via OrchardPlan, decoration seats — the pen pattern). TWO
+  MACHINERY LESSONS, both built in as guarantees: (1) ACCESS — the
+  gate apron must touch the lane/path network (cheb <= 1); the first
+  cut seated a stand in a woods hole and ambient forest sealed it
+  (27 walkable interior cells, 0 reachable — found by probing
+  reachability per stand, not by any gate: interiors are not
+  destinations). (2) PROTECTED GROUND — the envelope + apron join
+  protectedCells like quarters; character zones OVERRIDE ambient
+  outright (decorate.ts ~line 900) and chewed four planted trees on
+  the first cut. Roll-free placement (no channel draws) so all
+  pre-67 rolls byte-identical; laneless synthetic in the b64 test
+  keeps wood vineyard-exclusive there. Showcases: dust-sea farm
+  context (pen + plots + vineyard + orchard one frame), warm-vale
+  16px. Every placed stand probe-verified complete/stray-free/
+  reachable across four farm worlds. Floods above in the pointer.
 - Approved small archetypes (9): frontier-sparse, warm-vale,
   highland-fastness, sunburnt-reach, weeping-marsh, drowned-shore,
   the-old-war, the-long-winter, hearth-hollow. Tiny hollows (3):

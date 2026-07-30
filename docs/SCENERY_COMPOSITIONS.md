@@ -202,9 +202,21 @@ Ordered roughly by (visual payoff / effort). ✓ = shipped already.
 16. **Windmill hill** — `windmill` on open high ground + wheat
     fields + `haybales` + `cart`. Windmill is rostered (b49 variety)
     but places without its supporting cast.
-17. **Orchard** — `fruittree` grid + `beehive` + `baskets` + plain
-    `fence`. Fruit trees exist scattered; the ORCHARD is the
-    composition.
+17. ✓ **Orchard** (behavior 67, batch 7) — every farming settlement
+    with lane access plants ONE stand: six `fruittree` in spaced rows
+    inside a 7x5 clearing, plain `fence` ring with a two-cell gate
+    facing the farm, `beehive` in the far corner, `baskets` inside
+    the gate. PLACEMENT DOCTRINE: strict 9x7 envelope fit scanned
+    outward after the chicken run, PLUS the ACCESS GUARANTEE — the
+    gate apron must touch the lane/path network (chebyshev <= 1), and
+    the envelope + apron are PROTECTED ground (ambient scatter,
+    character zones, roadside markers all skip them). Cramped or
+    laneless farms go without (weeping-marsh does). LESSONS: a stand
+    placed in any open hole gets sealed by ambient forest (access
+    must be guaranteed, not hoped); zones OVERRIDE ambient outright,
+    so deliberate compositions must protect their ground, not just
+    clear it once. OPEN LEVER: E/W gate orientations would roughly
+    double farm coverage (3/8 on warm-vale-large today).
 18. **Watermill reach** — `watermill` ✓ + `ford`/`steppingstones`
     crossing + willow pair. Stepping stones are unused ford-class
     art.
