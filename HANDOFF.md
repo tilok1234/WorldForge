@@ -1,5 +1,21 @@
-# WorldForge — session handoff (2026-07-30, WORLD SHIPPED FOR TEST)
+# WorldForge — session handoff (2026-07-30 session close, world shipped + cliff diagnosis in)
 
+> **SESSION CLOSE NOTE (2026-07-30, account switch for usage; next
+> session may be terminal CLI).** Three things await the DESIGNER, in
+> order: (1) GO on the b71 carver-grading fix (fully specified in the
+> CLIFF DIAGNOSIS block below: add gradeRockCell to the CITY_LANE
+> writers in settlements.ts ~247/308/334 and the approach carver in
+> landmarks.ts ~453, mirror routes.ts 269-275; then re-export → the
+> lane auto-publishes @b71 → append the sl-0027 delivery update);
+> (2) the "tops walkable + ramps as access" walkability-CONTRACT
+> ruling (talk-before-build — touches pack/game/world_filler);
+> (3) @b70 GAME INTAKE stays HELD until b71. Hygiene: the viewer may
+> still be running on :8787; planning tools/sync_log.json carries
+> uncommitted on-disk appends (sl-0027 delivery, sl-0030 findings +
+> corrections) — planning's own session commits them; assistant
+> file-memory survives the account switch and cross-validates this
+> file. Everything below is committed and pushed through this line.
+>
 > **RESUME HERE. THE WILDSHOT OVERWORLD IS SHIPPED FOR TEST.** World
 > arc W4 ruling ("actually i think this is good enough for a test",
 > 2026-07-30) executed end to end: approve-recipe BASELINE recorded
