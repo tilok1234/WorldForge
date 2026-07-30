@@ -1,0 +1,136 @@
+{
+  "recipeFormat": 1,
+  "seed": 4242,
+  "world": {
+    "sizePreset": "medium",
+    "climatePreset": "temperate",
+    "densityPreset": "dense"
+  },
+  "zones": {
+    "layout": "anchors",
+    "seams": "hard",
+    "entries": [
+      {
+        "anchor": [
+          256,
+          48
+        ],
+        "weight": 1000,
+        "temperaturePermille": -380,
+        "moisturePermille": -60,
+        "elevationPermille": 300,
+        "settlementFloor": 1
+      },
+      {
+        "anchor": [
+          96,
+          128
+        ],
+        "weight": 950,
+        "temperaturePermille": -120,
+        "moisturePermille": 180,
+        "settlementFloor": 1
+      },
+      {
+        "anchor": [
+          420,
+          100
+        ],
+        "weight": 850,
+        "temperaturePermille": -80,
+        "moisturePermille": 40,
+        "elevationPermille": 150,
+        "settlementFloor": 1
+      },
+      {
+        "anchor": [
+          256,
+          256
+        ],
+        "weight": 1200,
+        "temperaturePermille": 30,
+        "moisturePermille": 60,
+        "settlementFloor": 2
+      },
+      {
+        "anchor": [
+          72,
+          320
+        ],
+        "weight": 900,
+        "temperaturePermille": 220,
+        "moisturePermille": -260,
+        "settlementFloor": 1
+      },
+      {
+        "anchor": [
+          256,
+          460
+        ],
+        "weight": 1000,
+        "temperaturePermille": 140,
+        "moisturePermille": 80,
+        "elevationPermille": -200,
+        "settlementFloor": 1
+      },
+      {
+        "anchor": [
+          440,
+          300
+        ],
+        "weight": 900,
+        "temperaturePermille": 60,
+        "moisturePermille": 220,
+        "settlementFloor": 1
+      },
+      {
+        "anchor": [
+          440,
+          450
+        ],
+        "weight": 800,
+        "temperaturePermille": 180,
+        "moisturePermille": 300,
+        "elevationPermille": -100,
+        "settlementFloor": 1
+      }
+    ]
+  },
+  "settlementStyle": {
+    "growthPermille": 600,
+    "scatterPermille": 450,
+    "variety": true,
+    "organicStreets": true,
+    "narrowStreets": true,
+    "urbanBlocks": true,
+    "cityWalls": true
+  },
+  "landmarks": [
+    {
+      "type": "ruined_city",
+      "relation": "far_from_town"
+    },
+    {
+      "type": "world_tree",
+      "relation": "far_from_town"
+    },
+    {
+      "type": "lighthouse",
+      "relation": "coastal"
+    },
+    {
+      "type": "mountain_hamlet",
+      "relation": "high_ground"
+    },
+    {
+      "type": "hunters_lodge",
+      "relation": "remote_corner"
+    }
+  ],
+  "budgets": {
+    "regionCount": 8,
+    "settlementCount": 10,
+    "primaryRouteCount": 5,
+    "landmarkCount": 5
+  }
+}
