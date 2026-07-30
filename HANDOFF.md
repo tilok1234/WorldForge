@@ -21,8 +21,16 @@
 > DOC 18 ABSORBED (2026-07-30): export-game-pack now runs behind the
 > publish gate (dirty tree / unpushed HEAD = refusal, exercised live)
 > and a clean gated export auto-publishes the pack zip as a GitHub
-> release tagged with the artifact id. Prior packs are GRANDFATHERED —
-> the first release tag lands at the next real export.
+> release tagged with the artifact id. Prior packs are GRANDFATHERED.
+> INCIDENT (OPEN, sync-log sl-0016): a post-push verification export
+> was meant to carry --no-release but the flag was omitted, so the
+> transport minted the first release EARLY: small-cold-coastal-pack-
+> dusk@b65 (commit 4497729, zip sha256 ba7e936f…). It is byte-identical
+> to the staging pack awaiting game intake (manifestSha256 cc329164…),
+> correctly provenance'd, overwrote nothing. Designer rules KEEP (bless
+> as the sl-0004 delivery transport) vs DELETE (designer-clicked;
+> staged: gh release delete "small-cold-coastal-pack-dusk@b65"
+> --cleanup-tag). Do not mint further releases until ruled.
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
@@ -108,7 +116,10 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   sourceCommit (byte-stable re-export doctrine); the commit binds via
   the release tag target + notes instead — deviation reported honestly
   in sync-log sl-0015. Dirty-tree refusal exercised for real; gh
-  keyring verified (tilok1234, repo scope). No release minted yet.
+  keyring verified (tilok1234, repo scope). A clean-tree verification
+  export then ran WITHOUT --no-release by mistake and published
+  small-cold-coastal-pack-dusk@b65 — open incident sl-0016, designer
+  ruling pending (see pointer block).
 
 Versions: behavior **65** (manor gardens), recipe compiler **35**,
 resolved-config **29**, artifact format 8, TileForge adapter 7,
@@ -442,9 +453,14 @@ discipline (§5 identity rule).
   RE-EXPORTED 2026-07-29 under the behavior-63 identity (flood 34641
   unchanged; canonical's city-harbor pier renders stone jetty now,
   art-only) — READY FOR HANDOVER to `assets/worldforge-packs/`.
-  (GRANDFATHERED per doc 18 §4.4 — hand over as-is, NO retroactive
-  release for this or any prior pack; the release lane starts with the
-  NEXT export.) WYSIWYG semantics
+  (GRANDFATHERED per doc 18 §4.4 — hand over as-is. NOTE 2026-07-30:
+  the staging manifest on disk says behaviorVersion 65, not 63 — the
+  round-16/17 byte-stable re-verifications refreshed the identity; the
+  "b63" labels here and in sync-log sl-0004 are stale. An UNPLANNED
+  release of these exact bytes exists as small-cold-coastal-pack-
+  dusk@b65 (incident sl-0016): if the designer KEEPS it, the game can
+  intake by tag + hash-verify instead of directory copy; if DELETED,
+  the dir hand-over proceeds unchanged.) WYSIWYG semantics
   (plan §3.3): art-outline stamp (footprints minus pass cells; house
   doors solid), level-0 moss carpet walks, NOTHING else seals — slits,
   pockets, and the two-wide seals all reopened. Pack flood **34641**
