@@ -1,20 +1,25 @@
 # WorldForge — session handoff (2026-07-30 session close, world shipped + cliff diagnosis in)
 
-> **SESSION CLOSE NOTE (2026-07-30, account switch for usage; next
-> session may be terminal CLI).** Three things await the DESIGNER, in
-> order: (1) GO on the b71 carver-grading fix (fully specified in the
-> CLIFF DIAGNOSIS block below: add gradeRockCell to the CITY_LANE
-> writers in settlements.ts ~247/308/334 and the approach carver in
-> landmarks.ts ~453, mirror routes.ts 269-275; then re-export → the
-> lane auto-publishes @b71 → append the sl-0027 delivery update);
-> (2) the "tops walkable + ramps as access" walkability-CONTRACT
-> ruling (talk-before-build — touches pack/game/world_filler);
-> (3) @b70 GAME INTAKE stays HELD until b71. Hygiene: the viewer may
-> still be running on :8787; planning tools/sync_log.json carries
-> uncommitted on-disk appends (sl-0027 delivery, sl-0030 findings +
-> corrections) — planning's own session commits them; assistant
-> file-memory survives the account switch and cross-validates this
-> file. Everything below is committed and pushed through this line.
+> **B71 SHIPPED (2026-07-30, planning ask sl-0032 GO).** The cliff
+> fix is live: every street/approach carver grades rock (gradeRockCell
+> shared from routes.ts; six write sites — through-route necking,
+> arms, ring, house-lane band x2, landmark approach), settlements.plans
+> 29, landmarks.stamps 8, behavior 71, 248 tests (regression pinned on
+> the shipped world: zero band cells on rock). Measured on the b71
+> pack: ZERO walkable cells at any terrace level >= 1 (b70 had 108+);
+> world flood 45082 unchanged, pack flood 45184. Released immutably as
+> **wildshot-overworld-pack-dusk@b71** (sourceCommit 6363271,
+> manifestSha 5fd96677…, zipSha dbfd9ac4…), delivery logged
+> **sl-0034** — lands beside b65/b70, supersedes nothing; planning
+> re-issues the game intake against the b71 hashes. SCOPE FENCE
+> honored: tops stay blocked, ramps unplaced — the tops+ramps
+> walkability-contract arc is DESIGNER-PENDING (with its TileForge
+> forward-guard rider); TF road restoration = sl-0029 (their lane).
+> world_filler sl-0026 paste: PARKED as far as WF can testify — never
+> handed to or relayed by this repo's sessions. Planning sync_log has
+> uncommitted on-disk appends (sl-0027, sl-0030+corrections, sl-0034)
+> — planning commits its own file. Eight-holds flood note: 182730 ->
+> 182736 (+6 moss re-rolls on graded cells, flagged).
 >
 > **RESUME HERE. THE WILDSHOT OVERWORLD IS SHIPPED FOR TEST.** World
 > arc W4 ruling ("actually i think this is good enough for a test",
