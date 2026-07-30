@@ -133,10 +133,15 @@ export function planFarmsAndPiers(
       const nearX = anchorFarm === undefined ? plan.anchorX : anchorFarm.x;
       const nearY = anchorFarm === undefined ? plan.anchorY : anchorFarm.y;
       let plots = 0;
-      // Scan outward for plot origins; two plots per farming settlement.
-      for (let ring = 2; ring <= plan.radius + 4 && plots < 2; ring += 1) {
-        for (let dy = -ring; dy <= ring && plots < 2; dy += 1) {
-          for (let dx = -ring; dx <= ring && plots < 2; dx += 1) {
+      // Scan outward for plot origins. The allotment scales with the tier
+      // (behavior 73, "farmtowns needs more farming"): a farming city works
+      // six fields, a town four, an outpost the classic two. Draws are
+      // position-hashed, so a grown cap appends fields WITHOUT moving the
+      // ones a world already had.
+      const plotCap = plan.kind === "city" ? 6 : plan.kind === "town" ? 4 : 2;
+      for (let ring = 2; ring <= plan.radius + 4 && plots < plotCap; ring += 1) {
+        for (let dy = -ring; dy <= ring && plots < plotCap; dy += 1) {
+          for (let dx = -ring; dx <= ring && plots < plotCap; dx += 1) {
             if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
             const originX = nearX + dx;
             const originY = nearY + dy;

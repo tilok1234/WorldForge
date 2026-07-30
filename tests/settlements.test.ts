@@ -9,6 +9,8 @@ import { validateArtifact } from "../src/validation/validateArtifact.js";
 import { PALETTE_INDEX, WORLD_PALETTE } from "../src/regions/biomes.js";
 import { WATER_NONE } from "../src/hydrology/hydrology.js";
 import { planFarmsAndPiers } from "../src/settlements/farms.js";
+import { buildStructureSequence } from "../src/settlements/settlements.js";
+import { channel } from "../src/core/channels.js";
 
 function worldFor(seed: number, landmarks?: unknown) {
   const validation = validateRecipe({
@@ -442,5 +444,86 @@ describe("relational vocabulary", () => {
     let strayWood = 0;
     for (const value of laneless.fenceLayer) if (value === WOOD) strayWood += 1;
     assert.equal(strayWood, 0, "laneless farm has half-stamped orchard fencing");
+  });
+
+  it("farming holds farm: tiered plots and the farmstead pair (behavior 73)", () => {
+    // Same synthetic-plain harness as the b64 pen test. The plot cap is
+    // tier-keyed (city 6 / town 4 / outpost 2) and style-free; the
+    // farmstead pair rides the variety purpose pack.
+    const validation = validateRecipe({
+      recipeFormat: 1,
+      seed: 1,
+      world: { sizePreset: "tiny", climatePreset: "temperate" },
+      budgets: { settlementCount: 1, primaryRouteCount: 1, landmarkCount: 0 },
+      settlementStyle: { variety: true },
+    });
+    assert.ok(validation.ok);
+    const config = compileRecipe(normalizeRecipe(validation.recipe));
+    const { width, height } = config.world;
+    const cells = width * height;
+    const hydro = {
+      waterKind: new Uint8Array(cells),
+      isRiver: new Uint8Array(cells),
+    } as unknown as Parameters<typeof planFarmsAndPiers>[2];
+    const planOf = (kind: "city" | "town" | "outpost") =>
+      ({
+        id: 0,
+        kind,
+        anchorX: Math.trunc(width / 2),
+        anchorY: Math.trunc(height / 2),
+        purpose: "farming",
+        radius: 12,
+        structures: [],
+      }) as unknown as Parameters<typeof planFarmsAndPiers>[4][number];
+    const plotsOf = (result: ReturnType<typeof planFarmsAndPiers>) => {
+      // Plots never abut (each ring needs clear ground), so 4-connected
+      // crop components count them.
+      const seen = new Uint8Array(cells);
+      let components = 0;
+      for (let index = 0; index < cells; index += 1) {
+        if (result.cropLayer[index] === 0 || seen[index] === 1) continue;
+        components += 1;
+        const queue = [index];
+        seen[index] = 1;
+        while (queue.length > 0) {
+          const cell = queue.pop() as number;
+          const x = cell % width;
+          for (const next of [
+            x > 0 ? cell - 1 : -1,
+            x < width - 1 ? cell + 1 : -1,
+            cell - width >= 0 ? cell - width : -1,
+            cell + width < cells ? cell + width : -1,
+          ]) {
+            if (next !== -1 && result.cropLayer[next] !== 0 && seen[next] === 0) {
+              seen[next] = 1;
+              queue.push(next);
+            }
+          }
+        }
+      }
+      return components;
+    };
+    for (const [kind, expected] of [["city", 6], ["town", 4], ["outpost", 2]] as const) {
+      const grid = new Array(cells).fill(PALETTE_INDEX["terrain.grass"]);
+      const result = planFarmsAndPiers(grid, new Uint8Array(cells), hydro, new Uint8Array(cells), [planOf(kind)], config, []);
+      assert.equal(plotsOf(result), expected, `farming ${kind} plot count`);
+    }
+
+    // The variety farming packs carry the farmstead pair; every other
+    // purpose keeps its pre-73 sequence (no farmhouse, no barn).
+    const farmTown = buildStructureSequence("town", "farming", config.settlements, 0, channel(1, "settlements.variety"), 10, 10);
+    for (const type of ["structure.windmill", "structure.farmhouse", "structure.barn"]) {
+      assert.ok(
+        farmTown.sequence.slice(0, farmTown.alwaysPlace).includes(type as (typeof farmTown.sequence)[number]),
+        `farming town specials missing ${type}`,
+      );
+    }
+    const crossingTown = buildStructureSequence("town", "crossing", config.settlements, 0, channel(1, "settlements.variety"), 10, 10);
+    for (const type of ["structure.farmhouse", "structure.barn"]) {
+      assert.ok(
+        !crossingTown.sequence.includes(type as (typeof crossingTown.sequence)[number]),
+        `crossing town gained ${type}`,
+      );
+    }
   });
 });

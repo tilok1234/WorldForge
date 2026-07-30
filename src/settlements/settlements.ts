@@ -87,14 +87,18 @@ const OUTPOST_SEQUENCES: { readonly [key in SettlementPlan["purpose"]]: readonly
 const CITY_PURPOSE_SPECIALS: { readonly [key in SettlementPlan["purpose"]]: readonly StructureType[] } = {
   harbor: ["structure.warehouse", "structure.fisher_hut", "structure.store"],
   crossing: ["structure.watermill", "structure.store", "structure.guardhouse"],
-  farming: ["structure.windmill", "structure.store", "structure.guardhouse"],
+  // Farming holds gained the farmstead pair in behavior 73 ("farmtowns
+  // needs more farming"): the farmhouse anchors the farms pass, so the
+  // plots and the pen cluster at a real farm quarter instead of the
+  // plaza ring.
+  farming: ["structure.windmill", "structure.farmhouse", "structure.barn", "structure.store", "structure.guardhouse"],
   mining: ["structure.quarry", "structure.store", "structure.guardhouse"],
   waypoint: ["structure.guardhouse", "structure.store", "structure.warehouse"],
 };
 const TOWN_PURPOSE_SPECIALS: { readonly [key in SettlementPlan["purpose"]]: readonly StructureType[] } = {
   harbor: ["structure.fisher_hut", "structure.store"],
   crossing: ["structure.watermill", "structure.guardhouse"],
-  farming: ["structure.windmill", "structure.guardhouse"],
+  farming: ["structure.windmill", "structure.farmhouse", "structure.barn", "structure.guardhouse"],
   mining: ["structure.quarry", "structure.guardhouse"],
   waypoint: ["structure.guardhouse", "structure.store"],
 };
@@ -107,6 +111,20 @@ const VARIETY_TOWN_FILL: readonly { readonly type: StructureType; readonly weigh
   ...TOWN_FILL,
   { type: "structure.store", weight: 5 },
   { type: "structure.guardhouse", weight: 4 },
+];
+// Behavior 73: a farming hold's ordinary fabric leans agricultural too —
+// barns and stalls join the roll so the fields read past the civic core.
+// Purpose-keyed so every non-farming settlement keeps its exact pre-73
+// fill rolls (the weights array feeds the channel).
+const VARIETY_FARM_CITY_FILL: readonly { readonly type: StructureType; readonly weight: number }[] = [
+  ...VARIETY_CITY_FILL,
+  { type: "structure.barn", weight: 7 },
+  { type: "structure.stall", weight: 5 },
+];
+const VARIETY_FARM_TOWN_FILL: readonly { readonly type: StructureType; readonly weight: number }[] = [
+  ...VARIETY_TOWN_FILL,
+  { type: "structure.barn", weight: 8 },
+  { type: "structure.stall", weight: 5 },
 ];
 // Swap slots stay below the smallest outpostLots (tiny: 6) so every size
 // carries its flavor structure.
@@ -1040,7 +1058,9 @@ export function buildStructureSequence(
       ? [...baseSpecials.slice(0, spliceAt), ...purposePack, ...baseSpecials.slice(spliceAt)]
       : [...baseSpecials];
     const fill = rules.variety
-      ? kind === "city" ? VARIETY_CITY_FILL : VARIETY_TOWN_FILL
+      ? kind === "city"
+        ? purpose === "farming" ? VARIETY_FARM_CITY_FILL : VARIETY_CITY_FILL
+        : purpose === "farming" ? VARIETY_FARM_TOWN_FILL : VARIETY_TOWN_FILL
       : kind === "city" ? CITY_FILL : TOWN_FILL;
     const baseLots = kind === "city" ? rules.cityLots : rules.townLots;
     const lots = baseLots + Math.trunc((baseLots * 2 * growthPermille) / 1000);

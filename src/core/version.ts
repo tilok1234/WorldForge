@@ -645,8 +645,23 @@ export const GENERATOR_VERSION = "0.1.0";
  *     untouched). Flood shifts where restored flanks were rock
  *     (walkable pavement -> honest terrain); reachability rides the
  *     banded centerline and the gates re-verify.
+ * 73: farming holds farm (settlements.plans 30; the W5 detail-round
+ *     verdict "farmtowns needs more farming"). Three levers, all
+ *     purpose-keyed to farming so every other settlement keeps its
+ *     exact rolls: (1) the plot allotment scales with tier — city 6 /
+ *     town 4 / outpost 2 (was a flat 2; style-free, plot draws are
+ *     position-hashed so grown caps APPEND fields without moving the
+ *     ones a world already had); (2) variety farming cities/towns
+ *     splice the farmstead pair (farmhouse + barn) into their civic
+ *     specials — and the farmhouse then ANCHORS the farms pass, so
+ *     plots, pen, and orchard cluster at a real farm quarter instead
+ *     of the plaza ring; (3) variety farming fill leans agricultural
+ *     (barns and stalls join the house roll). Non-variety worlds keep
+ *     pre-73 sequences byte-identically; farm worlds re-roll their
+ *     farm surroundings (flagged floods, orchard/pen may relocate
+ *     around the new fields).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 72;
+export const GENERATOR_BEHAVIOR_VERSION = 73;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -661,7 +676,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 18,
-  "settlements.plans": 29,
+  "settlements.plans": 30,
   "landmarks.stamps": 8,
   "terrain.texture": 1,
   "decoration.props": 16,
