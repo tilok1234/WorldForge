@@ -1,8 +1,13 @@
 # WorldForge — session handoff (2026-07-30, scenery loop mid-arc, round 22 out)
 
 > **RESUME HERE.** The scenery-composition loop is the active arc:
-> **round 22 (shipwreck cove, behavior 70, commit `a02fccd`) is SENT
-> and AWAITS THE VERDICT** — batch 9, the waterfront set opens,
+> **round 22 (shipwreck cove, behavior 70, commit `a02fccd`) RULED
+> POSITIVE ("and approved", 2026-07-30) — the scenery loop stands at
+> ELEVEN ratified compositions and THE WORLD ARC OPENS: the designer
+> asked for "an actual world map that i will use for now for wildshot
+> adventures"; the agreed shape is a fresh authored 512² world
+> iterated to DONE in verdict rounds, then baseline -> export ->
+> auto-published release -> game intake** — batch 9, the waterfront set opens,
 > proceeding on round 21's ruling ("beautiful approved"; rounds
 > 12-18, 20, 21 positive, 19 = the b68 entrance principle). NEW POI
 > poi.shipwreck_cove (decoration.pois 19): on a sand arc by open
