@@ -43,6 +43,29 @@
 > DOC 18 / RELEASE LANE fully live: publish gate + auto-released
 > exports proven TWICE (accidental @b65 RULED KEEP as the canonical
 > transport, sl-0016; deliberate @b70 = the overworld, sl-0027).
+>
+> CLIFF DIAGNOSIS (sl-0028 ask, findings logged sl-0030; GAME INTAKE
+> OF @b70 ON HOLD pending the fix): rock walkability is WF-side
+> semantics (loader BLOCKED_MATERIALS; cliffs are adapter ART inside
+> the rock mass under the invariant "walkable cells stay level 0").
+> Measured on b70: plateau TOPS 1705 cells / 79 walkable (all lane
+> cells), edges 231/29, RAMP LAYER ALL ZEROS (nothing ever writes it;
+> the package ships 4 walkable ramp families unused). The designer's
+> "cliffs are walkable" memory = the narrow moss ruling (level-0
+> apron carpet only). ROOT CAUSE of the road issue: the b56 city
+> street-web carvers (settlements.ts CITY_LANE writers) never grade
+> rock — the snowline city carved 108 walkable lane cells at terrace
+> level >= 1 (x 200-237, y 25-26), streets climbing cliff faces, no
+> ramps; wilderness trail carvers DO grade (zero violations). Latent:
+> the landmark approach carver also writes ungraded. WIDTH-DOUBT
+> VERDICT: two-wide rule DISMISSED on timeline (TF road retirement
+> 07-26; two-wide lived 49 min on 07-29); the real origin is b56's
+> cobble blob-rendering finding. NEXT (awaiting designer go): b71 =
+> grade rock under city-lane + approach carvers (small, in-lane,
+> restores the invariant), re-export, update sl-0027 delivery; the
+> BIGGER "tops walkable + ramps as access" intent is a walkability-
+> CONTRACT arc (pack/game/world_filler all move) — designer-ruled,
+> talk-before-build. TF-side restoration is sl-0029 (their lane).
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
