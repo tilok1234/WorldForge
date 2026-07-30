@@ -1,120 +1,54 @@
-# WorldForge — session handoff (2026-07-30, THE WORLD ARC, round W1 out)
+# WorldForge — session handoff (2026-07-30, THE WORLD ARC, round W2 out)
 
-> **RESUME HERE. THE WORLD ARC is the active arc** (designer asked for
-> "an actual world map that i will use for now for wildshot
-> adventures"; agreed shape: iterate to DONE in verdict rounds, then
-> approve-recipe baseline -> export -> auto-published release -> game
-> intake by tag). **Round W1 (draft 1, recipe
-> fixtures/recipes/wildshot-overworld.json, commit `af3735b`) is SENT
-> and AWAITS THE VERDICT**: 512² medium, seed 4242 (of five probed;
-> two gate-refused), eight anchor zones — frozen spine north (+300
-> elev), old forest NW, highlands NE, heartland center (floor 2), dry
-> marches west, DROWNED PORT COAST south (−200 elev = the great bay),
-> river vales east, marsh delta SE — full ratified style kit, all
-> five story landmarks, 10 settlements / 5 routes. Verified: 15/15
-> reachable, flood 143986, Godot 0. The capital is a walled harbor
-> city on the bay (stream through the plaza, twin gates, garden
-> greens). KNOWN DRAFT FLAWS (agent-flagged, designer to confirm):
-> the four remote landmarks crowd the north edge (relations all mean
-> "far", far is north — fix with at/near pins next round); only ONE
-> farming settlement rolled (heartland grass share — raise moisture
-> or pin); east/SE mud flats read heavy (tune delta moisture). The
-> scenery loop PAUSES at eleven ratified compositions (12-18, 20-22
-> positive; remaining leaders + levers listed in
-> docs/SCENERY_COMPOSITIONS.md §3) and resumes after the world
-> ships or on designer request. — batch 9, the waterfront set opens,
-> proceeding on round 21's ruling ("beautiful approved"; rounds
-> 12-18, 20, 21 positive, 19 = the b68 entrance principle). NEW POI
-> poi.shipwreck_cove (decoration.pois 19): on a sand arc by open
-> water — wreck hull, burst crates, loot pile, boards, driftwood
-> tideline; LOST place, no spur, cap 2. TWO placement lessons baked
-> in: coves seed on a DEDICATED channel lane before the general
-> stream (cave precedent — sand is ~0.3% of any map, the budget
-> fills before the stream ever lands on a beach) and there is NO
-> multi-cell all-land ask (a beach hugs water by definition; the
-> first cut placed ZERO coves on 882 sand cells — only the hull's
-> cell is required, cargo pieces guard themselves and settle
-> landside, the b63 way). Showcases: broken-isles beach arcs (2),
-> drowned-shore's town-edge wreck, canonical's offshore sandbar
-> hull (walkable-unreachable island, WYSIWYG-legal). Floods
-> re-verified TS+Godot 0: canonical 33783, dust-sea 50994,
-> eight-holds 182734 (0 coves — 34 sand cells, honest),
-> broken-isles 72797, drowned-shore 41138. 246 tests. After the
-> verdict: batch-10 from docs/SCENERY_COMPOSITIONS.md (remaining
-> leaders: battlefield blood [tone question §4 open], boardwalk
-> shore / seawall front / lighthouse point — the rest of the
-> waterfront set — windmill hill, processional way; open levers:
-> bridge-end guard posts, fenced-POI spur budget) — or the
-> designer's parallel pack-assessment notes merged into catalog
-> §3/§4, still outstanding. — batch 8, proceeding on round 20's
-> ruling ("ye that looks better aproved"; rounds 12-18 + 20 positive,
-> 19 absorbed as the b68 entrance principle). NEW POI
-> poi.logging_camp (decoration.pois 18): where forest meets the
-> town's reach (grass, >=8 trees in r4, gap 10-30, variant >= 500 —
-> the UPPER roll band, so crypt <250 / ruin <200 / graveyard <400
-> keep every candidate they ever claimed), the b49 sawmill stamps in
-> the wilderness for the first time with chopping block, two log
-> piles, hauling cart, and the crew's COOKFIRE (decoration.props 16 —
-> the last unused camp prop enters the roster; blocks like campfire).
-> THE CUT EDGE: up to four standing trees within r4 convert to
-> stumps, scan order — work in progress, not set dressing. Cap 3,
-> worked site = earns a b21 spur (the eight-holds camp's trail winds
-> down to the town — the showcase crop). Flagged flood shifts, all
-> re-verified TS+Godot 0 errors: canonical 33795 -> **33779**,
-> dust-sea 51009 -> 50995, eight-holds 182730 -> 182734, all
-> destinations reachable. 245 tests (new pin: tiny-seed camp with
-> kit + stumps; sawmill joined the pass-model table, fully
-> blocking). NOTE: the NEXT pack export will auto-publish a release
-> per doc 18 (the b65 release stays the blessed delivery until
-> then). After the verdict: batch-9 from docs/SCENERY_COMPOSITIONS.md
-> (remaining leaders: battlefield blood [tone question §4 open], the
-> waterfront set — boardwalk / seawall / lighthouse point / shipwreck
-> cove — windmill hill, processional way; open levers: bridge-end
-> guard posts, fenced-POI spur budget) — or the designer's parallel
-> pack-assessment notes merged into catalog §3/§4, still
-> outstanding. Round 19 (orchards,
-> b67, `72c5ef0`) was RULED with feedback — "that thing needs a
-> entrance where the road goes into it" — and b68 answers it THREE
-> ways: orchard gates open on whichever of the four sides has the
-> strongest lane contact (E/W roads now host stands, the b67 lever:
-> warm-vale-large 3→5 orchards); graveyard iron rings never stamp on
-> a path cell (a pre-existing trail crossing IS the gate, b65
-> precedent); and the b21 spur carver is FENCE-AWARE (the flagged
-> enclosure was actually a graveyard whose spur had been carved
-> straight through its iron ring — spurs now leave fenced yards
-> through the gate or not at all; that graveyard goes honestly
-> pathless, larger spur budget for fenced POIs = open lever). All
-> placed orchards probe-verified complete/stray-free/reachable, every
-> apron 3/3 lane contact. Floods: canonical 33795, eight-holds
-> 182730, dust-sea 51009 INVARIANT; warm-vale-large 646282. Rounds
-> 12-18 all positive; no pack re-export (b65 release = the delivery).
-> After the verdict: batch-8 from docs/SCENERY_COMPOSITIONS.md
-> (remaining leaders: logging camp, battlefield blood [tone question
-> §4 open], the waterfront set — boardwalk / seawall / lighthouse
-> point / shipwreck cove — windmill hill, processional way; open
-> levers: bridge-end guard posts, fenced-POI spur budget) — or the
-> designer's parallel pack-assessment notes merged into catalog
-> §3/§4, still outstanding. The bright-teal hedge art passed without comment;
-> the optional softer-hedge repaint stays a TileForge-side upstream
-> ask if it ever grates. NOTE: farming settlements only spawn inland
-> with ≥45% grass — canonical, eight-holds, and small warm-vale have
-> NONE; the farm worlds are warm-vale-large (8), the-broken-isles
-> (7), dust-sea, the-old-war-medium/-large, weeping-marsh,
-> the-eight-lands. Nothing is half-implemented; every behavior
-> through 67 is committed, pushed, and tested (244 green).
-> DOC 18 ABSORBED (2026-07-30): export-game-pack now runs behind the
-> publish gate (dirty tree / unpushed HEAD = refusal, exercised live)
-> and a clean gated export auto-publishes the pack zip as a GitHub
-> release tagged with the artifact id. Prior packs are GRANDFATHERED.
-> The accidental early release (sync-log sl-0016 — the verification
-> export that ran without --no-release) was RULED KEEP by the designer
-> (2026-07-30, planning session): small-cold-coastal-pack-dusk@b65
-> (commit 4497729, manifestSha256 cc329164…, zip sha256 ba7e936f…,
-> byte-identical to the staging pack) is the BLESSED transport for the
-> pending dusk delivery (sl-0004) — the game intakes by tag +
-> hash-verify against the release notes. Planning verified GitHub's
-> computed asset digest equals the noted zipSha256 before ruling. The
-> release lane is fully live; future exports publish normally.
+> **RESUME HERE. THE WORLD ARC is the active arc** (designer: "an
+> actual world map that i will use for now for wildshot adventures";
+> agreed: iterate to DONE in verdict rounds -> approve-recipe baseline
+> -> export -> auto-published release -> game intake by tag).
+> **Round W2 (draft 2 THE SMALL EDITION, recipe
+> fixtures/recipes/wildshot-overworld.json, commit `94da8f9`) is SENT
+> and AWAITS THE VERDICT.** W1 (512² draft, `af3735b`, kept in git as
+> the bigger-world-later reference) drew two designer redirects:
+> "route points too close, could be better spread" and "this world is
+> way to big for the game atm" — so the overworld is SMALL 256² now,
+> the scale the game already runs (canonical intake size). Seed 9001
+> of six probed (five honestly gate-refused), SIX zones (frozen spine
+> N +300 elev, NW old forest, heartland C, dry marches W, drowned bay
+> coast S -200 elev, east vales), SIX pinned settlements spread
+> deliberately: walled capital above the bay [121,170], mining city
+> in the northern snows [81,31], center town [130,141], vale town
+> [205,125], west port [74,210], farming outpost [199,172] (purposes
+> 2 farming / 2 crossing / 1 mining / 1 harbor). THREE landmarks
+> pinned to their regions: ruined_city [35,135] in the marches,
+> world_tree [44,52] NW forest, lighthouse PINNED onto the bay shore
+> [157,190] (the coastal relation had sent it to a map corner). Full
+> ratified style kit. Verified: 9/9 reachable, flood 36848, Godot 0.
+> PIN DOCTRINE learned this round: near-pins with modest radius +
+> seed iteration; the compose gate refuses bad geography honestly.
+> AGENT NOTES for the verdict: capital and center town sit ~30 cells
+> apart (reads capital + satellite); the SE delta mud is prominent.
+>
+> THE SCENERY LOOP is PAUSED at ELEVEN ratified compositions (rounds
+> 12-18, 20-22 positive; 19 = the b68 entrance principle; behaviors
+> 61-70: dressing, walls, harbor row, farm pair, gardens, gate
+> garrisons, orchards, entrances-follow-the-road, logging camp,
+> shipwreck cove). Behavior 70, 246 tests green; galleries
+> re-verified (canonical 33783, eight-holds 182734, dust-sea 50994,
+> warm-vale-large 646282, broken-isles 72797, drowned-shore 41138).
+> Remaining leaders + open levers: docs/SCENERY_COMPOSITIONS.md §3
+> (battlefield tone question §4 still open); resume after the world
+> ships or on request. NOTE: farming settlements only spawn inland
+> with >=45% grass. Nothing is half-implemented; every behavior
+> through 70 is committed, pushed, tested.
+>
+> DOC 18 / RELEASE LANE: export-game-pack runs behind the publish
+> gate (dirty tree / unpushed HEAD = refusal) and a clean gated
+> export AUTO-PUBLISHES the pack zip as a GitHub release tagged with
+> the artifact id. Prior packs grandfathered. Accidental early
+> release sl-0016 RULED KEEP: small-cold-coastal-pack-dusk@b65
+> (commit 4497729, manifestSha256 cc329164…, zip ba7e936f…) is the
+> BLESSED transport for the pending dusk delivery (sl-0004) — the
+> game intakes by tag + hash-verify. The release lane is fully live;
+> the NEXT export mints the next release.
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
