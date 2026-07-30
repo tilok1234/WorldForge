@@ -1,110 +1,52 @@
-# WorldForge — session handoff (2026-07-30 session close, world shipped + cliff diagnosis in)
+# WorldForge — session handoff (2026-07-30 close: world live at b72, game importing)
 
-> **B72 BUILT, VERDICT PENDING (2026-07-30, "roads are restored now
-> please fix the worlds roads").** Investigated first: the worlds'
-> roads were NEVER broken — the pinned package kept all road art, the
-> roadTypesLegacy flag is read by nothing, TF's restoration was
-> app-side with no new cut ("atlas kept"). The real read of the ask:
-> COUNTRY roads still render as 2-3 wide packed-road slabs (the same
-> look b56 banished from cities; the b57 corridor doctrine kept them
-> material because the band was retired upstream — now un-retired).
-> Behavior 72 (routes.graph 18, commit above): under narrowStreets,
-> country corridors neck to centerline and draw as the ROAD BAND over
-> restored ground; junction flanks that trails join become band cells
-> (first cut severed both north landmarks — compose gate caught it,
-> the b72 test now asserts gate cleanliness); rock grades (b71);
-> style-free worlds byte-identical (canonical 33783 verified).
-> Wildshot 9/9, flood 45099, Godot 0, 249 tests. Before/after sent —
-> ON APPROVAL: re-export -> release @b72 -> delivery line (planning
-> re-issues intake); until then the b71 intake stands.
+> **RESUME HERE. THE WILDSHOT OVERWORLD IS LIVE AT
+> wildshot-overworld-pack-dusk@b72** and the designer is importing it
+> into the game right now (delivery sl-0035: sourceCommit bbc10cd,
+> manifestSha ecdde8db…, zipSha 6cd46753…, pack flood 45202, spawn
+> [109,182]). b72 = country roads ride the band (designer-approved
+> "cool"): every road in a styled world is a one-tile band line —
+> city lanes, country highways (both path value 2), wilderness trails
+> (value 1); corridors still carve as material and the composer necks
+> them to centerline, restores flanks, bands trail-junction flanks,
+> grades rock (b71). Canonical 33783 byte-invariant. Releases @b65
+> (canonical transport, sl-0004 pending), @b70, @b71 remain immutable
+> on GitHub; @b72 is the intake target. IMPORTER WARNING (sl-0027/34/
+> 35): path values are 0/1/2 — a 0..1 pin refuses the pack; b72 puts
+> far more 2s in (country roads).
 >
-> **B71 SHIPPED (2026-07-30, planning ask sl-0032 GO).** The cliff
-> fix is live: every street/approach carver grades rock (gradeRockCell
-> shared from routes.ts; six write sites — through-route necking,
-> arms, ring, house-lane band x2, landmark approach), settlements.plans
-> 29, landmarks.stamps 8, behavior 71, 248 tests (regression pinned on
-> the shipped world: zero band cells on rock). Measured on the b71
-> pack: ZERO walkable cells at any terrace level >= 1 (b70 had 108+);
-> world flood 45082 unchanged, pack flood 45184. Released immutably as
-> **wildshot-overworld-pack-dusk@b71** (sourceCommit 6363271,
-> manifestSha 5fd96677…, zipSha dbfd9ac4…), delivery logged
-> **sl-0034** — lands beside b65/b70, supersedes nothing; planning
-> re-issues the game intake against the b71 hashes. SCOPE FENCE
-> honored: tops stay blocked, ramps unplaced — the tops+ramps
-> walkability-contract arc is DESIGNER-PENDING (with its TileForge
-> forward-guard rider); TF road restoration = sl-0029 (their lane).
-> world_filler sl-0026 paste: PARKED as far as WF can testify — never
-> handed to or relayed by this repo's sessions. Planning sync_log has
-> uncommitted on-disk appends (sl-0027, sl-0030+corrections, sl-0034)
-> — planning commits its own file. Eight-holds flood note: 182730 ->
-> 182736 (+6 moss re-rolls on graded cells, flagged).
+> SESSION LEDGER (2026-07-30, one continuous session): doc 18
+> absorbed (publish gate + auto-released exports; accidental @b65
+> RULED KEEP); scenery rounds 18-22 ratified (b66 gate garrisons, b67
+> orchards, b68 entrances-follow-the-road, b69 logging camp, b70
+> shipwreck cove — ELEVEN compositions total, loop now PAUSED,
+> leaders in docs/SCENERY_COMPOSITIONS.md §3); the WORLD ARC (drafts
+> W1-W4 -> seed 2008 baselined -> shipped @b70); ship-caught
+> validator fix (path 0..2); cliff diagnosis sl-0030 (city carvers
+> never graded rock, ramps never existed, two-wide dismissed on
+> timeline) -> b71 grading fix (sl-0032 GO, delivery sl-0034) -> b72
+> country bands (sl-0035). Behavior 72, routes.graph 18,
+> settlements.plans 29, landmarks.stamps 8, decoration.pois 19,
+> decoration.props 16, 249 tests green.
 >
-> **RESUME HERE. THE WILDSHOT OVERWORLD IS SHIPPED FOR TEST.** World
-> arc W4 ruling ("actually i think this is good enough for a test",
-> 2026-07-30) executed end to end: approve-recipe BASELINE recorded
-> (fixtures/recipes/wildshot-overworld.json.approval.json, recipeSha
-> 35321dea…, seed 2008, behavior-70 identity), publish gate passed on
-> clean pushed tree, pack exported to
-> outputs/game-packs/wildshot-overworld-pack-dusk (9 files, pack
-> flood 45167, spawn [109,182] = the harbor capital), and the doc-18
-> lane auto-published the FIRST deliberate release:
-> **wildshot-overworld-pack-dusk@b70** (sourceCommit 167615b,
-> manifestSha256 186a35c1…, zipSha256 88c41acb…). Delivery logged as
-> planning sync-log **sl-0027** (status open — the game intakes by
-> tag + hash-verify; sl-0004/b65 canonical delivery still stands,
-> game's choice which loads). SHIP-CAUGHT BUG, fixed: the artifact
-> validator pinned path to 0..1 (pre-b57) and refused the FIRST
-> styled pack ever exported — now 0..2 (city lane), regression
-> tested, 247 tests. WARNING carried in sl-0027: if the game-side
-> importer pins path values the same way, it will refuse too (accept
-> 0/1/2 per b57, adapter 7).
+> DOCS PASS (this close): docs/GENERATION_RULES.md road doctrine
+> rewritten to current law (band lineage b56/57/72; the 07-26
+> corridor MUSTs were stale); docs/SCENERY_COMPOSITIONS.md ramps
+> claim corrected (ramp layer never written — sl-0030);
+> docs/GAME_INTEGRATION_PLAN.md §3.4 updated to as-built (publish
+> gate flags + doc-18 release transport + importer path note).
 >
-> THE WORLD: seed 2008 ("layout C", W3 "c is a very good oine") —
-> 256², six zones, harbor capital [109,182] south bay, snowline
-> crossing city [210,53] (plaza stream into the lake), towns
-> [18,13]/[65,217]/[143,195], outpost [180,159], ruined_city [59,6],
-> world_tree [91,8], lighthouse [178,195]. Gallery slot
-> outputs/gallery/wildshot-overworld (viewer-ready), 9/9 reachable,
-> gallery flood 45082, Godot 0. PARKED DETAIL AGENDA (post-test
-> iteration; recipeSha changes → re-record baseline): spread
-> ruined_city + world_tree off the north edge (32 apart), add a
-> farming settlement (pin or moisture), designer polish. W-arc
-> lessons: unpinned small styled worlds ~80% gate-refused (pins
-> steer settlements onto good ground); rewrite this pointer WHOLE
-> each round (sequential minimal edits accreted every stale round).
->
-> THE SCENERY LOOP is PAUSED at ELEVEN ratified compositions (rounds
-> 12-18, 20-22 positive; 19 = the b68 entrance principle; behaviors
-> 61-70). 247 tests green. Leaders + levers:
-> docs/SCENERY_COMPOSITIONS.md §3 (battlefield tone question §4
-> open). Farming settlements need inland + >=45% grass.
->
-> DOC 18 / RELEASE LANE fully live: publish gate + auto-released
-> exports proven TWICE (accidental @b65 RULED KEEP as the canonical
-> transport, sl-0016; deliberate @b70 = the overworld, sl-0027).
->
-> CLIFF DIAGNOSIS (sl-0028 ask, findings logged sl-0030; GAME INTAKE
-> OF @b70 ON HOLD pending the fix): rock walkability is WF-side
-> semantics (loader BLOCKED_MATERIALS; cliffs are adapter ART inside
-> the rock mass under the invariant "walkable cells stay level 0").
-> Measured on b70: plateau TOPS 1705 cells / 79 walkable (all lane
-> cells), edges 231/29, RAMP LAYER ALL ZEROS (nothing ever writes it;
-> the package ships 4 walkable ramp families unused). The designer's
-> "cliffs are walkable" memory = the narrow moss ruling (level-0
-> apron carpet only). ROOT CAUSE of the road issue: the b56 city
-> street-web carvers (settlements.ts CITY_LANE writers) never grade
-> rock — the snowline city carved 108 walkable lane cells at terrace
-> level >= 1 (x 200-237, y 25-26), streets climbing cliff faces, no
-> ramps; wilderness trail carvers DO grade (zero violations). Latent:
-> the landmark approach carver also writes ungraded. WIDTH-DOUBT
-> VERDICT: two-wide rule DISMISSED on timeline (TF road retirement
-> 07-26; two-wide lived 49 min on 07-29); the real origin is b56's
-> cobble blob-rendering finding. NEXT (awaiting designer go): b71 =
-> grade rock under city-lane + approach carvers (small, in-lane,
-> restores the invariant), re-export, update sl-0027 delivery; the
-> BIGGER "tops walkable + ramps as access" intent is a walkability-
-> CONTRACT arc (pack/game/world_filler all move) — designer-ruled,
-> talk-before-build. TF-side restoration is sl-0029 (their lane).
+> OPEN, in rough order: (1) game intake of @b72 (game-side; sl-0035);
+> (2) the tops+ramps walkability-CONTRACT ruling (designer clock;
+> tops are blocked, ramps unplaced — a ruled arc moves pack, game,
+> world_filler together; TileForge forward-guard rider: never stop
+> exporting road/ruinedroad/ramp families); (3) world detail rounds
+> parked (spread ruined_city+world_tree off the north edge, add a
+> farming settlement; recipeSha changes -> re-record baseline); (4)
+> scenery loop resumable (battlefield still tone-gated on §4); (5)
+> planning sync_log has uncommitted on-disk appends (sl-0027, 0030,
+> 0034, 0035) — planning commits its own file; world_filler sl-0026
+> paste PARKED (never with WF). Viewer may still run on :8787.
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the

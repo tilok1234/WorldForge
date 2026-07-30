@@ -105,29 +105,38 @@ strength.
 
 ## Roads and routes
 
-Aligned with the upstream TileForge road doctrine as of the 2026-07-26 ruling
-(packages `a5baf52` and later): routes are corridors of ground material, and
-the one-cell road band is deprecated for route display.
+Doctrine lineage: the 2026-07-26 corridor doctrine (routes as ground-material
+corridors, road band deprecated) was overturned in two designer rulings. The
+behavior-56/57 rounds proved the "wide roads" complaint was cobble/packed
+BLOB-RENDERING (an area material draws a one-cell lane two-three tiles wide)
+and ruled the heavier road BAND the one-tile look for city streets; the
+behavior-72 ruling (2026-07-30, after the upstream road-layer restoration
+made the band first-class again) extended the band to country roads. Current
+law:
 
 - A primary route MUST connect meaningful destinations.
 - Route generation MUST distinguish graph intent from rendered cell paths.
-- Roads MUST be rendered as corridors of ground material. The default route
-  floor is the packed-road material; soil and gravel corridors serve character
-  routes such as farm lanes and quarry tracks.
-- Country roads MUST render as bare corridors two to four cells wide. The
-  one-cell road band MUST NOT be laid along routes; it re-creates the
-  line-drawn-on-the-map failure the corridor doctrine replaced.
-- The dirt-path band remains valid for faint backtrails and minor local spurs
-  (the one band retaining a display job in the pinned doctrine).
-- Town streets are cobble areas. The corridor rim, not a painted centerline,
-  carries the organic read.
+- Under `narrowStreets` (every styled world), EVERY road draws as a one-tile
+  band over natural ground: city lanes and country routes carry the road
+  band (path value 2), wilderness trails the dirt-path band (path value 1).
+  Corridors still CARVE as material internally; the composer necks them to
+  centerline and restores the flank ground (behaviors 52/56/72).
+- Style-free worlds keep the classic material corridors byte-identically:
+  packed-road country routes, cobble town streets (the pre-56 contract that
+  approved worlds bake in).
+- A band cell MUST NOT ride rock material — every band writer grades rock
+  (gravel or an adopted neighbor; behaviors 21/71), which is what keeps the
+  adapter's cliff relief off traversal ("walkable cells stay level 0").
+- Plazas and civic cores stay paved areas in every mode.
 - Route legs SHOULD stay axis-aligned with explicit corner turns; diagonal
   legs stair-step at gameplay zoom in the pinned tile system.
 - Major water crossings MUST be bridge structures; minor crossings SHOULD use
   the ford decal at valid route-water intersections.
-- Corridor material MUST NOT switch at an arbitrary mid-run butt joint.
 - Roads SHOULD prefer plausible grade and crossing cost.
-- Required route connectivity MUST be validated after decoration.
+- Required route connectivity MUST be validated after decoration, and a
+  restored corridor flank that a trail joins MUST become a band cell — bare
+  ground there strands the trail one cell short of the centerline (the
+  behavior-72 first cut severed two landmarks exactly this way).
 
 ## Settlements
 

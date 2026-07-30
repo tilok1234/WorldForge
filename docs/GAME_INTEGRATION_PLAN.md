@@ -192,21 +192,34 @@ Phase-4 importer's independent validation)
   TileForge template field (per-cell overhang rows) — a designer-scoped
   TileForge task, recorded here per the compatibility procedure.
 
-### 3.4 export-game-pack CLI (proposed)
+### 3.4 export-game-pack CLI (as built; transport updated 2026-07-30)
 
 ```text
-node dist/src/cli.js export-game-pack <recipe.json> --out <dir>
+node dist/src/cli.js export-game-pack <recipe.json> --out <dir> [--allow-dirty] [--no-release]
 ```
 
 Refuses to export when (all hard failures, no partial packs):
 
-1. the validation report is not `pass`;
-2. the TypeScript-loader flood count differs from the packed grid's;
-3. any manifest-listed file is missing or its hash mismatches;
-4. the output root fails the existing path guard.
+1. the doc-18 publish gate fails: dirty working tree or HEAD not on the
+   remote (`--allow-dirty` is a loud dev-only bypass that disables the
+   release upload);
+2. the validation report is not `pass`;
+3. the TypeScript-loader flood count differs from the packed grid's;
+4. any manifest-listed file is missing or its hash mismatches;
+5. the output root fails the existing path guard.
 
-Publish-after-validation and temp-directory staging follow the existing safe
-write rules.
+TRANSPORT (doc 18 §4.4, ruled 2026-07-30): a clean gated export
+auto-publishes the pack as an immutable GitHub release tagged
+`<world>-pack-<theme>@b<NN>` — notes carry sourceCommit plus manifest and
+zip SHA-256, an existing tag with different bytes refuses, and the game
+intakes by tag + hash-verify (delivery entries in planning
+`tools/sync_log.json` announce each release). The pack manifest itself
+stays deliberately commit-free so unchanged worlds re-export
+byte-identically; the commit binds through the release. Path-layer note
+for importers: values are 0 none / 1 wilderness trail band / 2 road band
+(behavior 57; country roads also carry 2 since behavior 72) — an importer
+pinning path at 0..1 must widen to 0..2, exactly as WorldForge's own
+validator had to.
 
 ## 4. Authored placement extension (draft)
 

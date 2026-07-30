@@ -71,7 +71,10 @@ apron. **UNUSED: `blood`, `steppingstones`, `frost`, `geyser`.**
 ### Crops (4) and other
 
 Crops used: wheat, pumpkin, corn, grapes (b64 warm-world vineyards).
-Crop stages (planted→harvested) exist and are used. Ramps used;
+Crop stages (planted→harvested) exist and are used. Ramps UNPLACED —
+the adapter's `ramp` layer exists but nothing ever writes it (sl-0030
+finding; the four walkable ramp families wait on the designer-pending
+tops+ramps walkability arc).
 **`stairs` UNUSED.** Road/path/ruined-road bands: all three in
 service.
 
