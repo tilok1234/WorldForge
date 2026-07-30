@@ -193,9 +193,20 @@ Ordered roughly by (visual payoff / effort). ✓ = shipped already.
     walls+gates for a fortified port look).
 14. **Lighthouse point** — lighthouse ✓ + `seawall` spur + `bollard`
     + `buoy` line offshore.
-15. **Shipwreck cove** — `wreck` ✓ + `driftwood` + `crates` +
-    `lootpile` on a beach arc (POI pattern; pieces all rostered, just
-    never composed).
+15. ✓ **Shipwreck cove** (behavior 70, batch 9) — new POI on a sand
+    arc by open water: `wreck` hull, burst `crates`, `lootpile`,
+    `brokenboards`, `driftwood` along the tideline. LOST place: no
+    spur (wrecks stay pathless), cap 2. PLACEMENT DOCTRINE, two
+    lessons: RARE TERRAIN NEEDS ITS OWN LANE — sand is ~0.3% of any
+    map, so the general candidate stream fills the budget before
+    landing on a beach (the cave precedent; coves seed on a dedicated
+    channel lane first); and NO MULTI-CELL ALL-LAND ASKS ON BEACHES —
+    a beach hugs water by definition, any clearRegion refuses every
+    real strip (the first cut placed zero coves on 882 sand cells);
+    require only the anchor cell, let each piece guard itself and
+    settle landside (the b63 harbor-row way). Offshore sandbar hulls
+    (canonical rolled one) are WYSIWYG-legal walkable-unreachable
+    islands — a shoaled wreck reads true.
 
 ### Farmland (FARM EXTENSION)
 

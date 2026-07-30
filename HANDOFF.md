@@ -1,9 +1,32 @@
-# WorldForge — session handoff (2026-07-30, scenery loop mid-arc, round 21 out)
+# WorldForge — session handoff (2026-07-30, scenery loop mid-arc, round 22 out)
 
 > **RESUME HERE.** The scenery-composition loop is the active arc:
-> **round 21 (logging camp, behavior 69, commit `a11942b`) RULED
-> POSITIVE ("beautiful approved", 2026-07-30) — batch 9 = SHIPWRECK
-> COVE proceeds** — batch 8, proceeding on round 20's
+> **round 22 (shipwreck cove, behavior 70, commit `a02fccd`) is SENT
+> and AWAITS THE VERDICT** — batch 9, the waterfront set opens,
+> proceeding on round 21's ruling ("beautiful approved"; rounds
+> 12-18, 20, 21 positive, 19 = the b68 entrance principle). NEW POI
+> poi.shipwreck_cove (decoration.pois 19): on a sand arc by open
+> water — wreck hull, burst crates, loot pile, boards, driftwood
+> tideline; LOST place, no spur, cap 2. TWO placement lessons baked
+> in: coves seed on a DEDICATED channel lane before the general
+> stream (cave precedent — sand is ~0.3% of any map, the budget
+> fills before the stream ever lands on a beach) and there is NO
+> multi-cell all-land ask (a beach hugs water by definition; the
+> first cut placed ZERO coves on 882 sand cells — only the hull's
+> cell is required, cargo pieces guard themselves and settle
+> landside, the b63 way). Showcases: broken-isles beach arcs (2),
+> drowned-shore's town-edge wreck, canonical's offshore sandbar
+> hull (walkable-unreachable island, WYSIWYG-legal). Floods
+> re-verified TS+Godot 0: canonical 33783, dust-sea 50994,
+> eight-holds 182734 (0 coves — 34 sand cells, honest),
+> broken-isles 72797, drowned-shore 41138. 246 tests. After the
+> verdict: batch-10 from docs/SCENERY_COMPOSITIONS.md (remaining
+> leaders: battlefield blood [tone question §4 open], boardwalk
+> shore / seawall front / lighthouse point — the rest of the
+> waterfront set — windmill hill, processional way; open levers:
+> bridge-end guard posts, fenced-POI spur budget) — or the
+> designer's parallel pack-assessment notes merged into catalog
+> §3/§4, still outstanding. — batch 8, proceeding on round 20's
 > ruling ("ye that looks better aproved"; rounds 12-18 + 20 positive,
 > 19 absorbed as the b68 entrance principle). NEW POI
 > poi.logging_camp (decoration.pois 18): where forest meets the
@@ -163,12 +186,12 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   (designer 2026-07-30): blessed as the sl-0004 delivery transport
   (see pointer block).
 
-Versions: behavior **69** (logging camp), recipe compiler **35**,
+Versions: behavior **70** (shipwreck cove), recipe compiler **35**,
 resolved-config **29**, artifact format 8, TileForge adapter 7,
-packFormat 1, settlements.plans 28, decoration.pois 18,
-decoration.props 16 (b69 rosters prop.cookfire — unused props now
-DOWN TO FOUR: abandonedwagon, leafpile, palm, rubblepile). **245
-tests, all green on this machine** (25 in tests/settlementStyle.test.ts; the
+packFormat 1, settlements.plans 28, decoration.pois 19,
+decoration.props 16 (unused props still FOUR: abandonedwagon,
+leafpile, palm, rubblepile — the cove composes already-rostered
+pieces). **246 tests, all green on this machine** (25 in tests/settlementStyle.test.ts; the
 b64 pen/grapes test rides tests/settlements.test.ts on a synthetic
 plain). Everything pushed through commit `719d167`. Standing commit+push
 authorization (memory) — re-confirm per policy; visual verdicts always
