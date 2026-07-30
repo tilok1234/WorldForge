@@ -1,8 +1,10 @@
 # WorldForge — session handoff (2026-07-30, scenery loop mid-arc, round 18 out)
 
 > **RESUME HERE.** The scenery-composition loop is the active arc:
-> **round 18 (gate guard posts, behavior 66, commit `1dc16a2`) is
-> SENT and AWAITS THE VERDICT** — the batch-6 pick was delegated
+> **round 18 (gate guard posts, behavior 66, commit `1dc16a2`) RULED
+> POSITIVE ("and yeah this is starting to get good! approved",
+> 2026-07-30) — SEVEN straight positive rounds (12-18); batch 7 =
+> ORCHARD proceeds** — the batch-6 pick was delegated
 > ("whichever you prefer") and guard post won: each b62 gatehouse
 > seats a garrison trio (brazier pair inside flanking the street, one
 > banner over the approach, archery target in the tower nook), every
@@ -317,7 +319,11 @@ gate. ALL APPROVED except one:
   untouched by construction). New test pins small seed-24 (two gates,
   full trio on both). No pack re-export — pack content untouched; the
   b65 release stays the blessed delivery. OPEN LEVERS: bridge-end
-  posts, the seated guardhouse structure.
+  posts, the seated guardhouse structure. ROUND 18 RULED positive
+  2026-07-30 ("and yeah this is starting to get good! approved") —
+  the SEVENTH straight positive round. Same exchange set a standing
+  communication habit: every session report ends with a brief TL;DR
+  (recorded in assistant memory).
 - Approved small archetypes (9): frontier-sparse, warm-vale,
   highland-fastness, sunburnt-reach, weeping-marsh, drowned-shore,
   the-old-war, the-long-winter, hearth-hollow. Tiny hollows (3):
