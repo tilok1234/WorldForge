@@ -5,7 +5,7 @@
   ],
   "bridgeStructures": 3,
   "cropCells": 0,
-  "decorationDecals": 1610,
+  "decorationDecals": 1609,
   "dirtPathCells": 927,
   "fordDecals": 77,
   "materialCells": {
@@ -26,7 +26,7 @@
   "overlayCells": 6201,
   "packageId": "dusk-ae1eecb-seed103991",
   "pierCells": 13,
-  "propCells": 12439,
+  "propCells": 12434,
   "unresolvedKeys": [],
   "wallCells": 139
 }

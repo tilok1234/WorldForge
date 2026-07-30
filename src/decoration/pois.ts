@@ -65,6 +65,8 @@ export const POI_TYPES = [
   "poi.lone_cottage",
   // Append-only (behavior 69): the lumber crew at the forest edge.
   "poi.logging_camp",
+  // Append-only (behavior 70): the sea kept its due.
+  "poi.shipwreck_cove",
 ] as const;
 export type PoiType = (typeof POI_TYPES)[number];
 
@@ -119,6 +121,7 @@ export function planPois(
   const gravel = PALETTE_INDEX["terrain.gravel"];
   const rockValue = PALETTE_INDEX["terrain.rock"];
   const mudValue = PALETTE_INDEX["terrain.mud"];
+  const sandValue = PALETTE_INDEX["terrain.sand"];
   const propIndex = new Map<string, number>();
   DECOR_TYPES.forEach((key, index) => propIndex.set(key, index + 1));
   const decalIndex = new Map<string, number>();
@@ -269,6 +272,7 @@ export function planPois(
     "poi.abandoned_homestead": 2,
     "poi.lone_cottage": 2,
     "poi.logging_camp": 3,
+    "poi.shipwreck_cove": 2,
   };
   // Far-reach quota (decoration.pois v4): rock- and snow-bound kinds get a
   // reserved slice of the budget. Rock edges are ~2% of cells, so without a
@@ -586,6 +590,49 @@ export function planPois(
     putProp(x - 1, y, "prop.milestone");
     putDecal(x, y + 1, "decal.bones");
     record("poi.pass_memorial", x, y);
+  }
+
+  // Shipwreck coves seed on their own lane (behavior 70, batch 9 — the
+  // waterfront set opens): sand is ~0.3% of even an archipelago map, so
+  // the general stream fills the whole budget before it ever lands on a
+  // beach — the cave lesson, again. The frozen wreck's temperate
+  // cousin: on a sand arc within reach of open water, the hull heels
+  // where the sea left it — burst cargo crates, a loot pile nobody has
+  // carried off, boards and driftwood along the tideline. A LOST place:
+  // no spur (wrecks stay pathless, b21 doctrine). NO clearRegion — a
+  // beach hugs water by definition, so any multi-cell all-land ask
+  // refuses every real strip (the first cut placed ZERO coves on 882
+  // sand cells); only the hull's own cell is required and each cargo
+  // piece carries its own guard, settling landside or skipping like
+  // the b63 harbor-row clutter. The fishing spot keeps every non-sand
+  // shore it ever had.
+  const coveTarget = Math.min(
+    TYPE_CAPS["poi.shipwreck_cove"],
+    Math.max(1, Math.trunc(budget / 24)),
+  );
+  for (let attempt = 0; attempt < attempts && (typeCounts.get("poi.shipwreck_cove") ?? 0) < coveTarget; attempt += 1) {
+    const x = roll.intAt(attempt, 8, 4, width - 8, 0) + 4;
+    const y = roll.intAt(attempt, 9, 4, height - 8, 0) + 4;
+    const center = cellAt(x, y);
+    if (center === -1 || !claimable(center) || grid[center] !== sandValue) continue;
+    if (!farEnough(x, y)) continue;
+    let shoreWater = false;
+    for (let dy = -3; dy <= 3 && !shoreWater; dy += 1) {
+      for (let dx = -3; dx <= 3 && !shoreWater; dx += 1) {
+        const index = cellAt(x + dx, y + dy);
+        if (index !== -1 && hydro.waterKind[index] !== WATER_NONE && hydro.isRiver[index] === 0) {
+          shoreWater = true;
+        }
+      }
+    }
+    if (!shoreWater) continue;
+    putProp(x, y, "prop.wreck");
+    putProp(x + 1, y + 1, "prop.crates");
+    putProp(x - 1, y, "prop.loot_pile");
+    putProp(x + 2, y - 1, "prop.broken_boards");
+    putDecal(x - 1, y + 1, "decal.driftwood");
+    putDecal(x + 2, y + 1, "decal.driftwood");
+    record("poi.shipwreck_cove", x, y);
   }
 
   for (let attempt = 0; attempt < attempts && pois.length < budget + cityCount; attempt += 1) {

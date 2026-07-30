@@ -168,6 +168,39 @@ describe("points of interest, phase A", () => {
     assert.ok(sawCamp, "no tiny seed 1-12 stages a logging camp");
   });
 
+  it("beaches the wreck on a sand arc by open water (behavior 70)", () => {
+    let sawCove = false;
+    for (let seed = 1; seed <= 24 && !sawCove; seed += 1) {
+      const { composed, config } = composedFor(seed);
+      const cove = composed.pois.find((poi) => poi.type === "poi.shipwreck_cove");
+      if (cove === undefined) continue;
+      sawCove = true;
+      const { width, height } = config.world;
+      const sand = PALETTE_INDEX["terrain.sand"];
+      assert.equal(composed.grid[cove.y * width + cove.x], sand, "cove anchor off the sand");
+      const at = (key: string): number => DECOR_TYPES.indexOf(key as never) + 1;
+      let wrecks = 0;
+      let cargo = 0;
+      let shore = false;
+      for (let dy = -3; dy <= 3; dy += 1) {
+        for (let dx = -3; dx <= 3; dx += 1) {
+          const x: number = cove.x + dx;
+          const y: number = cove.y + dy;
+          if (x < 0 || y < 0 || x >= width || y >= height) continue;
+          const index = y * width + x;
+          const value = composed.decoration.propLayer[index] as number;
+          if (value === at("prop.wreck")) wrecks += 1;
+          if (value === at("prop.crates") || value === at("prop.loot_pile")) cargo += 1;
+          if (composed.hydro.waterKind[index] !== 0 && composed.hydro.isRiver[index] === 0) shore = true;
+        }
+      }
+      assert.equal(wrecks, 1, "the cove has exactly one hull");
+      assert.ok(cargo >= 1, "the cargo washed away");
+      assert.ok(shore, "a shipwreck needs the water that put it there");
+    }
+    assert.ok(sawCove, "no tiny seed 1-24 beaches a wreck");
+  });
+
   it("carries pois through the artifact and the public loader", () => {
     const { normalized, config } = composedFor(1);
     const { artifact } = generateWorldDetailed(normalized, config);

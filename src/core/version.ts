@@ -592,8 +592,26 @@ export const GENERATOR_VERSION = "0.1.0";
  *     barely shift; worked site = earns a b21 spur path. Every
  *     forested world redistributes a few POI slots (flagged flood
  *     shifts expected; canonical re-measured).
+ * 70: shipwreck cove (decoration.pois 19; batch 9 — the waterfront set
+ *     opens). The frozen wreck's temperate cousin: on a sand beach arc
+ *     within reach of open water, the hull heels where the sea left it
+ *     — wreck, burst cargo crates, a loot pile nobody has carried off,
+ *     broken boards, driftwood along the tideline. A LOST place: no
+ *     spur (wrecks stay pathless, b21 doctrine), cap 2. Placed on its
+ *     OWN scan lane before the general stream (the cave precedent):
+ *     sand is ~0.3% of even an archipelago map, so the general stream
+ *     fills the whole budget before ever landing on a beach. No
+ *     variant band (sand is this kind's exclusive niche the way snow
+ *     shores are the frozen wreck's; the b69 band lesson is for
+ *     contested materials) and NO clearRegion — a beach hugs water by
+ *     definition, so any multi-cell all-land ask refuses every real
+ *     strip (the first cut placed zero coves on 882 sand cells); only
+ *     the hull's cell is required, cargo pieces carry their own guards
+ *     and settle landside or skip, the b63 harbor-row way. The fishing
+ *     spot keeps every non-sand shore it ever had. Sandy-coast worlds
+ *     redistribute a few POI slots (flagged floods).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 69;
+export const GENERATOR_BEHAVIOR_VERSION = 70;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -612,7 +630,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 16,
-  "decoration.pois": 18,
+  "decoration.pois": 19,
   "density.presets": 1,
   "authoring.overrides": 1,
   "adapter.tileforge": 7,
