@@ -1,13 +1,28 @@
-# WorldForge — session handoff (2026-07-30, scenery loop mid-arc, round 22 out)
+# WorldForge — session handoff (2026-07-30, THE WORLD ARC, round W1 out)
 
-> **RESUME HERE.** The scenery-composition loop is the active arc:
-> **round 22 (shipwreck cove, behavior 70, commit `a02fccd`) RULED
-> POSITIVE ("and approved", 2026-07-30) — the scenery loop stands at
-> ELEVEN ratified compositions and THE WORLD ARC OPENS: the designer
-> asked for "an actual world map that i will use for now for wildshot
-> adventures"; the agreed shape is a fresh authored 512² world
-> iterated to DONE in verdict rounds, then baseline -> export ->
-> auto-published release -> game intake** — batch 9, the waterfront set opens,
+> **RESUME HERE. THE WORLD ARC is the active arc** (designer asked for
+> "an actual world map that i will use for now for wildshot
+> adventures"; agreed shape: iterate to DONE in verdict rounds, then
+> approve-recipe baseline -> export -> auto-published release -> game
+> intake by tag). **Round W1 (draft 1, recipe
+> fixtures/recipes/wildshot-overworld.json, commit `af3735b`) is SENT
+> and AWAITS THE VERDICT**: 512² medium, seed 4242 (of five probed;
+> two gate-refused), eight anchor zones — frozen spine north (+300
+> elev), old forest NW, highlands NE, heartland center (floor 2), dry
+> marches west, DROWNED PORT COAST south (−200 elev = the great bay),
+> river vales east, marsh delta SE — full ratified style kit, all
+> five story landmarks, 10 settlements / 5 routes. Verified: 15/15
+> reachable, flood 143986, Godot 0. The capital is a walled harbor
+> city on the bay (stream through the plaza, twin gates, garden
+> greens). KNOWN DRAFT FLAWS (agent-flagged, designer to confirm):
+> the four remote landmarks crowd the north edge (relations all mean
+> "far", far is north — fix with at/near pins next round); only ONE
+> farming settlement rolled (heartland grass share — raise moisture
+> or pin); east/SE mud flats read heavy (tune delta moisture). The
+> scenery loop PAUSES at eleven ratified compositions (12-18, 20-22
+> positive; remaining leaders + levers listed in
+> docs/SCENERY_COMPOSITIONS.md §3) and resumes after the world
+> ships or on designer request. — batch 9, the waterfront set opens,
 > proceeding on round 21's ruling ("beautiful approved"; rounds
 > 12-18, 20, 21 positive, 19 = the b68 entrance principle). NEW POI
 > poi.shipwreck_cove (decoration.pois 19): on a sand arc by open
