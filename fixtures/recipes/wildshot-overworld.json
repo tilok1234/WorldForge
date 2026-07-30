@@ -86,20 +86,44 @@
   "landmarks": [
     {
       "type": "ruined_city",
-      "relation": "far_from_town"
+      "near": {
+        "cell": [
+          150,
+          36
+        ],
+        "radius": 12
+      }
     },
     {
       "type": "world_tree",
-      "relation": "far_from_town"
+      "near": {
+        "cell": [
+          45,
+          60
+        ],
+        "radius": 14
+      }
     },
     {
       "type": "lighthouse",
       "relation": "coastal"
     }
   ],
+  "settlements": [
+    {
+      "near": {
+        "cell": [
+          100,
+          120
+        ],
+        "radius": 10
+      },
+      "rank": 2
+    }
+  ],
   "budgets": {
     "regionCount": 8,
-    "settlementCount": 6,
+    "settlementCount": 7,
     "primaryRouteCount": 3,
     "landmarkCount": 3
   }
