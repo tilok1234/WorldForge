@@ -55,6 +55,21 @@ describe("artifact validation", () => {
     assert.equal(validateArtifact(outOfRange as WorldArtifact).status, "fail");
   });
 
+  it("accepts the b57 city-lane path value and refuses beyond it", () => {
+    // The 0..1 pin predated behavior 57 and refused the FIRST styled pack
+    // export (path 2 = city lane band); canonical, the only world packed
+    // before, is style-free and never carried one.
+    const laned = corruptible(tinyArtifact());
+    laned.chunks[0].layers.path[0][0] = 2;
+    assert.equal(validateArtifact(laned as WorldArtifact).status, "pass");
+
+    const beyond = corruptible(tinyArtifact());
+    beyond.chunks[0].layers.path[0][0] = 3;
+    const report = validateArtifact(beyond as WorldArtifact);
+    assert.equal(report.status, "fail");
+    assert.ok(report.errors.some((error) => error.includes("path value 3")));
+  });
+
   it("fails on malformed identity hashes and empty palettes", () => {
     const badHash = corruptible(tinyArtifact());
     badHash.generator.recipeSha256 = "not-a-hash";

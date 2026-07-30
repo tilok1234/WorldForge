@@ -105,7 +105,12 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
         },
         { name: "elevation", rows: chunk.layers.elevation, min: 0, max: 999 },
         { name: "river", rows: chunk.layers.river, min: 0, max: 2 },
-        { name: "path", rows: chunk.layers.path, min: 0, max: 1 },
+        // Path vocabulary since behavior 57: 0 none / 1 wilderness trail /
+        // 2 city lane (readers are value-agnostic; the adapter maps art).
+        // The 0..1 pin predated b57 and surfaced only on the FIRST styled
+        // pack export — canonical, the only world ever packed before, is
+        // style-free and carries no lane bands.
+        { name: "path", rows: chunk.layers.path, min: 0, max: 2 },
         { name: "structure", rows: chunk.layers.structure, min: 0, max: artifact.structureTypes.length },
         { name: "prop", rows: chunk.layers.prop, min: 0, max: artifact.propTypes.length },
         { name: "moss", rows: chunk.layers.moss, min: 0, max: 1 },
