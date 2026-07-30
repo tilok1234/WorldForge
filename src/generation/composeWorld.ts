@@ -530,6 +530,10 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
           if (grid[next] === rockIdx || grid[next] === swampIdx) continue;
           if (structureLayer[next] !== 0) continue;
           if (decoration.propLayer[next] !== 0) continue; // no paths under props
+          // Fences block like they render (behavior 68): a spur must leave
+          // a fenced yard through its GATE, never carve through the ring —
+          // the round-19 graveyard had its trail walled shut this way.
+          if (farms.fenceLayer[next] !== 0) continue;
           previous.set(next, cell);
           depth.set(next, steps + 1);
           queue.push(next);

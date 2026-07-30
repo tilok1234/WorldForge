@@ -56,9 +56,10 @@ export interface GardenPlan {
 export interface OrchardPlan {
   /** Interior origin; the stand spans 7x5 from here (ring one cell out). */
   readonly origin: readonly [number, number];
-  /** Row of the three-cell access apron outside the gate (lane-touching
-   *  by construction; decoration keeps it clear of ambient flora). */
-  readonly gateApronY: number;
+  /** The three access-apron cells outside the gate, on whichever side
+   *  the gate opened (behavior 68: the gate follows the road) —
+   *  lane-touching by construction; decoration protects them. */
+  readonly apron: readonly (readonly [number, number])[];
   readonly trees: readonly (readonly [number, number])[];
   readonly beehive: readonly [number, number];
   readonly baskets: readonly [number, number];
@@ -228,22 +229,36 @@ export function planFarmsAndPiers(
           }
         }
       }
-      // Orchard (behavior 67): one fruit-tree stand beside the farmstead —
-      // six trees in spaced rows inside a 7x5 clearing, ringed in the
-      // plain wood family (b64 vineyards) with a two-cell gate facing the
-      // farm; a beehive works the far corner and the pickers' baskets
-      // wait inside the gate (decoration seats every prop off the
-      // orchards list). Strict fit like the chicken run — the whole 9x7
-      // envelope must be usable — PLUS the access guarantee the first cut
-      // lacked: the three-cell apron outside the gate must touch the
+      // Orchard (behavior 67; gate reworked by 68): one fruit-tree stand
+      // beside the farmstead — six trees in spaced rows inside a 7x5
+      // clearing, ringed in the plain wood family (b64 vineyards) with a
+      // two-cell gate; a beehive works the corner farthest from the gate
+      // and the pickers' baskets wait inside it (decoration seats every
+      // prop off the orchards list). Strict fit like the chicken run —
+      // the whole 9x7 envelope must be usable — PLUS the access
+      // guarantee: the three-cell apron outside the gate must touch the
       // settlement's lane/path network (chebyshev <= 1). Lanes are
       // ambient-protected, so gate -> cleared apron -> lane -> corridor
       // network always walks in the final world; a stand that would sit
-      // in a hole in the woods is refused (the dust-sea first cut seated
-      // one that ambient forest then sealed shut — no road never means
-      // no route, b50). Cramped or laneless farms simply go without.
-      // Roll-free: fixed shape, no channel draws — every pre-67 roll
-      // stays byte-identical.
+      // in a hole in the woods is refused (the b67 first cut seated one
+      // that ambient forest sealed shut — no road never means no route,
+      // b50). THE GATE FOLLOWS THE ROAD (behavior 68, round-19 ruling
+      // "needs an entrance where the road goes into it"): any of the
+      // four sides may carry the gate — the side with the most
+      // lane-touching apron cells wins, ties prefer facing the farm,
+      // then the fixed order N/S/W/E. Cramped or laneless farms simply
+      // go without. Roll-free: fixed shape, no channel draws — every
+      // pre-67 roll stays byte-identical.
+      const onLane = (cell: number): boolean => pathLayer[cell] !== 0 || laneSet.has(cell);
+      // Per side: the two ring-relative gate cells, the three apron
+      // cells two steps out, the basket cell inside the gate, and the
+      // beehive corner farthest from it (interior coordinates).
+      const GATE_SIDES = [
+        { name: "n", gate: [[3, -1], [4, -1]], apron: [[2, -2], [3, -2], [4, -2]], baskets: [3, 0], beehive: [0, 4] },
+        { name: "s", gate: [[3, 5], [4, 5]], apron: [[2, 6], [3, 6], [4, 6]], baskets: [3, 4], beehive: [0, 0] },
+        { name: "w", gate: [[-1, 2], [-1, 3]], apron: [[-2, 1], [-2, 2], [-2, 3]], baskets: [0, 2], beehive: [6, 4] },
+        { name: "e", gate: [[7, 2], [7, 3]], apron: [[8, 1], [8, 2], [8, 3]], baskets: [6, 2], beehive: [0, 4] },
+      ] as const;
       let orchardPlaced = false;
       for (let ring = 2; ring <= plan.radius + 4 && !orchardPlaced; ring += 1) {
         for (let dy = -ring; dy <= ring && !orchardPlaced; dy += 1) {
@@ -261,43 +276,57 @@ export function planFarmsAndPiers(
               }
             }
             if (!fits) continue;
-            const gateSide = nearY <= originY ? -1 : 5; // face the farm
-            const apronY = gateSide === -1 ? originY - 2 : originY + 6;
-            const onLane = (cell: number): boolean =>
-              pathLayer[cell] !== 0 || laneSet.has(cell);
-            let apronOk = true;
-            let laneTouch = false;
-            for (const sx of [2, 3, 4]) {
-              const cell = cellAt(originX + sx, apronY, width, height);
-              if (
-                cell === -1 ||
-                structureLayer[cell] !== 0 ||
-                hydro.waterKind[cell] !== WATER_NONE ||
-                hydro.isRiver[cell] !== 0 ||
-                fenceLayer[cell] !== 0 ||
-                cropLayer[cell] !== 0
-              ) {
-                apronOk = false;
-                break;
-              }
-              for (let ny = apronY - 1; ny <= apronY + 1 && !laneTouch; ny += 1) {
-                for (let nx = originX + sx - 1; nx <= originX + sx + 1 && !laneTouch; nx += 1) {
-                  const near = cellAt(nx, ny, width, height);
-                  if (near !== -1 && onLane(near)) laneTouch = true;
+            // Score every side: viable = clear apron with lane contact.
+            const towardFarm =
+              Math.abs(nearY - (originY + 2)) >= Math.abs(nearX - (originX + 3))
+                ? nearY <= originY + 2 ? "n" : "s"
+                : nearX <= originX + 3 ? "w" : "e";
+            let best: (typeof GATE_SIDES)[number] | null = null;
+            let bestScore = 0;
+            for (const side of GATE_SIDES) {
+              let apronOk = true;
+              let contacts = 0;
+              for (const [ax, ay] of side.apron) {
+                const cell = cellAt(originX + ax, originY + ay, width, height);
+                if (
+                  cell === -1 ||
+                  structureLayer[cell] !== 0 ||
+                  hydro.waterKind[cell] !== WATER_NONE ||
+                  hydro.isRiver[cell] !== 0 ||
+                  fenceLayer[cell] !== 0 ||
+                  cropLayer[cell] !== 0
+                ) {
+                  apronOk = false;
+                  break;
                 }
+                let touched = false;
+                for (let ny = originY + ay - 1; ny <= originY + ay + 1 && !touched; ny += 1) {
+                  for (let nx = originX + ax - 1; nx <= originX + ax + 1 && !touched; nx += 1) {
+                    const near = cellAt(nx, ny, width, height);
+                    if (near !== -1 && onLane(near)) touched = true;
+                  }
+                }
+                if (touched) contacts += 1;
+              }
+              if (!apronOk || contacts === 0) continue;
+              const score = contacts * 2 + (side.name === towardFarm ? 1 : 0);
+              if (score > bestScore) {
+                bestScore = score;
+                best = side;
               }
             }
-            if (!apronOk || !laneTouch) continue;
+            if (best === null) continue;
+            const gateCells = new Set(
+              best.gate.map(([gx, gy]) => (originY + gy) * width + originX + gx),
+            );
             for (let sy = -1; sy <= 5; sy += 1) {
               for (let sx = -1; sx <= 7; sx += 1) {
                 const onRing = sy === -1 || sy === 5 || sx === -1 || sx === 7;
                 if (!onRing) continue;
-                if (sy === gateSide && (sx === 3 || sx === 4)) continue; // the gate
                 const cell = cellAt(originX + sx, originY + sy, width, height);
-                if (cell !== -1) {
-                  fenceLayer[cell] = 3; // fence.wood
-                  fenceCells += 1;
-                }
+                if (cell === -1 || gateCells.has(cell)) continue;
+                fenceLayer[cell] = 3; // fence.wood
+                fenceCells += 1;
               }
             }
             const trees: Array<readonly [number, number]> = [];
@@ -308,10 +337,10 @@ export function planFarmsAndPiers(
             }
             orchards.push({
               origin: [originX, originY],
-              gateApronY: apronY,
+              apron: best.apron.map(([ax, ay]) => [originX + ax, originY + ay] as const),
               trees,
-              beehive: [originX, gateSide === -1 ? originY + 4 : originY],
-              baskets: [originX + 3, gateSide === -1 ? originY : originY + 4],
+              beehive: [originX + best.beehive[0], originY + best.beehive[1]],
+              baskets: [originX + best.baskets[0], originY + best.baskets[1]],
             });
             orchardPlaced = true;
           }

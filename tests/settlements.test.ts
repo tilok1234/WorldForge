@@ -395,18 +395,45 @@ describe("relational vocabulary", () => {
     // The access guarantee holds: some apron cell touches the lane
     // (chebyshev <= 1) and no apron cell is fenced or cropped.
     let touches = false;
-    for (const sx of [2, 3, 4]) {
-      const ax = (orchard.origin[0] as number) + sx;
-      const cell = orchard.gateApronY * width + ax;
+    for (const [ax, ay] of orchard.apron) {
+      const cell = ay * width + ax;
       assert.equal(roomy.fenceLayer[cell], 0, "fenced apron");
       assert.equal(roomy.cropLayer[cell], 0, "cropped apron");
-      for (let ny = orchard.gateApronY - 1; ny <= orchard.gateApronY + 1; ny += 1) {
+      for (let ny = ay - 1; ny <= ay + 1; ny += 1) {
         for (let nx = ax - 1; nx <= ax + 1; nx += 1) {
           if (pathLayer[ny * width + nx] !== 0) touches = true;
         }
       }
     }
     assert.ok(touches, "orchard apron does not touch the lane network");
+    // A horizontal lane south of the farm opens a horizontal gate: the
+    // apron is a row (all apron ys equal).
+    assert.equal(new Set(orchard.apron.map(([, y]) => y)).size, 1, "south-road apron not a row");
+
+    // The gate follows the road (behavior 68): a VERTICAL lane east of
+    // the farm turns the gate east/west — the apron is a column and the
+    // ring's gap sits on that side (round-19 ruling: the entrance goes
+    // where the road goes in).
+    const vertPath = new Uint8Array(cells);
+    for (let y = cy - 30; y <= cy + 30; y += 1) vertPath[y * width + cx + 12] = 1;
+    const eastRoad = planFarmsAndPiers(grid, new Uint8Array(cells), hydro, vertPath, [farmPlan], config, []);
+    assert.equal(eastRoad.orchards.length, 1, "east-road farm lost its orchard");
+    const east = eastRoad.orchards[0] as (typeof eastRoad.orchards)[number];
+    const apronXs = new Set(east.apron.map(([x]) => x));
+    assert.equal(apronXs.size, 1, "east-road gate should open on a vertical side (column apron)");
+    const gateX =
+      ([...apronXs][0] as number) < (east.origin[0] as number)
+        ? (east.origin[0] as number) - 1
+        : (east.origin[0] as number) + 7;
+    let gaps = 0;
+    let woodOnSide = 0;
+    for (let sy = -1; sy <= 5; sy += 1) {
+      const cell = ((east.origin[1] as number) + sy) * width + gateX;
+      if (eastRoad.fenceLayer[cell] === WOOD) woodOnSide += 1;
+      else gaps += 1;
+    }
+    assert.equal(gaps, 2, "vertical gate must be exactly two cells");
+    assert.equal(woodOnSide, 5, "vertical ring side wood count drifted");
 
     // Laneless plain: the access guarantee refuses every candidate — no
     // orchard, nothing half-stamped (the dust-sea sealed-stand lesson).

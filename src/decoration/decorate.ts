@@ -446,8 +446,8 @@ export function decorateWorld(
         if (cell !== -1) protectedCells[cell] = 1;
       }
     }
-    for (const sx of [2, 3, 4]) {
-      const cell = cellIn(ox + sx, orchard.gateApronY, width, height);
+    for (const [ax, ay] of orchard.apron) {
+      const cell = cellIn(ax, ay, width, height);
       if (cell !== -1) protectedCells[cell] = 1;
     }
   }
@@ -743,8 +743,8 @@ export function decorateWorld(
     }
     // The access apron stays clear too: gate -> apron -> lane, with the
     // lane itself ambient-protected, so the stand always connects.
-    for (const sx of [2, 3, 4]) {
-      const cell = cellIn(ox + sx, orchard.gateApronY, width, height);
+    for (const [ax, ay] of orchard.apron) {
+      const cell = cellIn(ax, ay, width, height);
       if (cell !== -1 && propLayer[cell] !== 0) {
         propLayer[cell] = 0;
         propCount -= 1;

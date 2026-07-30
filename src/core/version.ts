@@ -556,8 +556,29 @@ export const GENERATOR_VERSION = "0.1.0";
  *     without. Roll-free by design: fixed shape, no channel draws —
  *     every pre-67 roll is byte-identical and worlds without farming
  *     settlements are untouched entirely.
+ * 68: entrances follow the road (settlements.plans 28, decoration.pois
+ *     17; round-19 ruling: "that thing needs a entrance where the road
+ *     goes into it"). TWO fences learn it. ORCHARD: any of the four
+ *     ring sides may carry the two-cell gate — each side scores its
+ *     three-cell apron by lane contact (chebyshev <= 1 per apron cell)
+ *     and the strongest contact wins, ties preferring the side that
+ *     faces the farm, then the fixed N/S/W/E order; baskets ride
+ *     inside whichever gate opens, the beehive keeps the far corner,
+ *     and east/west roads can now host stands (the b67 lever), so farm
+ *     coverage rises. GRAVEYARD (the enclosure the ruling actually
+ *     pointed at): TWO defects met — the iron ring stamped with no
+ *     path check, and the b21 spur carver was fence-blind, so a spur
+ *     carved AFTER the fence ran straight through the ring while the
+ *     carved gap sat on the far side. Now fence never stamps on a
+ *     path cell (behavior 47 outranks; a pre-existing trail crossing
+ *     IS the gate, b65 garden precedent) AND the spur BFS treats
+ *     fence cells as blocked like everything else that blocks — a
+ *     spur leaves a fenced yard through its designed gate, so the
+ *     trail arrives AT the entrance. Worlds with trail-side
+ *     graveyards re-route (flagged flood shifts); style-free
+ *     identity untouched.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 67;
+export const GENERATOR_BEHAVIOR_VERSION = 68;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -572,11 +593,11 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 17,
-  "settlements.plans": 27,
+  "settlements.plans": 28,
   "landmarks.stamps": 7,
   "terrain.texture": 1,
   "decoration.props": 15,
-  "decoration.pois": 16,
+  "decoration.pois": 17,
   "density.presets": 1,
   "authoring.overrides": 1,
   "adapter.tileforge": 7,

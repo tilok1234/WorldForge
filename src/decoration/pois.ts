@@ -1081,18 +1081,35 @@ export function planPois(
       variant < 400 && !capped("poi.graveyard") &&
       clearRegion(x - 1, y - 1, 6, 5)
     ) {
+      // The entrance goes where the road goes in (round-19 ruling; the
+      // b65 garden precedent): a trail crossing the ring IS the gate —
+      // fence never stamps on a path cell (behavior 47 outranks; the
+      // first cut walled a spur trail's arrival shut and left the
+      // carved gap on the far side). Only a ring nothing crosses keeps
+      // the carved north gap.
+      const ring: number[] = [];
       for (let sx = -1; sx <= 4; sx += 1) {
         for (const sy of [-1, 3]) {
-          if (sy === -1 && (sx === 1 || sx === 2)) continue; // gate gap
-          const index = cellAt(x + sx, y + sy);
-          if (index !== -1) farms.fenceLayer[index] = 2; // fence.iron
+          ring.push(cellAt(x + sx, y + sy));
         }
       }
       for (const sy of [0, 1, 2]) {
         for (const sx of [-1, 4]) {
-          const index = cellAt(x + sx, y + sy);
-          if (index !== -1) farms.fenceLayer[index] = 2;
+          ring.push(cellAt(x + sx, y + sy));
         }
+      }
+      const trailCrossed = ring.some(
+        (index) => index !== -1 && routesResult.pathLayer[index] !== 0,
+      );
+      for (const index of ring) {
+        if (index === -1) continue;
+        if (routesResult.pathLayer[index] !== 0) continue; // the trail is the gate
+        if (!trailCrossed) {
+          const sx = (index % width) - x;
+          const sy = Math.trunc(index / width) - y;
+          if (sy === -1 && (sx === 1 || sx === 2)) continue; // carved gate gap
+        }
+        farms.fenceLayer[index] = 2; // fence.iron
       }
       putProp(x, y, "prop.gravestones");
       putProp(x + 2, y, "prop.gravestones");
