@@ -52,12 +52,25 @@ export interface GardenPlan {
   readonly urns: readonly (readonly [number, number])[];
 }
 
+/** A planted orchard (behavior 67): decoration seats trees and furniture. */
+export interface OrchardPlan {
+  /** Interior origin; the stand spans 7x5 from here (ring one cell out). */
+  readonly origin: readonly [number, number];
+  /** Row of the three-cell access apron outside the gate (lane-touching
+   *  by construction; decoration keeps it clear of ambient flora). */
+  readonly gateApronY: number;
+  readonly trees: readonly (readonly [number, number])[];
+  readonly beehive: readonly [number, number];
+  readonly baskets: readonly [number, number];
+}
+
 export interface FarmResult {
   readonly cropLayer: Uint8Array;
   readonly fenceLayer: Uint8Array;
   readonly pierLayer: Uint8Array;
   readonly pens: readonly PenPlan[];
   readonly gardens: readonly GardenPlan[];
+  readonly orchards: readonly OrchardPlan[];
   readonly cropCells: number;
   readonly fenceCells: number;
   readonly pierCells: number;
@@ -85,6 +98,7 @@ export function planFarmsAndPiers(
   const pierLayer = new Uint8Array(cellCount);
   const pens: PenPlan[] = [];
   const gardens: GardenPlan[] = [];
+  const orchards: OrchardPlan[] = [];
   let cropCells = 0;
   let fenceCells = 0;
   let pierCells = 0;
@@ -214,6 +228,95 @@ export function planFarmsAndPiers(
           }
         }
       }
+      // Orchard (behavior 67): one fruit-tree stand beside the farmstead —
+      // six trees in spaced rows inside a 7x5 clearing, ringed in the
+      // plain wood family (b64 vineyards) with a two-cell gate facing the
+      // farm; a beehive works the far corner and the pickers' baskets
+      // wait inside the gate (decoration seats every prop off the
+      // orchards list). Strict fit like the chicken run — the whole 9x7
+      // envelope must be usable — PLUS the access guarantee the first cut
+      // lacked: the three-cell apron outside the gate must touch the
+      // settlement's lane/path network (chebyshev <= 1). Lanes are
+      // ambient-protected, so gate -> cleared apron -> lane -> corridor
+      // network always walks in the final world; a stand that would sit
+      // in a hole in the woods is refused (the dust-sea first cut seated
+      // one that ambient forest then sealed shut — no road never means
+      // no route, b50). Cramped or laneless farms simply go without.
+      // Roll-free: fixed shape, no channel draws — every pre-67 roll
+      // stays byte-identical.
+      let orchardPlaced = false;
+      for (let ring = 2; ring <= plan.radius + 4 && !orchardPlaced; ring += 1) {
+        for (let dy = -ring; dy <= ring && !orchardPlaced; dy += 1) {
+          for (let dx = -ring; dx <= ring && !orchardPlaced; dx += 1) {
+            if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
+            const originX = nearX + dx;
+            const originY = nearY + dy;
+            let fits = true;
+            for (let sy = -1; sy <= 5 && fits; sy += 1) {
+              for (let sx = -1; sx <= 7 && fits; sx += 1) {
+                const cell = cellAt(originX + sx, originY + sy, width, height);
+                if (cell === -1 || !usable(cell) || fenceLayer[cell] !== 0 || cropLayer[cell] !== 0) {
+                  fits = false;
+                }
+              }
+            }
+            if (!fits) continue;
+            const gateSide = nearY <= originY ? -1 : 5; // face the farm
+            const apronY = gateSide === -1 ? originY - 2 : originY + 6;
+            const onLane = (cell: number): boolean =>
+              pathLayer[cell] !== 0 || laneSet.has(cell);
+            let apronOk = true;
+            let laneTouch = false;
+            for (const sx of [2, 3, 4]) {
+              const cell = cellAt(originX + sx, apronY, width, height);
+              if (
+                cell === -1 ||
+                structureLayer[cell] !== 0 ||
+                hydro.waterKind[cell] !== WATER_NONE ||
+                hydro.isRiver[cell] !== 0 ||
+                fenceLayer[cell] !== 0 ||
+                cropLayer[cell] !== 0
+              ) {
+                apronOk = false;
+                break;
+              }
+              for (let ny = apronY - 1; ny <= apronY + 1 && !laneTouch; ny += 1) {
+                for (let nx = originX + sx - 1; nx <= originX + sx + 1 && !laneTouch; nx += 1) {
+                  const near = cellAt(nx, ny, width, height);
+                  if (near !== -1 && onLane(near)) laneTouch = true;
+                }
+              }
+            }
+            if (!apronOk || !laneTouch) continue;
+            for (let sy = -1; sy <= 5; sy += 1) {
+              for (let sx = -1; sx <= 7; sx += 1) {
+                const onRing = sy === -1 || sy === 5 || sx === -1 || sx === 7;
+                if (!onRing) continue;
+                if (sy === gateSide && (sx === 3 || sx === 4)) continue; // the gate
+                const cell = cellAt(originX + sx, originY + sy, width, height);
+                if (cell !== -1) {
+                  fenceLayer[cell] = 3; // fence.wood
+                  fenceCells += 1;
+                }
+              }
+            }
+            const trees: Array<readonly [number, number]> = [];
+            for (const sy of [1, 3]) {
+              for (const sx of [1, 3, 5]) {
+                trees.push([originX + sx, originY + sy]);
+              }
+            }
+            orchards.push({
+              origin: [originX, originY],
+              gateApronY: apronY,
+              trees,
+              beehive: [originX, gateSide === -1 ? originY + 4 : originY],
+              baskets: [originX + 3, gateSide === -1 ? originY : originY + 4],
+            });
+            orchardPlaced = true;
+          }
+        }
+      }
     }
 
     if (plan.purpose === "harbor") {
@@ -326,7 +429,7 @@ export function planFarmsAndPiers(
     }
   }
 
-  return { cropLayer, fenceLayer, pierLayer, pens, gardens, cropCells, fenceCells, pierCells };
+  return { cropLayer, fenceLayer, pierLayer, pens, gardens, orchards, cropCells, fenceCells, pierCells };
 }
 
 function plotFits(

@@ -302,6 +302,8 @@ describe("relational vocabulary", () => {
     };
 
     // Seed 1 rolls a vineyard when warm: grapes plot + plain wood ring.
+    // (The b67 orchard also rings in wood, but this laneless synthetic
+    // fails its access guarantee, so wood stays vineyard-exclusive here.)
     assert.ok(cropsOf(warm).has(4), "warm world rolled no grapes");
     assert.ok(fencesOf(warm).has(3), "vineyard did not ring in fence.wood");
     // The same seed without the warm bias must keep the pre-64 pool.
@@ -328,5 +330,90 @@ describe("relational vocabulary", () => {
       }
       assert.ok(ringFence >= 10, `pen ring too sparse (${ringFence} fence cells)`);
     }
+  });
+
+  it("orchards stand beside every roomy farm (behavior 67)", () => {
+    // Same synthetic-plain harness as the b64 pen test: planFarmsAndPiers
+    // is pure, so a fake farming plan exercises the orchard directly.
+    const validation = validateRecipe({
+      recipeFormat: 1,
+      seed: 1,
+      world: { sizePreset: "tiny", climatePreset: "temperate" },
+      budgets: { settlementCount: 1, primaryRouteCount: 1, landmarkCount: 0 },
+    });
+    assert.ok(validation.ok);
+    const config = compileRecipe(normalizeRecipe(validation.recipe));
+    const { width, height } = config.world;
+    const cells = width * height;
+    const hydro = {
+      waterKind: new Uint8Array(cells),
+      isRiver: new Uint8Array(cells),
+    } as unknown as Parameters<typeof planFarmsAndPiers>[2];
+    const cx = Math.trunc(width / 2);
+    const cy = Math.trunc(height / 2);
+    const farmPlan = {
+      id: 0,
+      kind: "town",
+      anchorX: cx,
+      anchorY: cy,
+      purpose: "farming",
+      radius: 10,
+      structures: [
+        { type: "structure.farmhouse", x: cx, y: cy, width: 2, height: 2, entranceX: cx, entranceY: cy + 2 },
+      ],
+    } as unknown as Parameters<typeof planFarmsAndPiers>[4][number];
+
+    // Roomy plain WITH a lane: the orchard needs its access guarantee —
+    // paint a path line south of the farm for the gate apron to touch.
+    const grid = new Array(cells).fill(PALETTE_INDEX["terrain.grass"]);
+    const pathLayer = new Uint8Array(cells);
+    for (let x = cx - 30; x <= cx + 30; x += 1) pathLayer[(cy + 8) * width + x] = 1;
+    const roomy = planFarmsAndPiers(grid, new Uint8Array(cells), hydro, pathLayer, [farmPlan], config, []);
+    assert.equal(roomy.orchards.length, 1, "roomy laned farm lost its orchard");
+    const orchard = roomy.orchards[0] as (typeof roomy.orchards)[number];
+    assert.equal(orchard.trees.length, 6, "orchard tree count drifted");
+    for (const [ax, ay] of orchard.trees) {
+      for (const [bx, by] of orchard.trees) {
+        if (ax === bx && ay === by) continue;
+        assert.ok(Math.abs(ax - bx) + Math.abs(ay - by) >= 2, "orchard trees touching");
+      }
+    }
+    // The ring is the plain wood family with exactly the two-cell gate:
+    // 28 boundary cells of the 9x7 envelope minus the 2 gate cells. The
+    // temperate fixture rolls no vineyard (cold pool), so every wood
+    // fence cell on the map is the orchard's.
+    const WOOD = 3;
+    let woodCells = 0;
+    for (const value of roomy.fenceLayer) if (value === WOOD) woodCells += 1;
+    assert.equal(woodCells, 26, "orchard ring drifted");
+    // Furniture sits on clear interior ground, never on fence or crops.
+    for (const [px, py] of [orchard.beehive, orchard.baskets, ...orchard.trees]) {
+      const cell = py * width + px;
+      assert.equal(roomy.fenceLayer[cell], 0, "orchard piece on the fence ring");
+      assert.equal(roomy.cropLayer[cell], 0, "orchard piece on crops");
+    }
+    // The access guarantee holds: some apron cell touches the lane
+    // (chebyshev <= 1) and no apron cell is fenced or cropped.
+    let touches = false;
+    for (const sx of [2, 3, 4]) {
+      const ax = (orchard.origin[0] as number) + sx;
+      const cell = orchard.gateApronY * width + ax;
+      assert.equal(roomy.fenceLayer[cell], 0, "fenced apron");
+      assert.equal(roomy.cropLayer[cell], 0, "cropped apron");
+      for (let ny = orchard.gateApronY - 1; ny <= orchard.gateApronY + 1; ny += 1) {
+        for (let nx = ax - 1; nx <= ax + 1; nx += 1) {
+          if (pathLayer[ny * width + nx] !== 0) touches = true;
+        }
+      }
+    }
+    assert.ok(touches, "orchard apron does not touch the lane network");
+
+    // Laneless plain: the access guarantee refuses every candidate — no
+    // orchard, nothing half-stamped (the dust-sea sealed-stand lesson).
+    const laneless = planFarmsAndPiers(grid, new Uint8Array(cells), hydro, new Uint8Array(cells), [farmPlan], config, []);
+    assert.equal(laneless.orchards.length, 0, "laneless farm must go without an orchard");
+    let strayWood = 0;
+    for (const value of laneless.fenceLayer) if (value === WOOD) strayWood += 1;
+    assert.equal(strayWood, 0, "laneless farm has half-stamped orchard fencing");
   });
 });

@@ -434,6 +434,23 @@ export function decorateWorld(
       }
     }
   }
+  // Orchards (behavior 67): the stand is PROTECTED ground like a quarter —
+  // ambient scatter, character zones (which override ambient outright; one
+  // chewed four planted trees on the first cut), and roadside markers all
+  // skip the envelope and the gate apron. The deliberate pieces seat below.
+  for (const orchard of farms.orchards) {
+    const [ox, oy] = orchard.origin;
+    for (let sy = -1; sy <= 5; sy += 1) {
+      for (let sx = -1; sx <= 7; sx += 1) {
+        const cell = cellIn(ox + sx, oy + sy, width, height);
+        if (cell !== -1) protectedCells[cell] = 1;
+      }
+    }
+    for (const sx of [2, 3, 4]) {
+      const cell = cellIn(ox + sx, orchard.gateApronY, width, height);
+      if (cell !== -1) protectedCells[cell] = 1;
+    }
+  }
   const nearStructure = (index: number): boolean => {
     const x = index % width;
     return (
@@ -704,6 +721,46 @@ export function decorateWorld(
       if (cell !== -1 && propLayer[cell] === 0 && structureLayer[cell] === 0) {
         propLayer[cell] = typeIndex.get(key) as number;
         propCount += 1;
+      }
+    }
+  }
+
+  // Orchards (behavior 67): the envelope is protected ground (above), so
+  // nothing ambient ever seats here — the clearing below is belt-and-
+  // braces against any writer that ignores protection. Then the planned
+  // pieces seat: trees on their rows, the beehive in the far corner, the
+  // pickers' baskets inside the gate.
+  for (const orchard of farms.orchards) {
+    const [ox, oy] = orchard.origin;
+    for (let sy = -1; sy <= 5; sy += 1) {
+      for (let sx = -1; sx <= 7; sx += 1) {
+        const cell = cellIn(ox + sx, oy + sy, width, height);
+        if (cell !== -1 && propLayer[cell] !== 0) {
+          propLayer[cell] = 0;
+          propCount -= 1;
+        }
+      }
+    }
+    // The access apron stays clear too: gate -> apron -> lane, with the
+    // lane itself ambient-protected, so the stand always connects.
+    for (const sx of [2, 3, 4]) {
+      const cell = cellIn(ox + sx, orchard.gateApronY, width, height);
+      if (cell !== -1 && propLayer[cell] !== 0) {
+        propLayer[cell] = 0;
+        propCount -= 1;
+      }
+    }
+    for (const [key, spots] of [
+      ["prop.fruit_tree", orchard.trees],
+      ["prop.beehive", [orchard.beehive]],
+      ["prop.baskets", [orchard.baskets]],
+    ] as const) {
+      for (const [px, py] of spots) {
+        const cell = cellIn(px, py, width, height);
+        if (cell !== -1 && propLayer[cell] === 0 && structureLayer[cell] === 0) {
+          propLayer[cell] = typeIndex.get(key) as number;
+          propCount += 1;
+        }
       }
     }
   }
