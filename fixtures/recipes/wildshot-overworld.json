@@ -1,6 +1,6 @@
 {
   "recipeFormat": 1,
-  "seed": 9001,
+  "seed": 2008,
   "world": {
     "sizePreset": "small",
     "climatePreset": "temperate",
@@ -83,98 +83,18 @@
     "urbanBlocks": true,
     "cityWalls": true
   },
-  "settlements": [
-    {
-      "near": {
-        "cell": [
-          120,
-          185
-        ],
-        "radius": 15
-      },
-      "rank": 0
-    },
-    {
-      "near": {
-        "cell": [
-          80,
-          28
-        ],
-        "radius": 15
-      },
-      "rank": 1
-    },
-    {
-      "near": {
-        "cell": [
-          132,
-          138
-        ],
-        "radius": 18
-      },
-      "rank": 2
-    },
-    {
-      "near": {
-        "cell": [
-          212,
-          140
-        ],
-        "radius": 18
-      },
-      "rank": 3
-    },
-    {
-      "near": {
-        "cell": [
-          60,
-          214
-        ],
-        "radius": 15
-      },
-      "rank": 4
-    },
-    {
-      "near": {
-        "cell": [
-          200,
-          190
-        ],
-        "radius": 18
-      },
-      "rank": 5
-    }
-  ],
   "landmarks": [
     {
       "type": "ruined_city",
-      "near": {
-        "cell": [
-          30,
-          160
-        ],
-        "radius": 20
-      }
+      "relation": "far_from_town"
     },
     {
       "type": "world_tree",
-      "near": {
-        "cell": [
-          45,
-          60
-        ],
-        "radius": 18
-      }
+      "relation": "far_from_town"
     },
     {
       "type": "lighthouse",
-      "near": {
-        "cell": [
-          150,
-          218
-        ],
-        "radius": 25
-      }
+      "relation": "coastal"
     }
   ],
   "budgets": {
