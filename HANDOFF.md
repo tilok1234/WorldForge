@@ -1,30 +1,30 @@
-# WorldForge — session handoff (2026-07-30, scenery loop mid-arc, round 19 out)
+# WorldForge — session handoff (2026-07-30, scenery loop mid-arc, round 20 out)
 
 > **RESUME HERE.** The scenery-composition loop is the active arc:
-> **round 19 (orchards, behavior 67, commit `72c5ef0`) is SENT and
-> AWAITS THE VERDICT** — batch 7, proceeding on round 18's ruling
-> ("and yeah this is starting to get good! approved" = SEVEN straight
-> positive rounds, 12-18; the guard-post garrison is ratified). Every
-> farming settlement with lane access plants ONE fenced stand: six
-> fruit trees in spaced rows, wood ring with a two-cell gate facing
-> the farm, beehive far corner, baskets inside the gate. Two first-cut
-> failures are BUILT IN as guarantees: the gate apron must touch the
-> lane network (a woods-hole stand got sealed shut by ambient forest —
-> 27 walkable interior cells, 0 reachable) and the envelope + apron
-> are PROTECTED ground (a character zone chewed four planted trees —
-> zones override ambient outright). Placement honest: dust-sea 1/1,
-> broken-isles 4/7, warm-vale-large 3/8, weeping-marsh 0/1 (cramped,
-> goes without); every placed stand verified complete, stray-free,
-> interior-reachable. Floods: dust-sea 51009, warm-vale-large 646317
-> (−75 vs b64), canonical 33795 + eight-holds 182730 INVARIANT (no
-> farms; no pack re-export — the b65 release stays the delivery).
+> **round 20 (entrances follow the road, behavior 68, commit
+> `773c921`) is SENT and AWAITS THE VERDICT.** Round 19 (orchards,
+> b67, `72c5ef0`) was RULED with feedback — "that thing needs a
+> entrance where the road goes into it" — and b68 answers it THREE
+> ways: orchard gates open on whichever of the four sides has the
+> strongest lane contact (E/W roads now host stands, the b67 lever:
+> warm-vale-large 3→5 orchards); graveyard iron rings never stamp on
+> a path cell (a pre-existing trail crossing IS the gate, b65
+> precedent); and the b21 spur carver is FENCE-AWARE (the flagged
+> enclosure was actually a graveyard whose spur had been carved
+> straight through its iron ring — spurs now leave fenced yards
+> through the gate or not at all; that graveyard goes honestly
+> pathless, larger spur budget for fenced POIs = open lever). All
+> placed orchards probe-verified complete/stray-free/reachable, every
+> apron 3/3 lane contact. Floods: canonical 33795, eight-holds
+> 182730, dust-sea 51009 INVARIANT; warm-vale-large 646282. Rounds
+> 12-18 all positive; no pack re-export (b65 release = the delivery).
 > After the verdict: batch-8 from docs/SCENERY_COMPOSITIONS.md
 > (remaining leaders: logging camp, battlefield blood [tone question
 > §4 open], the waterfront set — boardwalk / seawall / lighthouse
 > point / shipwreck cove — windmill hill, processional way; open
-> levers: bridge-end guard posts, E/W orchard gates for denser farm
-> coverage) — or the designer's parallel pack-assessment notes
-> merged into catalog §3/§4, still outstanding. The bright-teal hedge art passed without comment;
+> levers: bridge-end guard posts, fenced-POI spur budget) — or the
+> designer's parallel pack-assessment notes merged into catalog
+> §3/§4, still outstanding. The bright-teal hedge art passed without comment;
 > the optional softer-hedge repaint stays a TileForge-side upstream
 > ask if it ever grates. NOTE: farming settlements only spawn inland
 > with ≥45% grass — canonical, eight-holds, and small warm-vale have
@@ -136,11 +136,11 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   (designer 2026-07-30): blessed as the sl-0004 delivery transport
   (see pointer block).
 
-Versions: behavior **67** (orchards), recipe compiler **35**,
-resolved-config **29**, artifact format 8, TileForge adapter 7,
-packFormat 1, settlements.plans 27, decoration.props 15 (b66/b67 add
-no prop types — everything was already rostered). **244 tests, all
-green on this machine** (25 in tests/settlementStyle.test.ts; the
+Versions: behavior **68** (entrances follow the road), recipe
+compiler **35**, resolved-config **29**, artifact format 8, TileForge
+adapter 7, packFormat 1, settlements.plans 28, decoration.pois 17,
+decoration.props 15 (b66-b68 add no prop types — everything was
+already rostered). **244 tests, all green on this machine** (25 in tests/settlementStyle.test.ts; the
 b64 pen/grapes test rides tests/settlements.test.ts on a synthetic
 plain). Everything pushed through commit `719d167`. Standing commit+push
 authorization (memory) — re-confirm per policy; visual verdicts always
@@ -453,6 +453,12 @@ discipline (§5 identity rule).
   maps + a cut-finder; beware: two floods larger than the map means
   they're the same component.
 - **Reservation phases must be room-capped** (behavior 48 lesson).
+- **Fences block like they render (b68):** fence stamps never land on
+  path cells (a pre-existing trail crossing a planned ring IS its
+  gate), and the b21 spur carver treats fenceLayer as blocked — a
+  spur leaves a fenced yard through the gate or not at all. The
+  round-19 flagged enclosure was a graveyard whose spur predated
+  both rules and pierced the iron ring.
 - Temporary debug instrumentation is fine for hunting — REMOVE before
   commit. Bump rule packs SEQUENTIALLY and check the changelog
   comment matches the table (mis-skipped twice on 2026-07-28).

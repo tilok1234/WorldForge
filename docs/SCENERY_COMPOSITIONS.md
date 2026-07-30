@@ -215,8 +215,16 @@ Ordered roughly by (visual payoff / effort). ✓ = shipped already.
     placed in any open hole gets sealed by ambient forest (access
     must be guaranteed, not hoped); zones OVERRIDE ambient outright,
     so deliberate compositions must protect their ground, not just
-    clear it once. OPEN LEVER: E/W gate orientations would roughly
-    double farm coverage (3/8 on warm-vale-large today).
+    clear it once. GATE FOLLOWS THE ROAD (behavior 68, round-19
+    ruling "needs an entrance where the road goes into it"): any of
+    the four ring sides may carry the gate — the side with the
+    strongest apron lane contact wins, ties prefer facing the farm;
+    E/W roads host stands now (warm-vale-large 3→5). The same ruling
+    fixed the graveyard POI (iron ring never stamps on a path cell;
+    a trail crossing IS the gate) and made the b21 spur carver
+    fence-aware (spurs leave fenced yards through the gate or not at
+    all). OPEN LEVER: larger spur budget for fenced POIs (a rerouted
+    spur that exceeds 20 steps leaves the yard pathless today).
 18. **Watermill reach** — `watermill` ✓ + `ford`/`steppingstones`
     crossing + willow pair. Stepping stones are unused ford-class
     art.
