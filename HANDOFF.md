@@ -1,9 +1,34 @@
-# WorldForge — session handoff (2026-07-30, scenery loop mid-arc, round 20 out)
+# WorldForge — session handoff (2026-07-30, scenery loop mid-arc, round 21 out)
 
 > **RESUME HERE.** The scenery-composition loop is the active arc:
-> **round 20 (entrances follow the road, behavior 68, commit
-> `773c921`) RULED POSITIVE ("ye that looks better aproved",
-> 2026-07-30) — batch 8 = LOGGING CAMP proceeds.** Round 19 (orchards,
+> **round 21 (logging camp, behavior 69, commit `a11942b`) is
+> SENT and AWAITS THE VERDICT** — batch 8, proceeding on round 20's
+> ruling ("ye that looks better aproved"; rounds 12-18 + 20 positive,
+> 19 absorbed as the b68 entrance principle). NEW POI
+> poi.logging_camp (decoration.pois 18): where forest meets the
+> town's reach (grass, >=8 trees in r4, gap 10-30, variant >= 500 —
+> the UPPER roll band, so crypt <250 / ruin <200 / graveyard <400
+> keep every candidate they ever claimed), the b49 sawmill stamps in
+> the wilderness for the first time with chopping block, two log
+> piles, hauling cart, and the crew's COOKFIRE (decoration.props 16 —
+> the last unused camp prop enters the roster; blocks like campfire).
+> THE CUT EDGE: up to four standing trees within r4 convert to
+> stumps, scan order — work in progress, not set dressing. Cap 3,
+> worked site = earns a b21 spur (the eight-holds camp's trail winds
+> down to the town — the showcase crop). Flagged flood shifts, all
+> re-verified TS+Godot 0 errors: canonical 33795 -> **33779**,
+> dust-sea 51009 -> 50995, eight-holds 182730 -> 182734, all
+> destinations reachable. 245 tests (new pin: tiny-seed camp with
+> kit + stumps; sawmill joined the pass-model table, fully
+> blocking). NOTE: the NEXT pack export will auto-publish a release
+> per doc 18 (the b65 release stays the blessed delivery until
+> then). After the verdict: batch-9 from docs/SCENERY_COMPOSITIONS.md
+> (remaining leaders: battlefield blood [tone question §4 open], the
+> waterfront set — boardwalk / seawall / lighthouse point / shipwreck
+> cove — windmill hill, processional way; open levers: bridge-end
+> guard posts, fenced-POI spur budget) — or the designer's parallel
+> pack-assessment notes merged into catalog §3/§4, still
+> outstanding. Round 19 (orchards,
 > b67, `72c5ef0`) was RULED with feedback — "that thing needs a
 > entrance where the road goes into it" — and b68 answers it THREE
 > ways: orchard gates open on whichever of the four sides has the
@@ -137,11 +162,12 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   (designer 2026-07-30): blessed as the sl-0004 delivery transport
   (see pointer block).
 
-Versions: behavior **68** (entrances follow the road), recipe
-compiler **35**, resolved-config **29**, artifact format 8, TileForge
-adapter 7, packFormat 1, settlements.plans 28, decoration.pois 17,
-decoration.props 15 (b66-b68 add no prop types — everything was
-already rostered). **244 tests, all green on this machine** (25 in tests/settlementStyle.test.ts; the
+Versions: behavior **69** (logging camp), recipe compiler **35**,
+resolved-config **29**, artifact format 8, TileForge adapter 7,
+packFormat 1, settlements.plans 28, decoration.pois 18,
+decoration.props 16 (b69 rosters prop.cookfire — unused props now
+DOWN TO FOUR: abandonedwagon, leafpile, palm, rubblepile). **245
+tests, all green on this machine** (25 in tests/settlementStyle.test.ts; the
 b64 pen/grapes test rides tests/settlements.test.ts on a synthetic
 plain). Everything pushed through commit `719d167`. Standing commit+push
 authorization (memory) — re-confirm per policy; visual verdicts always

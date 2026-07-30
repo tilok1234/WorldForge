@@ -231,8 +231,18 @@ Ordered roughly by (visual payoff / effort). ✓ = shipped already.
 
 ### Wilderness set pieces (POI pattern)
 
-19. **Logging camp** — `sawmill` + `stump` field + `logpile` +
-    `choppingblock` + `cart`. Sawmill rostered, never staged.
+19. ✓ **Logging camp** (behavior 69, batch 8) — new worked-site POI
+    where forest meets the town's reach: the `sawmill` staged in the
+    wilderness at last, `choppingblock` by the door, two `logpile`
+    stacks, a `cart`, the crew's `cookfire` (rostered here — the last
+    unused camp prop). THE CUT EDGE: up to four standing trees in the
+    yard's reach convert to `stump`, so the site reads as work in
+    progress. PLACEMENT DOCTRINE: grass + >=8 trees (r4) + settlement
+    gap 10-30; the variant band is the UPPER half (>= 500) so the
+    low-band ratified kinds (crypt/ruin/graveyard) keep every
+    candidate they ever claimed — a new POI kind must claim only
+    rolls its elders passed over. Cap 3, general pool; worked site =
+    earns a b21 spur path.
 20. **Battlefield** — existing arrows/battlegear/bones + **`blood`**
     decal + `brokenwagon` + `banner`. Blood is unused; one table row.
 21. **Processional way** — `standingstone` pairs marching to the
