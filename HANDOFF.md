@@ -2,7 +2,8 @@
 
 > **RESUME HERE.** The scenery-composition loop is the active arc:
 > **round 20 (entrances follow the road, behavior 68, commit
-> `773c921`) is SENT and AWAITS THE VERDICT.** Round 19 (orchards,
+> `773c921`) RULED POSITIVE ("ye that looks better aproved",
+> 2026-07-30) — batch 8 = LOGGING CAMP proceeds.** Round 19 (orchards,
 > b67, `72c5ef0`) was RULED with feedback — "that thing needs a
 > entrance where the road goes into it" — and b68 answers it THREE
 > ways: orchard gates open on whichever of the four sides has the
