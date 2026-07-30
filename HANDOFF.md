@@ -1,67 +1,48 @@
-# WorldForge — session handoff (2026-07-30, THE WORLD ARC, round W2 out)
+# WorldForge — session handoff (2026-07-30, WORLD SHIPPED FOR TEST)
 
-> **RESUME HERE. THE WORLD ARC is the active arc** (designer: "an
-> actual world map that i will use for now for wildshot adventures";
-> agreed: iterate to DONE in verdict rounds -> approve-recipe baseline
-> -> export -> auto-published release -> game intake by tag).
-> **Round W3 RULED: layout C CHOSEN ("c is a very good oine",
-> 2026-07-30) — THE WORLD IS seed 2008,** locked in
-> fixtures/recipes/wildshot-overworld.json and verified in the
-> gallery/viewer slot (9/9 reachable, flood 45082, Godot 0): harbor
-> capital [109,182] on the south bay, snowline crossing city
-> [210,53] (plaza stream into the lake — the showcase), towns
-> [18,13]/[65,217]/[143,195], outpost [180,159]; landmarks
-> ruined_city [59,6], world_tree [91,8], lighthouse [178,195]. W2
-> history: the small edition drew "brand new generated world layout"
-> — pins dropped, 35 seeds probed organically (~80% gate-refused;
-> pins had been steering settlements onto good ground), candidates
-> 777/2015/2008 offered, C picked. DETAIL-PASS AGENDA (agent-flagged
-> for next rounds): ruined_city + world_tree crowd the north edge
-> again (32 apart — pin them apart), NO farming settlement rolled
-> (pin one or nudge moisture), then iterate to DONE -> baseline ->
-> export -> auto-release -> game intake. W1 (512² draft, `af3735b`, kept in git as
-> the bigger-world-later reference) drew two designer redirects:
-> "route points too close, could be better spread" and "this world is
-> way to big for the game atm" — so the overworld is SMALL 256² now,
-> the scale the game already runs (canonical intake size). Seed 9001
-> of six probed (five honestly gate-refused), SIX zones (frozen spine
-> N +300 elev, NW old forest, heartland C, dry marches W, drowned bay
-> coast S -200 elev, east vales), SIX pinned settlements spread
-> deliberately: walled capital above the bay [121,170], mining city
-> in the northern snows [81,31], center town [130,141], vale town
-> [205,125], west port [74,210], farming outpost [199,172] (purposes
-> 2 farming / 2 crossing / 1 mining / 1 harbor). THREE landmarks
-> pinned to their regions: ruined_city [35,135] in the marches,
-> world_tree [44,52] NW forest, lighthouse PINNED onto the bay shore
-> [157,190] (the coastal relation had sent it to a map corner). Full
-> ratified style kit. Verified: 9/9 reachable, flood 36848, Godot 0.
-> PIN DOCTRINE learned this round: near-pins with modest radius +
-> seed iteration; the compose gate refuses bad geography honestly.
-> AGENT NOTES for the verdict: capital and center town sit ~30 cells
-> apart (reads capital + satellite); the SE delta mud is prominent.
+> **RESUME HERE. THE WILDSHOT OVERWORLD IS SHIPPED FOR TEST.** World
+> arc W4 ruling ("actually i think this is good enough for a test",
+> 2026-07-30) executed end to end: approve-recipe BASELINE recorded
+> (fixtures/recipes/wildshot-overworld.json.approval.json, recipeSha
+> 35321dea…, seed 2008, behavior-70 identity), publish gate passed on
+> clean pushed tree, pack exported to
+> outputs/game-packs/wildshot-overworld-pack-dusk (9 files, pack
+> flood 45167, spawn [109,182] = the harbor capital), and the doc-18
+> lane auto-published the FIRST deliberate release:
+> **wildshot-overworld-pack-dusk@b70** (sourceCommit 167615b,
+> manifestSha256 186a35c1…, zipSha256 88c41acb…). Delivery logged as
+> planning sync-log **sl-0027** (status open — the game intakes by
+> tag + hash-verify; sl-0004/b65 canonical delivery still stands,
+> game's choice which loads). SHIP-CAUGHT BUG, fixed: the artifact
+> validator pinned path to 0..1 (pre-b57) and refused the FIRST
+> styled pack ever exported — now 0..2 (city lane), regression
+> tested, 247 tests. WARNING carried in sl-0027: if the game-side
+> importer pins path values the same way, it will refuse too (accept
+> 0/1/2 per b57, adapter 7).
+>
+> THE WORLD: seed 2008 ("layout C", W3 "c is a very good oine") —
+> 256², six zones, harbor capital [109,182] south bay, snowline
+> crossing city [210,53] (plaza stream into the lake), towns
+> [18,13]/[65,217]/[143,195], outpost [180,159], ruined_city [59,6],
+> world_tree [91,8], lighthouse [178,195]. Gallery slot
+> outputs/gallery/wildshot-overworld (viewer-ready), 9/9 reachable,
+> gallery flood 45082, Godot 0. PARKED DETAIL AGENDA (post-test
+> iteration; recipeSha changes → re-record baseline): spread
+> ruined_city + world_tree off the north edge (32 apart), add a
+> farming settlement (pin or moisture), designer polish. W-arc
+> lessons: unpinned small styled worlds ~80% gate-refused (pins
+> steer settlements onto good ground); rewrite this pointer WHOLE
+> each round (sequential minimal edits accreted every stale round).
 >
 > THE SCENERY LOOP is PAUSED at ELEVEN ratified compositions (rounds
 > 12-18, 20-22 positive; 19 = the b68 entrance principle; behaviors
-> 61-70: dressing, walls, harbor row, farm pair, gardens, gate
-> garrisons, orchards, entrances-follow-the-road, logging camp,
-> shipwreck cove). Behavior 70, 246 tests green; galleries
-> re-verified (canonical 33783, eight-holds 182734, dust-sea 50994,
-> warm-vale-large 646282, broken-isles 72797, drowned-shore 41138).
-> Remaining leaders + open levers: docs/SCENERY_COMPOSITIONS.md §3
-> (battlefield tone question §4 still open); resume after the world
-> ships or on request. NOTE: farming settlements only spawn inland
-> with >=45% grass. Nothing is half-implemented; every behavior
-> through 70 is committed, pushed, tested.
+> 61-70). 247 tests green. Leaders + levers:
+> docs/SCENERY_COMPOSITIONS.md §3 (battlefield tone question §4
+> open). Farming settlements need inland + >=45% grass.
 >
-> DOC 18 / RELEASE LANE: export-game-pack runs behind the publish
-> gate (dirty tree / unpushed HEAD = refusal) and a clean gated
-> export AUTO-PUBLISHES the pack zip as a GitHub release tagged with
-> the artifact id. Prior packs grandfathered. Accidental early
-> release sl-0016 RULED KEEP: small-cold-coastal-pack-dusk@b65
-> (commit 4497729, manifestSha256 cc329164…, zip ba7e936f…) is the
-> BLESSED transport for the pending dusk delivery (sl-0004) — the
-> game intakes by tag + hash-verify. The release lane is fully live;
-> the NEXT export mints the next release.
+> DOC 18 / RELEASE LANE fully live: publish gate + auto-released
+> exports proven TWICE (accidental @b65 RULED KEEP as the canonical
+> transport, sl-0016; deliberate @b70 = the overworld, sl-0027).
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
