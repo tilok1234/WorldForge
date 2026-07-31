@@ -355,6 +355,10 @@ export function decorateWorld(
   laneCells: readonly number[] = [],
   quarters: readonly SettlementQuarter[] = [],
   settlements: readonly SettlementPlan[] = [],
+  /** Behavior 74: 1 where a settlement writer painted a street band. The
+   * band value alone can no longer tell streets (trail-class since the
+   * sl-0049 ruling) from wilderness trails — lamps read this mask. */
+  bandLaneMask: Uint8Array = new Uint8Array(0),
 ): DecorationResult {
   const { width, height } = config.world;
   const cellCount = width * height;
@@ -1040,12 +1044,15 @@ export function decorateWorld(
   //    perimeter cells, walked clockwise from the cell after the entrance
   //    corner so the front door area stays clear (entrance neighbours are
   //    protected cells anyway) and the pieces cluster to the sides/back.
-  // 2. STREET LAMPS: dusk is the theme — lanes get light. City-lane band
-  //    cells (pathLayer CITY_LANE, so style-free worlds are untouched)
-  //    within the settlement radius are walked in scan order; every Nth
-  //    band cell tries to seat a lamp on an adjacent open ground cell,
+  // 2. STREET LAMPS: dusk is the theme — lanes get light. Street band
+  //    cells within the settlement radius are walked in scan order; every
+  //    Nth band cell tries to seat a lamp on an adjacent open ground cell,
   //    manhattan-spaced so rows read as placed, not scattered. Outposts
-  //    stay dark; wilderness trails (pathLayer 1) are never lamped.
+  //    stay dark; wilderness trails are never lamped. A street is a
+  //    road-class band cell (the through-route, CITY_LANE) or a recorded
+  //    settlement lane (bandLaneMask — trail-class in value since behavior
+  //    74, so the mask, not the value, is what separates streets from
+  //    trails). Style-free worlds write neither, so they stay untouched.
   {
     const yardGuard = (cell: number): boolean =>
       structureLayer[cell] === 0 &&
@@ -1177,7 +1184,10 @@ export function decorateWorld(
       for (let y = Math.max(0, settlement.anchorY - r); y <= Math.min(height - 1, settlement.anchorY + r) && seated.length < lampBudget; y += 1) {
         for (let x = Math.max(0, settlement.anchorX - r); x <= Math.min(width - 1, settlement.anchorX + r) && seated.length < lampBudget; x += 1) {
           const cell = y * width + x;
-          if (routesResult.pathLayer[cell] !== CITY_LANE) continue;
+          const isStreet =
+            routesResult.pathLayer[cell] === CITY_LANE ||
+            (cell < bandLaneMask.length && bandLaneMask[cell] === 1);
+          if (!isStreet) continue;
           bandSeen += 1;
           if (bandSeen % stride !== 0) continue;
           let spaced = true;

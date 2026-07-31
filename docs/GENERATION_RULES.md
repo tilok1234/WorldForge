@@ -111,16 +111,34 @@ behavior-56/57 rounds proved the "wide roads" complaint was cobble/packed
 BLOB-RENDERING (an area material draws a one-cell lane two-three tiles wide)
 and ruled the heavier road BAND the one-tile look for city streets; the
 behavior-72 ruling (2026-07-30, after the upstream road-layer restoration
-made the band first-class again) extended the band to country roads. Current
-law:
+made the band first-class again) extended the band to country roads. The
+behavior-74 ruling (sl-0049, 2026-07-31: "i want banded roads in the
+cities... atm theres tiles used to connect togheter houses, not road tiles")
+split the two band classes by role: the dusk road_network art is a
+near-full-cell slab, so road-class lanes read as paving between houses;
+settlement streets now ride the trail-class band, whose narrow dirtpath art
+reads as an actual road. Current law:
 
 - A primary route MUST connect meaningful destinations.
 - Route generation MUST distinguish graph intent from rendered cell paths.
 - Under `narrowStreets` (every styled world), EVERY road draws as a one-tile
-  band over natural ground: city lanes and country routes carry the road
-  band (path value 2), wilderness trails the dirt-path band (path value 1).
-  Corridors still CARVE as material internally; the composer necks them to
-  centerline and restores the flank ground (behaviors 52/56/72).
+  band over natural ground. Path value 2 (road band art) is ROAD CLASS:
+  country routes and the necked through-route inside settlement bounds —
+  the inter-city road and its continuation. Path value 1 (dirt-path band
+  art) is TRAIL CLASS: wilderness trails AND every settlement-written
+  street surface (arms, city ring, house lanes, civic approaches, dock
+  lanes; behavior 74). Corridors still CARVE as material internally; the
+  composer necks them to centerline and restores the flank ground
+  (behaviors 52/56/72).
+- Lamps (behavior 61) light settlement streets, never wilderness trails.
+  Since behavior 74 the band VALUE cannot make that distinction —
+  settlement writers record their lane cells in `bandLaneMask` and the
+  lamp pass reads the mask plus road-class cells; eligibility and scan
+  order reproduce the pre-74 seats byte-identically.
+- The road_network slab art is the reason for the class split, not a law:
+  when improved road art ships upstream ("until i get to improve the
+  tiles"), re-pin and re-judge — the street class is one constant per
+  writer.
 - Style-free worlds keep the classic material corridors byte-identically:
   packed-road country routes, cobble town streets (the pre-56 contract that
   approved worlds bake in).

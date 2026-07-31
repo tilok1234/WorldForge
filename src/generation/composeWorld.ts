@@ -256,7 +256,11 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   // kept itself clear. Empty for every style-free recipe.
   const laneCells: number[] = [];
   const quarters: SettlementQuarter[] = [];
-  const settlementPlans = planSettlements(grid, structureLayer, fields, hydro, routesResult, config, planErrors, laneCells, quarters);
+  // Behavior 74: settlement street bands are trail-class in the path layer
+  // (sl-0049) — this mask records which trail-band cells are STREETS so the
+  // lamp pass can light them without ever lamping a wilderness trail.
+  const bandLaneMask = new Uint8Array(width * height);
+  const settlementPlans = planSettlements(grid, structureLayer, fields, hydro, routesResult, config, planErrors, laneCells, quarters, bandLaneMask);
   const landmarkPlans = placeLandmarks(grid, structureLayer, routesResult.pathLayer, fields, hydro, routesResult, config, planErrors);
 
   // Country roads ride the band (behavior 72, style-gated on narrowStreets;
@@ -534,7 +538,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   for (const plan of landmarkPlans) {
     entranceCells.push(plan.entranceY * width + plan.entranceX);
   }
-  const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config, farms, streetFordCells, laneCells, quarters, settlementPlans);
+  const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config, farms, streetFordCells, laneCells, quarters, settlementPlans, bandLaneMask);
 
   // Points of interest stamp after ambient decoration and overwrite it:
   // deliberate discoveries beat scattered flavor.

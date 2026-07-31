@@ -128,10 +128,11 @@ describe("W8 cross-consumer parity", () => {
     }
   });
 
-  it("agrees on a styled world's city-lane band cells (behavior 57)", () => {
-    // narrowStreets writes path-layer value 2 (rendered as the road band);
-    // the loader walks any band value and the resolved ladder walks any
-    // road-band cell — prove they agree cell-for-cell on a styled world.
+  it("agrees on a styled world's street band cells (behaviors 57/74)", () => {
+    // narrowStreets writes band lanes (trail-class value 1 since behavior
+    // 74; the through-route keeps road-class 2); the loader walks any band
+    // value and the resolved ladder walks any band cell — prove they agree
+    // cell-for-cell on a styled world.
     const validation = validateRecipe({
       recipeFormat: 1,
       seed: 11,
@@ -153,13 +154,13 @@ describe("W8 cross-consumer parity", () => {
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const index = y * width + x;
-        if (result.composed.routesResult.pathLayer[index] === 2) laneCells += 1;
+        if (result.composed.routesResult.pathLayer[index] !== 0) laneCells += 1;
         if (world.walkableAt(x, y) !== ladderWalkable(resolved.mapData, index)) {
           mismatches += 1;
         }
       }
     }
-    assert.ok(laneCells > 0, "styled world produced no city-lane cells");
+    assert.ok(laneCells > 0, "styled world produced no band cells");
     assert.equal(mismatches, 0, `${mismatches} walkability mismatches on the styled world`);
   });
 

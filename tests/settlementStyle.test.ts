@@ -654,24 +654,60 @@ describe("narrow streets (behavior 51)", () => {
     }
     assert.ok(extras > 0, "market square has no civic extras");
 
-    // Street lamps: at least one lamp seats BESIDE a city-lane band cell
-    // (never on it), proving the lane pass ran — tavern lamps do not count
-    // because this one must touch pathLayer value 2.
+    // Street lamps: at least one lamp seats BESIDE a street band cell
+    // (never on any band), proving the lane pass ran — tavern lamps do not
+    // count because this one must touch a band cell (trail-class since
+    // behavior 74; the through-route stays road-class).
     const pathLayer = b.composed.routesResult.pathLayer;
     let laneLamps = 0;
     for (let index = 0; index < propLayer.length; index += 1) {
       const x = index % width;
       const y = (index - x) / width;
       if (propAt(x, y) !== "prop.lamp") continue;
-      assert.notEqual(pathLayer[index], 2, `lamp ON a lane band at ${x},${y}`);
+      assert.equal(pathLayer[index], 0, `lamp ON a band at ${x},${y}`);
       const besideLane =
-        (x > 0 && pathLayer[index - 1] === 2) ||
-        (pathLayer[index + 1] === 2) ||
-        (index - width >= 0 && pathLayer[index - width] === 2) ||
-        (index + width < propLayer.length && pathLayer[index + width] === 2);
+        (x > 0 && pathLayer[index - 1] !== 0) ||
+        (pathLayer[index + 1] !== 0) ||
+        (index - width >= 0 && pathLayer[index - width] !== 0) ||
+        (index + width < propLayer.length && pathLayer[index + width] !== 0);
       if (besideLane) laneLamps += 1;
     }
-    assert.ok(laneLamps > 0, "no street lamps beside city lanes");
+    assert.ok(laneLamps > 0, "no street lamps beside settlement streets");
+  });
+
+  it("settlement streets ride the trail band; the through-road keeps the road band (behavior 74)", () => {
+    // The sl-0049 ruling, option B: the surfaces CONNECTING HOUSES draw as
+    // the dirtpath band (trail class, value 1) so streets read as actual
+    // roads; the necked through-route inside the hold keeps the heavier
+    // road band (big roads stay as they are). Law asserted on a styled
+    // fixture: every road-class band cell within a settlement radius lies
+    // on the corridor centerline — no slab lanes remain — and trail-class
+    // street cells exist (the web still bands).
+    const styled = compiled({
+      ...BASE,
+      settlementStyle: { growthPermille: 600, narrowStreets: true },
+    });
+    const b = generateWorldDetailed(styled.normalized, styled.config);
+    const { width } = styled.config.world;
+    const pathLayer = b.composed.routesResult.pathLayer;
+    const centerline = b.composed.routesResult.corridorCenterline;
+    let streetCells = 0;
+    let slabLanes = 0;
+    for (const plan of b.composed.settlementPlans) {
+      const r = plan.radius;
+      for (let dy = -r; dy <= r; dy += 1) {
+        for (let dx = -r; dx <= r; dx += 1) {
+          const x = plan.anchorX + dx;
+          const y = plan.anchorY + dy;
+          if (x < 0 || y < 0 || x >= width || y >= width) continue;
+          const cell = y * width + x;
+          if (pathLayer[cell] === 1) streetCells += 1;
+          if (pathLayer[cell] === 2 && !centerline.has(cell)) slabLanes += 1;
+        }
+      }
+    }
+    assert.ok(streetCells > 0, "styled settlements carved no trail-band streets");
+    assert.equal(slabLanes, 0, `${slabLanes} road-class lane cells off the corridor centerline`);
   });
 
   it("necks through-roads to the centerline inside settlement bounds", () => {

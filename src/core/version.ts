@@ -660,8 +660,33 @@ export const GENERATOR_VERSION = "0.1.0";
  *     pre-73 sequences byte-identically; farm worlds re-roll their
  *     farm surroundings (flagged floods, orchard/pen may relocate
  *     around the new fields).
+ * 74: settlement streets are trail-band roads (settlements.plans 31;
+ *     designer ruling sl-0049, round sl-0050, option B: "i want banded
+ *     roads in the cities... atm theres tiles used to connect togheter
+ *     houses, not road tiles"). The b56/57 lanes were already the
+ *     road-class band (value 2) — but the dusk road_network art is a
+ *     near-full-cell SLAB, so one-wide lanes rendered as paving strips
+ *     and junction-dense webs fused into "tiles connecting houses". Now
+ *     every settlement-WRITTEN street surface (arms, city ring, house
+ *     lanes, civic approaches, dock lanes — all classes) writes the
+ *     TRAIL-class band (value 1, dirtpath art: a true narrow band with
+ *     ground on both sides). The through-route keeps the road band
+ *     (CITY_LANE — big roads stay as they are, same ruling), country
+ *     corridors untouched, plaza cobble untouched (its keep/convert is
+ *     a pending designer render call). Lamps (b61) can no longer key on
+ *     the band VALUE (trails share it): settlement writers record their
+ *     lane cells in bandLaneMask and the lamp pass lights CITY_LANE OR
+ *     recorded-lane cells — the eligibility set and scan order are
+ *     byte-identical to b73, so every lamp seats exactly where it did.
+ *     Walkability is value-agnostic (any nonzero band walks): floods
+ *     hold by construction. The 0/1/2 artifact contract is unchanged
+ *     (census shifts road->trail on lane cells). Style-free worlds
+ *     write no bands and stay byte-identical. Interim doctrine: when
+ *     the designer's improved road_network art ships upstream ("until
+ *     i get to improve the tiles"), re-pin and re-judge — the lane
+ *     class is one constant per writer.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 73;
+export const GENERATOR_BEHAVIOR_VERSION = 74;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -676,7 +701,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 18,
-  "settlements.plans": 30,
+  "settlements.plans": 31,
   "landmarks.stamps": 8,
   "terrain.texture": 1,
   "decoration.props": 16,
