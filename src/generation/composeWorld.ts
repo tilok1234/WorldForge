@@ -771,6 +771,33 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
         }
       }
     }
+    // JUNCTION REMNANTS (the designer's lighthouse-blob round): a
+    // road-class cell with NO orthogonal road-class neighbor is not a road
+    // — it is a stranded junction cell (an old corridor end or flank-join
+    // amid trails), and the road family's near-full-cell slab art renders
+    // it as a fat block in the middle of thin dirtpath lines. Repaint it
+    // as the trail it serves (value swap only — walkability identical;
+    // the centerline legally carries trail value per the b72 doctrine).
+    // Snapshot first so a repaint never cascades along a real road.
+    {
+      const ROAD_CLASS = 2;
+      const snapshot: number[] = [];
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const cell = y * width + x;
+          if (pathLayer[cell] !== ROAD_CLASS) continue;
+          let roadNeighbors = 0;
+          if (y > 0 && pathLayer[cell - width] === ROAD_CLASS) roadNeighbors += 1;
+          if (y < height - 1 && pathLayer[cell + width] === ROAD_CLASS) roadNeighbors += 1;
+          if (x > 0 && pathLayer[cell - 1] === ROAD_CLASS) roadNeighbors += 1;
+          if (x < width - 1 && pathLayer[cell + 1] === ROAD_CLASS) roadNeighbors += 1;
+          if (roadNeighbors === 0) snapshot.push(cell);
+        }
+      }
+      for (const cell of snapshot) {
+        pathLayer[cell] = TRAIL;
+      }
+    }
     // RECONNECT (both passes): an erased cell that sat between two
     // surviving band cells on opposite sides was a through-link — a trail
     // line crossing the flank's course, a junction bridge — not braid.
