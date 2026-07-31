@@ -1,53 +1,50 @@
-# WorldForge — session handoff (2026-07-31 late: b75 shipped — street band + no-diagonal roads; intake pending with TWO hard requirements)
+# WorldForge — session handoff (2026-07-31 night: b76 shipped — road joints on the arc-closing 9b8b2a2 cut; b76 is THE intake target)
 
 > **RESUME HERE. THE WILDSHOT OVERWORLD IS RELEASED AT
-> wildshot-overworld-pack-dusk@b75** (delivery sl-0060 OPEN, game-side
-> intake pending: sourceCommit a262620, manifestSha 77f975e6…, zipSha
-> 25f9d5c1…, pack flood 45156, spawn [109,182]; supersedes @b74 which
-> the game intook at sl-0052; recipe UNCHANGED c756cc8d — the delta is
-> all generator-side). TWO HARD INTAKE REQUIREMENTS in the delivery
-> line: (1) the game MUST bundle the tileforge-dusk-complete@e2699cc
-> package (zipSha 942ecadb…) into assets/tileforge — the pack pins
-> tileforgePackageId dusk-e2699cc-seed103991 and world_builder refuses
-> mismatched identity; (2) path contract is 0..3 now — value 3 =
-> street (1466 cells); any 0..2 pin refuses the pack.
+> wildshot-overworld-pack-dusk@b76** (delivery sl-0061 OPEN, game-side
+> intake pending: sourceCommit 4291f79, manifestSha 8a838922…, zipSha
+> 98c3170d…, pack flood 45156, spawn [109,182]). B76 SUPERSEDES B75
+> PRE-INTAKE (b71→b72 precedent — the game never took b75; sl-0060 is
+> superseded by sl-0061). World content is BYTE-IDENTICAL to b75
+> modulo dependency identity: b76 = the 9b8b2a2 re-pin + adapter v9
+> road-joint render substitution ONLY (47 render cells changed, every
+> one a straight-run class switch; proof in the b76 commit).
+> INTAKE REQUIREMENTS (sl-0061): (1) bundle the
+> tileforge-dusk-complete@9b8b2a2 package (zipSha e09ea40e…) into
+> assets/tileforge — the pack pins dusk-9b8b2a2-seed103991 and
+> world_builder refuses mismatched identity; the WF tmj already
+> carries joint gids so tmj-driven rendering gets transitions free;
+> (2) path contract 0..3 (value 3 = street, 1466 cells).
 >
-> SESSION LEDGER (2026-07-31 evening, the sl-0053 arc, designer-ruled
-> at every step): TF shipped its first gated cut e2699cc (sl-0055:
-> roadType 4 "street" 10px sett band, roadTypesLegacy gone) → RE-PIN
-> dusk-e2699cc-seed103991 (dadcb20; tiny golden byte-identical minus
-> dependency identity = zero content drift; old dusk package kept as
-> b65–b74 reference) → behavior 75 in verdict rounds: STREET CLASS
-> (path 3 → roadType 4, adapter 8, validator 0..3, lamps re-key on
-> values {2,3}, b74 bandLaneMask retired) → "roads are not made
-> diagonal" (designer root cause): TURN-COST ROUTING (routes.graph 19,
-> dijkstra over cell+direction states, turn = 4×stepCost) + direction
-> persistence in all three BFS carvers (landmark approaches, house
-> lanes, POI spurs) + DE-BRAID (trail-hug merge, b72 flank-line merge,
-> junction-remnant repaint, reconnect, 2×2 thinning LAST — ordering
-> found by instrumentation: the reconnect can complete a square after
-> an early thinning looks). EVERY ROUTE IN EVERY WORLD RE-PLANNED
-> (biggest flagged sweep since b47): canonical 33783→33386,
-> eight-holds 182709→182666, wildshot world 45063 / pack 45156, all
-> TS=Godot 0 errors; seed-24 gate fixture now THREE full-garrison
-> gatehouses (re-pinned 6/3/3). Designer look-approval: "nice ye that
-> is better!". Behavior 75, settlements.plans 32, routes.graph 19,
-> adapter.tileforge 8, 251 tests. Commits 300524e→a262620.
+> SESSION LEDGER (2026-07-31, the sl-0053→sl-0058 road arc, all
+> designer-ruled): b74 intaken (sl-0052) → e2699cc re-pin + b75
+> street band + the NO-DIAGONAL arc (turn-cost routing routes.graph
+> 19, carver direction persistence, de-braid chain with 2×2 thinning
+> LAST, junction-remnant repaint) → designer approval → @b75 released
+> (sl-0060, never intaken) → TF arc-closing cut 9b8b2a2 (sl-0058:
+> roadTypes 1-8 + roadjoint family, 21 pairs × 4 orients) → RE-PIN
+> dusk-9b8b2a2-seed103991 + behavior 76 adapter v9 joints (contract
+> in mappings.roadJoints; new adapter test pins every-switch-joints/
+> none-elsewhere) → @b76 released hands-free (nothing beyond joints
+> shifted). Types 5-8 (gravelway/flagway/corduroy/threshold) UNUSED
+> pending their own designed round. NO-DIAGONAL is a STANDING RULE
+> (sl-0059, docs/08 planning-side; GENERATION_RULES here). Behavior
+> 76, adapter.tileforge 9, routes.graph 19, settlements.plans 32,
+> 252 tests. Three dusk packages committed: ae1eecb (b65-b74
+> reference), e2699cc (b75 reference), 9b8b2a2 (PINNED).
 >
-> OPEN, in rough order: (1) game intake of @b75 (game-side, sl-0060 —
-> mind the two hard requirements above; porosity re-pin expected from
-> re-routed approaches, account every cell per sl-0052 precedent);
-> (2) world_filler re-pin (now two world versions + one package
-> version behind; sl-0041 direction work in flight); (3) TF scope
-> extension continues TF-side (road-type zoo + road transitions,
-> sl-0054 16:35Z — WF-side transition work returns here if ruled);
-> (4) the tops+ramps walkability-CONTRACT ruling (designer clock,
-> unchanged); (5) plaza cobble keep/convert still parks; (6)
-> landmark-centerpiece guard (task chip task_962526be); scenery loop
-> resumable; farm-more levers recorded. Planning sync_log has on-disk
-> appends sl-0057 + sl-0060 (earlier ones swept) — planning commits
-> its own file. Viewer on :8787 serves the b75 galleries
-> (wildshot/canonical/eight-holds all regenerated).
+> OPEN, in rough order: (1) game intake of @b76 (sl-0061 — the two
+> requirements above; porosity re-pin expected, sl-0052 precedent);
+> (2) world_filler re-pin (three world versions + two package
+> versions behind now; sl-0041 in flight); (3) route-hierarchy round
+> for types 5-8 (designer-designed, when wanted: country highway =
+> gravelway, processional = flagway, swamp causeway = corduroy,
+> threshold pads at class switches); (4) tops+ramps contract ruling
+> (designer clock); (5) plaza cobble keep/convert parks; (6)
+> landmark-centerpiece guard (task chip); scenery loop resumable;
+> farm-more levers recorded. Planning sync_log on-disk appends:
+> sl-0057/0060/0061 (planning commits its own file). Viewer :8787
+> serves b76 galleries.
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
