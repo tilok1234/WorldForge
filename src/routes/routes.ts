@@ -837,37 +837,69 @@ function dijkstra(
 ): number[] | null {
   const rules = config.routes;
   const cellCount = width * height;
-  const dist = new Float64Array(cellCount).fill(Number.POSITIVE_INFINITY);
-  const prev = new Int32Array(cellCount).fill(-1);
-  const done = new Uint8Array(cellCount);
-  const heap = new MinHeap(cellCount * 4);
-  dist[start] = 0;
-  heap.push(0, start);
+  // Roads are not made diagonal (the designer's b75 round-3 ruling; the
+  // packaged GAME-GUIDE carries no-pure-diagonal as doctrine and
+  // GENERATION_RULES has always said route legs SHOULD stay axis-aligned
+  // with explicit corner turns). A cell-keyed search between diagonal
+  // endpoints zigzags every cell — thousands of equal-cost staircases and
+  // the tie-break picks one. Search over (cell, entry-direction) states
+  // instead and charge every TURN four steps: shortest paths become long
+  // straight legs with a few honest 90-degree corners, terrain costs
+  // unchanged (a crossing or a soft-avoid still outweighs several turns).
+  const turnCost = rules.stepCost * 4;
+  const stateCount = cellCount * 4;
+  const dist = new Float64Array(stateCount).fill(Number.POSITIVE_INFINITY);
+  const prev = new Int32Array(stateCount).fill(-1);
+  const done = new Uint8Array(stateCount);
+  const heap = new MinHeap(stateCount * 2);
+  // Direction encoding matches the neighbor push order: 0=N, 1=E, 2=S, 3=W.
+  const stepOf = (direction: number): number =>
+    direction === 0 ? -width : direction === 1 ? 1 : direction === 2 ? width : -1;
+  const canStep = (x: number, y: number, direction: number): boolean =>
+    direction === 0 ? y > 0 : direction === 1 ? x < width - 1 : direction === 2 ? y < height - 1 : x > 0;
+  // Seed: leaving the start in every legal direction, no turn charge.
+  {
+    const sx = start % width;
+    const sy = (start - sx) / width;
+    for (let direction = 0; direction < 4; direction += 1) {
+      if (!canStep(sx, sy, direction)) continue;
+      const state = start * 4 + direction;
+      dist[state] = 0;
+      prev[state] = -1;
+      heap.push(0, state);
+    }
+  }
   while (heap.size > 0) {
-    const current = heap.pop();
-    if (done[current] === 1) {
+    const currentState = heap.pop();
+    if (done[currentState] === 1) {
       continue;
     }
-    done[current] = 1;
+    done[currentState] = 1;
+    const current = (currentState / 4) | 0;
+    const directionIn = currentState % 4;
     if (targets.has(current)) {
       const path: number[] = [];
-      let cursor = current;
+      let cursor = currentState;
       while (cursor !== -1) {
-        path.push(cursor);
+        const cell = (cursor / 4) | 0;
+        if (path.length === 0 || path[path.length - 1] !== cell) {
+          path.push(cell);
+        }
         cursor = prev[cursor] as number;
+      }
+      if (path[path.length - 1] !== start) {
+        path.push(start);
       }
       path.reverse();
       return path;
     }
     const x = current % width;
     const y = (current - x) / width;
-    const neighbors: number[] = [];
-    if (y > 0) neighbors.push(current - width);
-    if (x < width - 1) neighbors.push(current + 1);
-    if (y < height - 1) neighbors.push(current + width);
-    if (x > 0) neighbors.push(current - 1);
-    for (const neighbor of neighbors) {
-      if (done[neighbor] === 1) {
+    for (let direction = 0; direction < 4; direction += 1) {
+      if (!canStep(x, y, direction)) continue;
+      const neighbor = current + stepOf(direction);
+      const neighborState = neighbor * 4 + direction;
+      if (done[neighborState] === 1) {
         continue;
       }
       const kind = hydro.waterKind[neighbor];
@@ -904,11 +936,14 @@ function dijkstra(
       if (rules.roadReusePermille > 0 && grid[neighbor] === PACKED_ROAD) {
         cost = Math.max(1, Math.trunc((cost * (1000 - rules.roadReusePermille)) / 1000));
       }
-      const candidate = (dist[current] as number) + cost;
-      if (candidate < (dist[neighbor] as number)) {
-        dist[neighbor] = candidate;
-        prev[neighbor] = current;
-        heap.push(candidate, neighbor);
+      if (current !== start && direction !== directionIn) {
+        cost += turnCost;
+      }
+      const candidate = (dist[currentState] as number) + cost;
+      if (candidate < (dist[neighborState] as number)) {
+        dist[neighborState] = candidate;
+        prev[neighborState] = currentState;
+        heap.push(candidate, neighborState);
       }
     }
   }

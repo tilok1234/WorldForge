@@ -549,8 +549,11 @@ describe("narrow streets (behavior 51)", () => {
 
   it("posts guards at the city gates: braziers, banner, drill target (behavior 66)", () => {
     // Pinned fixture: small seed-24 — the probe showcase whose walled city
-    // seats TWO gatehouses with the full garrison on both. (No tiny seed in
-    // 1-40 places a gate at all; gates need real through-streets.)
+    // seats THREE gatehouses with the full garrison on all (two at b66;
+    // the turn-cost routing of behavior 75 re-shaped the through-streets
+    // and the wall now fits a third — re-pinned to the measured truth).
+    // (No tiny seed in 1-40 places a gate at all; gates need real
+    // through-streets.)
     const walled = compiled({
       ...BASE,
       seed: 24,
@@ -563,7 +566,7 @@ describe("narrow streets (behavior 51)", () => {
     const city = b.artifact.settlements.find((s) => s.kind === "city");
     assert.ok(city !== undefined, "fixture lost its city");
     const gates = city.structures.filter((st) => st.type === "structure.city_gate");
-    assert.equal(gates.length, 2, "seed-24 fixture lost a gatehouse");
+    assert.equal(gates.length, 3, "seed-24 fixture lost a gatehouse");
 
     // Fixed garrison spots, recomputed independently of the implementation:
     // brazier pair on the city side flanking the through-street, one banner
@@ -606,9 +609,9 @@ describe("narrow streets (behavior 51)", () => {
         }
       }
     }
-    assert.equal(braziers, 4, "seed-24 brazier pair drifted");
-    assert.equal(banners, 2, "seed-24 banner drifted");
-    assert.equal(targets, 2, "seed-24 drill target drifted");
+    assert.equal(braziers, 6, "seed-24 brazier pair drifted");
+    assert.equal(banners, 3, "seed-24 banner drifted");
+    assert.equal(targets, 3, "seed-24 drill target drifted");
   });
 
   it("dresses lived-in settlements: yards, market extras, lamped lanes (behavior 61)", () => {

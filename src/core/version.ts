@@ -711,7 +711,24 @@ export const GENERATOR_VERSION = "0.1.0";
  *     alone (the road-transition arc is parked upstream, sl-0054
  *     scope extension). Style-free worlds write no street bands and
  *     keep their trails' L-steps only where trails themselves
- *     staircase.
+ *     staircase. ROUND 2 (the designer's "still some left"): DE-BRAID —
+ *     a trail hugging a road-class line (beside it or shadowing a
+ *     staircase diagonally) merges onto the road, and the b72
+ *     junction-flank machinery's parallel flank LINES (a trail running
+ *     alongside qualified every flank cell on the run) collapse into
+ *     the centerline; joins and through-links are kept (reconnect
+ *     sweep restores erased crossing cells). ROUND 3 (the designer's
+ *     root-cause call: "these roads are not made diagonal"):
+ *     TURN-COST ROUTING (routes.graph 19) — the route search runs
+ *     over (cell, entry-direction) states and charges every turn four
+ *     steps, so shortest paths become long straight legs with a few
+ *     honest 90-degree corners instead of per-cell diagonal
+ *     staircases. Every route in every world re-plans (flagged
+ *     floods: canonical 33783 -> 33370, eight-holds 182709 -> 182665,
+ *     wildshot 45040 -> 45063; the seed-24 gate fixture now seats
+ *     THREE full-garrison gatehouses, re-pinned). The L-step and
+ *     de-braid passes remain as safety nets for the residual
+ *     terrain-forced corner steps.
  */
 export const GENERATOR_BEHAVIOR_VERSION = 75;
 
@@ -727,7 +744,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.fields": 10,
   "macro.biomes": 7,
   "hydrology.water": 5,
-  "routes.graph": 18,
+  "routes.graph": 19,
   "settlements.plans": 32,
   "landmarks.stamps": 8,
   "terrain.texture": 1,
