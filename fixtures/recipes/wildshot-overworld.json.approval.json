@@ -1,10 +1,9 @@
 {
   "approvalFormat": 1,
-  "recipeSha256": "35321dea9de9670f402f8c69f5cbf09d2dcb6c3abb66251c7f7d0f590e3a8c7f",
+  "recipeSha256": "c756cc8d00320430157720390d85929684288f3aaf350ed724b8819b2888fb46",
   "state": "accepted",
   "visualBaseline": {
     "approved": true,
-    "generationIdentitySha256": "70a30d1052205c49462b9d2180b2f5d15e64de72b66794e50c43e47725efd70f",
-    "note": "good enough for a test (designer, 2026-07-30, world arc W4)"
+    "generationIdentitySha256": "e0fc53ac71a4e56a8b1afbe3d7550e528af9e470d0fe5ed38f4da63ea6e6204f"
   }
 }
