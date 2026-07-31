@@ -137,8 +137,130 @@ export const DECAL_TYPES = [
   "decal.steam_vent",
 ] as const;
 
-/** Species that block movement (mirrors the package's prop walkability). */
-const BLOCKING = new Set<string>([
+/** Walkability classes (behavior 77; planning sl-0063 — convert, don't thin). */
+export type PropWalkClass = "carpet" | "canopy" | "solid";
+
+/**
+ * The walkability class of every prop species (behavior 77, planning
+ * sl-0063 — the designer's navigation ask: keep the visual density,
+ * convert classes instead of thinning). CARPET ground clutter renders but
+ * never blocks. CANOPY blocks only the trunk cell it occupies; the
+ * package's `_over` crown draws at (x, y-1) — never blocked — and reads
+ * as walking under the canopy once the game renders props-overhang above
+ * the player. SOLID visibly reads as a blocker (CORE-32: solids look
+ * solid). Four carpet entries deliberately diverge from the package's
+ * walkable:false flags (stump, fallen_log, bone_pile, loot_pile — the
+ * pile/debris silhouettes); that divergence list is pinned in tests as
+ * the sl-0063 ruling. Blocking-ness consumers mirror this table with
+ * literal lists — the public loader's BLOCKING_PROPS, the Godot
+ * consumer's CARPET_PROPS override, and the parity-test ladder — and the
+ * walkability tests keep them honest.
+ */
+export const PROP_WALKABILITY: Readonly<Record<(typeof DECOR_TYPES)[number], PropWalkClass>> = {
+  // CANOPY — the package's two-part species in our roster: trunk cell
+  // solid, crown drawn one cell up on the props-overhang layer.
+  "prop.oak": "canopy",
+  "prop.birch": "canopy",
+  "prop.pine": "canopy",
+  "prop.willow": "canopy",
+  "prop.dead_tree": "canopy",
+  "prop.fruit_tree": "canopy",
+  "prop.giant_shroom": "canopy",
+  "prop.pillar": "canopy",
+  "prop.lamp": "canopy",
+  // CARPET — always walked (package ships these walkable already).
+  "prop.bush": "carpet",
+  "prop.flowers": "carpet",
+  "prop.sapling": "carpet",
+  "prop.mushrooms": "carpet",
+  "prop.ferns": "carpet",
+  "prop.snow_shrub": "carpet",
+  "prop.desert_shrub": "carpet",
+  "prop.roots": "carpet",
+  "prop.reeds": "carpet",
+  "prop.cattails": "carpet",
+  "prop.fishnets": "carpet",
+  "prop.bedroll": "carpet",
+  "prop.ash_pile": "carpet",
+  "prop.broken_boards": "carpet",
+  // CARPET — the sl-0063 conversions: ground-hugging pile/debris
+  // silhouettes that never visibly read as blockers. The package flags
+  // them walkable:false; WF's contract overrides (recorded ruling).
+  "prop.stump": "carpet",
+  "prop.fallen_log": "carpet",
+  "prop.bone_pile": "carpet",
+  "prop.loot_pile": "carpet",
+  // SOLID — reads as a blocker: rock, uprights, barricades, wrecks.
+  "prop.boulder": "solid",
+  "prop.rock_outcrop": "solid",
+  "prop.milestone": "solid",
+  "prop.signpost": "solid",
+  "prop.rowboat": "solid",
+  "prop.buoy": "solid",
+  "prop.campfire": "solid",
+  "prop.game_rack": "solid",
+  "prop.log_pile": "solid",
+  "prop.standing_stone": "solid",
+  "prop.runestone": "solid",
+  "prop.broken_wagon": "solid",
+  "prop.altar": "solid",
+  "prop.brazier": "solid",
+  "prop.gravestones": "solid",
+  "prop.lone_grave": "solid",
+  "prop.mine_cart": "solid",
+  "prop.ore_vein": "solid",
+  "prop.watchfire": "solid",
+  "prop.skull_pole": "solid",
+  "prop.spikes": "solid",
+  "prop.banner": "solid",
+  "prop.crystals": "solid",
+  "prop.statue": "solid",
+  "prop.stone_blocks": "solid",
+  "prop.crates": "solid",
+  "prop.wheelbarrow": "solid",
+  "prop.tool_rack": "solid",
+  "prop.sacks": "solid",
+  "prop.firewood": "solid",
+  "prop.burned_tree": "solid",
+  "prop.cart": "solid",
+  "prop.chest": "solid",
+  "prop.archery_target": "solid",
+  "prop.chopping_block": "solid",
+  "prop.hay_bales": "solid",
+  "prop.trough": "solid",
+  "prop.wreck": "solid",
+  "prop.corrupted_tree": "solid",
+  "prop.beehive": "solid",
+  "prop.cactus": "solid",
+  "prop.flower_bed": "solid",
+  // Settlement furniture: deliberate set dressing, all solid.
+  "prop.barrels": "solid",
+  "prop.bench": "solid",
+  "prop.noticeboard": "solid",
+  "prop.table_chairs": "solid",
+  "prop.anvil": "solid",
+  "prop.workbench": "solid",
+  "prop.laundry_line": "solid",
+  "prop.baskets": "solid",
+  "prop.fishingboat": "solid",
+  "prop.bollard": "solid",
+  "prop.coop": "solid",
+  "prop.topiary": "solid",
+  "prop.planter_urn": "solid",
+  "prop.sundial": "solid",
+  "prop.cookfire": "solid",
+};
+
+/**
+ * Placement guard: species kept off structure aprons and street fords.
+ * FROZEN at the b76 blocking set (behavior 77, sl-0063): the walkability
+ * conversion moved stump/fallen_log/bone_pile/loot_pile to carpet, but
+ * the guard keeps the pre-conversion roster so every prop layer stays
+ * byte-identical — the round is walkability-only by design. Relaxing the
+ * guard for carpet species would ADD props beside structures and fords;
+ * that is a content change reserved for its own designed round.
+ */
+const PLACEMENT_GUARDED = new Set<string>([
   "prop.oak", "prop.birch", "prop.pine", "prop.willow", "prop.dead_tree",
   "prop.fruit_tree", "prop.stump", "prop.fallen_log", "prop.boulder",
   "prop.rock_outcrop", "prop.milestone", "prop.signpost", "prop.rowboat",
@@ -404,7 +526,7 @@ export function decorateWorld(
   }
   // Street-ford cells (composeWorld's single source of truth) stay open to
   // cosmetic props (reeds beside the crossing read fine) but must never
-  // take a BLOCKING prop: the §3 ladder walks fords, and a blocking prop
+  // take a guarded prop: the §3 ladder walks fords, and a blocking prop
   // there severs the street. The first blocked ford appeared on the first
   // 1024-cell map — smaller worlds had simply never rolled one.
   const fordCells = new Uint8Array(cellCount);
@@ -473,7 +595,7 @@ export function decorateWorld(
 
   const place = (index: number, key: (typeof DECOR_TYPES)[number], x: number, y: number): boolean => {
     if (propLayer[index] !== 0) return false;
-    if (BLOCKING.has(key) && (nearStructure(index) || fordCells[index] === 1)) return false;
+    if (PLACEMENT_GUARDED.has(key) && (nearStructure(index) || fordCells[index] === 1)) return false;
     if (TWO_PART.has(key) && y > 0 && structureLayer[index - width] !== 0) return false;
     propLayer[index] = typeIndex.get(key) as number;
     return true;

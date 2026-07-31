@@ -199,6 +199,20 @@ hand-authored road-joint transitions. Current law:
 - Each prop species MUST have a named deterministic channel.
 - Prop placement MUST honor substrate, spacing, footprint, and blocking rules.
 - Blocking props MUST NOT occupy protected navigation cells.
+- WALKABILITY CLASSES — STANDING RULE (behavior 77, planning sl-0063,
+  designer: keep the density, convert instead of thin): every prop species
+  carries exactly one class in PROP_WALKABILITY. CARPET ground clutter
+  (tufts, debris, low bushes, piles) renders but never blocks — four
+  species deliberately override the package's walkable:false (stump,
+  fallen_log, bone_pile, loot_pile; the pinned divergence IS the ruling,
+  extending it is a new ruling). CANOPY (the package's two-part species)
+  blocks only its trunk cell; the _over crown at (x, y-1) never blocks and
+  the game must render props-overhang ABOVE the player for the pass-under
+  to read. SOLID must visibly read as a blocker (trunks, boulders, built
+  walls — CORE-32). Placement guards stay frozen at the b76 roster so the
+  conversion left every prop layer byte-identical; relaxing them is its
+  own designed round. Edge-case reclassification is designer taste, never
+  a refactor.
 - Density SHOULD vary at low frequency; uniform independent scatter SHOULD be
   avoided.
 - Important landmarks and interactables SHOULD have local contrast and clear

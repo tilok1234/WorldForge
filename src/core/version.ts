@@ -744,8 +744,32 @@ export const GENERATOR_VERSION = "0.1.0";
  *     their own designed round; the no-diagonal rule is standing
  *     doctrine (sl-0059). Supersedes b75 PRE-INTAKE (the b71->b72
  *     precedent: the game never took b75).
+ * 77: prop walkability classes (decoration.props 17; planning sl-0063 —
+ *     the designer's open-world navigation ask: KEEP the density,
+ *     CONVERT instead of thin). Every prop species carries a class in
+ *     PROP_WALKABILITY: walk-over CARPET ground clutter renders but
+ *     never blocks (four conversions against the package's
+ *     walkable:false — stump, fallen_log, bone_pile, loot_pile, the
+ *     pile/debris silhouettes; the divergence list is pinned in tests
+ *     as the sl-0063 ruling), walk-under CANOPY (the package's
+ *     two-part species: oak, birch, pine, willow, dead_tree,
+ *     fruit_tree, giant_shroom, pillar, lamp) blocks ONLY its trunk
+ *     cell — the _over crown at (x, y-1) never blocked and the game
+ *     must draw props-overhang ABOVE the player for the pass-under to
+ *     read — and SOLID keeps everything that visibly reads as a
+ *     blocker (trunks, boulders, built walls; CORE-32). Placement
+ *     guards stay FROZEN at the b76 blocking set, so every prop layer
+ *     is byte-identical: the round is walkability-only. Mirrored in
+ *     the public loader, the Godot consumer's carpet override, and
+ *     the parity-test ladder. Flagged floods, every cell typed:
+ *     canonical 33386 -> 34387 (the b75 changelog's 33370 was a stale
+ *     mid-arc measurement — the true b76-rules flood on the byte-
+ *     identical world is 33386), eight-holds 182666 -> 188355 (+5689:
+ *     4158 converted debris cells + 1531 unlocked pocket cells the
+ *     debris had sealed), wildshot 45063 -> 46391 (+1328: 903
+ *     converted + 425 unlocked). TS = Godot on all three.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 76;
+export const GENERATOR_BEHAVIOR_VERSION = 77;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -763,7 +787,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "settlements.plans": 32,
   "landmarks.stamps": 8,
   "terrain.texture": 1,
-  "decoration.props": 16,
+  "decoration.props": 17,
   "decoration.pois": 19,
   "density.presets": 1,
   "authoring.overrides": 1,

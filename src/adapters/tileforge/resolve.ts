@@ -86,7 +86,7 @@ const STRUCTURE_NAME: { readonly [key: string]: string } = {
 };
 
 /** WorldForge semantic prop keys -> package prop species names. */
-const PROP_NAME: { readonly [key: string]: string } = {
+export const PROP_NAME: { readonly [key: string]: string } = {
   "prop.oak": "oak",
   "prop.birch": "birch",
   "prop.pine": "pine",

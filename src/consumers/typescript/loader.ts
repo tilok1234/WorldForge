@@ -158,16 +158,26 @@ export const STRUCTURE_PASS_CELLS: Readonly<Record<string, readonly number[]>> =
   "structure.city_gate": [1, 4],
 };
 
-/** Prop species that block movement; unlisted species never block. */
+/**
+ * Prop species that block movement; unlisted species never block.
+ * Behavior 77 (planning sl-0063) three-class walkability: this list is the
+ * non-carpet half of decorate's PROP_WALKABILITY table. CARPET debris
+ * walks — stump, fallen_log, bone_pile and loot_pile left the list
+ * deliberately, diverging from the package's walkable:false flags
+ * (recorded designer ruling, pinned in tests). CANOPY species (oak, birch,
+ * pine, willow, dead_tree, fruit_tree, giant_shroom, pillar, lamp) block
+ * only the trunk cell they occupy; their `_over` crown at (x, y-1) was
+ * never blocked.
+ */
 const BLOCKING_PROPS = new Set<string>([
   "prop.oak", "prop.birch", "prop.pine", "prop.willow", "prop.dead_tree",
-  "prop.fruit_tree", "prop.stump", "prop.fallen_log", "prop.boulder",
+  "prop.fruit_tree", "prop.boulder",
   "prop.rock_outcrop", "prop.milestone", "prop.signpost", "prop.rowboat",
   "prop.buoy", "prop.campfire", "prop.game_rack", "prop.log_pile",
   "prop.standing_stone", "prop.runestone", "prop.broken_wagon",
-  "prop.bone_pile", "prop.altar", "prop.brazier", "prop.gravestones",
+  "prop.altar", "prop.brazier", "prop.gravestones",
   "prop.lone_grave", "prop.mine_cart", "prop.ore_vein", "prop.watchfire",
-  "prop.skull_pole", "prop.loot_pile", "prop.spikes", "prop.banner",
+  "prop.skull_pole", "prop.spikes", "prop.banner",
   "prop.crystals", "prop.statue", "prop.pillar", "prop.stone_blocks",
   "prop.crates", "prop.wheelbarrow", "prop.tool_rack", "prop.sacks",
   "prop.firewood",

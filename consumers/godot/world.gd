@@ -2,7 +2,9 @@ extends Node2D
 # WorldForge W7 vertical slice: streams the resolved world (resolved-map.tmj,
 # authored per GAME-GUIDE §2.13) in 32x32-cell chunks through the TileSet the
 # PACKAGED importer built, moves a grid player on the §3 walkability ladder
-# (importer-built tile custom data, not a parallel table), renders a minimap
+# (importer-built tile custom data, not a parallel table — the one deliberate
+# exception is CARPET_PROPS, the behavior-77/sl-0063 walk-over ruling that
+# overrides four package walkable:false species), renders a minimap
 # from mappings.minimap, and persists explicit world deltas over the
 # deterministic base (user://worldforge-deltas.json).
 #
@@ -13,6 +15,14 @@ const CHUNK := 32
 const LOAD_RADIUS := 1
 const WORLD_DIR := "res://world/"
 const DELTAS_PATH := "user://worldforge-deltas.json"
+# Carpet debris walks (behavior 77, planning sl-0063): these species keep the
+# package's walkable:false on their tiles, but the WF walkability contract
+# converts them to walk-over ground clutter — a recorded designer ruling,
+# mirrored from the TS loader's BLOCKING_PROPS omissions (semantic_id
+# prefixes; the trailing dot pins the species name exactly).
+const CARPET_PROPS: Array[String] = [
+	"prop.stump.", "prop.fallenlog.", "prop.bonepile.", "prop.lootpile.",
+]
 
 var map_w := 0
 var map_h := 0
@@ -178,6 +188,14 @@ func _tile_data(layer_name: String, cell: Vector2i) -> TileData:
 	return layers[layer_index[layer_name]].get_cell_tile_data(cell)
 
 
+func _is_carpet(p: TileData) -> bool:
+	var sid := String(p.get_custom_data("semantic_id"))
+	for prefix in CARPET_PROPS:
+		if sid.begins_with(prefix):
+			return true
+	return false
+
+
 func is_walkable(cell: Vector2i) -> bool:
 	# GAME-GUIDE §3, the walkability ladder — first hit wins, reading the
 	# custom data the PACKAGED importer stamped on every tile.
@@ -187,7 +205,7 @@ func is_walkable(cell: Vector2i) -> bool:
 	if s != null:
 		return bool(s.get_custom_data("walkable"))
 	var p := _tile_data("props", cell)
-	if p != null and not bool(p.get_custom_data("walkable")):
+	if p != null and not bool(p.get_custom_data("walkable")) and not _is_carpet(p):
 		return false
 	if _tile_data("fence", cell) != null or _tile_data("wall", cell) != null:
 		return false

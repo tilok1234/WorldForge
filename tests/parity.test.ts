@@ -53,10 +53,15 @@ function ladderWalkable(data: TileForgeMapData, index: number): boolean {
     const ground = family.tiles.find((tile) => tile.mask === prop * 10 && tile.variant === 0);
     // Per-tile walkable overrides are not exposed on FamilyTile; blocking-ness
     // is family default (false) unless the species is in the known open set.
+    // The last four are the behavior-77 CARPET conversions (planning
+    // sl-0063): the package flags them walkable:false, the WF contract
+    // walks them — the same deliberate override the loader and the Godot
+    // consumer carry.
     const openSpecies = new Set([
       "bush", "flowers", "sapling", "mushrooms", "ferns", "desertshrub",
       "snowshrub", "roots", "leafpile", "reeds", "cattails", "fishnets",
       "bedroll", "brokenboards", "ashpile",
+      "stump", "fallenlog", "bonepile", "lootpile",
     ]);
     const name = manifest.propNameById[prop] as string;
     void ground;
