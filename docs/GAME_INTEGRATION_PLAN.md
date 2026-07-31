@@ -216,10 +216,18 @@ intakes by tag + hash-verify (delivery entries in planning
 `tools/sync_log.json` announce each release). The pack manifest itself
 stays deliberately commit-free so unchanged worlds re-export
 byte-identically; the commit binds through the release. Path-layer note
-for importers: values are 0 none / 1 wilderness trail band / 2 road band
-(behavior 57; country roads also carry 2 since behavior 72) — an importer
-pinning path at 0..1 must widen to 0..2, exactly as WorldForge's own
-validator had to.
+for importers: values are 0 none / 1 wilderness trail band / 2 road band /
+3 street band (behavior 75, the sett-paved settlement streets) — the range
+is 0..3 and the pin must move WITH the vocabulary, exactly as WorldForge's
+own validator had to twice (0..1 refused the first styled pack at b70;
+0..2 would have refused the first street pack at b75). Two more couplings
+since b76: the pack manifest pins its tileforgePackageId (currently
+dusk-9b8b2a2-seed103991) and a consumer that verifies package identity
+must intake the matching TileForge release alongside the world pack; and
+road-class SWITCHES render hand-authored joint tiles per the package's
+mappings.roadJoints — the WorldForge-resolved tmj already carries the
+joint gids, so tmj-driven renderers get transitions free, while a runtime
+re-resolver must replicate the roadJoints rule.
 
 ## 4. Authored placement extension (draft)
 
@@ -329,7 +337,12 @@ separately scopes that repository and task").
 ## 6. Decision points — DECIDED 2026-07-27 (designer approved all
 recommendations)
 
-1. **Theme pin → (b), re-pin to dusk — EXECUTED 2026-07-28.** The
+1. **Theme pin → (b), re-pin to dusk — EXECUTED 2026-07-28.** [PIN
+   SINCE MOVED twice through the same deliberate-adoption lane: to
+   dusk-e2699cc (behavior 75, the street-band cut) and then to
+   dusk-9b8b2a2-seed103991 (behavior 76, road joints — CURRENT). All
+   three dusk packages plus forest stay committed for reproducibility;
+   `tileforge.lock.json` is the authority.] The
    designer-supplied `tileforge-dusk-complete.zip` imported as
    `fixtures/tileforge-packages/dusk-ae1eecb-seed103991/` (a NEWER
    upstream commit than forest's a5baf52 — its guide retires road bands

@@ -106,39 +106,50 @@ strength.
 ## Roads and routes
 
 Doctrine lineage: the 2026-07-26 corridor doctrine (routes as ground-material
-corridors, road band deprecated) was overturned in two designer rulings. The
+corridors, road band deprecated) was overturned in designer rulings. The
 behavior-56/57 rounds proved the "wide roads" complaint was cobble/packed
-BLOB-RENDERING (an area material draws a one-cell lane two-three tiles wide)
-and ruled the heavier road BAND the one-tile look for city streets; the
-behavior-72 ruling (2026-07-30, after the upstream road-layer restoration
-made the band first-class again) extended the band to country roads. The
-behavior-74 ruling (sl-0049, 2026-07-31: "i want banded roads in the
-cities... atm theres tiles used to connect togheter houses, not road tiles")
-split the two band classes by role: the dusk road_network art is a
-near-full-cell slab, so road-class lanes read as paving between houses;
-settlement streets now ride the trail-class band, whose narrow dirtpath art
-reads as an actual road. Current law:
+BLOB-RENDERING and ruled the band the one-tile look; behavior 72 extended
+the band to country roads; behavior 74 (sl-0049) briefly routed settlement
+streets onto the trail band while no street art existed; behavior 75
+(sl-0053, on the e2699cc cut) gave streets their own class when the
+designer shipped the 10px sett "street" band, and folded the no-diagonal
+arc; behavior 76 (sl-0058, the arc-closing 9b8b2a2 cut) added the
+hand-authored road-joint transitions. Current law:
 
 - A primary route MUST connect meaningful destinations.
 - Route generation MUST distinguish graph intent from rendered cell paths.
-- Under `narrowStreets` (every styled world), EVERY road draws as a one-tile
-  band over natural ground. Path value 2 (road band art) is ROAD CLASS:
-  country routes and the necked through-route inside settlement bounds —
-  the inter-city road and its continuation. Path value 1 (dirt-path band
-  art) is TRAIL CLASS: wilderness trails AND every settlement-written
-  street surface (arms, city ring, house lanes, civic approaches, dock
-  lanes; behavior 74). Corridors still CARVE as material internally; the
-  composer necks them to centerline and restores the flank ground
-  (behaviors 52/56/72).
-- Lamps (behavior 61) light settlement streets, never wilderness trails.
-  Since behavior 74 the band VALUE cannot make that distinction —
-  settlement writers record their lane cells in `bandLaneMask` and the
-  lamp pass reads the mask plus road-class cells; eligibility and scan
-  order reproduce the pre-74 seats byte-identically.
-- The road_network slab art is the reason for the class split, not a law:
-  when improved road art ships upstream ("until i get to improve the
-  tiles"), re-pin and re-judge — the street class is one constant per
-  writer.
+- Path-layer vocabulary (validator range 0..3 — the pin moves WITH the
+  vocabulary, the b70 lesson): 0 none / 1 TRAIL class (wilderness trails,
+  dirtpath art) / 2 ROAD class (country routes and the necked
+  through-route inside settlement bounds — the inter-city road and its
+  continuation; road_network art) / 3 STREET class (every
+  settlement-written street surface — arms, city ring, house lanes, civic
+  approaches, dock lanes; the package's sett-paved street band, behavior
+  75). Corridors still CARVE as material internally; the composer necks
+  them to centerline and restores the flank ground (behaviors 52/56/72).
+- NO DIAGONAL ROADS — STANDING RULE (sl-0059, designer, revisit only as a
+  deliberate design act): no road lane of any class, from any writer, may
+  step diagonally; direction changes are orthogonal L-step pairs. Encoded
+  end to end: turn-cost routing (the route search charges every turn four
+  steps, so paths plan as straight legs, routes.graph 19), direction
+  persistence in the BFS carvers (landmark approaches, house lanes, POI
+  spurs), and the compose-time normalization chain (de-braid: trail-hug
+  and flank-line merges onto the road; junction-remnant repaint; L-step
+  insertion; 2x2 block thinning LAST — a junction is a T or an L, never a
+  filled square). The packaged GAME-GUIDE carries the same doctrine.
+- ROAD JOINTS (behavior 76, adapter v9): class switches on straight runs
+  render the package's hand-authored joint tile per mappings.roadJoints
+  (A = the senior class by the classes ranking, B = the cell; one side
+  fires; junction/corner switches keep the wider-class doctrine;
+  threshold never joints). PURE RENDER SUBSTITUTION — the road grid byte
+  never changes and no writer places anything for joints.
+- Lamps (behavior 61) light settlement streets, never wilderness trails:
+  eligibility is band VALUE {2, 3} (behavior 75 made street distinct
+  again; the b74 bandLaneMask workaround is retired).
+- Road types 5-8 (gravelway / flagway / corduroy / threshold, the 9b8b2a2
+  cut) are rostered but UNUSED — their route-hierarchy round (country
+  highway = gravelway, processional = flagway, swamp causeway = corduroy,
+  threshold pads at ceremonial switches) is its own designed round.
 - Style-free worlds keep the classic material corridors byte-identically:
   packed-road country routes, cobble town streets (the pre-56 contract that
   approved worlds bake in).

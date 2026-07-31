@@ -136,14 +136,15 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   (designer 2026-07-30): blessed as the sl-0004 delivery transport
   (see pointer block).
 
-Versions: behavior **70** (shipwreck cove), recipe compiler **35**,
-resolved-config **29**, artifact format 8, TileForge adapter 7,
-packFormat 1, settlements.plans 28, decoration.pois 19,
-decoration.props 16 (unused props still FOUR: abandonedwagon,
-leafpile, palm, rubblepile — the cove composes already-rostered
-pieces). **246 tests, all green on this machine** (25 in tests/settlementStyle.test.ts; the
-b64 pen/grapes test rides tests/settlements.test.ts on a synthetic
-plain). Everything pushed through commit `719d167`. Standing commit+push
+Versions (2026-07-31 close): behavior **76** (road joints), recipe
+compiler **35**, resolved-config **29**, artifact format 8, TileForge
+adapter **9**, packFormat 1, routes.graph **19**, settlements.plans
+**32**, decoration.pois 19, decoration.props 16 (unused props still
+FOUR: abandonedwagon, leafpile, palm, rubblepile). Path-layer
+vocabulary 0..3 (1 trail / 2 road / 3 street). Pinned package
+dusk-9b8b2a2-seed103991 (roadTypes 1-8 + roadjoint; types 5-8 unused
+pending their round). **252 tests, all green on this machine.**
+Everything pushed through the b76 handoff commit. Standing commit+push
 authorization (memory) — re-confirm per policy; visual verdicts always
 user-gated. THE SCENERY LOOP IS THE ACTIVE ARC: the pack assessment +
 composition catalog live at docs/SCENERY_COMPOSITIONS.md (28 ideas,
@@ -370,7 +371,12 @@ gate. ALL APPROVED except one:
 
 ## 3. Dusk re-pin (executed 2026-07-28)
 
-Pinned package: `dusk-ae1eecb-seed103991` (user: "use dusk for now, we
+[HISTORICAL — the pin has since moved twice through the same
+deliberate-adoption lane: dusk-e2699cc (b75, street band) then
+`dusk-9b8b2a2-seed103991` (b76, road joints — CURRENT; the lock is the
+authority). This section records the FIRST dusk adoption.]
+
+Pinned package then: `dusk-ae1eecb-seed103991` (user: "use dusk for now, we
 can change later"). Forest fixture stays committed — re-pin back = lock
 + test-literal change. Dusk is a NEWER upstream commit: road bands 1/3
 retired as `roadTypesLegacy` (matches our corridor doctrine; dirtpath
@@ -472,15 +478,17 @@ discipline (§5 identity rule).
 
 ## 6. Open items
 
+[THE POINTER AT THE TOP IS THE CURRENT OPEN LIST — this section keeps
+the older per-arc detail; where they disagree, the pointer wins.]
+
 **User-gated:**
-- **BATCH-6 PICK** — the resume point (round 17 ruled positive,
-  nothing pending). From docs/SCENERY_COMPOSITIONS.md — remaining
-  leaders: logging camp, battlefield blood decal, the waterfront set
-  (boardwalk / seawall / lighthouse point / shipwreck cove),
-  windmill hill, orchard, guard post, processional way. Props roster
-  is down to five unused pieces (cookfire, abandonedwagon, leafpile,
-  palm, rubblepile). The designer's own parallel pack-assessment
-  pass is also outstanding — it merges into catalog §3/§4.
+- **SCENERY LOOP (paused at ELEVEN ratified compositions, rounds
+  12-22)** — resumable any time. Remaining catalog leaders
+  (docs/SCENERY_COMPOSITIONS.md §3): battlefield blood decal (tone
+  question §4), boardwalk / seawall / windmill hill / processional
+  way; levers: bridge-end posts, fenced-POI spur budget. Unused props
+  down to FOUR (abandonedwagon, leafpile, palm, rubblepile).
+
 - ~~Slit-seal vs flat-green readability collision~~ **RESOLVED by the
   WYSIWYG ruling (2026-07-29, §2):** the designer ruled for flat-green
   — every ground-rendering cell reopened; the sprite-overdraw bug the

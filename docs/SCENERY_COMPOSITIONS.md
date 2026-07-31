@@ -1,7 +1,7 @@
 # Scenery compositions — pack content assessment (2026-07-29)
 
 A full inventory of the pinned dusk package
-(`dusk-ae1eecb-seed103991`) against what WorldForge actually
+(`dusk-ae1eecb-seed103991`; assessment-era pin — the lock has since moved to `dusk-9b8b2a2-seed103991`, same theme, roster only grew) against what WorldForge actually
 generates today, and a catalog of candidate scenery COMPOSITIONS —
 multi-piece arrangements in the church+graveyard mold (behavior 59's
 quarter machinery made these cheap to add). Written for the designer's
