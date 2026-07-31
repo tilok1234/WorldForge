@@ -733,8 +733,19 @@ export const GENERATOR_VERSION = "0.1.0";
  *     wedge, the designer's last sighting). The L-step and de-braid
  *     passes remain as safety nets for the residual terrain-forced
  *     corner steps.
+ * 76: road joints on the arc-closing cut (adapter.tileforge 9; the
+ *     9b8b2a2 re-pin, sl-0058 — roadTypes 1-8 + the hand-authored
+ *     roadjoint family for all 21 class pairs). PURE RENDER
+ *     SUBSTITUTION per mappings.roadJoints: straight-run class
+ *     switches render the joint tile; the road grid, every writer,
+ *     and walkability are byte-identical to b75 (the world content
+ *     diff is EMPTY modulo dependency identity). Types 5-8
+ *     (gravelway/flagway/corduroy/threshold) stay unused pending
+ *     their own designed round; the no-diagonal rule is standing
+ *     doctrine (sl-0059). Supersedes b75 PRE-INTAKE (the b71->b72
+ *     precedent: the game never took b75).
  */
-export const GENERATOR_BEHAVIOR_VERSION = 75;
+export const GENERATOR_BEHAVIOR_VERSION = 76;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -756,7 +767,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "decoration.pois": 19,
   "density.presets": 1,
   "authoring.overrides": 1,
-  "adapter.tileforge": 8,
+  "adapter.tileforge": 9,
 };
 
 /**
@@ -773,5 +784,10 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
  * the package's heavier "road" band; wilderness trails (1) keep dirtpath.
  * 8: street band mapping (behavior 75, the e2699cc cut) — path-layer value
  * 3 renders as the package's "street" sett band (roadType 4).
+ * 9: road joints (behavior 76, the 9b8b2a2 cut) — render substitution per
+ * mappings.roadJoints: a straight-run road cell whose neighbor class ranks
+ * earlier renders the hand-authored joint tile (A=neighbor, B=cell,
+ * orientation by side; one side fires; junctions/corners keep wider-class
+ * doctrine; threshold never joints). The road grid byte never changes.
  */
-export const TILEFORGE_ADAPTER_VERSION = 8;
+export const TILEFORGE_ADAPTER_VERSION = 9;

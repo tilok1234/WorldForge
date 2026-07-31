@@ -1,0 +1,377 @@
+{
+  "generator": "tileforge-proto/0.4.0",
+  "projectSeed": 103991,
+  "summary": {
+    "tiles": 31759,
+    "failures": 0,
+    "warnings": 0,
+    "seamBreaks": 0,
+    "paletteIssues": 0,
+    "ms": 5389
+  },
+  "sections": {
+    "structural": [
+      {
+        "s": "pass",
+        "t": "Topology coverage — grass-on-soil",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — dry-grass-on-soil",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — tall-grass-overlay",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — mud-on-soil",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — swamp-muck",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — bog-peat",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — corrupted-ground",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — snow-on-soil",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — ice-surface",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — gravel-on-soil",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — packed-road-on-soil",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — cracked-earth",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — ash-scorched",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — basalt-on-soil",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — cave-dirt",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — cave-stone",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — fungal-ground",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — water-on-soil",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — shallow-water",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — deep-water",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — hot-spring",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — lava-on-soil",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — rock-on-soil",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — moss-overlay",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — cracks-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — leaves-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — rubble-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — scorch-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — puddles-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — blood-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — webs-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — bones-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — rapids-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — waterfall-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — lilypads-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — stepping-stones-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — driftwood-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — frost-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — ford-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — geyser-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Topology coverage — steam-vent-decal",
+        "d": "47/47 normalized masks enumerated + generated"
+      },
+      {
+        "s": "pass",
+        "t": "Network coverage — road + dirt path + ruined road + street + gravel way + flag way + corduroy + threshold + fence + pen fence + iron fence + hedge + wall + palisade + cave wall + dungeon wall + pier + boardwalk",
+        "d": "16/16 connectivity states each · ports N/E/S/W · road, pier and fence layers are typed (all types inter-connect)"
+      },
+      {
+        "s": "pass",
+        "t": "Joint coverage — road-class connections",
+        "d": "21 class pairs × 4 orientations · hand-authored switch cells · render substitution (grid stays typed)"
+      },
+      {
+        "s": "pass",
+        "t": "Corner coverage — sand-on-soil",
+        "d": "16/16 corner cases · dual-grid placement"
+      },
+      {
+        "s": "pass",
+        "t": "Network coverage — river",
+        "d": "16/16 connectivity states · flows under roads"
+      },
+      {
+        "s": "pass",
+        "t": "Cliff coverage — elevation edges + biome reskins",
+        "d": "47/47 masks × 4 role-maps (earthen/desert/snow/volcanic) · south faces + lit rims · family picked per cell by substrate"
+      },
+      {
+        "s": "pass",
+        "t": "Prop parts — anchored",
+        "d": "10 two-part species (ground+overhang) · 78 single-part props through the ash pile · bottom-center anchor"
+      },
+      {
+        "s": "pass",
+        "t": "Crop stages — wheat + pumpkin + corn + grapes",
+        "d": "4 crops × 4 growth stages (planted/young/mature/harvested) · walkable overlay layer · games drive the stage at runtime"
+      },
+      {
+        "s": "pass",
+        "t": "Ramp transitions — elevation (P5.1) + biome reskins",
+        "d": "2 types × 4 ascent dirs × 4 role-maps · workbench map has 0 invalid ramp cells (must sit dry, pointing at exactly elev+1)"
+      },
+      {
+        "s": "pass",
+        "t": "Cross-material ladder — connection matrix",
+        "d": "325 pairs · 306 one-directional (lower runs under) · 12 mutual-flush · 7 gutter (wet-vs-wet + overrides) · 0 incoherent"
+      },
+      {
+        "s": "pass",
+        "t": "Metatile cells — structures",
+        "d": "house · ruin · monolith · cottage · dungeon · tower · gate · tavern · smithy · well · stall · rtower · fisherhut · 4 bridges (all-pass) · cave mouth (walk-through) · mine shaft (entry row passes) · farmhouse · barn · windmill · watermill · sawmill · quarry · bakery · general store · warehouse · chapel · town hall · guardhouse · manor · fountain · abandoned + burned house states · drawbridge + ruined gates · keep · tent · dock (deck passes, crane cell blocks) · lighthouse · stone circle (processional axis passes) · hunter's lodge · hermit hut · den + crypt (entry rows pass) · ruined temple (west/center steps pass) · giant skeleton (rib-gap cells pass) · buried statue · portal (walk-through arch) · crystal spire · world tree (hollow cell passes) — 52 types, placed atomically, one variant per structure"
+      },
+      {
+        "s": "pass",
+        "t": "Animation frames — water group",
+        "d": "water + shallow + deep: 47 masks × 6 variants × 4 frames · region static per frame"
+      },
+      {
+        "s": "pass",
+        "t": "Godot animation runs — atlas alignment",
+        "d": "3134 frame runs · frames innermost in a 12-col grid, every run row-contained · 0 would wrap"
+      },
+      {
+        "s": "pass",
+        "t": "Tile dimensions",
+        "d": "31759 tiles · all exactly 32×32 px · integer coords"
+      },
+      {
+        "s": "pass",
+        "t": "Semantic tile IDs",
+        "d": "31759 unique IDs · 0 collisions · stable across variants"
+      },
+      {
+        "s": "pass",
+        "t": "Atlas packing",
+        "d": "12 columns · 0 cell overlaps · padding + extrusion preserved"
+      },
+      {
+        "s": "pass",
+        "t": "Gameplay metadata",
+        "d": "walkable defined on 4/4 families · variants share metadata"
+      }
+    ],
+    "pixel": [
+      {
+        "s": "pass",
+        "t": "Palette conformity",
+        "d": "32,521,216 px scanned · 0 off-palette"
+      },
+      {
+        "s": "pass",
+        "t": "Alpha discipline",
+        "d": "binary alpha enforced · 0 graded px found"
+      },
+      {
+        "s": "pass",
+        "t": "Manual overrides preserved",
+        "d": "0 edited px · 0 intact after regeneration"
+      },
+      {
+        "s": "pass",
+        "t": "Isolated pixels",
+        "d": "76881 orphan px across set (8-neighbor isolation · cleanup threshold 95277)"
+      },
+      {
+        "s": "pass",
+        "t": "Variant distinctness",
+        "d": "closest variant pair differs in 4.5% of px"
+      }
+    ],
+    "seams": [
+      {
+        "s": "pass",
+        "t": "Adjacency sweep — same-material seams + overlay",
+        "d": "random 40×26 field · 0 region breaks"
+      },
+      {
+        "s": "pass",
+        "t": "Dual-grid sweep — corner16 sand",
+        "d": "1886 dual seams · 0 region breaks"
+      },
+      {
+        "s": "pass",
+        "t": "Variant edge contract",
+        "d": "17072 cross-variant comparisons · 0 edge mismatches"
+      },
+      {
+        "s": "pass",
+        "t": "Network port alignment",
+        "d": "road 8–23 · street 11–20 · gravel way 10–21 · flag way 9–22 · corduroy 11–20 · threshold 8–23 · fence 14–16 · pen fence 13–17 · iron fence 13–17 · hedge 10–20 · wall/palisade/ruined/seawall/cavewall/dungeonwall 10–21 · pier 12–19 · jetty 11–20 · river 9–22 · 2432 edges · 0 misaligned"
+      },
+      {
+        "s": "pass",
+        "t": "Shadow continuity",
+        "d": "cast SE of boundaries · contract zones roughness-free"
+      }
+    ],
+    "repetition": [
+      {
+        "s": "pass",
+        "t": "Variant distribution",
+        "d": "48×48 map field · 13 slots · max/min usage ratio 1.42 · weighted+toned · mode coordinated"
+      },
+      {
+        "s": "pass",
+        "t": "Adjacent repeats",
+        "d": "0.0% same-variant neighbors · random expectation 17%"
+      },
+      {
+        "s": "pass",
+        "t": "2×2 identical quads",
+        "d": "0 found"
+      },
+      {
+        "s": "pass",
+        "t": "Edge band strategy",
+        "d": "shared wallpaper near edges — universal-mode tradeoff (richer interiors)"
+      }
+    ]
+  }
+}

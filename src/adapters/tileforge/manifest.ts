@@ -107,6 +107,16 @@ export interface TileForgeManifest {
   readonly pierTypeByKey: ReadonlyMap<string, number>;
   /** road family key -> road layer byte. */
   readonly roadTypeByKey: ReadonlyMap<string, number>;
+  /** Road-transition contract (9b8b2a2, mappings.roadJoints): class seniority
+   * rank per road family key (earlier = wider/senior) and the joint-code
+   * base per ordered pair "a|b" (code = base + orient, orients A-west/
+   * A-east/A-north/A-south). Undefined on packages without the family. */
+  readonly roadJoints:
+    | {
+        readonly rankByFamily: ReadonlyMap<string, number>;
+        readonly codeBaseByPair: ReadonlyMap<string, number>;
+      }
+    | undefined;
   /** wall family key -> wall layer byte. */
   readonly wallTypeByKey: ReadonlyMap<string, number>;
   /** material grid id -> family key (dense, index by id). */
@@ -186,6 +196,13 @@ export function loadPinnedManifest(): { lock: TileForgeLock; manifest: TileForge
         version: number;
         families?: Record<string, SelectorFamily>;
       };
+      roadJoints?: {
+        classes: string[];
+        pairs: { a: string; b: string; codeBase: number }[];
+        code: string;
+        orients: string[];
+        rule: string;
+      };
     };
     families: Record<string, RawFamily>;
   };
@@ -231,6 +248,21 @@ export function loadPinnedManifest(): { lock: TileForgeLock; manifest: TileForge
   for (const [id, key] of Object.entries(raw.mappings.wallTypes)) {
     wallTypeByKey.set(key, Number(id));
   }
+  const rawJoints = raw.mappings.roadJoints;
+  const roadJoints =
+    rawJoints === undefined
+      ? undefined
+      : {
+          rankByFamily: new Map<string, number>(
+            (rawJoints.classes as string[]).map((key: string, rank: number) => [key, rank]),
+          ),
+          codeBaseByPair: new Map<string, number>(
+            (rawJoints.pairs as { a: string; b: string; codeBase: number }[]).map((pair) => [
+              `${pair.a}|${pair.b}`,
+              pair.codeBase,
+            ]),
+          ),
+        };
 
   const denseByIdTable = (table: Record<string, string>): string[] => {
     const out: string[] = [];
@@ -327,6 +359,7 @@ export function loadPinnedManifest(): { lock: TileForgeLock; manifest: TileForge
       fenceTypeByKey,
       pierTypeByKey,
       roadTypeByKey,
+      roadJoints,
       wallTypeByKey,
       materialFamilyById,
       decalFamilyById,

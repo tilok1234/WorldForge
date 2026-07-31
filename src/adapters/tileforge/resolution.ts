@@ -133,6 +133,7 @@ export interface ResolutionTables {
   readonly materialFamilyById: readonly string[];
   readonly decalFamilyById: readonly string[];
   readonly roadFamilyByType: readonly string[];
+  readonly roadJoints: import("./manifest.js").TileForgeManifest["roadJoints"];
   readonly pierFamilyByType: readonly string[];
   readonly fenceFamilyByType: readonly string[];
   readonly wallFamilyByType: readonly string[];
@@ -188,6 +189,7 @@ export function buildResolutionTables(manifest: TileForgeManifest): ResolutionTa
     materialFamilyById: manifest.materialFamilyById,
     decalFamilyById: manifest.decalFamilyById,
     roadFamilyByType: manifest.roadFamilyByType,
+    roadJoints: manifest.roadJoints,
     pierFamilyByType: manifest.pierFamilyByType,
     fenceFamilyByType: manifest.fenceFamilyByType,
     wallFamilyByType: manifest.wallFamilyByType,
@@ -607,7 +609,39 @@ export function resolveLayers(
       }
       const road = readLayer(g, "road", x, y);
       if (road !== 0) {
-        cells.road[at] = place(t.roadFamilyByType[road] as string, networkMask(t, g, "road", x, y));
+        // Road joints (adapter v9, the 9b8b2a2 contract — render substitution
+        // only, the road byte stays the class): a STRAIGHT-run road cell
+        // whose neighbor class ranks EARLIER in roadJoints.classes renders
+        // the joint tile (A = the senior neighbor, B = this cell), oriented
+        // by the neighbor side; exactly one side fires (first in W/E/N/S
+        // order); junction and corner switches keep the wider-class
+        // doctrine, threshold cells never joint.
+        const mask = networkMask(t, g, "road", x, y);
+        let placed = false;
+        const joints = t.roadJoints;
+        const familyB = t.roadFamilyByType[road] as string;
+        if (joints !== undefined && familyB !== "threshold" && (mask === 5 || mask === 10)) {
+          const sides: readonly (readonly [number, number, number])[] =
+            mask === 10
+              ? [[-1, 0, 0], [1, 0, 1]] // A-west, A-east
+              : [[0, -1, 2], [0, 1, 3]]; // A-north, A-south
+          const rankB = joints.rankByFamily.get(familyB);
+          for (const [dx, dy, orient] of sides) {
+            const neighborType = readLayer(g, "road", x + dx, y + dy);
+            if (neighborType === 0 || neighborType === OUTSIDE || neighborType === road) continue;
+            const familyA = t.roadFamilyByType[neighborType] as string;
+            const rankA = joints.rankByFamily.get(familyA);
+            if (rankA === undefined || rankB === undefined || rankA >= rankB) continue;
+            const base = joints.codeBaseByPair.get(`${familyA}|${familyB}`);
+            if (base === undefined) continue;
+            cells.road[at] = place("roadjoint", base + orient);
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          cells.road[at] = place(familyB, mask);
+        }
       }
       const fence = readLayer(g, "fence", x, y);
       if (fence !== 0) {

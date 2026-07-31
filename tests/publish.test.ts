@@ -194,7 +194,7 @@ describe("release identity and notes", () => {
       sourceCommit: "cd".repeat(20),
       packFormat: 1,
       tileforgeAdapterVersion: 7,
-      tileforgePackageId: "dusk-e2699cc-seed103991",
+      tileforgePackageId: "dusk-9b8b2a2-seed103991",
       baseArtifactSha256: "ef".repeat(32),
       manifestSha256,
       zipSha256: "12".repeat(32),

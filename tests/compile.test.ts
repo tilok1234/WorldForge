@@ -82,8 +82,8 @@ describe("recipe compiler", () => {
 
   it("keeps the dependency state explicit and lists the W2 passes", () => {
     const config = compileRecipe(normalized(1, "tiny", "temperate"));
-    assert.equal(config.dependencies.tileforge?.packageId, "dusk-e2699cc-seed103991");
-    assert.match(config.dependencies.tileforge?.packageSha256 ?? "", /^942ecadb/);
+    assert.equal(config.dependencies.tileforge?.packageId, "dusk-9b8b2a2-seed103991");
+    assert.match(config.dependencies.tileforge?.packageSha256 ?? "", /^e09ea40e/);
     assert.deepEqual(config.passes, ["macro.fields", "hydrology.water", "regions.biomes", "routes.graph", "settlements.plans", "landmarks.stamps", "terrain.texture", "decoration.props", "adapter.tileforge"]);
     assert.equal(config.resolvedConfigFormat, 29);
     assert.equal(config.water.seaLevelPermille, 310);

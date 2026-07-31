@@ -187,7 +187,7 @@ describe("W8 cross-consumer parity", () => {
         wrongDependency.issues.some((issue) => issue.path.includes("tileforge")),
     );
     const matching = loadWorldArtifact(artifact, {
-      expectTileForge: { packageId: "dusk-e2699cc-seed103991" },
+      expectTileForge: { packageId: "dusk-9b8b2a2-seed103991" },
     });
     assert.ok(matching.ok, "matching dependency identity loads");
   });
