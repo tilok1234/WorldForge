@@ -628,6 +628,169 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   // construction. Runs after decoration: lamp seats never see L cells.
   // Mixed-class joins stay as they are (the road-transition arc parks
   // upstream, sl-0054 scope extension).
+  //
+  // DE-BRAID (same behavior, the designer's "still some left" round): a
+  // TRAIL that hugs a road-class line — beside it, or shadowing a
+  // staircase diagonally — draws a parallel band or a chain of curl
+  // stubs one cell off the road. Two routes carved along one corridor
+  // are ONE road to the eye: the trail merges onto the road. Before the
+  // L-step pass, iteratively erase every trail cell whose 8-neighborhood
+  // holds a road-class cell AND whose every orthogonal trail neighbor
+  // also hugs road (parallel runs and staircase shadows both), then
+  // sweep hugging orphans. A trail cell where the route genuinely bends
+  // away (a neighbor with no road in reach) is the junction — it stays.
+  // Erasure guards: never a crossing (water/river) and never ground
+  // that only walked BECAUSE of the band (swamp/rock/water materials) —
+  // those cells are load-bearing, so the flood cannot move.
+  {
+    const pathLayer = routesResult.pathLayer;
+    const TRAIL = 1;
+    // The corridor centerline is the road's own line whatever value it
+    // carries (b72 keeps pre-existing trail bands on it) — it is never
+    // braid, and a trail hugging it is.
+    const centerline = routesResult.corridorCenterline;
+    const roadAt = (cell: number): boolean =>
+      pathLayer[cell] === 2 || pathLayer[cell] === 3 || (pathLayer[cell] !== 0 && centerline.has(cell));
+    const hugsRoad = (x: number, y: number): boolean => {
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+          if (roadAt(ny * width + nx)) return true;
+        }
+      }
+      return false;
+    };
+    const walksWithoutBand = (cell: number): boolean => {
+      if (hydro.waterKind[cell] !== WATER_NONE || hydro.isRiver[cell] === 1) return false;
+      const material = grid[cell] as number;
+      const key = WORLD_PALETTE[material] as string;
+      return key !== "terrain.rock" && key !== "terrain.swamp" && key !== "water.deep" && key !== "water.shallow";
+    };
+    const erasedCells = new Set<number>();
+    // FLANK-LINE MERGE (the other braid direction): the b72 junction-flank
+    // rule bands a restored flank cell wherever a trail joins the corridor
+    // — but a trail running ALONGSIDE the corridor for a stretch qualifies
+    // every flank cell on the run, building a second band line one cell
+    // off the centerline (the designer's ladder). A non-centerline band
+    // RUN that parallels a banded centerline line duplicates the road:
+    // erase the run's interior; a run END that continues onward into the
+    // network (the genuine join) stays. Same ground guards — the flood
+    // cannot move.
+    {
+      const bandedCenterlineAt = (x: number, y: number): boolean => {
+        if (x < 0 || y < 0 || x >= width || y >= height) return false;
+        const cell = y * width + x;
+        return pathLayer[cell] !== 0 && centerline.has(cell);
+      };
+      const bandAt = (x: number, y: number): boolean =>
+        x >= 0 && y >= 0 && x < width && y < height && pathLayer[y * width + x] !== 0;
+      for (const [sideDx, sideDy] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) {
+        const runDx = sideDy === 0 ? 0 : 1;
+        const runDy = sideDy === 0 ? 1 : 0;
+        const inRun = (x: number, y: number): boolean => {
+          if (x < 0 || y < 0 || x >= width || y >= height) return false;
+          const cell = y * width + x;
+          return (
+            pathLayer[cell] !== 0 &&
+            !centerline.has(cell) &&
+            bandedCenterlineAt(x + sideDx, y + sideDy) &&
+            walksWithoutBand(cell)
+          );
+        };
+        for (let y = 0; y < height; y += 1) {
+          for (let x = 0; x < width; x += 1) {
+            if (!inRun(x, y)) continue;
+            // Only process run heads (previous cell along the run is not one).
+            if (inRun(x - runDx, y - runDy)) continue;
+            let length = 0;
+            while (inRun(x + runDx * length, y + runDy * length)) length += 1;
+            if (length < 2) continue;
+            for (let step = 0; step < length; step += 1) {
+              const cx = x + runDx * step;
+              const cy = y + runDy * step;
+              // A run cell that connects to the band network OUTSIDE the
+              // run and its paralleled centerline is a genuine join — the
+              // horizontal trail crossing the run's end, the web at a
+              // junction. Erasing it would gap a real line; it stays.
+              let outsideJoin = false;
+              for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+                const nx = cx + dx;
+                const ny = cy + dy;
+                if (dx === sideDx && dy === sideDy) continue; // the centerline side
+                if (inRun(nx, ny)) continue;
+                if (bandAt(nx, ny)) {
+                  outsideJoin = true;
+                  break;
+                }
+              }
+              if (outsideJoin) continue;
+              erasedCells.add(cy * width + cx);
+            }
+          }
+        }
+      }
+      for (const cell of erasedCells) {
+        pathLayer[cell] = 0;
+      }
+    }
+    let debraided = true;
+    while (debraided) {
+      debraided = false;
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const cell = y * width + x;
+          if (pathLayer[cell] !== TRAIL) continue;
+          if (centerline.has(cell)) continue;
+          if (!hugsRoad(x, y)) continue;
+          if (!walksWithoutBand(cell)) continue;
+          let neighbors = 0;
+          let allHug = true;
+          for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+            if (pathLayer[ny * width + nx] !== TRAIL) continue;
+            neighbors += 1;
+            if (!hugsRoad(nx, ny)) allHug = false;
+          }
+          if (neighbors === 0 || allHug) {
+            pathLayer[cell] = 0;
+            erasedCells.add(cell);
+            debraided = true;
+          }
+        }
+      }
+    }
+    // RECONNECT (both passes): an erased cell that sat between two
+    // surviving band cells on opposite sides was a through-link — a trail
+    // line crossing the flank's course, a junction bridge — not braid.
+    // Erasing it gapped a real line; restore it with the lighter class (a
+    // trail continues into a junction as a trail). Only ever applied to
+    // cells that carried a band before de-braiding, so deliberate gaps
+    // (fords, crossings) are untouchable by construction.
+    for (const cell of erasedCells) {
+      if (pathLayer[cell] !== 0) continue;
+      const x = cell % width;
+      const y = (cell - x) / width;
+      const at = (nx: number, ny: number): number =>
+        nx < 0 || ny < 0 || nx >= width || ny >= height ? 0 : (pathLayer[ny * width + nx] as number);
+      const pairs = [
+        [at(x - 1, y), at(x + 1, y)],
+        [at(x, y - 1), at(x, y + 1)],
+      ];
+      for (const pair of pairs) {
+        const a = pair[0] as number;
+        const b = pair[1] as number;
+        if (a !== 0 && b !== 0) {
+          pathLayer[cell] = Math.min(a, b);
+          break;
+        }
+      }
+    }
+  }
   {
     const pathLayer = routesResult.pathLayer;
     const rockIdx = PALETTE_INDEX["terrain.rock"];

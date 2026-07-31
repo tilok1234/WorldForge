@@ -725,6 +725,48 @@ describe("narrow streets (behavior 51)", () => {
       }
     }
     assert.equal(diagonalPairs, 0, `${diagonalPairs} same-class diagonal band pairs survived the L-step pass`);
+
+    // De-braid (the "still some left" round): no erasable trail cell may
+    // survive hugging a road-class line — parallel runs and staircase
+    // shadows both merge onto the road. Cells the guards keep (crossings,
+    // band-load-bearing ground, genuine junction departures) are legal.
+    const roadClass = (v: number) => v === 2 || v === 3;
+    const hugs = (x: number, y: number): boolean => {
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+          if (roadClass(pathLayer[ny * width + nx] as number)) return true;
+        }
+      }
+      return false;
+    };
+    let braidRemnants = 0;
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        if (pathLayer[y * width + x] !== 1 || !hugs(x, y)) continue;
+        // Centerline trail cells are the road's own line (b72), never braid.
+        if (b.composed.routesResult.corridorCenterline.has(y * width + x)) continue;
+        const ground = b.composed.grid[y * width + x] as number;
+        const key = PALETTE_INDEX["terrain.rock"] === ground || PALETTE_INDEX["terrain.swamp"] === ground;
+        if (key) continue; // load-bearing band, legally kept
+        if (b.composed.hydro.waterKind[y * width + x] !== 0 || b.composed.hydro.isRiver[y * width + x] === 1) continue;
+        let neighbors = 0;
+        let allHug = true;
+        for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+          if (pathLayer[ny * width + nx] !== 1) continue;
+          neighbors += 1;
+          if (!hugs(nx, ny)) allHug = false;
+        }
+        if (neighbors === 0 || allHug) braidRemnants += 1;
+      }
+    }
+    assert.equal(braidRemnants, 0, `${braidRemnants} braided trail cells survived the de-braid pass`);
   });
 
   it("necks through-roads to the centerline inside settlement bounds", () => {
