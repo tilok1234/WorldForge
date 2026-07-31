@@ -27,7 +27,7 @@ function composedFor(seed: number) {
 describe("pinned manifest", () => {
   it("loads, hash-verifies, and exposes the machine-readable mappings", () => {
     const { lock, manifest } = loadPinnedManifest();
-    assert.equal(lock.packageId, "dusk-ae1eecb-seed103991");
+    assert.equal(lock.packageId, "dusk-e2699cc-seed103991");
     assert.equal(manifest.formatVersion, 1);
     assert.equal(manifest.materialIdByKey.get("packedroad"), 27);
     assert.equal(manifest.structureByName.get("house")?.def.w, 3);
@@ -80,7 +80,7 @@ describe("tileforge resolution", () => {
   it("round-trips the package's own map-data.json structurally", () => {
     const theirs = JSON.parse(
       readFileSync(
-        join(ROOT, "fixtures", "tileforge-packages", "dusk-ae1eecb-seed103991", "map-data.json"),
+        join(ROOT, "fixtures", "tileforge-packages", "dusk-e2699cc-seed103991", "map-data.json"),
         "utf8",
       ),
     ) as TileForgeMapData;

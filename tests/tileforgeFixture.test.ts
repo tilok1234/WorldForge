@@ -28,16 +28,16 @@ describe("pinned TileForge package fixture", () => {
     assert.equal(lock.generator, "tileforge-proto/0.4.0");
     assert.equal(lock.manifestFormat, 1);
     assert.equal(lock.theme, "dusk");
-    assert.equal(lock.sourceCommit, "ae1eecb");
+    assert.equal(lock.sourceCommit, "e2699cc");
     assert.equal(lock.projectSeed, 103991);
     assert.equal(lock.tileSize, 32);
     assert.equal(
       lock.packageSha256,
-      "395c16929e3a678668b82f10f952c55c5315f3938450891db2ac3ae1dd4dc1eb",
+      "942ecadb21843c472e4608e08c77b3b17c94c7b62ccbec3515859725a7ab6f2d",
     );
     assert.equal(
       lock.manifestSha256,
-      "bb10a0aafe6b8fb14be1d3a41bce325202d57a6b277306ae5e6ef9c57f3b2b11",
+      "669745f6461fa6c5804d91a85f0a4f9130a5cb15f66c012b24ead11f767ea4c7",
     );
   });
 
@@ -60,7 +60,7 @@ describe("pinned TileForge package fixture", () => {
     ) as Record<string, unknown>;
     assert.equal(manifest["formatVersion"], 1);
     assert.equal(manifest["generator"], "tileforge-proto/0.4.0");
-    assert.equal(manifest["sourceCommit"], "ae1eecb");
+    assert.equal(manifest["sourceCommit"], "e2699cc");
     assert.equal(manifest["projectSeed"], 103991);
     assert.equal(manifest["tileSize"], 32);
     const style = manifest["style"] as Record<string, unknown>;

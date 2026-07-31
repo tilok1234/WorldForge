@@ -1,0 +1,144 @@
+{
+  "columns": 12,
+  "image": "temple_floor.png",
+  "imagewidth": 432,
+  "imageheight": 36,
+  "margin": 2,
+  "spacing": 4,
+  "name": "temple_floor",
+  "tilecount": 6,
+  "tiledversion": "1.11.2",
+  "tileheight": 32,
+  "tilewidth": 32,
+  "type": "tileset",
+  "version": "1.10",
+  "wangsets": [],
+  "tiles": [
+    {
+      "id": 0,
+      "probability": 0.16666666666666666,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.templefloor.variant_00"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "probability": 0.16666666666666666,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.templefloor.variant_01"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "probability": 0.16666666666666666,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.templefloor.variant_02"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "probability": 0.16666666666666666,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.templefloor.variant_03"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "probability": 0.16666666666666666,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.templefloor.variant_04"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "probability": 0.16666666666666666,
+      "properties": [
+        {
+          "name": "semanticId",
+          "type": "string",
+          "value": "fill.templefloor.variant_05"
+        },
+        {
+          "name": "walkable",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "mask",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    }
+  ]
+}
