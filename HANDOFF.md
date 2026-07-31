@@ -1,50 +1,73 @@
-# WorldForge — session handoff (2026-07-31 night: b76 shipped — road joints on the arc-closing 9b8b2a2 cut; b76 is THE intake target)
+# WorldForge — session handoff (2026-08-01: b77 shipped — prop walkability classes, sl-0063 executed; b77 is THE next intake)
 
 > **RESUME HERE. THE WILDSHOT OVERWORLD IS RELEASED AT
-> wildshot-overworld-pack-dusk@b76** (delivery sl-0061 OPEN, game-side
-> intake pending: sourceCommit 4291f79, manifestSha 8a838922…, zipSha
-> 98c3170d…, pack flood 45156, spawn [109,182]). B76 SUPERSEDES B75
-> PRE-INTAKE (b71→b72 precedent — the game never took b75; sl-0060 is
-> superseded by sl-0061). World content is BYTE-IDENTICAL to b75
-> modulo dependency identity: b76 = the 9b8b2a2 re-pin + adapter v9
-> road-joint render substitution ONLY (47 render cells changed, every
-> one a straight-run class switch; proof in the b76 commit).
-> INTAKE REQUIREMENTS (sl-0061): (1) bundle the
-> tileforge-dusk-complete@9b8b2a2 package (zipSha e09ea40e…) into
-> assets/tileforge — the pack pins dusk-9b8b2a2-seed103991 and
-> world_builder refuses mismatched identity; the WF tmj already
-> carries joint gids so tmj-driven rendering gets transitions free;
-> (2) path contract 0..3 (value 3 = street, 1466 cells).
+> wildshot-overworld-pack-dusk@b77** (delivery sl-0066 OPEN:
+> sourceCommit 1a20bd2, manifestSha 5166341a…, zipSha c9083012…, pack
+> flood 46493, spawn [109,182]). The game INTOOK b76 (sl-0064
+> resolved, 2026-07-31 night — joints render end-to-end, b74
+> superseded in place), so b77 is a clean NEXT intake, no
+> supersession. B77 = the sl-0063 walkability conversion ONLY: every
+> prop species classed carpet / canopy / solid in decorate's
+> PROP_WALKABILITY; four CARPET conversions against the package's
+> walkable:false (stump, fallen_log, bone_pile, loot_pile — the
+> pile/debris silhouettes, art-judged per CORE-32; the pinned
+> divergence list IS the ruling); CANOPY = the package's nine
+> two-part species (trunk cell blocks, _over crown never did); SOLID
+> = everything that visibly reads as a blocker (boulders stay solid
+> per the ask). Placement guards FROZEN at the b76 roster → every
+> prop layer byte-identical, canonical + wildshot renders
+> byte-identical (density kept, proven). INTAKE REQUIREMENTS
+> (sl-0066): (1) same dusk-9b8b2a2-seed103991 pin the game already
+> bundles (sl-0064's resolve-by-the-pack's-pin holds, zero TF work);
+> (2) path contract 0..3 unchanged; (3) THE ONE GAME-SIDE CHECK: the
+> game must render the pack tmj's props-overhang layer ABOVE the
+> player (tmj layer order) or walk-under canopy reads as standing on
+> the crown; (4) porosity/diag re-pins expected DELIBERATELY
+> (sl-0052 precedent) — ~903 prop cells newly walk in-pack, typed by
+> species in the b77 commit.
 >
-> SESSION LEDGER (2026-07-31, the sl-0053→sl-0058 road arc, all
-> designer-ruled): b74 intaken (sl-0052) → e2699cc re-pin + b75
-> street band + the NO-DIAGONAL arc (turn-cost routing routes.graph
-> 19, carver direction persistence, de-braid chain with 2×2 thinning
-> LAST, junction-remnant repaint) → designer approval → @b75 released
-> (sl-0060, never intaken) → TF arc-closing cut 9b8b2a2 (sl-0058:
-> roadTypes 1-8 + roadjoint family, 21 pairs × 4 orients) → RE-PIN
-> dusk-9b8b2a2-seed103991 + behavior 76 adapter v9 joints (contract
-> in mappings.roadJoints; new adapter test pins every-switch-joints/
-> none-elsewhere) → @b76 released hands-free (nothing beyond joints
-> shifted). Types 5-8 (gravelway/flagway/corduroy/threshold) UNUSED
-> pending their own designed round. NO-DIAGONAL is a STANDING RULE
-> (sl-0059, docs/08 planning-side; GENERATION_RULES here). Behavior
-> 76, adapter.tileforge 9, routes.graph 19, settlements.plans 32,
-> 252 tests. Three dusk packages committed: ae1eecb (b65-b74
-> reference), e2699cc (b75 reference), 9b8b2a2 (PINNED).
+> FLOODS (every cell typed, TS = Godot, 0 errors, 257 tests):
+> canonical 33386 → 34387 (+1001 = 692 converted debris + 309
+> unlocked; the b75 changelog's 33370 was a STALE mid-arc number —
+> re-measured on byte-identical world bytes with the true b76
+> loader), the-eight-holds 182666 → 188355 (+5689 = 4158 converted +
+> 1531 unlocked pocket cells the debris had sealed), wildshot world
+> 45063 → 46391 (+1328 = 903 + 425), pack 45156 → 46493. The
+> unlocked-pocket counts ARE the designer's "getting blocked" made
+> visible. Eight-holds' gallery render changed only because it was a
+> stale b75/e2699cc render catching up to the ruled b76 road joints
+> (world bytes identical). FOLLOW-UP LEVER (sl-0063): if conversion
+> alone doesn't clear navigation, WF clustering/corridor rules
+> through prop fields — designer taste, its own round.
 >
-> OPEN, in rough order: (1) game intake of @b76 (sl-0061 — the two
-> requirements above; porosity re-pin expected, sl-0052 precedent);
-> (2) world_filler re-pin (three world versions + two package
-> versions behind now; sl-0041 in flight); (3) route-hierarchy round
-> for types 5-8 (designer-designed, when wanted: country highway =
-> gravelway, processional = flagway, swamp causeway = corduroy,
-> threshold pads at class switches); (4) tops+ramps contract ruling
-> (designer clock); (5) plaza cobble keep/convert parks; (6)
-> landmark-centerpiece guard (task chip); scenery loop resumable;
-> farm-more levers recorded. Planning sync_log on-disk appends:
-> sl-0057/0060/0061 (planning commits its own file). Viewer :8787
-> serves b76 galleries.
+> SESSION LEDGER (2026-08-01): sl-0063 fired by planning (W-13, the
+> worldshape forklift; designer: "to hard to navigate without
+> getting blocked" — keep density, CONVERT). Classification grounded
+> in measurement (9067 blocking prop cells in wildshot: ~5800 canopy
+> trunks, ~1050 rock, 1047 debris) and the package art (contested
+> species eyeballed; carpet = the ground-hugging pile silhouettes).
+> Parity kept across FIVE surfaces: decorate PROP_WALKABILITY
+> (truth) / loader BLOCKING_PROPS / Godot world.gd CARPET_PROPS
+> override (semantic_id prefixes) / parity-test ladder openSpecies /
+> GENERATION_RULES standing rule. decoration.props 17. New
+> tests/propWalkability.test.ts pins the partition, canopy==_over,
+> the divergence list, per-species loader behavior, and the .gd
+> mirror. Release idempotence re-verified (double export
+> verified-identical).
+>
+> OPEN, in rough order: (1) game intake of @b77 (sl-0066 — the four
+> requirements above); (2) world_filler re-pin (sl-0041 in flight;
+> now four world versions behind); (3) route-hierarchy round for
+> types 5-8 (designer-designed, when wanted); (4) tops+ramps
+> contract ruling (designer clock); (5) plaza cobble keep/convert
+> parks; (6) landmark-centerpiece guard (task chip); scenery loop
+> resumable; farm-more levers recorded; sl-0065 dev map overlay is
+> GAME-side only (WF's minimap.png is the artifact — becomes a WF
+> ask only if its resolution proves insufficient on screen).
+> Planning sync_log on-disk append this session: sl-0066 (planning
+> commits its own file). Viewer :8787 serves b77 galleries for the
+> three regenerated worlds (canonical / eight-holds / wildshot);
+> other galleries carry older identity stamps but identical content.
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
@@ -136,14 +159,14 @@ Every planned arc is COMPLETE, in a verdict round, or gated on the user:
   (designer 2026-07-30): blessed as the sl-0004 delivery transport
   (see pointer block).
 
-Versions (2026-07-31 close): behavior **76** (road joints), recipe
-compiler **35**, resolved-config **29**, artifact format 8, TileForge
-adapter **9**, packFormat 1, routes.graph **19**, settlements.plans
-**32**, decoration.pois 19, decoration.props 16 (unused props still
-FOUR: abandonedwagon, leafpile, palm, rubblepile). Path-layer
-vocabulary 0..3 (1 trail / 2 road / 3 street). Pinned package
-dusk-9b8b2a2-seed103991 (roadTypes 1-8 + roadjoint; types 5-8 unused
-pending their round). **252 tests, all green on this machine.**
+Versions (2026-08-01 close): behavior **77** (prop walkability
+classes), recipe compiler **35**, resolved-config **29**, artifact
+format 8, TileForge adapter **9**, packFormat 1, routes.graph **19**,
+settlements.plans **32**, decoration.pois 19, decoration.props **17**
+(unused props still FOUR: abandonedwagon, leafpile, palm, rubblepile).
+Path-layer vocabulary 0..3 (1 trail / 2 road / 3 street). Pinned
+package dusk-9b8b2a2-seed103991 (roadTypes 1-8 + roadjoint; types 5-8
+unused pending their round). **257 tests, all green on this machine.**
 Everything pushed through the b76 handoff commit. Standing commit+push
 authorization (memory) — re-confirm per policy; visual verdicts always
 user-gated. THE SCENERY LOOP IS THE ACTIVE ARC: the pack assessment +
@@ -555,9 +578,16 @@ the older per-arc detail; where they disagree, the pointer wins.]
   resolvedConfigFormat + compiler + literal in tests/compile.test.ts
   (currently 27).
 - APPEND-ONLY: WORLD_PALETTE, STRUCTURE_TYPES, DECOR_TYPES,
-  DECAL_TYPES, POI_TYPES. Parity: decorate BLOCKING == loader
-  BLOCKING_PROPS; loader STRUCTURE_PASS_CELLS mirrors package manifest;
-  package walkable flags are truth.
+  DECAL_TYPES, POI_TYPES. Parity (behavior 77): decorate
+  PROP_WALKABILITY is the truth table — loader BLOCKING_PROPS = its
+  non-carpet classes, the Godot world.gd CARPET_PROPS override and the
+  parity-test ladder mirror the four carpet conversions
+  (tests/propWalkability.test.ts pins all of it); loader
+  STRUCTURE_PASS_CELLS mirrors the package manifest; package walkable
+  flags are truth EXCEPT the pinned sl-0063 carpet conversions (stump,
+  fallen_log, bone_pile, loot_pile — extending that list is a new
+  designer ruling, never a refactor). Placement guards stay frozen at
+  the b76 roster (PLACEMENT_GUARDED in decorate).
 - TileForge upstream (`C:\Users\headc\Documents\Semantic tile
   generator design`) read-only; guard denylist in gitignored
   worldforge.local.json. Theme exports live in its exports/ (dusk
@@ -570,7 +600,7 @@ the older per-arc detail; where they disagree, the pointer wins.]
 ## 8. Commands
 
 ```
-npm test                          # build + 242 tests
+npm test                          # build + 257 tests
 node dist/tools/update-golden.js
 node dist/src/cli.js resolve-tileforge fixtures/recipes/<name>.json --out outputs/gallery/<name>
 node --max-old-space-size=8192 dist/src/cli.js resolve-tileforge fixtures/recipes/<medium-or-large>.json --out outputs/gallery/<name>
