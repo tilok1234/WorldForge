@@ -824,6 +824,55 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
         }
       }
     }
+    // NO FILLED SQUARES (same round, LAST — the reconnect above can
+    // legitimately restore a through-link that completes a square, so the
+    // thinning must see the final state): where lines meet, a solid 2x2
+    // same-class block can form (a junction arrives one row beside a
+    // through-line; the remnant repaint above can complete one) — and a
+    // 2x2 band block renders as a closed loop box, the '8' again. A
+    // junction is a T or an L, never a filled square: erase the block
+    // corner that has NO band connection outside the block (its lines all
+    // continue through the other three cells), first such corner in NW/
+    // NE/SW/SE order, ground-guarded like every erasure here. Blocks
+    // whose four corners all continue outward are real four-way webs and
+    // stay.
+    {
+      for (let y = 0; y < height - 1; y += 1) {
+        for (let x = 0; x < width - 1; x += 1) {
+          const nw = y * width + x;
+          const cls = pathLayer[nw] as number;
+          if (cls === 0) continue;
+          const ne = nw + 1;
+          const sw = nw + width;
+          const se = sw + 1;
+          if (pathLayer[ne] !== cls || pathLayer[sw] !== cls || pathLayer[se] !== cls) continue;
+          const corners = [
+            [nw, x, y],
+            [ne, x + 1, y],
+            [sw, x, y + 1],
+            [se, x + 1, y + 1],
+          ] as const;
+          for (const [cell, cx, cy] of corners) {
+            let outside = false;
+            for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]] as const) {
+              const ox = cx + dx;
+              const oy = cy + dy;
+              if (ox < 0 || oy < 0 || ox >= width || oy >= height) continue;
+              const other = oy * width + ox;
+              if (other === nw || other === ne || other === sw || other === se) continue;
+              if (pathLayer[other] !== 0) {
+                outside = true;
+                break;
+              }
+            }
+            if (!outside && walksWithoutBand(cell)) {
+              pathLayer[cell] = 0;
+              break;
+            }
+          }
+        }
+      }
+    }
   }
   {
     const pathLayer = routesResult.pathLayer;
