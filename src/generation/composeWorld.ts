@@ -572,6 +572,8 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
       const start = poi.y * width + poi.x;
       const previous = new Map<number, number>();
       const depth = new Map<number, number>();
+      // Spurs are not made diagonal either (b75 round-3 doctrine).
+      const spurEntryDir = new Map<number, number>();
       previous.set(start, -1);
       depth.set(start, 0);
       const queue = [start];
@@ -582,7 +584,11 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
         if (steps >= maxSpur) continue;
         const cx = cell % width;
         const cy = (cell - cx) / width;
-        for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
+        const baseDirs = [[0, 1], [1, 0], [-1, 0], [0, -1]] as const;
+        const into = spurEntryDir.get(cell);
+        const order =
+          into === undefined ? [...baseDirs] : [baseDirs[into] as readonly [number, number], ...baseDirs.filter((_, i) => i !== into)];
+        for (const [dx, dy] of order) {
           const nx = cx + dx;
           const ny = cy + dy;
           if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
@@ -602,6 +608,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
           // the round-19 graveyard had its trail walled shut this way.
           if (farms.fenceLayer[next] !== 0) continue;
           previous.set(next, cell);
+          spurEntryDir.set(next, baseDirs.findIndex((d) => d[0] === dx && d[1] === dy));
           depth.set(next, steps + 1);
           queue.push(next);
         }

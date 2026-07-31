@@ -441,6 +441,12 @@ function carveTrailApproach(
   // arbiter of whether the world ships.
   for (const requireCorridor of [true, false]) {
     const previous = new Map<number, number>();
+    // Approaches are not made diagonal either (the b75 round-3 doctrine):
+    // remember each cell's entry direction and expand the straight
+    // continuation FIRST — among the many equal-length BFS paths, first
+    // discovery wins, so the carve runs in straight legs with dogleg
+    // corners instead of per-cell staircases.
+    const entryDir = new Map<number, number>();
     const queue = [start];
     previous.set(start, -1);
     for (let head = 0; head < queue.length && head < 4096; head += 1) {
@@ -470,7 +476,11 @@ function carveTrailApproach(
       }
       const x = cell % width;
       const y = (cell - x) / width;
-      for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
+      const baseDirs = [[0, 1], [1, 0], [-1, 0], [0, -1]] as const;
+      const into = entryDir.get(cell);
+      const order =
+        into === undefined ? [...baseDirs] : [baseDirs[into] as readonly [number, number], ...baseDirs.filter((_, i) => i !== into)];
+      for (const [dx, dy] of order) {
         const nx = x + dx;
         const ny = y + dy;
         if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
@@ -482,6 +492,7 @@ function carveTrailApproach(
         }
         if (hydro.waterKind[next] === WATER_NONE && hydro.isRiver[next] === 0) {
           previous.set(next, cell);
+          entryDir.set(next, baseDirs.findIndex((d) => d[0] === dx && d[1] === dy));
           queue.push(next);
         }
       }

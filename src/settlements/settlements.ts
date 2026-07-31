@@ -1280,6 +1280,9 @@ function carveApproach(
     }
   };
   const previous = new Map<number, number>();
+  // Lanes are not made diagonal either (b75 round-3 doctrine): expand the
+  // straight continuation first so first-discovery paths run in legs.
+  const entryDir = new Map<number, number>();
   const queue = [start];
   previous.set(start, -1);
   for (let head = 0; head < queue.length && head <= maxLength * 8; head += 1) {
@@ -1311,7 +1314,11 @@ function carveApproach(
     }
     const x = cell % width;
     const y = (cell - x) / width;
-    for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]] as const) {
+    const baseDirs = [[0, 1], [1, 0], [-1, 0], [0, -1]] as const;
+    const into = entryDir.get(cell);
+    const order =
+      into === undefined ? [...baseDirs] : [baseDirs[into] as readonly [number, number], ...baseDirs.filter((_, i) => i !== into)];
+    for (const [dx, dy] of order) {
       const next = cellAt(x + dx, y + dy, width, height);
       if (next === -1 || previous.has(next)) {
         continue;
@@ -1322,6 +1329,7 @@ function carveApproach(
         grid[next] === PACKED_ROAD;
       if (open && structureLayer[next] === 0) {
         previous.set(next, cell);
+        entryDir.set(next, baseDirs.findIndex((d) => d[0] === dx && d[1] === dy));
         queue.push(next);
       }
     }

@@ -726,9 +726,13 @@ export const GENERATOR_VERSION = "0.1.0";
  *     staircases. Every route in every world re-plans (flagged
  *     floods: canonical 33783 -> 33370, eight-holds 182709 -> 182665,
  *     wildshot 45040 -> 45063; the seed-24 gate fixture now seats
- *     THREE full-garrison gatehouses, re-pinned). The L-step and
- *     de-braid passes remain as safety nets for the residual
- *     terrain-forced corner steps.
+ *     THREE full-garrison gatehouses, re-pinned). The BFS carvers
+ *     (landmark approaches, house lanes, POI spurs) get direction
+ *     persistence — the straight continuation expands first, so
+ *     first-discovery paths run in legs (the lighthouse-approach
+ *     wedge, the designer's last sighting). The L-step and de-braid
+ *     passes remain as safety nets for the residual terrain-forced
+ *     corner steps.
  */
 export const GENERATOR_BEHAVIOR_VERSION = 75;
 
