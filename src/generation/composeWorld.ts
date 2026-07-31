@@ -256,11 +256,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   // kept itself clear. Empty for every style-free recipe.
   const laneCells: number[] = [];
   const quarters: SettlementQuarter[] = [];
-  // Behavior 74: settlement street bands are trail-class in the path layer
-  // (sl-0049) — this mask records which trail-band cells are STREETS so the
-  // lamp pass can light them without ever lamping a wilderness trail.
-  const bandLaneMask = new Uint8Array(width * height);
-  const settlementPlans = planSettlements(grid, structureLayer, fields, hydro, routesResult, config, planErrors, laneCells, quarters, bandLaneMask);
+  const settlementPlans = planSettlements(grid, structureLayer, fields, hydro, routesResult, config, planErrors, laneCells, quarters);
   const landmarkPlans = placeLandmarks(grid, structureLayer, routesResult.pathLayer, fields, hydro, routesResult, config, planErrors);
 
   // Country roads ride the band (behavior 72, style-gated on narrowStreets;
@@ -538,7 +534,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
   for (const plan of landmarkPlans) {
     entranceCells.push(plan.entranceY * width + plan.entranceX);
   }
-  const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config, farms, streetFordCells, laneCells, quarters, settlementPlans, bandLaneMask);
+  const decoration = decorateWorld(grid, structureLayer, hydro, routesResult, entranceCells, config, farms, streetFordCells, laneCells, quarters, settlementPlans);
 
   // Points of interest stamp after ambient decoration and overwrite it:
   // deliberate discoveries beat scattered flavor.
@@ -617,6 +613,77 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
         cursor = previous.get(cursor) as number;
       }
     }
+  }
+
+  // No pure diagonals (behavior 75; the "80" verdict, settled TF-side as
+  // writer work — the package's port-mask system is orthogonal-only, so
+  // two same-class band cells touching only at a corner each render a
+  // closed round stub and staircases become chains of loops). After EVERY
+  // band writer has run (routes, settlement lanes, landmark approaches,
+  // country necking, POI spurs), insert an L-step cell wherever a
+  // same-class diagonal pair has no shared orthogonal band cell:
+  // deterministic first-fit of the two candidate corners, only onto open
+  // already-walkable natural ground — never water, river, rock, swamp,
+  // cobble (the plaza), or any occupied cell — so walkability holds by
+  // construction. Runs after decoration: lamp seats never see L cells.
+  // Mixed-class joins stay as they are (the road-transition arc parks
+  // upstream, sl-0054 scope extension).
+  {
+    const pathLayer = routesResult.pathLayer;
+    const rockIdx = PALETTE_INDEX["terrain.rock"];
+    const swampIdx = PALETTE_INDEX["terrain.swamp"];
+    const cobbleIdx = PALETTE_INDEX["terrain.cobble"];
+    const deepIdx = PALETTE_INDEX["water.deep"];
+    const shallowIdx = PALETTE_INDEX["water.shallow"];
+    const canHostStep = (cell: number): boolean =>
+      pathLayer[cell] === 0 &&
+      hydro.waterKind[cell] === WATER_NONE &&
+      hydro.isRiver[cell] === 0 &&
+      structureLayer[cell] === 0 &&
+      decoration.propLayer[cell] === 0 &&
+      decoration.decalLayer[cell] === 0 &&
+      farms.fenceLayer[cell] === 0 &&
+      farms.cropLayer[cell] === 0 &&
+      farms.pierLayer[cell] === 0 &&
+      grid[cell] !== rockIdx &&
+      grid[cell] !== swampIdx &&
+      grid[cell] !== cobbleIdx &&
+      grid[cell] !== deepIdx &&
+      grid[cell] !== shallowIdx;
+    let inserted = 0;
+    let unresolved = 0;
+    for (let y = 0; y < height - 1; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const cell = y * width + x;
+        const cls = pathLayer[cell] as number;
+        if (cls === 0) continue;
+        for (const dx of [-1, 1] as const) {
+          const nx = x + dx;
+          if (nx < 0 || nx >= width) continue;
+          const diagonal = (y + 1) * width + nx;
+          if (pathLayer[diagonal] !== cls) continue;
+          const sideA = y * width + nx;
+          const sideB = (y + 1) * width + x;
+          if (pathLayer[sideA] === cls || pathLayer[sideB] === cls) continue;
+          if (canHostStep(sideA)) {
+            pathLayer[sideA] = cls;
+            inserted += 1;
+          } else if (canHostStep(sideB)) {
+            pathLayer[sideB] = cls;
+            inserted += 1;
+          } else {
+            // Both corners occupied/hostile: the pair keeps its two stubs
+            // (cosmetic only — never a traversal question; diagonal cells
+            // do not connect in the loader either direction). The b75 law
+            // test counts these on the shipped world so a regression is
+            // loud where it matters, without a new plumbing channel here.
+            unresolved += 1;
+          }
+        }
+      }
+    }
+    void inserted;
+    void unresolved;
   }
 
   // Lone-cobble cleanup (behavior 21): an approach or street stump with no

@@ -147,15 +147,19 @@ const DEEP = PALETTE_INDEX["water.deep"];
  * family. Since behavior 74 (the sl-0049 ruling) settlement-written lanes
  * no longer use this value. Exported for the lamp pass (behavior 61). */
 export const CITY_LANE = 2;
-/** Path-layer value for the TRAIL-class band: wilderness trails, and —
- * since behavior 74 — every settlement-written street surface (arms, the
- * city ring, house lanes, civic approaches, dock lanes). The designer
- * ruling (sl-0049): the road_network slab art read as "tiles connecting
- * houses"; the dirtpath band reads as actual roads. The through-route
- * keeps the road band (big roads stay as they are). Lamps cannot key on
- * this value (trails share it) — settlement writers record their lane
- * cells in a mask the lamp pass reads instead. */
+/** Path-layer value for the TRAIL-class band: wilderness trails (the
+ * dirtpath art). Behavior 74 briefly routed settlement streets here (the
+ * sl-0049 ruling era, before the package had street art); behavior 75
+ * moved them to STREET_BAND when the e2699cc cut shipped roadType 4. */
 export const TRAIL_BAND = 1;
+/** Path-layer value for the STREET-class band (behavior 75, sl-0053/
+ * sl-0055): every settlement-written street surface — arms, the city
+ * ring, house lanes, civic approaches, dock lanes — wears the package's
+ * 10px sett-paved "street" band (roadType 4, road palette, blends into
+ * cobble plazas by construction). The through-route keeps CITY_LANE and
+ * wilderness trails keep TRAIL_BAND. Lamps key on {CITY_LANE,
+ * STREET_BAND} — the b74 bandLaneMask workaround retired with this. */
+export const STREET_BAND = 3;
 const SHALLOW = PALETTE_INDEX["water.shallow"];
 
 export interface PlacedStructure {
@@ -208,11 +212,6 @@ export function planSettlements(
   errors: string[],
   laneCells: number[] = [],
   quarters: SettlementQuarter[] = [],
-  /** OUT (behavior 74): 1 where a settlement writer painted a street band
-   * (arms, ring, house lanes, civic approaches, dock lanes). Those cells
-   * carry TRAIL_BAND in the path layer — indistinguishable from wilderness
-   * trails by value — so the lamp pass lights streets off this mask. */
-  bandLaneMask: Uint8Array = new Uint8Array(fields.width * fields.height),
 ): SettlementPlan[] {
   const { width, height } = fields;
   const rules = config.settlements;
@@ -345,13 +344,11 @@ export function planSettlements(
           // the one-tile PATH BAND over natural ground — cobble is an area
           // material whose blob rendering reads two-three tiles wide however
           // few cells it covers (the round-7 verdict, screenshot-confirmed).
-          // Since behavior 74 the band is TRAIL class (sl-0049: the road
-          // slab art read as paving; dirtpath reads as an actual road).
+          // Street class since behavior 75 (the e2699cc sett band).
           // Without the style the arm keeps its classic two-cell cobble.
           if (isOpenLand(lane, grid, hydro)) {
             if (rules.narrowStreets) {
-              routes.pathLayer[lane] = TRAIL_BAND;
-              bandLaneMask[lane] = 1;
+              routes.pathLayer[lane] = STREET_BAND;
               // Behavior 71: arms grade rock (isOpenLand admits it).
               if (grid[lane] === ROCK) {
                 gradeRockCell(lane, grid, width, height);
@@ -381,9 +378,8 @@ export function planSettlements(
           const cell = cellAt(rx, ry, width, height);
           if (cell !== -1 && isOpenLand(cell, grid, hydro)) {
             if (rules.narrowStreets) {
-              // Trail-class since behavior 74 (the ring is a street).
-              routes.pathLayer[cell] = TRAIL_BAND;
-              bandLaneMask[cell] = 1;
+              // Street-class since behavior 75 (the ring is a street).
+              routes.pathLayer[cell] = STREET_BAND;
               // Behavior 71: the ring grades rock too.
               if (grid[cell] === ROCK) {
                 gradeRockCell(cell, grid, width, height);
@@ -501,7 +497,6 @@ export function planSettlements(
               ox + 1, oy + 2, grid, structureLayer, hydro, Math.max(approachBudget * 2, radius * 4), width, height,
               "solid", 0, wear, laneCells,
               rules.narrowStreets ? routes.pathLayer : null,
-            rules.narrowStreets ? bandLaneMask : null,
             );
             if (!connected) {
               for (let sy = 0; sy < 2; sy += 1) {
@@ -613,7 +608,6 @@ export function planSettlements(
             entranceX, entranceY, grid, structureLayer, hydro, approachBudget * 2, width, height,
             "solid", 0, wear, laneCells,
             rules.narrowStreets ? routes.pathLayer : null,
-            rules.narrowStreets ? bandLaneMask : null,
           );
           if (!connected) {
             for (let sy = 0; sy < fh; sy += 1) {
@@ -863,7 +857,6 @@ export function planSettlements(
             entranceX, entranceY, grid, structureLayer, hydro, approachBudget, width, height,
             laneMode, wornPermille, wear, laneCells,
             rules.narrowStreets ? routes.pathLayer : null,
-            rules.narrowStreets ? bandLaneMask : null,
           );
           for (let recorded = laneStart; recorded < laneCells.length; recorded += 1) {
             laneSet.add(laneCells[recorded] as number);
@@ -1217,10 +1210,8 @@ function carveApproach(
   laneCells: number[] | null = null,
   /** Line roads (behavior 56): paint the path band instead of cobble, and
    * count existing band cells as network so lanes chain into streets.
-   * Trail-class since behavior 74; painted cells are recorded in laneMask
-   * so the lamp pass can tell streets from wilderness trails. */
+   * Street-class since behavior 75 (the e2699cc sett band). */
   bandLanes: Uint8Array | null = null,
-  laneMask: Uint8Array | null = null,
 ): boolean {
   // Deterministic BFS to the nearest street (cobble or road). The
   // verification and rollback contract is identical in every mode; only
@@ -1269,10 +1260,7 @@ function carveApproach(
     }
     if (mode === "none") return;
     if (bandLanes !== null) {
-      bandLanes[target] = TRAIL_BAND;
-      if (laneMask !== null) {
-        laneMask[target] = 1;
-      }
+      bandLanes[target] = STREET_BAND;
       // Behavior 71: house lanes grade rock (solid mode paves whatever it
       // crosses, and a band over rock material would put the lane inside
       // the adapter's cliff relief).
@@ -1311,10 +1299,7 @@ function carveApproach(
       }
       if (mode !== "none") {
         if (bandLanes !== null) {
-          bandLanes[start] = TRAIL_BAND;
-          if (laneMask !== null) {
-            laneMask[start] = 1;
-          }
+          bandLanes[start] = STREET_BAND;
           if (grid[start] === ROCK) {
             gradeRockCell(start, grid, width, height);
           }

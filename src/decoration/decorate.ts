@@ -18,7 +18,7 @@ import { floorDiv } from "../core/coords.js";
 import { PALETTE_INDEX, WORLD_PALETTE } from "../regions/biomes.js";
 import { WATER_NONE, type HydrologyResult } from "../hydrology/hydrology.js";
 import type { RoutesResult } from "../routes/routes.js";
-import { CITY_LANE, type SettlementPlan, type SettlementQuarter } from "../settlements/settlements.js";
+import { CITY_LANE, STREET_BAND, type SettlementPlan, type SettlementQuarter } from "../settlements/settlements.js";
 import type { ResolvedWorldConfig } from "../recipe/compile.js";
 import type { FarmResult } from "../settlements/farms.js";
 
@@ -355,10 +355,6 @@ export function decorateWorld(
   laneCells: readonly number[] = [],
   quarters: readonly SettlementQuarter[] = [],
   settlements: readonly SettlementPlan[] = [],
-  /** Behavior 74: 1 where a settlement writer painted a street band. The
-   * band value alone can no longer tell streets (trail-class since the
-   * sl-0049 ruling) from wilderness trails — lamps read this mask. */
-  bandLaneMask: Uint8Array = new Uint8Array(0),
 ): DecorationResult {
   const { width, height } = config.world;
   const cellCount = width * height;
@@ -1049,10 +1045,10 @@ export function decorateWorld(
   //    Nth band cell tries to seat a lamp on an adjacent open ground cell,
   //    manhattan-spaced so rows read as placed, not scattered. Outposts
   //    stay dark; wilderness trails are never lamped. A street is a
-  //    road-class band cell (the through-route, CITY_LANE) or a recorded
-  //    settlement lane (bandLaneMask — trail-class in value since behavior
-  //    74, so the mask, not the value, is what separates streets from
-  //    trails). Style-free worlds write neither, so they stay untouched.
+  //    road-class band cell (the through-route, CITY_LANE) or a
+  //    street-class cell (STREET_BAND, behavior 75 — the value is
+  //    distinct again, so b74's bandLaneMask workaround retired).
+  //    Style-free worlds write neither, so they stay untouched.
   {
     const yardGuard = (cell: number): boolean =>
       structureLayer[cell] === 0 &&
@@ -1186,7 +1182,7 @@ export function decorateWorld(
           const cell = y * width + x;
           const isStreet =
             routesResult.pathLayer[cell] === CITY_LANE ||
-            (cell < bandLaneMask.length && bandLaneMask[cell] === 1);
+            routesResult.pathLayer[cell] === STREET_BAND;
           if (!isStreet) continue;
           bandSeen += 1;
           if (bandSeen % stride !== 0) continue;

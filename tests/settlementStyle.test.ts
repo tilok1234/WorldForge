@@ -675,20 +675,21 @@ describe("narrow streets (behavior 51)", () => {
     assert.ok(laneLamps > 0, "no street lamps beside settlement streets");
   });
 
-  it("settlement streets ride the trail band; the through-road keeps the road band (behavior 74)", () => {
-    // The sl-0049 ruling, option B: the surfaces CONNECTING HOUSES draw as
-    // the dirtpath band (trail class, value 1) so streets read as actual
-    // roads; the necked through-route inside the hold keeps the heavier
-    // road band (big roads stay as they are). Law asserted on a styled
-    // fixture: every road-class band cell within a settlement radius lies
-    // on the corridor centerline — no slab lanes remain — and trail-class
-    // street cells exist (the web still bands).
+  it("settlement streets wear the street band and no band steps diagonally (behavior 75)", () => {
+    // The sl-0053 re-judge on the e2699cc re-pin: the surfaces CONNECTING
+    // HOUSES draw as the STREET band (value 3, the package's 10px sett
+    // band); the necked through-route keeps the road band (2), wilderness
+    // trails keep dirtpath (1). Law asserted on a styled fixture: street
+    // cells exist, every road-class cell within a settlement radius lies
+    // on the corridor centerline, no street cells leak outside settlement
+    // reach, and NO same-class band pair touches only diagonally (the
+    // "80" verdict — the L-step pass owns every writer's output).
     const styled = compiled({
       ...BASE,
       settlementStyle: { growthPermille: 600, narrowStreets: true },
     });
     const b = generateWorldDetailed(styled.normalized, styled.config);
-    const { width } = styled.config.world;
+    const { width, height } = styled.config.world;
     const pathLayer = b.composed.routesResult.pathLayer;
     const centerline = b.composed.routesResult.corridorCenterline;
     let streetCells = 0;
@@ -701,13 +702,29 @@ describe("narrow streets (behavior 51)", () => {
           const y = plan.anchorY + dy;
           if (x < 0 || y < 0 || x >= width || y >= width) continue;
           const cell = y * width + x;
-          if (pathLayer[cell] === 1) streetCells += 1;
+          if (pathLayer[cell] === 3) streetCells += 1;
           if (pathLayer[cell] === 2 && !centerline.has(cell)) slabLanes += 1;
         }
       }
     }
-    assert.ok(streetCells > 0, "styled settlements carved no trail-band streets");
+    assert.ok(streetCells > 0, "styled settlements carved no street-band cells");
     assert.equal(slabLanes, 0, `${slabLanes} road-class lane cells off the corridor centerline`);
+
+    let diagonalPairs = 0;
+    for (let y = 0; y < height - 1; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const cls = pathLayer[y * width + x];
+        if (cls === 0) continue;
+        for (const dx of [-1, 1]) {
+          const nx = x + dx;
+          if (nx < 0 || nx >= width) continue;
+          if (pathLayer[(y + 1) * width + nx] !== cls) continue;
+          if (pathLayer[y * width + nx] === cls || pathLayer[(y + 1) * width + x] === cls) continue;
+          diagonalPairs += 1;
+        }
+      }
+    }
+    assert.equal(diagonalPairs, 0, `${diagonalPairs} same-class diagonal band pairs survived the L-step pass`);
   });
 
   it("necks through-roads to the centerline inside settlement bounds", () => {

@@ -110,7 +110,10 @@ export function validateArtifact(artifact: WorldArtifact, options: ValidationOpt
         // The 0..1 pin predated b57 and surfaced only on the FIRST styled
         // pack export — canonical, the only world ever packed before, is
         // style-free and carries no lane bands.
-        { name: "path", rows: chunk.layers.path, min: 0, max: 2 },
+        // 0 none / 1 trail / 2 road / 3 street (behavior 75, the e2699cc
+        // street band — the b70 ship-caught lesson: this pin must move
+        // WITH the vocabulary, never lag it).
+        { name: "path", rows: chunk.layers.path, min: 0, max: 3 },
         { name: "structure", rows: chunk.layers.structure, min: 0, max: artifact.structureTypes.length },
         { name: "prop", rows: chunk.layers.prop, min: 0, max: artifact.propTypes.length },
         { name: "moss", rows: chunk.layers.moss, min: 0, max: 1 },

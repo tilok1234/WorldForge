@@ -685,8 +685,35 @@ export const GENERATOR_VERSION = "0.1.0";
  *     the designer's improved road_network art ships upstream ("until
  *     i get to improve the tiles"), re-pin and re-judge — the lane
  *     class is one constant per writer.
+ * 75: streets wear the street band + no pure diagonals
+ *     (settlements.plans 32, adapter.tileforge 8; the promised b74
+ *     re-judge, executed against the e2699cc re-pin — sl-0053 resumed,
+ *     sl-0055 delivered roadType 4 "street", a 10px sett-paved town
+ *     band wearing the road palette). ONE CONSTANT PER WRITER, as
+ *     recorded: every settlement-written street surface moves
+ *     TRAIL_BAND -> STREET_BAND (path value 3; validator range 0..3 —
+ *     the pin moves WITH the vocabulary); through-routes keep the road
+ *     band (2), wilderness trails keep dirtpath (1), plaza cobble
+ *     untouched (its keep/convert still parks). Lamps re-key on the
+ *     VALUES {CITY_LANE, STREET_BAND} — the street value is distinct
+ *     again, so b74's bandLaneMask workaround RETIRES (same
+ *     eligibility set, seats reproduce). DIAGONAL L-STEPS (the "80"
+ *     verdict, settled TF-side as writer work — the port-mask system
+ *     is orthogonal-only): a normalization pass after ALL band
+ *     writers (settlement lanes, landmark approaches, country
+ *     necking, POI spurs) inserts an L-step cell wherever two
+ *     same-class band cells touch only diagonally — deterministic
+ *     first-fit of the two shared orthogonal positions, only onto
+ *     open already-walkable natural ground (never water/river/rock/
+ *     cobble/occupied), so walkability holds by construction and the
+ *     plaza never gains band cells. Runs AFTER decoration, so lamp
+ *     seats never see L cells. Mixed-class diagonal joins are left
+ *     alone (the road-transition arc is parked upstream, sl-0054
+ *     scope extension). Style-free worlds write no street bands and
+ *     keep their trails' L-steps only where trails themselves
+ *     staircase.
  */
-export const GENERATOR_BEHAVIOR_VERSION = 74;
+export const GENERATOR_BEHAVIOR_VERSION = 75;
 
 /** Behavior version of the WorldRecipe -> ResolvedWorldConfig compiler. */
 // 33 belongs to behavior 54's roadReusePermille shape change (bumped late —
@@ -701,14 +728,14 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
   "macro.biomes": 7,
   "hydrology.water": 5,
   "routes.graph": 18,
-  "settlements.plans": 31,
+  "settlements.plans": 32,
   "landmarks.stamps": 8,
   "terrain.texture": 1,
   "decoration.props": 16,
   "decoration.pois": 19,
   "density.presets": 1,
   "authoring.overrides": 1,
-  "adapter.tileforge": 7,
+  "adapter.tileforge": 8,
 };
 
 /**
@@ -723,5 +750,7 @@ export const RULE_PACK_VERSIONS: { readonly [name: string]: number } = {
  * 6: two-tile cascades — the plunge cell below each lip falls too.
  * 7: city-lane band mapping (behavior 57) — path-layer value 2 renders as
  * the package's heavier "road" band; wilderness trails (1) keep dirtpath.
+ * 8: street band mapping (behavior 75, the e2699cc cut) — path-layer value
+ * 3 renders as the package's "street" sett band (roadType 4).
  */
-export const TILEFORGE_ADAPTER_VERSION = 7;
+export const TILEFORGE_ADAPTER_VERSION = 8;

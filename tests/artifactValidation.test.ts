@@ -55,19 +55,22 @@ describe("artifact validation", () => {
     assert.equal(validateArtifact(outOfRange as WorldArtifact).status, "fail");
   });
 
-  it("accepts the b57 city-lane path value and refuses beyond it", () => {
+  it("accepts every band class through street and refuses beyond it", () => {
     // The 0..1 pin predated behavior 57 and refused the FIRST styled pack
-    // export (path 2 = city lane band); canonical, the only world packed
-    // before, is style-free and never carried one.
-    const laned = corruptible(tinyArtifact());
-    laned.chunks[0].layers.path[0][0] = 2;
-    assert.equal(validateArtifact(laned as WorldArtifact).status, "pass");
+    // export (path 2 = city lane band); the 0..2 pin would have refused the
+    // FIRST street pack the same way (behavior 75, path 3 = street band).
+    // The b70 lesson: this pin moves WITH the vocabulary, never lags it.
+    for (const value of [1, 2, 3]) {
+      const banded = corruptible(tinyArtifact());
+      banded.chunks[0].layers.path[0][0] = value;
+      assert.equal(validateArtifact(banded as WorldArtifact).status, "pass", `path value ${value}`);
+    }
 
     const beyond = corruptible(tinyArtifact());
-    beyond.chunks[0].layers.path[0][0] = 3;
+    beyond.chunks[0].layers.path[0][0] = 4;
     const report = validateArtifact(beyond as WorldArtifact);
     assert.equal(report.status, "fail");
-    assert.ok(report.errors.some((error) => error.includes("path value 3")));
+    assert.ok(report.errors.some((error) => error.includes("path value 4")));
   });
 
   it("fails on malformed identity hashes and empty palettes", () => {
