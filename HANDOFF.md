@@ -1,72 +1,53 @@
-# WorldForge — session handoff (2026-07-31: b74 shipped — banded settlement streets + farming towns; intake pending)
+# WorldForge — session handoff (2026-07-31 late: b75 shipped — street band + no-diagonal roads; intake pending with TWO hard requirements)
 
 > **RESUME HERE. THE WILDSHOT OVERWORLD IS RELEASED AT
-> wildshot-overworld-pack-dusk@b74** (delivery sl-0051 OPEN, game-side
-> intake pending: sourceCommit 1ca3af8, manifestSha bef253c7…, zipSha
-> efebe8db…, pack flood 45137, spawn [109,182]; supersedes @b72 which
-> the game intook at sl-0043). RECIPE CHANGED this delivery
-> (recipeSha c756cc8d…, approve-recipe baseline re-recorded +
-> committed): W5 detail round pins + settlement budget 7. Three
-> designer-approved arcs aboard: (1) W5 — farming town near-pinned to
-> the heartland ([91,110]), ruined_city off the north edge ([149,18],
-> spine snowfield), world_tree to the old forest ([41,42]); found +
-> fixed by relocation: the shipped b70-b72 worlds' world_tree BODY
-> and lighthouse TOWER never placed (all 3 dressing spots refused —
-> severs-through-trail guard / harbor-town lanes; both monuments
-> stand now; the silent-refusal GUARD is an open task chip). (2) b73
-> farming holds farm — tier plots (city 6/town 4/outpost 2,
-> position-hashed so grown caps APPEND), farmstead pair (farmhouse+
-> barn) anchors the farm quarter, agricultural fill; all
-> farming-purpose-keyed. (3) b74 settlement streets ride the TRAIL
-> band (sl-0049 ruling, option B from the sl-0050 A/B round: "lets
-> try b until i get to improve the tiels"): the road_network slab art
-> read as "tiles connecting houses" — now every settlement-WRITTEN
-> street surface (arms, ring, house lanes, civic approaches, dock
-> lanes) writes value 1 (dirtpath band); the necked through-route
-> keeps value 2 (road band), country + plaza untouched (plaza
-> keep/convert = pending designer render call). Lamps re-keyed onto
-> bandLaneMask — seats byte-identical, ALL floods INVARIANT
-> (canonical 33783, eight-holds 182709 — note: the recorded 182736
-> was stale, b72 had moved it unrecorded — wildshot world 45040,
-> TS=Godot everywhere). Behavior 74, settlements.plans 31, 251
-> tests. Releases @b65 (canonical transport), @b70-@b72 immutable
-> archives; @b74 = THE intake target.
+> wildshot-overworld-pack-dusk@b75** (delivery sl-0060 OPEN, game-side
+> intake pending: sourceCommit a262620, manifestSha 77f975e6…, zipSha
+> 25f9d5c1…, pack flood 45156, spawn [109,182]; supersedes @b74 which
+> the game intook at sl-0052; recipe UNCHANGED c756cc8d — the delta is
+> all generator-side). TWO HARD INTAKE REQUIREMENTS in the delivery
+> line: (1) the game MUST bundle the tileforge-dusk-complete@e2699cc
+> package (zipSha 942ecadb…) into assets/tileforge — the pack pins
+> tileforgePackageId dusk-e2699cc-seed103991 and world_builder refuses
+> mismatched identity; (2) path contract is 0..3 now — value 3 =
+> street (1466 cells); any 0..2 pin refuses the pack.
 >
-> SESSION LEDGER (2026-07-31, one session): sl-0035 verified RESOLVED
-> (game intook b72 at sl-0043; world_filler adopted at sl-0040; active
-> ecosystem arc = world_filler directing the overworld, sl-0041 —
-> should re-pin to b74 on its own schedule, noted in sl-0051); W5
-> detail round (commit a2a652c) -> approved "rest is very cool"; b73
-> farming (a96ea46) -> approved; sl-0049 banded-streets ask ->
-> diagnosis INVERTED planning's framing (streets already banded; the
-> art is the issue) -> A/B round logged sl-0050 -> ruled B -> b74
-> (d9e5313) -> baseline (1ca3af8) -> gated export auto-released @b74
-> -> delivery sl-0051. Upstream ask REAFFIRMED: improved road_network
-> art (designer: "until i get to improve the tiels") — on shipping,
-> re-pin + re-judge the street class (one constant per writer,
-> GENERATION_RULES notes the path).
+> SESSION LEDGER (2026-07-31 evening, the sl-0053 arc, designer-ruled
+> at every step): TF shipped its first gated cut e2699cc (sl-0055:
+> roadType 4 "street" 10px sett band, roadTypesLegacy gone) → RE-PIN
+> dusk-e2699cc-seed103991 (dadcb20; tiny golden byte-identical minus
+> dependency identity = zero content drift; old dusk package kept as
+> b65–b74 reference) → behavior 75 in verdict rounds: STREET CLASS
+> (path 3 → roadType 4, adapter 8, validator 0..3, lamps re-key on
+> values {2,3}, b74 bandLaneMask retired) → "roads are not made
+> diagonal" (designer root cause): TURN-COST ROUTING (routes.graph 19,
+> dijkstra over cell+direction states, turn = 4×stepCost) + direction
+> persistence in all three BFS carvers (landmark approaches, house
+> lanes, POI spurs) + DE-BRAID (trail-hug merge, b72 flank-line merge,
+> junction-remnant repaint, reconnect, 2×2 thinning LAST — ordering
+> found by instrumentation: the reconnect can complete a square after
+> an early thinning looks). EVERY ROUTE IN EVERY WORLD RE-PLANNED
+> (biggest flagged sweep since b47): canonical 33783→33386,
+> eight-holds 182709→182666, wildshot world 45063 / pack 45156, all
+> TS=Godot 0 errors; seed-24 gate fixture now THREE full-garrison
+> gatehouses (re-pinned 6/3/3). Designer look-approval: "nice ye that
+> is better!". Behavior 75, settlements.plans 32, routes.graph 19,
+> adapter.tileforge 8, 251 tests. Commits 300524e→a262620.
 >
-> DOCS: GENERATION_RULES road doctrine extended to the b74 class
-> split (value 2 = road class: country + through-routes; value 1 =
-> trail class: wilderness trails + settlement streets; lamp mask law).
->
-> OPEN, in rough order: (1) game intake of @b74 (game-side, sl-0051;
-> path 0/1/2 unchanged, census shifts ~1400 cells 2->1 — the
-> value-agnostic contract needs zero game code change); (2)
-> world_filler re-pin b72->b74 (their schedule, sl-0041 direction
-> work in flight); (3) the tops+ramps walkability-CONTRACT ruling
-> (designer clock, unchanged); (4) plaza cobble keep/convert +
-> possible braid-wart round (parallel doubled lanes render
-> ladder-like columns — b54-style trunk sharing at lane scale, noted
-> in sl-0050); (5) landmark-centerpiece silent-refusal guard (task
-> chip task_962526be: compose gate or fallback ring, behavior bump +
-> library sweep); (6) scenery loop resumable (battlefield tone-gated
-> §4); more world detail rounds welcome (farm-more levers recorded:
-> town cap 5-6, plot dims, hay dressing). Planning sync_log has
-> on-disk appends sl-0050 + sl-0051 — planning commits its own file.
-> The viewer may be running on :8787 (launch.json "viewer");
-> regenerated galleries: wildshot-overworld, small-cold-coastal,
-> the-eight-holds, dust-sea all at b73/b74 states.
+> OPEN, in rough order: (1) game intake of @b75 (game-side, sl-0060 —
+> mind the two hard requirements above; porosity re-pin expected from
+> re-routed approaches, account every cell per sl-0052 precedent);
+> (2) world_filler re-pin (now two world versions + one package
+> version behind; sl-0041 direction work in flight); (3) TF scope
+> extension continues TF-side (road-type zoo + road transitions,
+> sl-0054 16:35Z — WF-side transition work returns here if ruled);
+> (4) the tops+ramps walkability-CONTRACT ruling (designer clock,
+> unchanged); (5) plaza cobble keep/convert still parks; (6)
+> landmark-centerpiece guard (task chip task_962526be); scenery loop
+> resumable; farm-more levers recorded. Planning sync_log has on-disk
+> appends sl-0057 + sl-0060 (earlier ones swept) — planning commits
+> its own file. Viewer on :8787 serves the b75 galleries
+> (wildshot/canonical/eight-holds all regenerated).
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
