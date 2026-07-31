@@ -1,53 +1,72 @@
-# WorldForge — session handoff (2026-07-30 close: world live at b72, game importing)
+# WorldForge — session handoff (2026-07-31: b74 shipped — banded settlement streets + farming towns; intake pending)
 
-> **RESUME HERE. THE WILDSHOT OVERWORLD IS LIVE AT
-> wildshot-overworld-pack-dusk@b72** and the designer is importing it
-> into the game right now (delivery sl-0035: sourceCommit bbc10cd,
-> manifestSha ecdde8db…, zipSha 6cd46753…, pack flood 45202, spawn
-> [109,182]). b72 = country roads ride the band (designer-approved
-> "cool"): every road in a styled world is a one-tile band line —
-> city lanes, country highways (both path value 2), wilderness trails
-> (value 1); corridors still carve as material and the composer necks
-> them to centerline, restores flanks, bands trail-junction flanks,
-> grades rock (b71). Canonical 33783 byte-invariant. Releases @b65
-> (canonical transport, sl-0004 pending), @b70, @b71 remain immutable
-> on GitHub; @b72 is the intake target. IMPORTER WARNING (sl-0027/34/
-> 35): path values are 0/1/2 — a 0..1 pin refuses the pack; b72 puts
-> far more 2s in (country roads).
+> **RESUME HERE. THE WILDSHOT OVERWORLD IS RELEASED AT
+> wildshot-overworld-pack-dusk@b74** (delivery sl-0051 OPEN, game-side
+> intake pending: sourceCommit 1ca3af8, manifestSha bef253c7…, zipSha
+> efebe8db…, pack flood 45137, spawn [109,182]; supersedes @b72 which
+> the game intook at sl-0043). RECIPE CHANGED this delivery
+> (recipeSha c756cc8d…, approve-recipe baseline re-recorded +
+> committed): W5 detail round pins + settlement budget 7. Three
+> designer-approved arcs aboard: (1) W5 — farming town near-pinned to
+> the heartland ([91,110]), ruined_city off the north edge ([149,18],
+> spine snowfield), world_tree to the old forest ([41,42]); found +
+> fixed by relocation: the shipped b70-b72 worlds' world_tree BODY
+> and lighthouse TOWER never placed (all 3 dressing spots refused —
+> severs-through-trail guard / harbor-town lanes; both monuments
+> stand now; the silent-refusal GUARD is an open task chip). (2) b73
+> farming holds farm — tier plots (city 6/town 4/outpost 2,
+> position-hashed so grown caps APPEND), farmstead pair (farmhouse+
+> barn) anchors the farm quarter, agricultural fill; all
+> farming-purpose-keyed. (3) b74 settlement streets ride the TRAIL
+> band (sl-0049 ruling, option B from the sl-0050 A/B round: "lets
+> try b until i get to improve the tiels"): the road_network slab art
+> read as "tiles connecting houses" — now every settlement-WRITTEN
+> street surface (arms, ring, house lanes, civic approaches, dock
+> lanes) writes value 1 (dirtpath band); the necked through-route
+> keeps value 2 (road band), country + plaza untouched (plaza
+> keep/convert = pending designer render call). Lamps re-keyed onto
+> bandLaneMask — seats byte-identical, ALL floods INVARIANT
+> (canonical 33783, eight-holds 182709 — note: the recorded 182736
+> was stale, b72 had moved it unrecorded — wildshot world 45040,
+> TS=Godot everywhere). Behavior 74, settlements.plans 31, 251
+> tests. Releases @b65 (canonical transport), @b70-@b72 immutable
+> archives; @b74 = THE intake target.
 >
-> SESSION LEDGER (2026-07-30, one continuous session): doc 18
-> absorbed (publish gate + auto-released exports; accidental @b65
-> RULED KEEP); scenery rounds 18-22 ratified (b66 gate garrisons, b67
-> orchards, b68 entrances-follow-the-road, b69 logging camp, b70
-> shipwreck cove — ELEVEN compositions total, loop now PAUSED,
-> leaders in docs/SCENERY_COMPOSITIONS.md §3); the WORLD ARC (drafts
-> W1-W4 -> seed 2008 baselined -> shipped @b70); ship-caught
-> validator fix (path 0..2); cliff diagnosis sl-0030 (city carvers
-> never graded rock, ramps never existed, two-wide dismissed on
-> timeline) -> b71 grading fix (sl-0032 GO, delivery sl-0034) -> b72
-> country bands (sl-0035). Behavior 72, routes.graph 18,
-> settlements.plans 29, landmarks.stamps 8, decoration.pois 19,
-> decoration.props 16, 249 tests green.
+> SESSION LEDGER (2026-07-31, one session): sl-0035 verified RESOLVED
+> (game intook b72 at sl-0043; world_filler adopted at sl-0040; active
+> ecosystem arc = world_filler directing the overworld, sl-0041 —
+> should re-pin to b74 on its own schedule, noted in sl-0051); W5
+> detail round (commit a2a652c) -> approved "rest is very cool"; b73
+> farming (a96ea46) -> approved; sl-0049 banded-streets ask ->
+> diagnosis INVERTED planning's framing (streets already banded; the
+> art is the issue) -> A/B round logged sl-0050 -> ruled B -> b74
+> (d9e5313) -> baseline (1ca3af8) -> gated export auto-released @b74
+> -> delivery sl-0051. Upstream ask REAFFIRMED: improved road_network
+> art (designer: "until i get to improve the tiels") — on shipping,
+> re-pin + re-judge the street class (one constant per writer,
+> GENERATION_RULES notes the path).
 >
-> DOCS PASS (this close): docs/GENERATION_RULES.md road doctrine
-> rewritten to current law (band lineage b56/57/72; the 07-26
-> corridor MUSTs were stale); docs/SCENERY_COMPOSITIONS.md ramps
-> claim corrected (ramp layer never written — sl-0030);
-> docs/GAME_INTEGRATION_PLAN.md §3.4 updated to as-built (publish
-> gate flags + doc-18 release transport + importer path note).
+> DOCS: GENERATION_RULES road doctrine extended to the b74 class
+> split (value 2 = road class: country + through-routes; value 1 =
+> trail class: wilderness trails + settlement streets; lamp mask law).
 >
-> OPEN, in rough order: (1) game intake of @b72 (game-side; sl-0035);
-> (2) the tops+ramps walkability-CONTRACT ruling (designer clock;
-> tops are blocked, ramps unplaced — a ruled arc moves pack, game,
-> world_filler together; TileForge forward-guard rider: never stop
-> exporting road/ruinedroad/ramp families); (3) world detail rounds
-> parked (spread ruined_city+world_tree off the north edge, add a
-> farming settlement; recipeSha changes -> re-record baseline); (4)
-> scenery loop resumable (battlefield still tone-gated on §4); (5)
-> planning sync_log has uncommitted on-disk appends (sl-0027, 0030,
-> 0034, 0035) — planning commits its own file; world_filler sl-0026
-> paste PARKED (never with WF). The viewer server was STOPPED at
-> session close (relaunch: preview/launch.json "viewer", :8787).
+> OPEN, in rough order: (1) game intake of @b74 (game-side, sl-0051;
+> path 0/1/2 unchanged, census shifts ~1400 cells 2->1 — the
+> value-agnostic contract needs zero game code change); (2)
+> world_filler re-pin b72->b74 (their schedule, sl-0041 direction
+> work in flight); (3) the tops+ramps walkability-CONTRACT ruling
+> (designer clock, unchanged); (4) plaza cobble keep/convert +
+> possible braid-wart round (parallel doubled lanes render
+> ladder-like columns — b54-style trunk sharing at lane scale, noted
+> in sl-0050); (5) landmark-centerpiece silent-refusal guard (task
+> chip task_962526be: compose gate or fallback ring, behavior bump +
+> library sweep); (6) scenery loop resumable (battlefield tone-gated
+> §4); more world detail rounds welcome (farm-more levers recorded:
+> town cap 5-6, plot dims, hay dressing). Planning sync_log has
+> on-disk appends sl-0050 + sl-0051 — planning commits its own file.
+> The viewer may be running on :8787 (launch.json "viewer");
+> regenerated galleries: wildshot-overworld, small-cold-coastal,
+> the-eight-holds, dust-sea all at b73/b74 states.
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the
