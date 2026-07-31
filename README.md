@@ -77,14 +77,18 @@ policy.
 
 ## Project status
 
-**Milestones W0–W6 complete and approved; W7 (Godot vertical slice) and W8
-(TypeScript consumer) functionally complete — both entry-gate proofs, the §4
-acceptance test, a streamed playable Godot world, a public TypeScript loader
-with cell-exact cross-consumer walkability parity, and the read-only viewer
-running on that loader. Worlds carry forests, varied settlements with plaza
-fountains, farms, piers, beaches, and stream fords. Final visual baseline
-approval and W9 (AI authoring workflow) remain; `HANDOFF.md` carries live
-session state.**
+**All planned milestones (W0–W9) are complete and the generator is in
+production for the Wildshot game: the seed-2008 wildshot overworld ships as
+versioned game-pack releases through a gated publish lane (doc 18) and the
+game intakes them by tag + hash verification. Current state (2026-07-31):
+behavior 76, TileForge adapter 9, pinned package dusk-9b8b2a2-seed103991
+(roadTypes 1–8 + hand-authored road-joint transitions), path-layer
+vocabulary 0..3 (trail / road / street bands), the standing no-diagonal-
+roads rule (sl-0059), designer-approved settlement street webs, farming
+towns, and eleven ratified scenery compositions. Both consumer lanes (Godot
++ TypeScript loader) verify cell-exact walkability parity on every release.
+`HANDOFF.md` carries live session state — its top pointer is the resume
+authority.**
 
 The intended first release is a small finite seeded world that:
 
