@@ -294,7 +294,7 @@ const PLACEMENT_GUARDED = new Set<string>([
 ]);
 
 /** Two-part canopy species (§2.10): skip when a structure sits above. */
-const TWO_PART = new Set<string>([
+export const TWO_PART_KEYS = new Set<string>([
   "prop.oak", "prop.birch", "prop.pine", "prop.willow", "prop.dead_tree",
   "prop.fruit_tree", "prop.pillar", "prop.giant_shroom",
 ]);
@@ -434,6 +434,18 @@ export interface DecorationResult {
   readonly tallGrassLayer: Uint8Array;
   /** Row-major; index + 1 into DECAL_TYPES, 0 = none. */
   readonly decalLayer: Uint8Array;
+  /**
+   * Row-major 0/1: prop cells the WILDERNESS scatter writers placed
+   * (forest roll, flat scatter, character zones) — the population the
+   * behavior-78 walkable-woods re-spacing governs. Authored placements
+   * (POIs, farm pieces, vignettes, furniture) never set it, and every
+   * later writer that clears or overwrites a prop clears it too.
+   */
+  readonly wildernessProps: Uint8Array;
+  /** Row-major 0/1: ground decoration must keep off (exported for respace). */
+  readonly protectedCells: Uint8Array;
+  /** Row-major 0/1: street-ford cells (exported for respace). */
+  readonly fordCells: Uint8Array;
   readonly propCount: number;
   readonly decalCount: number;
   readonly overlayCount: number;
@@ -484,9 +496,14 @@ export function decorateWorld(
   const mossLayer = new Uint8Array(cellCount);
   const tallGrassLayer = new Uint8Array(cellCount);
   const decalLayer = new Uint8Array(cellCount);
+  const wildernessProps = new Uint8Array(cellCount);
   const density = config.decoration.densityPermille;
   if (density === 0) {
-    return { propLayer, mossLayer, tallGrassLayer, decalLayer, propCount: 0, decalCount: 0, overlayCount: 0 };
+    return {
+      propLayer, mossLayer, tallGrassLayer, decalLayer, wildernessProps,
+      protectedCells: new Uint8Array(cellCount), fordCells: new Uint8Array(cellCount),
+      propCount: 0, decalCount: 0, overlayCount: 0,
+    };
   }
 
   const seed = config.seed;
@@ -596,7 +613,7 @@ export function decorateWorld(
   const place = (index: number, key: (typeof DECOR_TYPES)[number], x: number, y: number): boolean => {
     if (propLayer[index] !== 0) return false;
     if (PLACEMENT_GUARDED.has(key) && (nearStructure(index) || fordCells[index] === 1)) return false;
-    if (TWO_PART.has(key) && y > 0 && structureLayer[index - width] !== 0) return false;
+    if (TWO_PART_KEYS.has(key) && y > 0 && structureLayer[index - width] !== 0) return false;
     propLayer[index] = typeIndex.get(key) as number;
     return true;
   };
@@ -630,6 +647,7 @@ export function decorateWorld(
           const pick = forestRoll.weightedPickAt(x, y, forest.map((s) => s.weight), 1);
           if (place(index, (forest[pick] as SpeciesWeight).key, x, y)) {
             propCount += 1;
+            wildernessProps[index] = 1;
             continue;
           }
         }
@@ -643,6 +661,7 @@ export function decorateWorld(
           const pick = scatterRoll.weightedPickAt(x, y, scatter.map((s) => s.weight), 1);
           if (place(index, (scatter[pick] as SpeciesWeight).key, x, y)) {
             propCount += 1;
+            wildernessProps[index] = 1;
           }
         }
       }
@@ -1044,10 +1063,14 @@ export function decorateWorld(
           // The zone replaces ambient decoration outright.
           propLayer[index] = 0;
           decalLayer[index] = 0;
+          wildernessProps[index] = 0;
           if (zones.permilleAt(x, y, 5) < kind.density) {
             const pick = zones.weightedPickAt(x, y, weights, 6);
             const key = (kind.species[pick] as SpeciesWeight).key;
-            if (place(index, key, x, y)) propCount += 1;
+            if (place(index, key, x, y)) {
+              propCount += 1;
+              wildernessProps[index] = 1;
+            }
           } else if (kind.decal !== undefined && zones.permilleAt(x, y, 7) < kind.decal.permille) {
             decalLayer[index] = decalIndex.get(kind.decal.key) as number;
             decalCount += 1;
@@ -1334,5 +1357,8 @@ export function decorateWorld(
       }
     }
   }
-  return { propLayer, mossLayer, tallGrassLayer, decalLayer, propCount, decalCount, overlayCount };
+  return {
+    propLayer, mossLayer, tallGrassLayer, decalLayer, wildernessProps,
+    protectedCells, fordCells, propCount, decalCount, overlayCount,
+  };
 }

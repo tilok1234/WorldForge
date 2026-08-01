@@ -969,6 +969,15 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     }
   }
 
+  // NOTE (2026-08-01, sl-0075 closed SUPERSEDED): the walkable-woods
+  // re-spacing pass was built, validated, designer-render-approved, then
+  // PARKED UNRELEASED the same day — the ruling moved: prop composition
+  // is art direction and ships as authored; navigation through prop
+  // fields is solved game-side (art-matched prop collision, sl-0078).
+  // The pass lives dormant in src/decoration/respace.ts (a possible
+  // future designer-OPT-IN art tool); it is deliberately NOT called
+  // here, so generation is byte-identical to behavior 77.
+
   // Authored cell overrides (behavior 36): the designer's spot decisions,
   // applied last so they win over every procedural pass, before validation
   // and resolution so every validator still judges the final world. Water
@@ -981,6 +990,7 @@ export function composeWorld(config: ResolvedWorldConfig): ComposedWorld {
     }
     if (override.clearProp) {
       decoration.propLayer[cell] = 0;
+      decoration.wildernessProps[cell] = 0;
     }
     if (override.clearDecal) {
       decoration.decalLayer[cell] = 0;

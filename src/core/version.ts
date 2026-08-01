@@ -768,6 +768,14 @@ export const GENERATOR_VERSION = "0.1.0";
  *     4158 converted debris cells + 1531 unlocked pocket cells the
  *     debris had sealed), wildshot 45063 -> 46391 (+1328: 903
  *     converted + 425 unlocked). TS = Godot on all three.
+ *     [The walkable-woods re-spacing pass built for planning sl-0075
+ *     was designer-render-approved, then PARKED UNRELEASED the same
+ *     day (sl-0075 closed superseded: composition is art direction,
+ *     the navigation fix moved game-side — art-matched prop
+ *     collision, sl-0078). It never shipped as a behavior; the
+ *     number 78 stays free. The dormant pass and its tests live in
+ *     src/decoration/respace.ts as possible future designer-opt-in
+ *     art tooling.]
  */
 export const GENERATOR_BEHAVIOR_VERSION = 77;
 

@@ -199,6 +199,15 @@ hand-authored road-joint transitions. Current law:
 - Each prop species MUST have a named deterministic channel.
 - Prop placement MUST honor substrate, spacing, footprint, and blocking rules.
 - Blocking props MUST NOT occupy protected navigation cells.
+- PROP COMPOSITION IS ART DIRECTION (sl-0075 closed SUPERSEDED,
+  2026-08-01): generated prop fields ship AS AUTHORED — WorldForge
+  performs no re-spacing, thinning, or porosity editing of the
+  composition; navigation through prop fields is solved GAME-SIDE
+  (art-matched prop collision, sl-0078). The fully-built walkable-woods
+  re-spacing pass is archived dormant at src/decoration/respace.ts
+  (designer-render-approved before the park; a possible future
+  designer-OPT-IN art tool) — wiring it into generation is a designer
+  decision, never a refactor.
 - WALKABILITY CLASSES — STANDING RULE (behavior 77, planning sl-0063,
   designer: keep the density, convert instead of thin): every prop species
   carries exactly one class in PROP_WALKABILITY. CARPET ground clutter

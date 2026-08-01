@@ -1,73 +1,60 @@
-# WorldForge — session handoff (2026-08-01: b77 shipped — prop walkability classes, sl-0063 executed; b77 is THE next intake)
+# WorldForge — session handoff (2026-08-01 later: walkable-woods PARKED unreleased — sl-0075 closed superseded; b77 remains the released truth)
 
-> **RESUME HERE. THE WILDSHOT OVERWORLD IS RELEASED AT
-> wildshot-overworld-pack-dusk@b77** (delivery sl-0066 OPEN:
-> sourceCommit 1a20bd2, manifestSha 5166341a…, zipSha c9083012…, pack
-> flood 46493, spawn [109,182]). The game INTOOK b76 (sl-0064
-> resolved, 2026-07-31 night — joints render end-to-end, b74
-> superseded in place), so b77 is a clean NEXT intake, no
-> supersession. B77 = the sl-0063 walkability conversion ONLY: every
-> prop species classed carpet / canopy / solid in decorate's
-> PROP_WALKABILITY; four CARPET conversions against the package's
-> walkable:false (stump, fallen_log, bone_pile, loot_pile — the
-> pile/debris silhouettes, art-judged per CORE-32; the pinned
-> divergence list IS the ruling); CANOPY = the package's nine
-> two-part species (trunk cell blocks, _over crown never did); SOLID
-> = everything that visibly reads as a blocker (boulders stay solid
-> per the ask). Placement guards FROZEN at the b76 roster → every
-> prop layer byte-identical, canonical + wildshot renders
-> byte-identical (density kept, proven). INTAKE REQUIREMENTS
-> (sl-0066): (1) same dusk-9b8b2a2-seed103991 pin the game already
-> bundles (sl-0064's resolve-by-the-pack's-pin holds, zero TF work);
-> (2) path contract 0..3 unchanged; (3) THE ONE GAME-SIDE CHECK: the
-> game must render the pack tmj's props-overhang layer ABOVE the
-> player (tmj layer order) or walk-under canopy reads as standing on
-> the crown; (4) porosity/diag re-pins expected DELIBERATELY
-> (sl-0052 precedent) — ~903 prop cells newly walk in-pack, typed by
-> species in the b77 commit.
+> **RESUME HERE. THE WILDSHOT OVERWORLD REMAINS RELEASED AND INTAKEN
+> AT wildshot-overworld-pack-dusk@b77** (delivery sl-0066 executed by
+> the game as intake sl-0067; sourceCommit 1a20bd2, manifestSha
+> 5166341a…, zipSha c9083012…, pack flood 46493, spawn [109,182]).
+> Behavior is **77**; THE NUMBER 78 IS FREE — nothing new is
+> released, and the generator output is BYTE-IDENTICAL to the b77
+> commit (goldens diff-empty; canonical/eight-holds/wildshot
+> galleries regenerated and hash-equal to their b77 renders; wildshot
+> world flood back at 46391 both consumers).
 >
-> FLOODS (every cell typed, TS = Godot, 0 errors, 257 tests):
-> canonical 33386 → 34387 (+1001 = 692 converted debris + 309
-> unlocked; the b75 changelog's 33370 was a STALE mid-arc number —
-> re-measured on byte-identical world bytes with the true b76
-> loader), the-eight-holds 182666 → 188355 (+5689 = 4158 converted +
-> 1531 unlocked pocket cells the debris had sealed), wildshot world
-> 45063 → 46391 (+1328 = 903 + 425), pack 45156 → 46493. The
-> unlocked-pocket counts ARE the designer's "getting blocked" made
-> visible. Eight-holds' gallery render changed only because it was a
-> stale b75/e2699cc render catching up to the ruled b76 road joints
-> (world bytes identical). FOLLOW-UP LEVER (sl-0063): if conversion
-> alone doesn't clear navigation, WF clustering/corridor rules
-> through prop fields — designer taste, its own round.
+> THE PARKED ROUND (this session): the designer's b77 walk escalated
+> the pinch finding to region scale (sl-0072 diagnosis: 1,143
+> on-flood prop pinches, ALL shortcut-denials; then sl-0075 WALKABLE
+> WOODS — "whole tree bands are walls"). A full re-spacing pass was
+> BUILT AND VALIDATED: 8-connected governed clusters ≤ 2, orthogonal
+> pairs only, relocation-never-deletion with understory swaps,
+> terrain-standing props exempt as barrier-class, authored work
+> untouchable; per-species counts byte-equal, tree walls up to 1,005
+> cells dissolved, game diag_pinch census 1143 → 258 on-flood (wild
+> 811 → 169), floods +1.2-3.8k with pockets typed, TS=Godot, renders
+> designer-APPROVED ("go")… and then PLANNING SUPERSEDED THE ROUND
+> MINUTES LATER: **composition is art direction and ships as
+> authored; the navigation fix moved game-side (art-matched prop
+> collision, sl-0078). sl-0075 closed superseded — parked UNRELEASED
+> on planning's instruction, no delivery line** (nothing was ever
+> published: the only export was a scratch dev preview). The pass is
+> ARCHIVED DORMANT at src/decoration/respace.ts — designer-opt-in
+> art-tooling candidate, exercised by tests/walkableWoods.test.ts via
+> direct invocation, deliberately NOT called from composeWorld;
+> wiring it back is a designer decision, never a refactor. Kept
+> plumbing (generation-inert): decorate's wildernessProps
+> provenance mask + protectedCells/fordCells exports, pois/override
+> mask clears. GENERATION_RULES records the art-direction ruling.
+> 260 tests green.
 >
-> SESSION LEDGER (2026-08-01): sl-0063 fired by planning (W-13, the
-> worldshape forklift; designer: "to hard to navigate without
-> getting blocked" — keep density, CONVERT). Classification grounded
-> in measurement (9067 blocking prop cells in wildshot: ~5800 canopy
-> trunks, ~1050 rock, 1047 debris) and the package art (contested
-> species eyeballed; carpet = the ground-hugging pile silhouettes).
-> Parity kept across FIVE surfaces: decorate PROP_WALKABILITY
-> (truth) / loader BLOCKING_PROPS / Godot world.gd CARPET_PROPS
-> override (semantic_id prefixes) / parity-test ladder openSpecies /
-> GENERATION_RULES standing rule. decoration.props 17. New
-> tests/propWalkability.test.ts pins the partition, canopy==_over,
-> the divergence list, per-species loader behavior, and the .gd
-> mirror. Release idempotence re-verified (double export
-> verified-identical).
+> B77 CONTEXT THAT STILL BINDS: carpet/canopy/solid classes
+> (sl-0063; four carpet conversions vs package flags — stump,
+> fallen_log, bone_pile, loot_pile; five parity surfaces pinned by
+> tests/propWalkability.test.ts); the game renders props-overhang
+> ABOVE the player (verified at the sl-0067 intake); flood history
+> canonical 33386 → 34387, eight-holds 182666 → 188355, wildshot
+> 45063 → 46391 (pack 46493), every cell typed in the b77 commit.
 >
-> OPEN, in rough order: (1) game intake of @b77 (sl-0066 — the four
-> requirements above); (2) world_filler re-pin (sl-0041 in flight;
-> now four world versions behind); (3) route-hierarchy round for
-> types 5-8 (designer-designed, when wanted); (4) tops+ramps
-> contract ruling (designer clock); (5) plaza cobble keep/convert
-> parks; (6) landmark-centerpiece guard (task chip); scenery loop
-> resumable; farm-more levers recorded; sl-0065 dev map overlay is
-> GAME-side only (WF's minimap.png is the artifact — becomes a WF
-> ask only if its resolution proves insufficient on screen).
-> Planning sync_log on-disk append this session: sl-0066 (planning
-> commits its own file). Viewer :8787 serves b77 galleries for the
-> three regenerated worlds (canonical / eight-holds / wildshot);
-> other galleries carry older identity stamps but identical content.
+> OPEN, in rough order: (1) NAVIGATION IS GAME-SIDE NOW — sl-0078
+> art-matched prop collision (their lane; no WF work unless an ask
+> routes); (2) world_filler re-pin (sl-0041 in flight); (3)
+> route-hierarchy round for types 5-8 (designer-designed, when
+> wanted); (4) tops+ramps contract ruling (designer clock); (5)
+> plaza cobble keep/convert parks; (6) landmark-centerpiece guard
+> (task chip); scenery loop resumable; farm-more levers recorded;
+> sl-0065 dev map overlay is GAME-side only. NO sync-log append this
+> session (park = no cross-repo event from WF; planning sweeps the
+> sl-0075 closure and sl-0078 themselves). Viewer :8787 serves b77
+> galleries — all three regenerated worlds verified hash-identical
+> to the b77 release state.
 
 > **ECOSYSTEM POINTER (2026-07-29, designer-accepted doc 16).** This
 > repo is one of seven in the Wildshot project (it generates worlds the

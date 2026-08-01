@@ -223,6 +223,7 @@ export function planPois(
     const index = cellAt(x, y);
     if (index === -1 || !claimable(index)) return;
     decoration.propLayer[index] = prop(key);
+    decoration.wildernessProps[index] = 0;
     decoration.decalLayer[index] = 0;
   };
   const putDecal = (x: number, y: number, key: string): void => {
@@ -236,6 +237,7 @@ export function planPois(
     // random trees. Vignettes keep their own props and decals on disjoint
     // cells, so a POI never erases its own work.
     decoration.propLayer[index] = 0;
+    decoration.wildernessProps[index] = 0;
     decoration.decalLayer[index] = decal(key);
   };
 
@@ -328,6 +330,7 @@ export function planPois(
         const cell = (originY + sy) * width + originX + sx;
         structureLayer[cell] = STRUCTURE_LAYER_VALUE[type];
         decoration.propLayer[cell] = 0;
+        decoration.wildernessProps[cell] = 0;
         decoration.decalLayer[cell] = 0;
       }
     }
@@ -431,6 +434,7 @@ export function planPois(
             const cell = (originY + yy) * width + originX + xx;
             structureLayer[cell] = STRUCTURE_LAYER_VALUE[type];
             decoration.propLayer[cell] = 0;
+            decoration.wildernessProps[cell] = 0;
             decoration.decalLayer[cell] = 0;
           }
         }
@@ -668,6 +672,7 @@ export function planPois(
           if (cell !== -1) {
             structureLayer[cell] = campWall;
             decoration.propLayer[cell] = 0;
+            decoration.wildernessProps[cell] = 0;
             decoration.decalLayer[cell] = 0;
           }
         }
@@ -678,6 +683,7 @@ export function planPois(
           if (cell !== -1) {
             structureLayer[cell] = campWall;
             decoration.propLayer[cell] = 0;
+            decoration.wildernessProps[cell] = 0;
             decoration.decalLayer[cell] = 0;
           }
         }
@@ -1120,6 +1126,7 @@ export function planPois(
             const index = cellAt(x + dx, y + dy);
             if (index !== -1 && treeValues.has(decoration.propLayer[index] as number)) {
               decoration.propLayer[index] = stump;
+              decoration.wildernessProps[index] = 0;
               felled += 1;
             }
           }
@@ -1326,6 +1333,7 @@ export function planPois(
         const wy = (shoreWater - wx) / width;
         if (decoration.propLayer[shoreWater] === 0 && farms.pierLayer[shoreWater] === 0) {
           decoration.propLayer[shoreWater] = prop("prop.rowboat");
+          decoration.wildernessProps[shoreWater] = 0;
         }
         putProp(x + 1, y, "prop.fishnets");
         // The catch crated up, the boards of an older jetty gone soft.
